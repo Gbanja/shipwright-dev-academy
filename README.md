@@ -1,6 +1,6 @@
 # Shipwright Dev Academy
 
-A hands-on software engineering academy that runs entirely in your browser. There are 15 tracks and 102 lessons, and every lesson has a sandbox that checks your work as you go. There is no backend and no build step.
+A hands-on software engineering academy that runs entirely in your browser. There are 15 tracks, 102 lessons and 30 projects, and every lesson and project has a sandbox that checks your work as you go. There is no backend and no build step.
 
 | Phase | Tracks |
 | --- | --- |
@@ -16,6 +16,10 @@ A hands-on software engineering academy that runs entirely in your browser. Ther
   - Real code runners: JavaScript, TypeScript, HTML/CSS, React, Vue, a mini Next.js App Router, Python (Brython), SQL (sql.js) and PHP (a built-in interpreter).
   - A Playwright-style end-to-end test runner and a system design capacity simulator.
 - **Quizzes** for every track.
+- **Projects**: every track ends with two capstone projects, 30 in total.
+  - A **guided project** walks you through a realistic build one step at a time, with the commands or code to type and why each step matters.
+  - A **solo project** gives you a brief and requirements only. You build it in the same sandbox, then press **Submit for review** to get a report: which requirements you met, what went wrong for each one you missed, the commands that errored, and habits to fix. You can then copy a review request to paste into Claude for a written review (inside Claude, the page asks Claude directly) and compare your work with a reference solution.
+  - The guided project opens when you finish a track's lessons, and the solo project opens after the guided one.
 - **Real-world reps**: tasks to do on your own machine and accounts.
 - **Study notes**, saved automatically for each finished lesson and exportable as Markdown.
 - **Progress tracking**: XP, ranks, a daily streak and per-track progress. Tracks unlock in order.
@@ -62,6 +66,8 @@ docs/
   js/runners.js         # code runners + code sandbox
   js/php.js             # PHP interpreter (PDO, Composer autoload, mini Laravel)
   js/design.js          # system design simulator
+  js/projects.js        # guided + solo projects: steps, review reports, Projects tab
+  js/projects/*.js      # project content, one file per track
   js/tracks/*.js        # lesson content, one file per track
   tools/build-index.ps1 # regenerates index.html after you edit page.html
 shipwright-academy.html # standalone single-file version
@@ -76,3 +82,10 @@ powershell -ExecutionPolicy Bypass -File docs/tools/build-index.ps1
 ## Adding or changing lessons
 
 Each track file calls `defineTrack({ id, name, lessons, quizzes, real })`. A lesson has a `kind` (`git`, `ops`, `code`, `design` or `none`), a `concept` (HTML), a short `sum`, `keys`, and `tasks`. Each task has a check function `c(ctx)`, a code expression `x`, or multiple-choice options `o` with an answer `a`. Keep lesson ids stable, because progress and notes are keyed by them.
+
+## Adding or changing projects
+
+Each file in `docs/js/projects/` calls `defineProjects(trackId, { guided, solo })`. A project uses the same sandbox settings as a lesson (`kind`, `setup`, `lang`, `starter`, `files` and so on), plus a `title`, a one-line `pitch` and a `brief` (HTML).
+
+- **Guided** steps have `t` (the step), `why` (the explanation), and `h` (commands), `f` (files to write) or `code` (a snippet) to show. Each step has a check: `c(ctx)` or a code expression `x`.
+- **Solo** requirements have `t` and a check, plus `miss`: the feedback shown when the requirement isn't met (a string, or a function of the sandbox state that diagnoses the mistake). Mark a requirement `now: true` if it must hold at submit time rather than at any point during the session. `warn` lists habit checks (`{ c, m }`), and `ref` is the reference solution.

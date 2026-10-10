@@ -263,6 +263,58 @@ pre.snip{position:relative;background:var(--term-bg);color:var(--term-ink);borde
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-weight:600;font-size:14px;z-index:9;max-width:calc(100% - 32px)}
 .toast[hidden]{display:none}
 
+/* projects */
+.linkbtn{background:none;border:0;padding:0;color:var(--ink);font-weight:600;font-size:13px;text-decoration:underline;text-underline-offset:2px}
+.proj-road{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;border-top:1px dashed var(--line);margin-top:10px;padding-top:10px}
+.proj-road .eyebrow{margin-right:2px}
+.proj-head{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;margin-bottom:8px}
+.proj-meter{min-width:200px;flex:0 1 260px}
+.prow{margin-bottom:14px}
+.pgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:8px}
+.pcard{padding:16px;display:flex;flex-direction:column;gap:6px}
+.pcard.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.pcard h4{font-size:17px}
+.pcard p{margin:0;color:var(--ink-2);font-size:14px}
+.pcard-top{display:flex;gap:6px;flex-wrap:wrap}
+.pcard-act{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:auto;padding-top:6px}
+.pill.pg{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.pill.ps{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.psteps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.pstep{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:9px;padding:12px;background:var(--surface)}
+.pstep.cur{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.pstep.later{opacity:.62}
+.pstep.done{background:var(--surface-2)}
+.pstep.done .ptitle{color:var(--ink-2)}
+.pnum{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;background:var(--surface-2);border:1px solid var(--line)}
+.pstep.cur .pnum{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.pstep.done .pnum{background:var(--ok);border-color:var(--ok)}
+.pstep.done .pnum::after{content:"";width:10px;height:5px;border:2px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.pbody{min-width:0;flex:1;display:flex;flex-direction:column;gap:8px}
+.ptitle{font-weight:600}
+.pwhy{margin:0;color:var(--ink-2);font-size:14px}
+.pdo{font-size:14px;background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:8px 10px}
+.reqs{margin:0 0 12px;padding-left:22px}
+.reqs li{margin:4px 0}
+.proj-submit{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:6px 0 14px}
+.review{padding:18px;margin:4px 0 14px;border-left:4px solid var(--warn)}
+.review.pass{border-left-color:var(--ok)}
+.review h4{font-size:15px;margin:16px 0 6px}
+.review-top{display:flex;gap:16px;align-items:center;justify-content:space-between}
+.review-top h3{font-size:19px;margin-top:2px}
+.score{flex:none;font-family:var(--f-display);font-weight:800;font-size:26px;padding:6px 12px;border-radius:10px;background:var(--warn-soft);color:var(--warn)}
+.score.ok{background:var(--ok-soft);color:var(--ok)}
+.score.low{background:var(--bad-soft);color:var(--bad)}
+.rlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.rlist li{display:flex;gap:10px;align-items:flex-start}
+.rmark{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700}
+.rlist li.ok .rmark{background:var(--ok-soft);color:var(--ok)}
+.rlist li.bad .rmark{background:var(--bad-soft);color:var(--bad)}
+.rmiss{margin-top:4px;font-size:14px;color:var(--ink-2);background:var(--bad-soft);border-radius:6px;padding:6px 10px}
+.rwarn{margin:0;padding-left:20px;color:var(--ink-2)}
+.rwarn li{margin:4px 0}
+.ai-review{margin-top:12px;padding:12px 14px;border-radius:8px;background:var(--surface-2);border:1px solid var(--line);font-size:14px;overflow-wrap:anywhere}
+.ai-review pre.snip{margin:6px 0}
+@media (max-width:860px){.pgrid{grid-template-columns:minmax(0,1fr)}.review-top{align-items:flex-start}}
 @media (max-width:1200px){.lesson-grid{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:860px){
   .hero{grid-template-columns:minmax(0,1fr)}

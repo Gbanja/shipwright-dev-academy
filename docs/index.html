@@ -30,6 +30,7 @@
   <nav class="tabs" role="tablist">
     <button role="tab" id="tab-road" aria-selected="true" data-tab="road">Roadmap</button>
     <button role="tab" id="tab-learn" aria-selected="false" data-tab="learn">Learn</button>
+    <button role="tab" id="tab-proj" aria-selected="false" data-tab="proj">Projects</button>
     <button role="tab" id="tab-quiz" aria-selected="false" data-tab="quiz">Quizzes</button>
     <button role="tab" id="tab-real" aria-selected="false" data-tab="real">Real-world reps</button>
     <button role="tab" id="tab-notes" aria-selected="false" data-tab="notes">My notes</button>
@@ -88,6 +89,17 @@
     </div>
   </section>
 
+  <section id="view-proj" hidden>
+    <div class="proj-head">
+      <div style="min-width:0">
+        <h2 style="font-size:24px;margin-bottom:6px">Projects</h2>
+        <p style="margin:0;color:var(--ink-2);max-width:72ch">Every track ends with two projects. The <b>guided project</b> walks you through a realistic build step by step, with the commands and the reasons behind them. The <b>solo project</b> gives you a brief and requirements only. You build it yourself, submit it, and get a review: what went wrong, the commands that failed, and habits to fix.</p>
+      </div>
+      <div class="proj-meter"><div class="meter"><i id="projMeter" style="width:0%"></i></div><div class="note-meta" id="projText"></div></div>
+    </div>
+    <div id="projList"></div>
+  </section>
+
   <section id="view-quiz" hidden>
     <div class="quiz-grid">
       <aside class="card qnav lessons" id="quizNav" aria-label="Quizzes"></aside>
@@ -121,6 +133,7 @@
 <script src="js/php.js"></script>
 <script src="js/runners.js"></script>
 <script src="js/design.js"></script>
+<script src="js/projects.js"></script>
 <script src="js/tracks/git.js"></script>
 <script src="js/tracks/docker.js"></script>
 <script src="js/tracks/deploy.js"></script>
@@ -136,6 +149,21 @@
 <script src="js/tracks/sysdesign.js"></script>
 <script src="js/tracks/cloud.js"></script>
 <script src="js/tracks/ai.js"></script>
+<script src="js/projects/git.js"></script>
+<script src="js/projects/docker.js"></script>
+<script src="js/projects/deploy.js"></script>
+<script src="js/projects/frontend.js"></script>
+<script src="js/projects/next.js"></script>
+<script src="js/projects/php.js"></script>
+<script src="js/projects/python.js"></script>
+<script src="js/projects/sql.js"></script>
+<script src="js/projects/testing.js"></script>
+<script src="js/projects/linux.js"></script>
+<script src="js/projects/security.js"></script>
+<script src="js/projects/dsa.js"></script>
+<script src="js/projects/sysdesign.js"></script>
+<script src="js/projects/cloud.js"></script>
+<script src="js/projects/ai.js"></script>
 <script>ACAD_BOOT()</script>
 
 </body>
