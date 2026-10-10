@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="An interactive, hands-on software engineering academy: Git, Docker, deployment, frontend, Next.js, PHP, Python, SQL, testing, Linux, security, algorithms, system design, cloud and AI.">
+<title>Shipwright Dev Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="academy.css">
+<style>html,body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><path d="M8 6v22M8 17c0-6 18-4 18-11" fill="none" stroke="var(--ink-2)" stroke-width="2.4" stroke-linecap="round"/><circle cx="8" cy="6" r="4" fill="var(--l1)"/><circle cx="8" cy="28" r="4" fill="var(--accent)"/><circle cx="26" cy="6" r="4" fill="var(--l2)"/></svg>
+      <h1>Shipwright Dev Academy<small>From first commit to shipping in production</small></h1>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="sRank">Novice</b><span>Rank</span></div>
+      <div class="stat"><b id="sXp">0</b><span>XP</span></div>
+      <div class="stat"><b id="sStreak">0</b><span>Day streak</span></div>
+      <div class="stat"><b id="sPath">0%</b><span>Full path</span></div>
+    </div>
+    <div class="save-chip" id="saveChip"><i></i>Saving in this browser</div>
+  </header>
+  <div class="warnbar" id="evalWarn" hidden>This page is blocked from running code here, so the code labs can't execute. Open the GitHub Pages copy of the academy to use them.</div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" id="tab-road" aria-selected="true" data-tab="road">Roadmap</button>
+    <button role="tab" id="tab-learn" aria-selected="false" data-tab="learn">Learn</button>
+    <button role="tab" id="tab-quiz" aria-selected="false" data-tab="quiz">Quizzes</button>
+    <button role="tab" id="tab-real" aria-selected="false" data-tab="real">Real-world reps</button>
+    <button role="tab" id="tab-notes" aria-selected="false" data-tab="notes">My notes</button>
+  </nav>
+
+  <section id="view-road">
+    <div class="hero">
+      <div class="card">
+        <div class="eyebrow">Your path</div>
+        <h2>Fifteen tracks, every lesson hands-on</h2>
+        <p>Each lesson has a sandbox that checks your work as you go: a Git simulator, a Linux and cloud terminal, real code runners for JavaScript, TypeScript, React, Python, SQL and PHP, and an architecture simulator.</p>
+        <p>Tracks open in order. You can preview any lesson ahead of time; its sandbox opens when you reach it.</p>
+        <div style="display:flex;gap:10px;align-items:center;margin-top:14px;flex-wrap:wrap">
+          <button class="btn primary" id="goLearn">Continue learning</button>
+          <span class="pill" id="nextLessonPill"></span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="eyebrow">Realistic pace</div>
+        <ul class="pace">
+          <li><b>Git &amp; GitHub:</b> confident in 1–2 weeks at about 1–2 hours a day.</li>
+          <li><b>Full path:</b> 15 tracks in 3 phases, about 9–12 months at 2 hours a day.</li>
+          <li><b>Daily habit:</b> one lesson, one quiz, one real-world rep.</li>
+        </ul>
+        <div class="eyebrow" style="margin-bottom:6px">Overall path progress</div>
+        <div class="meter"><i id="pathMeter" style="width:0%"></i></div>
+        <div style="font-size:13px;color:var(--ink-2);margin-top:6px" id="pathText"></div>
+        <div class="bk">
+          <button class="btn" id="bkToggle">Back up or restore progress</button>
+          <div id="bkPanel" hidden>
+            <p class="note-meta" style="margin:8px 0 0">Progress saved in Claude and on GitHub Pages is kept separately. Copy a backup from one and restore it in the other. Restoring merges, so nothing you've finished is lost.</p>
+            <div class="bk-row"><button class="btn" id="bkCopy">Copy backup</button><button class="btn" id="bkSave" hidden>Save backup file</button><label class="btn" for="bkFile">Open backup file</label><input type="file" id="bkFile" accept=".json,application/json" hidden></div>
+            <label class="sr" for="bkText">Paste a backup to restore</label><textarea id="bkText" placeholder="Paste a backup here, then press Restore"></textarea>
+            <div class="bk-row"><button class="btn primary" id="bkImport">Restore and merge</button></div>
+            <div class="bk-msg" id="bkMsg" role="status"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="tracks"></div>
+  </section>
+
+  <section id="view-learn" hidden>
+    <div class="lab">
+      <aside class="card lessons" aria-label="Tracks and lessons">
+        <label class="eyebrow" for="trackSel">Track</label>
+        <select id="trackSel"></select>
+        <div class="meter small"><i id="trackMeter" style="width:0%"></i></div>
+        <div class="trackstate" id="trackState"></div>
+        <div id="lessonList"></div>
+      </aside>
+      <div class="lesson-grid" id="lessonGrid">
+        <article class="card sheet" id="sheet"></article>
+        <div class="bench" id="bench"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-quiz" hidden>
+    <div class="quiz-grid">
+      <aside class="card qnav lessons" id="quizNav" aria-label="Quizzes"></aside>
+      <div id="quizBody"></div>
+    </div>
+  </section>
+
+  <section id="view-real" hidden>
+    <div style="max-width:940px;margin-bottom:16px">
+      <h2 style="font-size:24px;margin-bottom:6px">Real-world reps</h2>
+      <p style="margin:0;color:var(--ink-2)">The sandboxes build the habit. These reps prove it on your own computer and real accounts. Tick each one when you've done it.</p>
+    </div>
+    <div class="rw" id="rw"></div>
+  </section>
+
+  <section id="view-notes" hidden>
+    <div class="notes-head">
+      <div style="min-width:0">
+        <h2 style="font-size:24px;margin-bottom:6px">My notes</h2>
+        <p style="margin:0;color:var(--ink-2);max-width:68ch">Each lesson you finish saves a study note: a short summary, the key commands, every task, and exactly what you typed or wrote for each one. Your last 5 attempts per lesson are kept as versions.</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="copyAll">Copy all as Markdown</button><button class="btn primary" id="saveAll" hidden>Save all as .md file</button></div>
+    </div>
+    <div id="notes"></div>
+  </section>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script src="js/core.js"></script>
+<script src="js/sim-git.js"></script>
+<script src="js/sim-ops.js"></script>
+<script src="js/php.js"></script>
+<script src="js/runners.js"></script>
+<script src="js/design.js"></script>
+<script src="js/tracks/git.js"></script>
+<script src="js/tracks/docker.js"></script>
+<script src="js/tracks/deploy.js"></script>
+<script src="js/tracks/frontend.js"></script>
+<script src="js/tracks/next.js"></script>
+<script src="js/tracks/php.js"></script>
+<script src="js/tracks/python.js"></script>
+<script src="js/tracks/sql.js"></script>
+<script src="js/tracks/testing.js"></script>
+<script src="js/tracks/linux.js"></script>
+<script src="js/tracks/security.js"></script>
+<script src="js/tracks/dsa.js"></script>
+<script src="js/tracks/sysdesign.js"></script>
+<script src="js/tracks/cloud.js"></script>
+<script src="js/tracks/ai.js"></script>
+<script>ACAD_BOOT()</script>
+
+</body>
+</html>
