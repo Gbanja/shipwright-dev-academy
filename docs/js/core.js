@@ -31,7 +31,7 @@ function loadScript(src){if(_loaded[src])return _loaded[src];_loaded[src]=new Pr
 async function need(name){for(const u of LIBS[name])await loadScript(u)}
 
 /* ---------- track registry ---------- */
-const ACAD={tracks:{},lessonById:{}};
+const ACAD={tracks:{},lessonById:{},projects:{},projById:{}};
 const TRACK_ORDER=['git','docker','deploy','frontend','next','php','python','sql','testing','linux','security','dsa','sysdesign','cloud','ai'];
 const PHASES=[
  {name:'Phase 1 · Developer tools',sub:'The tools every engineer uses daily.',ids:['git','docker','deploy']},
@@ -47,7 +47,7 @@ function unlocked(t){const ts=tracks();const i=ts.indexOf(t);return i<=0||trackD
 function prevTrack(t){const ts=tracks();return ts[ts.indexOf(t)-1]}
 
 /* ---------- progress ---------- */
-const DEF={v:2,lessons:{},quiz:{},checks:{},xp:0,days:[],best:{},last:'g1',notes:{},lastTrack:'git'};
+const DEF={v:2,lessons:{},quiz:{},checks:{},xp:0,days:[],best:{},last:'g1',notes:{},lastTrack:'git',projects:{}};
 let P=deep(DEF);
 const store={mode:'local',ref:null,chain:Promise.resolve(),timer:null,
  loadLocal(){try{const raw=localStorage.getItem('shipwright-progress');if(raw)return JSON.parse(raw)}catch(e){}return null},
@@ -112,20 +112,21 @@ function makeTerminal(el,opts){
 /* ---------- lesson engine ---------- */
 const BENCH={};
 let L=null,done=[],taskLog=[],pending=[],hints={},locked=false,drillStart=null,drillTick=null,choiceWrong={},checking=false,curTrackId='git';
-function record(e){if(!L||locked||done.every(Boolean))return;if(e.code!=null)pending=pending.filter(x=>x.code==null||x.file!==e.file);if(pending.length<200)pending.push(e);
+function record(e){if(L&&L.proj&&!locked)projRecord(e);if(!L||locked||done.every(Boolean))return;if(e.code!=null)pending=pending.filter(x=>x.code==null||x.file!==e.file);if(pending.length<200)pending.push(e);
  if(L.drill&&!drillStart){drillStart=Date.now();drillTick=setInterval(renderTimer,1000)}}
 async function checkTasks(ctx){
- if(!L||locked)return;const lesson=L;let changed=false,first=true;
+ if(!L||locked||projBusy)return;const lesson=L;let changed=false,first=true;
  for(let i=0;i<lesson.tasks.length;i++){const t=lesson.tasks[i];if(done[i]||t.o)continue;if(ctx&&ctx.liveOnly&&!t.live)continue;let v=false;
   try{if(t.x!=null&&!t.c)v=!!(ctx&&ctx.res&&ctx.res[i]&&ctx.res[i].ok);else{v=t.c?await t.c(ctx||{}):false;if(v&&t.x!=null)v=!!(ctx&&ctx.res&&ctx.res[i]&&ctx.res[i].ok)}}catch(e){v=false}
   if(lesson!==L)return;
   if(v){done[i]=true;taskLog[i]=first?pending:[];first=false;changed=true;if(t.done)try{t.done()}catch(e){}}}
- if(changed){pending=[];renderTasks();if(done.every(Boolean))completeLesson()}
+ if(changed){pending=[];if(lesson.proj==='solo')return;renderTasks();if(done.every(Boolean))completeLesson()}
 }
 function answerChoice(i,j){const t=L.tasks[i];if(done[i]||locked)return;if(j===t.a){done[i]=true;taskLog[i]=[{answer:t.o[j]}];delete choiceWrong[i];renderTasks();if(done.every(Boolean))completeLesson()}else{choiceWrong[i]=j;renderTasks()}}
 function buildNote(secs){const prev=P.notes[L.id]||[];const tasks=L.tasks.map((t,i)=>({t:t.t||t.q,log:taskLog[i]||[]}));const cmds=tasks.flatMap(t=>t.log.filter(x=>x.c!=null));
  return{v:(prev[0]?prev[0].v:0)+1,at:new Date().toISOString(),title:L.title,lvl:L.lvl||'',n:L.idx+1,track:L.track,summary:L.sum||'',keys:L.keys||[],tasks,total:cmds.length,errors:cmds.filter(c=>!c.ok).length,secs:secs||null}}
 function completeLesson(){
+ if(L.proj){completeProject();return}
  const first=!P.lessons[L.id];P.lessons[L.id]={at:today()};let secs=null;
  if(L.drill&&drillStart){secs=Math.round((Date.now()-drillStart)/1000);clearInterval(drillTick);if(!P.best[L.id]||secs<P.best[L.id])P.best[L.id]=secs}
  P.notes=P.notes||{};P.notes[L.id]=[buildNote(secs),...(P.notes[L.id]||[])].slice(0,5);noteVer[L.id]=0;
@@ -135,12 +136,14 @@ function completeLesson(){
  renderTasks();renderSide();renderStats();renderRoad();renderNotes();renderQuiz();renderReal();
 }
 function openLesson(id){
- const l=ACAD.lessonById[id]||tracks()[0].lessons[0];L=l;const t=ACAD.tracks[l.track];locked=!unlocked(t);curTrackId=t.id;
- if(!locked){P.last=l.id;P.lastTrack=t.id;store.save()}
+ const l=ACAD.lessonById[id]||ACAD.projById[id]||tracks()[0].lessons[0];L=l;const t=ACAD.tracks[l.track];locked=l.proj?!projUnlocked(l):!unlocked(t);curTrackId=t.id;
+ if(!locked&&!l.proj){P.last=l.id;P.lastTrack=t.id;store.save()}
+ projReset();
  done=l.tasks.map(()=>false);taskLog=[];pending=[];hints={};choiceWrong={};drillStart=null;clearInterval(drillTick);CUR_TERM=null;
  renderSide();renderSheet();
  const bench=$('#bench');bench.innerHTML='';const kind=l.kind||'none';const b=BENCH[kind];
  $('#lessonGrid').classList.toggle('solo',kind==='none');
+ if(locked&&l.proj){bench.innerHTML=projLockBox(l);return}
  if(locked&&kind!=='none'){const pv=prevTrack(t);bench.innerHTML='<div class="card lockbox"><div class="eyebrow">Preview mode</div><h3>The sandbox opens when you reach this track</h3><p>Finish <b>'+esc(pv.name)+'</b> to unlock '+esc(t.name)+'. You can read every lesson and task now, so you know what\'s coming.</p><p class="note-meta">Sandbox: '+esc(BENCH_LABEL[kind]||kind)+'</p></div>';return}
  if(b){try{b.mount(bench,l)}catch(e){bench.innerHTML='<div class="card lockbox"><h3>Sandbox failed to start</h3><p>'+esc(e.message)+'</p></div>'}}
 }
@@ -154,14 +157,17 @@ function renderSide(){
  const t=ACAD.tracks[curTrackId];$('#trackMeter').style.width=trackPct(t)+'%';
  $('#trackState').textContent=unlocked(t)?(trackDone(t)?'Track complete':trackPct(t)+'% complete'):'Preview: finish '+prevTrack(t).name+' to unlock';
  let html='',lvl=null;for(const l of t.lessons){if((l.lvl||'')!==lvl){lvl=l.lvl||'';if(lvl)html+='<div class="lvl">'+esc(lvl)+'</div>'}html+='<button class="lbtn'+(P.lessons[l.id]?' done':'')+(unlocked(t)?'':' lockedl')+'" data-lesson="'+l.id+'" aria-current="'+(L&&L.id===l.id)+'"><span class="dot"></span>'+esc(l.title)+'</button>'}
+ html+=projSideHtml(t);
  $('#lessonList').innerHTML=html;
 }
 function renderSheet(){
+ if(L.proj){renderProjSheet();return}
  const l=L,t=ACAD.tracks[l.track];
  $('#sheet').innerHTML=(locked?'<div class="preview-flag">Preview · unlocks after '+esc(prevTrack(t).name)+'</div>':'')+'<div class="eyebrow">'+esc(t.name)+(l.lvl?' · '+esc(l.lvl):'')+' · Lesson '+(l.idx+1)+' of '+t.lessons.length+'</div><h2>'+esc(l.title)+'</h2><div class="concept">'+l.concept+'</div><div class="tasks" id="tasks"></div>';
  renderTasks();
 }
 function renderTasks(){
+ if(L&&L.proj){renderProjTasks();return}
  const l=L,el=$('#tasks');if(!el)return;const n=done.filter(Boolean).length;
  let html='<h3>'+(locked?'Tasks in this lesson':'Your tasks')+' <span class="pill'+(n===l.tasks.length?' ok':'')+'">'+n+' / '+l.tasks.length+'</span>'+(l.drill&&!locked?' <span class="timer" id="timer">0:00</span>'+(P.best[l.id]?' <span class="pill">best '+fmt(P.best[l.id])+'</span>':''):'')+'</h3>';
  l.tasks.forEach((t,i)=>{
@@ -169,8 +175,8 @@ function renderTasks(){
   const hint=t.hint||t.h||'';const fileHint=t.f?Object.entries(t.f).map(([p,c])=>'# '+p+'\n'+c).join('\n\n'):'';const solHint=t.sol&&typeof t.sol==='string'&&t.showSol!==false?t.sol:'';
   const full=[hint,fileHint,solHint&&!hint?solHint:''].filter(Boolean).join('\n\n');
   html+='<div class="task'+(done[i]?' done':'')+'"><span class="box"></span><div class="ttext">'+esc(t.t)+(done[i]||!full?'':' <button class="hintbtn" data-hint="'+i+'">'+(hints[i]?'Hide hint':'Show hint')+'</button>')+(hints[i]&&!done[i]&&full?'<code class="hint">'+esc(full)+'</code>':'')+'</div></div>'});
- const tr=ACAD.tracks[l.track];const next=tr.lessons[l.idx+1]||(tracks()[tracks().indexOf(tr)+1]||{lessons:[]}).lessons[0];
- if(!locked&&done.every(Boolean))html+='<div class="done-banner"><span>Lesson complete. Your study note is saved.</span><button class="btn" data-note-go="'+l.id+'">View note</button>'+(next?'<button class="btn primary" data-lesson="'+next.id+'">Next: '+esc(next.title)+'</button>':'')+'</div>';
+ const tr=ACAD.tracks[l.track];const pj=ACAD.projects[tr.id];const next=tr.lessons[l.idx+1]||(pj&&trackDone(tr)&&!(P.projects[pj.guided.id]||{}).done?pj.guided:null)||(tracks()[tracks().indexOf(tr)+1]||{lessons:[]}).lessons[0];
+ if(!locked&&done.every(Boolean))html+='<div class="done-banner"><span>Lesson complete. Your study note is saved.</span><button class="btn" data-note-go="'+l.id+'">View note</button>'+(next?'<button class="btn primary" data-lesson="'+next.id+'">Next: '+(next.proj?'guided project':esc(next.title))+'</button>':'')+'</div>';
  else if(!locked&&P.lessons[l.id])html+='<div class="done-banner soft"><span>You finished this lesson before. Replaying it is great practice.</span></div>';
  html+='<div class="lesson-actions">'+(locked||!l.kind||l.kind==='none'?'':'<button class="btn" id="resetLesson">Reset sandbox</button>')+(next?'<button class="btn" data-lesson="'+next.id+'">'+(locked?'Next lesson':'Skip to next')+'</button>':'')+'</div>';
  el.innerHTML=html;if(l.drill&&!locked)renderTimer();
@@ -182,7 +188,7 @@ function renderChip(){const c=$('#saveChip');c.className='save-chip'+(store.mode
 function currentTrack(){return tracks().find(t=>unlocked(t)&&!trackDone(t))||tracks()[tracks().length-1]}
 function renderRoad(){
  const card=t=>{const i=tracks().indexOf(t);const un=unlocked(t),fin=trackDone(t),p=trackPct(t),pv=prevTrack(t);
-  return '<div class="card track'+(un&&!fin?' active':'')+'"><header><h3>'+esc(t.name)+'</h3><span class="num">Track '+(i+1)+'</span></header><div class="pills"><span class="pill">'+esc(t.weeks)+'</span><span class="pill">'+t.lessons.length+' lessons</span>'+(fin?'<span class="pill ok">Complete</span>':un?'<span class="pill hot">Open now</span>':'<span class="pill">Preview</span>')+'</div><ol>'+t.lessons.map(l=>'<li'+(P.lessons[l.id]?' class="li-done"':'')+'>'+esc(l.title)+'</li>').join('')+'</ol><footer><div style="flex:1;min-width:100px"><div class="meter"><i style="width:'+p+'%"></i></div></div><span class="mono">'+p+'%</span><button class="btn'+(un?' primary':'')+'" data-track-open="'+t.id+'">'+(un?(fin?'Review':'Open'):'Preview')+'</button></footer>'+(un?'':'<div class="note-meta">Unlocks after '+esc(pv.name)+'</div>')+'</div>'};
+  return '<div class="card track'+(un&&!fin?' active':'')+'"><header><h3>'+esc(t.name)+'</h3><span class="num">Track '+(i+1)+'</span></header><div class="pills"><span class="pill">'+esc(t.weeks)+'</span><span class="pill">'+t.lessons.length+' lessons</span>'+(fin?'<span class="pill ok">Complete</span>':un?'<span class="pill hot">Open now</span>':'<span class="pill">Preview</span>')+'</div><ol>'+t.lessons.map(l=>'<li'+(P.lessons[l.id]?' class="li-done"':'')+'>'+esc(l.title)+'</li>').join('')+'</ol><footer><div style="flex:1;min-width:100px"><div class="meter"><i style="width:'+p+'%"></i></div></div><span class="mono">'+p+'%</span><button class="btn'+(un?' primary':'')+'" data-track-open="'+t.id+'">'+(un?(fin?'Review':'Open'):'Preview')+'</button></footer>'+projRoadHtml(t)+(un?'':'<div class="note-meta">Unlocks after '+esc(pv.name)+'</div>')+'</div>'};
  $('#tracks').innerHTML=PHASES.map(ph=>'<div class="phase"><h2>'+esc(ph.name)+'</h2><p>'+esc(ph.sub)+'</p><div class="tracks">'+ph.ids.filter(id=>ACAD.tracks[id]).map(id=>card(ACAD.tracks[id])).join('')+'</div></div>').join('');
  const ls=allLessons(),dn=ls.filter(l=>P.lessons[l.id]).length,ct=currentTrack();
  $('#pathMeter').style.width=pathPct()+'%';$('#pathText').textContent=dn+' of '+ls.length+' lessons done across '+tracks().length+' tracks · '+pathPct()+'% of the full path';
@@ -235,6 +241,7 @@ function mergeProgress(inc){
  for(const [k,v] of Object.entries(inc.best||{}))if(!out.best[k]||v<out.best[k])out.best[k]=v;
  for(const [k,v] of Object.entries(inc.quiz||{})){if(k==='xpGiven'){out.quiz.xpGiven=Object.assign({},v,out.quiz.xpGiven||{});continue}out.quiz[k]=Object.assign({},v,out.quiz[k]||{})}
  for(const [k,vs] of Object.entries(inc.notes||{})){const mine=out.notes[k]||[];const seen=new Set(mine.map(n=>n.at));out.notes[k]=[...mine,...vs.filter(n=>!seen.has(n.at))].sort((a,b)=>b.at<a.at?-1:1).slice(0,5)}
+ out.projects=out.projects||{};for(const [k,v] of Object.entries(inc.projects||{})){const m=out.projects[k];if(!m){out.projects[k]=v;continue}if(!m.done&&v.done)m.done=v.done;m.best=Math.max(m.best||0,v.best||0);const seen=new Set((m.attempts||[]).map(a=>a.at));m.attempts=[...(m.attempts||[]),...(v.attempts||[]).filter(a=>!seen.has(a.at))].sort((a,b)=>b.at<a.at?-1:1).slice(0,5)}
  out.days=[...new Set([...(out.days||[]),...(inc.days||[])])].sort().slice(-400);
  out.xp=Math.max(out.xp||0,inc.xp||0);return out;
 }
@@ -244,11 +251,12 @@ function importProgress(txt){let data;try{data=JSON.parse(txt.trim())}catch(e){r
  P=mergeProgress(inc);store.save();renderAll();return null}
 
 /* ---------- tabs + events ---------- */
-function showTab(id){for(const b of $$('.tabs button'))b.setAttribute('aria-selected',b.dataset.tab===id);for(const v of ['road','learn','quiz','real','notes'])$('#view-'+v).hidden=v!==id;
+function showTab(id){for(const b of $$('.tabs button'))b.setAttribute('aria-selected',b.dataset.tab===id);for(const v of ['road','learn','proj','quiz','real','notes'])$('#view-'+v).hidden=v!==id;if(id==='proj')renderProjects();
  if(id==='learn'&&!L){const t=currentTrack();const nx=t.lessons.find(l=>!P.lessons[l.id])||t.lessons[0];openLesson(P.last&&ACAD.lessonById[P.last]&&unlocked(ACAD.tracks[ACAD.lessonById[P.last].track])?P.last:nx.id)}}
-function renderAll(){renderStats();renderRoad();renderQuiz();renderReal();renderNotes();renderChip();if(L)renderSide()}
+function renderAll(){renderStats();renderRoad();renderQuiz();renderReal();renderNotes();renderProjects();renderChip();if(L)renderSide()}
 function bindEvents(){
  document.addEventListener('click',e=>{
+  if(projClick(e))return;
   const t=e.target.closest('[data-tab],[data-tab-go],[data-lesson],[data-hint],[data-quiz],[data-q],[data-copy],[data-note-go],[data-note-copy],[data-note-save],[data-choice],[data-track-open],#copyAll,#saveAll,#resetLesson,#goLearn,#quizReset,#bkCopy,#bkSave,#bkImport,#bkToggle');if(!t)return;
   const nv=id=>P.notes[id][Math.min(noteVer[id]||0,P.notes[id].length-1)];
   if(t.dataset.noteGo){showTab('notes');renderNotes();const n=$('#note-'+t.dataset.noteGo);if(n)n.scrollIntoView({block:'start'});return}
