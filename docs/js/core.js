@@ -53,6 +53,7 @@ const store={mode:'local',ref:null,chain:Promise.resolve(),timer:null,
  loadLocal(){try{const raw=localStorage.getItem('shipwright-progress');if(raw)return JSON.parse(raw)}catch(e){}return null},
  async init(){
   const local=this.loadLocal();if(local)P=Object.assign(deep(DEF),local);
+  if(creditNewLessons())this.save();
   renderAll();
   try{
    if(!window.claude||!window.claude.use)return;
@@ -61,7 +62,7 @@ const store={mode:'local',ref:null,chain:Promise.resolve(),timer:null,
    this.ref=db.doc('data/users/'+id+'/progress');
    const snap=await this.ref.get();
    if(snap.exists)P=Object.assign(deep(DEF),deep(snap.data()));else if(local)await this.ref.set(deep(P));
-   this.mode='cloud';renderAll();
+   this.mode='cloud';if(creditNewLessons())this.save();renderAll();
   }catch(e){this.ref=null;this.mode='local'}
   renderChip();
  },
@@ -155,15 +156,15 @@ function renderSide(){
  const sel=$('#trackSel');if(!sel)return;
  sel.innerHTML=PHASES.map(ph=>'<optgroup label="'+esc(ph.name)+'">'+ph.ids.map(id=>{const t=ACAD.tracks[id];if(!t)return'';return '<option value="'+id+'"'+(id===curTrackId?' selected':'')+'>'+(unlocked(t)?'':'🔒 ')+esc(t.name)+' · '+trackPct(t)+'%</option>'}).join('')+'</optgroup>').join('');
  const t=ACAD.tracks[curTrackId];$('#trackMeter').style.width=trackPct(t)+'%';
- $('#trackState').textContent=unlocked(t)?(trackDone(t)?'Track complete':trackPct(t)+'% complete'):'Preview: finish '+prevTrack(t).name+' to unlock';
- let html='',lvl=null;for(const l of t.lessons){if((l.lvl||'')!==lvl){lvl=l.lvl||'';if(lvl)html+='<div class="lvl">'+esc(lvl)+'</div>'}html+='<button class="lbtn'+(P.lessons[l.id]?' done':'')+(unlocked(t)?'':' lockedl')+'" data-lesson="'+l.id+'" aria-current="'+(L&&L.id===l.id)+'"><span class="dot"></span>'+esc(l.title)+'</button>'}
+ $('#trackState').innerHTML=esc(unlocked(t)?(trackDone(t)?'Track complete':trackPct(t)+'% complete'):'Preview: finish '+prevTrack(t).name+' to unlock')+(unlocked(t)&&!t.lessons.some(l=>P.lessons[l.id])?'<div class="lvl-info">New to this? Start with the first Beginner lesson. Already experienced? Read the level goals below and jump to the first lesson you can\'t already do.</div>':'');
+ let html='',lvl=null;for(const l of t.lessons){if((l.lvl||'')!==lvl){lvl=l.lvl||'';if(lvl)html+='<div class="lvl">'+esc(lvl)+'</div>'+(LEVEL_INFO[t.id]&&LEVEL_INFO[t.id][lvl]?'<div class="lvl-info">'+esc(LEVEL_INFO[t.id][lvl])+'</div>':'')}html+='<button class="lbtn'+(P.lessons[l.id]?' done':'')+(unlocked(t)?'':' lockedl')+'" data-lesson="'+l.id+'" aria-current="'+(L&&L.id===l.id)+'"><span class="dot"></span>'+esc(l.title)+'</button>'}
  html+=projSideHtml(t);
  $('#lessonList').innerHTML=html;
 }
 function renderSheet(){
  if(L.proj){renderProjSheet();return}
  const l=L,t=ACAD.tracks[l.track];
- $('#sheet').innerHTML=(locked?'<div class="preview-flag">Preview · unlocks after '+esc(prevTrack(t).name)+'</div>':'')+'<div class="eyebrow">'+esc(t.name)+(l.lvl?' · '+esc(l.lvl):'')+' · Lesson '+(l.idx+1)+' of '+t.lessons.length+'</div><h2>'+esc(l.title)+'</h2><div class="concept">'+l.concept+'</div><div class="tasks" id="tasks"></div>';
+ $('#sheet').innerHTML=(locked?'<div class="preview-flag">Preview · unlocks after '+esc(prevTrack(t).name)+'</div>':'')+'<div class="eyebrow">'+esc(t.name)+(l.lvl?' · '+esc(l.lvl):'')+' · Lesson '+(l.idx+1)+' of '+t.lessons.length+'</div><h2>'+esc(l.title)+'</h2>'+levelLadderHtml(l)+beforeYouStartHtml(l)+'<div class="concept">'+l.concept+'</div><div class="tasks" id="tasks"></div>';
  renderTasks();
 }
 function renderTasks(){
@@ -188,7 +189,7 @@ function renderChip(){const c=$('#saveChip');c.className='save-chip'+(store.mode
 function currentTrack(){return tracks().find(t=>unlocked(t)&&!trackDone(t))||tracks()[tracks().length-1]}
 function renderRoad(){
  const card=t=>{const i=tracks().indexOf(t);const un=unlocked(t),fin=trackDone(t),p=trackPct(t),pv=prevTrack(t);
-  return '<div class="card track'+(un&&!fin?' active':'')+'"><header><h3>'+esc(t.name)+'</h3><span class="num">Track '+(i+1)+'</span></header><div class="pills"><span class="pill">'+esc(t.weeks)+'</span><span class="pill">'+t.lessons.length+' lessons</span>'+(fin?'<span class="pill ok">Complete</span>':un?'<span class="pill hot">Open now</span>':'<span class="pill">Preview</span>')+'</div><ol>'+t.lessons.map(l=>'<li'+(P.lessons[l.id]?' class="li-done"':'')+'>'+esc(l.title)+'</li>').join('')+'</ol><footer><div style="flex:1;min-width:100px"><div class="meter"><i style="width:'+p+'%"></i></div></div><span class="mono">'+p+'%</span><button class="btn'+(un?' primary':'')+'" data-track-open="'+t.id+'">'+(un?(fin?'Review':'Open'):'Preview')+'</button></footer>'+projRoadHtml(t)+(un?'':'<div class="note-meta">Unlocks after '+esc(pv.name)+'</div>')+'</div>'};
+  return '<div class="card track'+(un&&!fin?' active':'')+'"><header><h3>'+esc(t.name)+'</h3><span class="num">Track '+(i+1)+'</span></header><div class="pills"><span class="pill">'+esc(t.weeks)+'</span><span class="pill">'+t.lessons.length+' lessons</span>'+(fin?'<span class="pill ok">Complete</span>':un?'<span class="pill hot">Open now</span>':'<span class="pill">Preview</span>')+'</div><ol>'+t.lessons.map((l,j)=>(l.lvl&&(j===0||t.lessons[j-1].lvl!==l.lvl)?'<li class="lvl-mark" aria-hidden="true">'+esc(l.lvl)+'</li>':'')+'<li value="'+(j+1)+'"'+(P.lessons[l.id]?' class="li-done"':'')+'>'+esc(l.title)+'</li>').join('')+'</ol><footer><div style="flex:1;min-width:100px"><div class="meter"><i style="width:'+p+'%"></i></div></div><span class="mono">'+p+'%</span><button class="btn'+(un?' primary':'')+'" data-track-open="'+t.id+'">'+(un?(fin?'Review':'Open'):'Preview')+'</button></footer>'+projRoadHtml(t)+(un?'':'<div class="note-meta">Unlocks after '+esc(pv.name)+'</div>')+'</div>'};
  $('#tracks').innerHTML=PHASES.map(ph=>'<div class="phase"><h2>'+esc(ph.name)+'</h2><p>'+esc(ph.sub)+'</p><div class="tracks">'+ph.ids.filter(id=>ACAD.tracks[id]).map(id=>card(ACAD.tracks[id])).join('')+'</div></div>').join('');
  const ls=allLessons(),dn=ls.filter(l=>P.lessons[l.id]).length,ct=currentTrack();
  $('#pathMeter').style.width=pathPct()+'%';$('#pathText').textContent=dn+' of '+ls.length+' lessons done across '+tracks().length+' tracks · '+pathPct()+'% of the full path';
@@ -248,7 +249,7 @@ function mergeProgress(inc){
 function progressCode(){return JSON.stringify({app:'shipwright-academy',exported:new Date().toISOString(),progress:P})}
 function importProgress(txt){let data;try{data=JSON.parse(txt.trim())}catch(e){return 'That text is not a valid progress backup. Paste the whole backup, starting with {'}
  const inc=data&&data.progress?data.progress:data;if(!inc||typeof inc!=='object'||!inc.lessons)return 'That backup has no lesson progress in it.';
- P=mergeProgress(inc);store.save();renderAll();return null}
+ P=mergeProgress(inc);creditNewLessons();store.save();renderAll();return null}
 
 /* ---------- tabs + events ---------- */
 function showTab(id){for(const b of $$('.tabs button'))b.setAttribute('aria-selected',b.dataset.tab===id);for(const v of ['road','learn','proj','quiz','real','notes'])$('#view-'+v).hidden=v!==id;if(id==='proj')renderProjects();

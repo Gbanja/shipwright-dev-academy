@@ -1,6 +1,6 @@
 # Shipwright Dev Academy
 
-A hands-on software engineering academy that runs entirely in your browser. There are 15 tracks, 102 lessons and 30 projects, and every lesson and project has a sandbox that checks your work as you go. There is no backend and no build step.
+A hands-on software engineering academy that runs entirely in your browser. There are 15 tracks, 113 lessons and 30 projects, and every lesson and project has a sandbox that checks your work as you go. There is no backend and no build step.
 
 | Phase | Tracks |
 | --- | --- |
@@ -9,6 +9,8 @@ A hands-on software engineering academy that runs entirely in your browser. Ther
 | 3 · Engineering depth | SQL & databases · Testing · Linux & the shell · Web security · Data structures & algorithms · System design · Cloud (AWS + Terraform) · AI integration |
 
 ## What's inside
+
+- **Four levels in every track**: Beginner, Intermediate, Advanced and Pro, ordered from easiest to hardest. Every track starts from zero experience. Each lesson shows where you are on the level ladder, what you'll be able to do at the end of the level, what the lesson builds on, and an "In plain English" explanation before the technical detail. Learners with experience can read the level goals and jump straight to their level.
 
 - **Sandboxes that check your work**
   - A Git simulator with a live commit graph and a fake GitHub remote, including pull requests.
@@ -66,6 +68,8 @@ docs/
   js/runners.js         # code runners + code sandbox
   js/php.js             # PHP interpreter (PDO, Composer autoload, mini Laravel)
   js/design.js          # system design simulator
+  js/beginner.js        # beginner lessons that open the tracks that used to start too deep
+  js/levels.js          # level order, level goals and plain-English explanations for every lesson
   js/projects.js        # guided + solo projects: steps, review reports, Projects tab
   js/projects/*.js      # project content, one file per track
   js/tracks/*.js        # lesson content, one file per track
