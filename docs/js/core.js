@@ -155,7 +155,7 @@ function openLesson(id){
  if(!locked&&!l.proj){P.last=l.id;P.lastTrack=t.id;store.save()}
  projReset();
  done=l.tasks.map(()=>false);taskLog=[];pending=[];hints={};attempts=0;choiceWrong={};drillStart=null;clearInterval(drillTick);CUR_TERM=null;
- renderSide();renderSheet();
+ renderSide();renderSheet();VOICE.onOpen();
  const bench=$('#bench');bench.innerHTML='';const kind=l.kind||'none';const b=BENCH[kind];
  $('#lessonGrid').classList.toggle('solo',kind==='none');
  if(locked&&l.proj){bench.innerHTML=projLockBox(l);return}
@@ -270,12 +270,12 @@ function importProgress(txt){let data;try{data=JSON.parse(txt.trim())}catch(e){r
  P=mergeProgress(inc);migrateProgress();store.save();renderAll();return null}
 
 /* ---------- tabs + events ---------- */
-function showTab(id){for(const b of $$('.tabs button'))b.setAttribute('aria-selected',b.dataset.tab===id);for(const v of ['road','learn','proj','review','quiz','real','notes'])$('#view-'+v).hidden=v!==id;if(id==='review')renderReview();if(id==='proj')renderProjects();
+function showTab(id){if(id!=='learn')VOICE.stop();for(const b of $$('.tabs button'))b.setAttribute('aria-selected',b.dataset.tab===id);for(const v of ['road','learn','proj','review','quiz','real','notes'])$('#view-'+v).hidden=v!==id;if(id==='review')renderReview();if(id==='proj')renderProjects();
  if(id==='learn'&&!L){const t=currentTrack();const nx=t.lessons.find(l=>!P.lessons[l.id])||t.lessons[0];openLesson(P.last&&ACAD.lessonById[P.last]&&unlocked(ACAD.tracks[ACAD.lessonById[P.last].track])?P.last:nx.id)}}
 function renderAll(){renderStats();renderRoad();renderQuiz();renderReal();renderNotes();renderProjects();renderReview();renderChip();if(L)renderSide()}
 function bindEvents(){
  document.addEventListener('click',e=>{
-  if(reviewClick(e)||projClick(e))return;
+  if(VOICE.click(e)||reviewClick(e)||projClick(e))return;
   const t=e.target.closest('[data-tab],[data-tab-go],[data-lesson],[data-hint],[data-quiz],[data-q],[data-copy],[data-note-go],[data-note-copy],[data-note-save],[data-choice],[data-track-open],#copyAll,#saveAll,#resetLesson,#goLearn,#quizReset,#bkCopy,#bkSave,#bkImport,#bkToggle');if(!t)return;
   const nv=id=>P.notes[id][Math.min(noteVer[id]||0,P.notes[id].length-1)];
   if(t.dataset.noteGo){showTab('notes');renderNotes();const n=$('#note-'+t.dataset.noteGo);if(n)n.scrollIntoView({block:'start'});return}
@@ -301,6 +301,7 @@ function bindEvents(){
   else if(t.id==='quizReset'){const keep=P.quiz.xpGiven;P.quiz[quizKey]={};P.quiz.xpGiven=keep;store.save();renderQuiz()}
  });
  document.addEventListener('change',e=>{
+  if(VOICE.change(e))return;
   if(e.target.id==='trackSel'){const tr=ACAD.tracks[e.target.value];openLesson((tr.lessons.find(l=>!P.lessons[l.id])||tr.lessons[0]).id);return}
   if(e.target.id==='bkFile'){const f=e.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{$('#bkText').value=rd.result};rd.readAsText(f);return}
   if(e.target.dataset&&e.target.dataset.ver){noteVer[e.target.dataset.ver]=+e.target.value;renderNotes();return}

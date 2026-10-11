@@ -20,6 +20,7 @@ Tracks open in prerequisite order: each one only uses skills from the tracks bef
   - **Explain it in your own words** after each lesson, saved to your notes.
   - **A core path**: a few lessons are marked optional, and you pick one backend language.
   - **An early debugging lesson** on reading errors and fixing bugs one at a time.
+- **Read aloud**: press **🔊 Listen** on any lesson, project or review card to hear it through your headphones, or turn on auto-read so each lesson starts speaking when you open it. A player bar lets you skip back and forward, pause, and change the speed and voice. It uses your device's built-in voices, so it works offline, and it keeps the screen awake while it reads.
 - **Four levels in every track**: Beginner, Intermediate, Advanced and Pro, ordered from easiest to hardest. Every track starts from zero experience. Each lesson shows where you are on the level ladder, what you'll be able to do at the end of the level, what the lesson builds on, and an "In plain English" explanation before the technical detail. Learners with experience can read the level goals and jump straight to their level.
 
 - **Sandboxes that check your work**
@@ -88,6 +89,7 @@ js/design.js          # system design simulator
 js/beginner.js        # beginner lessons that open the tracks that used to start too deep
 js/levels.js          # level order, level goals and plain-English explanations for every lesson
 js/review.js          # spaced review, mixed practice, own-words notes, progress migrations
+js/voice.js           # read-aloud: turns lessons into speech, player bar, auto-read
 js/projects.js        # guided + solo projects: steps, review reports, Projects tab
 js/projects/*.js      # project content, one file per track
 js/tracks/*.js        # lesson content, one file per track
