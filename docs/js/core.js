@@ -32,19 +32,32 @@ async function need(name){for(const u of LIBS[name])await loadScript(u)}
 
 /* ---------- track registry ---------- */
 const ACAD={tracks:{},lessonById:{},projects:{},projById:{}};
-const TRACK_ORDER=['git','docker','deploy','frontend','next','php','python','sql','testing','linux','security','dsa','sysdesign','cloud','ai'];
+const TRACK_ORDER=['linux','git','frontend','python','php','sql','testing','next','docker','deploy','security','dsa','sysdesign','cloud','ai'];
+/* Tracks you choose between: finishing either one opens the tracks after them. */
+const CHOICES=[['python','php']];
 const PHASES=[
- {name:'Phase 1 · Developer tools',sub:'The tools every engineer uses daily.',ids:['git','docker','deploy']},
- {name:'Phase 2 · Building apps',sub:'Frontend, full-stack and backend languages.',ids:['frontend','next','php','python']},
- {name:'Phase 3 · Engineering depth',sub:'The skills that turn a coder into a software engineer.',ids:['sql','testing','linux','security','dsa','sysdesign','cloud','ai']},
+ {name:'Phase 1 · Foundations',sub:'The terminal, version control and your first web pages. Everything later builds on these.',ids:['linux','git','frontend']},
+ {name:'Phase 2 · Building apps',sub:'One backend language (choose Python or PHP), databases, testing, then a full-stack framework.',ids:['python','php','sql','testing','next']},
+ {name:'Phase 3 · Shipping',sub:'Package, deploy and secure what you build.',ids:['docker','deploy','security']},
+ {name:'Phase 4 · Engineering depth',sub:'The skills that turn a coder into a software engineer.',ids:['dsa','sysdesign','cloud','ai']},
 ];
 function defineTrack(t){t.lessons.forEach((l,i)=>{l.track=t.id;l.idx=i;ACAD.lessonById[l.id]=l});ACAD.tracks[t.id]=t}
 const tracks=()=>TRACK_ORDER.map(id=>ACAD.tracks[id]).filter(Boolean);
 const allLessons=()=>tracks().flatMap(t=>t.lessons);
-const trackDone=t=>t.lessons.every(l=>P.lessons[l.id]);
-const trackPct=t=>Math.round(100*t.lessons.filter(l=>P.lessons[l.id]).length/t.lessons.length);
-function unlocked(t){const ts=tracks();const i=ts.indexOf(t);return i<=0||trackDone(ts[i-1])}
-function prevTrack(t){const ts=tracks();return ts[ts.indexOf(t)-1]}
+const coreLessons=t=>t.lessons.filter(l=>!l.elective);
+const trackDone=t=>coreLessons(t).every(l=>P.lessons[l.id]);
+const trackPct=t=>{const c=coreLessons(t);return Math.round(100*c.filter(l=>P.lessons[l.id]).length/c.length)};
+const choiceOf=id=>CHOICES.find(c=>c.includes(id));
+/* A step is one track, or a choice between tracks that is done when any of them is. */
+function stepDone(id){const c=choiceOf(id);return c?c.some(x=>ACAD.tracks[x]&&trackDone(ACAD.tracks[x])):trackDone(ACAD.tracks[id])}
+function stepName(id){const c=choiceOf(id);return c?c.map(x=>ACAD.tracks[x].name).join(' or '):ACAD.tracks[id].name}
+function blockerOf(t){const ts=tracks();const i=ts.indexOf(t);const c=choiceOf(t.id);for(let j=0;j<i;j++){const id=ts[j].id;if(c&&c.includes(id))continue;if(!stepDone(id))return id}return null}
+function unlocked(t){if(P.legacy&&P.legacy.includes(t.id))return true;return !blockerOf(t)}
+function prevTrack(t){const b=blockerOf(t);if(b)return{id:b,name:stepName(b)};const ts=tracks();return ts[ts.indexOf(t)-1]||{name:''}}
+/* The next track worth starting after t (skips the other side of a choice you've already made). */
+function nextTrackAfter(t){const ts=tracks();for(let i=ts.indexOf(t)+1;i<ts.length;i++){const c=choiceOf(ts[i].id);if(c&&c.includes(t.id))continue;if(c&&stepDone(ts[i].id)&&!trackDone(ts[i]))continue;return ts[i]}return null}
+/* Lessons on your path: core lessons, counting only the track you picked from each choice. */
+function pathLessons(){const out=[];for(const t of tracks()){const c=choiceOf(t.id);if(c){const picked=c.find(x=>ACAD.tracks[x]&&ACAD.tracks[x].lessons.some(l=>P.lessons[l.id]))||c[0];if(t.id!==picked)continue}out.push(...coreLessons(t))}return out}
 
 /* ---------- progress ---------- */
 const DEF={v:2,lessons:{},quiz:{},checks:{},xp:0,days:[],best:{},last:'g1',notes:{},lastTrack:'git',projects:{}};
@@ -53,7 +66,7 @@ const store={mode:'local',ref:null,chain:Promise.resolve(),timer:null,
  loadLocal(){try{const raw=localStorage.getItem('shipwright-progress');if(raw)return JSON.parse(raw)}catch(e){}return null},
  async init(){
   const local=this.loadLocal();if(local)P=Object.assign(deep(DEF),local);
-  if(creditNewLessons())this.save();
+  if(migrateProgress())this.save();
   renderAll();
   try{
    if(!window.claude||!window.claude.use)return;
@@ -62,7 +75,7 @@ const store={mode:'local',ref:null,chain:Promise.resolve(),timer:null,
    this.ref=db.doc('data/users/'+id+'/progress');
    const snap=await this.ref.get();
    if(snap.exists)P=Object.assign(deep(DEF),deep(snap.data()));else if(local)await this.ref.set(deep(P));
-   this.mode='cloud';if(creditNewLessons())this.save();renderAll();
+   this.mode='cloud';if(migrateProgress())this.save();renderAll();
   }catch(e){this.ref=null;this.mode='local'}
   renderChip();
  },
@@ -79,7 +92,7 @@ function award(x,msg){P.xp+=x;touch();store.save();renderStats();if(msg)toast(ms
 function streak(){const set=new Set(P.days);const d=new Date();let n=0;const f=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');if(!set.has(f(d)))d.setDate(d.getDate()-1);while(set.has(f(d))){n++;d.setDate(d.getDate()-1)}return n}
 const RANKS=[[0,'Novice'],[300,'Apprentice'],[800,'Committer'],[1400,'Maintainer'],[2500,'Builder'],[4500,'Engineer'],[7000,'Senior'],[10000,'Principal']];
 function rank(){let r=RANKS[0][1];for(const [x,n] of RANKS)if(P.xp>=x)r=n;return r}
-function pathPct(){const ls=allLessons();return ls.length?Math.round(100*ls.filter(l=>P.lessons[l.id]).length/ls.length):0}
+function pathPct(){const ls=pathLessons();return ls.length?Math.round(100*ls.filter(l=>P.lessons[l.id]).length/ls.length):0}
 function fmt(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 
 /* ---------- capability helpers ---------- */
@@ -112,8 +125,8 @@ function makeTerminal(el,opts){
 
 /* ---------- lesson engine ---------- */
 const BENCH={};
-let L=null,done=[],taskLog=[],pending=[],hints={},locked=false,drillStart=null,drillTick=null,choiceWrong={},checking=false,curTrackId='git';
-function record(e){if(L&&L.proj&&!locked)projRecord(e);if(!L||locked||done.every(Boolean))return;if(e.code!=null)pending=pending.filter(x=>x.code==null||x.file!==e.file);if(pending.length<200)pending.push(e);
+let attempts=0,L=null,done=[],taskLog=[],pending=[],hints={},locked=false,drillStart=null,drillTick=null,choiceWrong={},checking=false,curTrackId='git';
+function record(e){if(L&&L.proj&&!locked)projRecord(e);if(L&&!locked&&!L.proj&&++attempts===1)setTimeout(()=>{if(L&&!L.proj)renderTasks()},0);if(!L||locked||done.every(Boolean))return;if(e.code!=null)pending=pending.filter(x=>x.code==null||x.file!==e.file);if(pending.length<200)pending.push(e);
  if(L.drill&&!drillStart){drillStart=Date.now();drillTick=setInterval(renderTimer,1000)}}
 async function checkTasks(ctx){
  if(!L||locked||projBusy)return;const lesson=L;let changed=false,first=true;
@@ -130,6 +143,7 @@ function completeLesson(){
  if(L.proj){completeProject();return}
  const first=!P.lessons[L.id];P.lessons[L.id]={at:today()};let secs=null;
  if(L.drill&&drillStart){secs=Math.round((Date.now()-drillStart)/1000);clearInterval(drillTick);if(!P.best[L.id]||secs<P.best[L.id])P.best[L.id]=secs}
+ reviewAddLesson(L.id);
  P.notes=P.notes||{};P.notes[L.id]=[buildNote(secs),...(P.notes[L.id]||[])].slice(0,5);noteVer[L.id]=0;
  const t=ACAD.tracks[L.track];const finishedTrack=first&&trackDone(t);
  if(first)award(L.drill?200:100,'Lesson complete: '+L.title);else{touch();store.save();toast('Lesson replayed. Nice reps!')}
@@ -140,7 +154,7 @@ function openLesson(id){
  const l=ACAD.lessonById[id]||ACAD.projById[id]||tracks()[0].lessons[0];L=l;const t=ACAD.tracks[l.track];locked=l.proj?!projUnlocked(l):!unlocked(t);curTrackId=t.id;
  if(!locked&&!l.proj){P.last=l.id;P.lastTrack=t.id;store.save()}
  projReset();
- done=l.tasks.map(()=>false);taskLog=[];pending=[];hints={};choiceWrong={};drillStart=null;clearInterval(drillTick);CUR_TERM=null;
+ done=l.tasks.map(()=>false);taskLog=[];pending=[];hints={};attempts=0;choiceWrong={};drillStart=null;clearInterval(drillTick);CUR_TERM=null;
  renderSide();renderSheet();
  const bench=$('#bench');bench.innerHTML='';const kind=l.kind||'none';const b=BENCH[kind];
  $('#lessonGrid').classList.toggle('solo',kind==='none');
@@ -157,14 +171,14 @@ function renderSide(){
  sel.innerHTML=PHASES.map(ph=>'<optgroup label="'+esc(ph.name)+'">'+ph.ids.map(id=>{const t=ACAD.tracks[id];if(!t)return'';return '<option value="'+id+'"'+(id===curTrackId?' selected':'')+'>'+(unlocked(t)?'':'🔒 ')+esc(t.name)+' · '+trackPct(t)+'%</option>'}).join('')+'</optgroup>').join('');
  const t=ACAD.tracks[curTrackId];$('#trackMeter').style.width=trackPct(t)+'%';
  $('#trackState').innerHTML=esc(unlocked(t)?(trackDone(t)?'Track complete':trackPct(t)+'% complete'):'Preview: finish '+prevTrack(t).name+' to unlock')+(unlocked(t)&&!t.lessons.some(l=>P.lessons[l.id])?'<div class="lvl-info">New to this? Start with the first Beginner lesson. Already experienced? Read the level goals below and jump to the first lesson you can\'t already do.</div>':'');
- let html='',lvl=null;for(const l of t.lessons){if((l.lvl||'')!==lvl){lvl=l.lvl||'';if(lvl)html+='<div class="lvl">'+esc(lvl)+'</div>'+(LEVEL_INFO[t.id]&&LEVEL_INFO[t.id][lvl]?'<div class="lvl-info">'+esc(LEVEL_INFO[t.id][lvl])+'</div>':'')}html+='<button class="lbtn'+(P.lessons[l.id]?' done':'')+(unlocked(t)?'':' lockedl')+'" data-lesson="'+l.id+'" aria-current="'+(L&&L.id===l.id)+'"><span class="dot"></span>'+esc(l.title)+'</button>'}
+ let html='',lvl=null;for(const l of t.lessons){if((l.lvl||'')!==lvl){lvl=l.lvl||'';if(lvl)html+='<div class="lvl">'+esc(lvl)+'</div>'+(LEVEL_INFO[t.id]&&LEVEL_INFO[t.id][lvl]?'<div class="lvl-info">'+esc(LEVEL_INFO[t.id][lvl])+'</div>':'')}html+='<button class="lbtn'+(P.lessons[l.id]?' done':'')+(unlocked(t)?'':' lockedl')+'" data-lesson="'+l.id+'" aria-current="'+(L&&L.id===l.id)+'"><span class="dot"></span>'+esc(l.title)+(l.elective?' <span class="optl">optional</span>':'')+'</button>'}
  html+=projSideHtml(t);
  $('#lessonList').innerHTML=html;
 }
 function renderSheet(){
  if(L.proj){renderProjSheet();return}
  const l=L,t=ACAD.tracks[l.track];
- $('#sheet').innerHTML=(locked?'<div class="preview-flag">Preview · unlocks after '+esc(prevTrack(t).name)+'</div>':'')+'<div class="eyebrow">'+esc(t.name)+(l.lvl?' · '+esc(l.lvl):'')+' · Lesson '+(l.idx+1)+' of '+t.lessons.length+'</div><h2>'+esc(l.title)+'</h2>'+levelLadderHtml(l)+beforeYouStartHtml(l)+'<div class="concept">'+l.concept+'</div><div class="tasks" id="tasks"></div>';
+ $('#sheet').innerHTML=(locked?'<div class="preview-flag">Preview · unlocks after '+esc(prevTrack(t).name)+'</div>':'')+'<div class="eyebrow">'+esc(t.name)+(l.lvl?' · '+esc(l.lvl):'')+' · Lesson '+(l.idx+1)+' of '+t.lessons.length+(l.elective?' · Optional':'')+'</div><h2>'+esc(l.title)+'</h2>'+levelLadderHtml(l)+beforeYouStartHtml(l)+'<div class="concept">'+l.concept+'</div><div class="tasks" id="tasks"></div>';
  renderTasks();
 }
 function renderTasks(){
@@ -175,10 +189,10 @@ function renderTasks(){
   if(t.o){html+='<div class="task'+(done[i]?' done':'')+'"><span class="box"></span><div class="ttext"><div>'+esc(t.t||t.q)+'</div><div class="copts">'+t.o.map((o,j)=>'<button class="copt'+(done[i]&&j===t.a?' right':'')+(choiceWrong[i]===j?' wrong':'')+'" data-choice="'+i+'" data-o="'+j+'"'+(done[i]||locked?' disabled':'')+'>'+esc(o)+'</button>').join('')+'</div>'+(done[i]&&t.e?'<div class="explain">'+esc(t.e)+'</div>':'')+(choiceWrong[i]!=null&&!done[i]?'<div class="explain bad">Not quite. Read the concept again and try another answer.</div>':'')+'</div></div>';return}
   const hint=t.hint||t.h||'';const fileHint=t.f?Object.entries(t.f).map(([p,c])=>'# '+p+'\n'+c).join('\n\n'):'';const solHint=t.sol&&typeof t.sol==='string'&&t.showSol!==false?t.sol:'';
   const full=[hint,fileHint,solHint&&!hint?solHint:''].filter(Boolean).join('\n\n');
-  html+='<div class="task'+(done[i]?' done':'')+'"><span class="box"></span><div class="ttext">'+esc(t.t)+(done[i]||!full?'':' <button class="hintbtn" data-hint="'+i+'">'+(hints[i]?'Hide hint':'Show hint')+'</button>')+(hints[i]&&!done[i]&&full?'<code class="hint">'+esc(full)+'</code>':'')+'</div></div>'});
- const tr=ACAD.tracks[l.track];const pj=ACAD.projects[tr.id];const next=tr.lessons[l.idx+1]||(pj&&trackDone(tr)&&!(P.projects[pj.guided.id]||{}).done?pj.guided:null)||(tracks()[tracks().indexOf(tr)+1]||{lessons:[]}).lessons[0];
- if(!locked&&done.every(Boolean))html+='<div class="done-banner"><span>Lesson complete. Your study note is saved.</span><button class="btn" data-note-go="'+l.id+'">View note</button>'+(next?'<button class="btn primary" data-lesson="'+next.id+'">Next: '+(next.proj?'guided project':esc(next.title))+'</button>':'')+'</div>';
- else if(!locked&&P.lessons[l.id])html+='<div class="done-banner soft"><span>You finished this lesson before. Replaying it is great practice.</span></div>';
+  html+='<div class="task'+(done[i]?' done':'')+'"><span class="box"></span><div class="ttext">'+esc(t.t)+(done[i]||!full?'':attempts||locked?' <button class="hintbtn" data-hint="'+i+'">'+(hints[i]?'Hide hint':'Show hint')+'</button>':' <button class="hintbtn" disabled title="Struggling a little before you look makes it stick. Run or type something first.">Hint after your first try</button>')+(hints[i]&&!done[i]&&full?'<code class="hint">'+esc(full)+'</code>':'')+'</div></div>'});
+ const tr=ACAD.tracks[l.track];const pj=ACAD.projects[tr.id];const next=tr.lessons[l.idx+1]||(pj&&trackDone(tr)&&!(P.projects[pj.guided.id]||{}).done?pj.guided:null)||(nextTrackAfter(tr)||{lessons:[]}).lessons[0];
+ if(!locked&&done.every(Boolean))html+='<div class="done-banner"><span>Lesson complete. Your study note is saved.</span><button class="btn" data-note-go="'+l.id+'">View note</button>'+(next?'<button class="btn primary" data-lesson="'+next.id+'">Next: '+(next.proj?'guided project':esc(next.title))+'</button>':'')+'</div>'+ownWordsHtml(l);
+ else if(!locked&&P.lessons[l.id])html+='<div class="done-banner soft"><span>You finished this lesson before. Replaying it is great practice.</span></div>'+ownWordsHtml(l);
  html+='<div class="lesson-actions">'+(locked||!l.kind||l.kind==='none'?'':'<button class="btn" id="resetLesson">Reset sandbox</button>')+(next?'<button class="btn" data-lesson="'+next.id+'">'+(locked?'Next lesson':'Skip to next')+'</button>':'')+'</div>';
  el.innerHTML=html;if(l.drill&&!locked)renderTimer();
 }
@@ -186,14 +200,14 @@ function renderTasks(){
 /* ---------- other views ---------- */
 function renderStats(){$('#sXp').textContent=P.xp;$('#sStreak').textContent=streak();$('#sRank').textContent=rank();$('#sPath').textContent=pathPct()+'%'}
 function renderChip(){const c=$('#saveChip');c.className='save-chip'+(store.mode==='cloud'?' cloud':'');c.innerHTML='<i></i>'+(store.mode==='cloud'?'Progress saved to your account':'Saving in this browser')}
-function currentTrack(){return tracks().find(t=>unlocked(t)&&!trackDone(t))||tracks()[tracks().length-1]}
+function currentTrack(){return tracks().find(t=>unlocked(t)&&!trackDone(t)&&!(choiceOf(t.id)&&stepDone(t.id)))||tracks()[tracks().length-1]}
 function renderRoad(){
  const card=t=>{const i=tracks().indexOf(t);const un=unlocked(t),fin=trackDone(t),p=trackPct(t),pv=prevTrack(t);
-  return '<div class="card track'+(un&&!fin?' active':'')+'"><header><h3>'+esc(t.name)+'</h3><span class="num">Track '+(i+1)+'</span></header><div class="pills"><span class="pill">'+esc(t.weeks)+'</span><span class="pill">'+t.lessons.length+' lessons</span>'+(fin?'<span class="pill ok">Complete</span>':un?'<span class="pill hot">Open now</span>':'<span class="pill">Preview</span>')+'</div><ol>'+t.lessons.map((l,j)=>(l.lvl&&(j===0||t.lessons[j-1].lvl!==l.lvl)?'<li class="lvl-mark" aria-hidden="true">'+esc(l.lvl)+'</li>':'')+'<li value="'+(j+1)+'"'+(P.lessons[l.id]?' class="li-done"':'')+'>'+esc(l.title)+'</li>').join('')+'</ol><footer><div style="flex:1;min-width:100px"><div class="meter"><i style="width:'+p+'%"></i></div></div><span class="mono">'+p+'%</span><button class="btn'+(un?' primary':'')+'" data-track-open="'+t.id+'">'+(un?(fin?'Review':'Open'):'Preview')+'</button></footer>'+projRoadHtml(t)+(un?'':'<div class="note-meta">Unlocks after '+esc(pv.name)+'</div>')+'</div>'};
+  return '<div class="card track'+(un&&!fin?' active':'')+'"><header><h3>'+esc(t.name)+'</h3><span class="num">Track '+(i+1)+'</span></header><div class="pills"><span class="pill">'+esc(t.weeks)+'</span><span class="pill">'+t.lessons.length+' lessons</span>'+(choiceOf(t.id)?'<span class="pill pc">Choose one: '+esc(stepName(t.id))+'</span>':'')+(fin?'<span class="pill ok">Complete</span>':un?'<span class="pill hot">Open now</span>':'<span class="pill">Preview</span>')+'</div><ol>'+t.lessons.map((l,j)=>(l.lvl&&(j===0||t.lessons[j-1].lvl!==l.lvl)?'<li class="lvl-mark" aria-hidden="true">'+esc(l.lvl)+'</li>':'')+'<li value="'+(j+1)+'"'+(P.lessons[l.id]?' class="li-done"':'')+'>'+esc(l.title)+(l.elective?' <span class="optl">optional</span>':'')+'</li>').join('')+'</ol><footer><div style="flex:1;min-width:100px"><div class="meter"><i style="width:'+p+'%"></i></div></div><span class="mono">'+p+'%</span><button class="btn'+(un?' primary':'')+'" data-track-open="'+t.id+'">'+(un?(fin?'Review':'Open'):'Preview')+'</button></footer>'+projRoadHtml(t)+(un?'':'<div class="note-meta">Unlocks after '+esc(pv.name)+'</div>')+'</div>'};
  $('#tracks').innerHTML=PHASES.map(ph=>'<div class="phase"><h2>'+esc(ph.name)+'</h2><p>'+esc(ph.sub)+'</p><div class="tracks">'+ph.ids.filter(id=>ACAD.tracks[id]).map(id=>card(ACAD.tracks[id])).join('')+'</div></div>').join('');
- const ls=allLessons(),dn=ls.filter(l=>P.lessons[l.id]).length,ct=currentTrack();
- $('#pathMeter').style.width=pathPct()+'%';$('#pathText').textContent=dn+' of '+ls.length+' lessons done across '+tracks().length+' tracks · '+pathPct()+'% of the full path';
- const nx=ct.lessons.find(l=>!P.lessons[l.id]);$('#nextLessonPill').textContent=nx?'Up next: '+ct.name+' · '+nx.title:'Every track complete. You did it.';
+ const ls=pathLessons(),dn=ls.filter(l=>P.lessons[l.id]).length,ct=currentTrack();
+ $('#pathMeter').style.width=pathPct()+'%';$('#pathText').textContent=dn+' of '+ls.length+' core lessons done on your path · '+pathPct()+'%. Optional lessons and the backend language you didn\'t pick are extra.';
+ const nx=coreLessons(ct).find(l=>!P.lessons[l.id]);$('#nextLessonPill').textContent=nx?'Up next: '+ct.name+' · '+nx.title:'Every track complete. You did it.';
 }
 function quizSets(){const out=[];for(const t of tracks())for(const [k,qs] of Object.entries(t.quizzes||{}))out.push({key:k,track:t,label:t.id==='git'?k:'Track quiz',qs});return out}
 let quizKey='Beginner';
@@ -217,20 +231,21 @@ function logMd(log){const L2=[];const cmds=log.filter(x=>x.c!=null);if(cmds.leng
 function noteMd(n){const tr=ACAD.tracks[n.track||'git'];
  const L2=['# '+(tr?tr.name+' · ':'')+'Lesson '+n.n+': '+n.title+(n.lvl?' ('+n.lvl+')':''),'','Version '+n.v+' · completed '+noteDate(n.at)+' · '+n.total+' commands, '+n.errors+' error'+(n.errors===1?'':'s')+(n.secs?' · time '+fmt(n.secs):''),'','## Summary','',n.summary,'','## Key commands and ideas','',(n.keys||[]).map(k=>'`'+k+'`').join(' · '),'','## What I did',''];
  n.tasks.forEach((t,i)=>{const log=t.log||(t.cmds?t.cmds.map(c=>({c:c.c,ok:c.ok})):[]);L2.push('### '+(i+1)+'. '+t.t,'');const lm=logMd(log);if(lm.length)L2.push(...lm);else L2.push('_Completed by work from an earlier step._','')});
+ const lid=allLessons().map(l=>l.id).find(id=>(P.notes[id]||[]).includes(n));if(lid&&P.own&&P.own[lid])L2.push('## In my own words','',P.own[lid].t,'');
  return L2.join('\n')}
-function allMd(){return '# Shipwright Dev Academy: my study notes\n\n'+allLessons().filter(l=>P.notes[l.id]&&P.notes[l.id].length).map(l=>noteMd(P.notes[l.id][0])).join('\n\n---\n\n')}
+function allMd(){return '# Shipwright Dev Academy: my study notes\n\n'+allLessons().filter(l=>(P.notes[l.id]&&P.notes[l.id].length)||(P.own&&P.own[l.id])).map(l=>P.notes[l.id]&&P.notes[l.id].length?noteMd(P.notes[l.id][0]):'# '+ACAD.tracks[l.track].name+' · '+l.title+'\n\n## In my own words\n\n'+P.own[l.id].t).join('\n\n---\n\n')}
 function logHtml(log){let h='';const cmds=log.filter(x=>x.c!=null);if(cmds.length)h+='<pre class="snip">'+cmds.map(c=>c.ok?esc(c.c):'<span class="c-r">'+esc(c.c)+'</span>  <span class="c-m"># error</span>').join('\n')+'</pre>';
  for(const x of log){if(x.code!=null)h+=(x.file?'<div class="note-meta mono">'+esc(x.file)+'</div>':'')+'<pre class="snip">'+esc(x.code)+'</pre>';else if(x.answer!=null)h+='<div class="note-meta">Answer: <b>'+esc(x.answer)+'</b></div>'}
  return h||'<div class="note-meta">Completed by work from an earlier step.</div>'}
 function renderNotes(){
- const el=$('#notes');if(!el)return;const has=allLessons().filter(l=>P.notes[l.id]&&P.notes[l.id].length);
+ const el=$('#notes');if(!el)return;const has=allLessons().filter(l=>(P.notes[l.id]&&P.notes[l.id].length)||(P.own&&P.own[l.id]));
  $('#copyAll').hidden=!has.length;$('#saveAll').hidden=!has.length||!downloads;
  if(!has.length){el.innerHTML='<div class="card note-empty"><h3>No notes yet</h3><p>Finish your first lesson and its note appears here: the summary, the key commands, and everything you typed for each task.</p><button class="btn primary" data-tab-go="learn">Start learning</button></div>';return}
  let html='',tid=null;
  for(const l of has){if(l.track!==tid){tid=l.track;html+='<h3 class="rw-title">'+esc(ACAD.tracks[tid].name)+'</h3>'}
-  const vs=P.notes[l.id];const vi=Math.min(noteVer[l.id]||0,vs.length-1);const n=vs[vi];
+  const vs=P.notes[l.id];if(!vs||!vs.length){html+='<article class="card note" id="note-'+l.id+'"><div class="eyebrow">'+esc(l.lvl?l.lvl+' · ':'')+'Lesson '+(l.idx+1)+'</div><h3>'+esc(l.title)+'</h3><div class="note-own"><div class="eyebrow">In my own words</div><p>'+esc(P.own[l.id].t)+'</p></div></article>';continue}const vi=Math.min(noteVer[l.id]||0,vs.length-1);const n=vs[vi];
   html+='<article class="card note" id="note-'+l.id+'"><header class="note-top"><div style="min-width:0"><div class="eyebrow">'+esc(n.lvl?n.lvl+' · ':'')+'Lesson '+n.n+'</div><h3>'+esc(n.title)+'</h3><div class="note-meta">Completed '+esc(noteDate(n.at))+' · '+n.total+' commands · '+n.errors+' error'+(n.errors===1?'':'s')+(n.secs?' · time '+fmt(n.secs):'')+'</div></div><div class="note-actions">'+(vs.length>1?'<label class="sr" for="ver-'+l.id+'">Version</label><select id="ver-'+l.id+'" data-ver="'+l.id+'">'+vs.map((x,i)=>'<option value="'+i+'"'+(i===vi?' selected':'')+'>Version '+x.v+(i===0?' (latest)':'')+'</option>').join('')+'</select>':'<span class="pill">Version '+n.v+'</span>')+'<button class="btn" data-note-copy="'+l.id+'">Copy</button>'+(downloads?'<button class="btn" data-note-save="'+l.id+'">Save .md</button>':'')+'</div></header>'+
-  '<p class="note-sum">'+esc(n.summary)+'</p><div class="note-keys">'+(n.keys||[]).map(k=>'<code class="key">'+esc(k)+'</code>').join('')+'</div><ol class="note-tasks">'+n.tasks.map(t=>'<li><div>'+esc(t.t)+'</div>'+logHtml(t.log||(t.cmds||[]).map(c=>({c:c.c,ok:c.ok})))+'</li>').join('')+'</ol></article>'}
+  '<p class="note-sum">'+esc(n.summary)+'</p><div class="note-keys">'+(n.keys||[]).map(k=>'<code class="key">'+esc(k)+'</code>').join('')+'</div><ol class="note-tasks">'+n.tasks.map(t=>'<li><div>'+esc(t.t)+'</div>'+logHtml(t.log||(t.cmds||[]).map(c=>({c:c.c,ok:c.ok})))+'</li>').join('')+'</ol>'+(P.own&&P.own[l.id]?'<div class="note-own"><div class="eyebrow">In my own words</div><p>'+esc(P.own[l.id].t)+'</p></div>':'')+'</article>'}
  el.innerHTML=html;
 }
 
@@ -243,21 +258,24 @@ function mergeProgress(inc){
  for(const [k,v] of Object.entries(inc.quiz||{})){if(k==='xpGiven'){out.quiz.xpGiven=Object.assign({},v,out.quiz.xpGiven||{});continue}out.quiz[k]=Object.assign({},v,out.quiz[k]||{})}
  for(const [k,vs] of Object.entries(inc.notes||{})){const mine=out.notes[k]||[];const seen=new Set(mine.map(n=>n.at));out.notes[k]=[...mine,...vs.filter(n=>!seen.has(n.at))].sort((a,b)=>b.at<a.at?-1:1).slice(0,5)}
  out.projects=out.projects||{};for(const [k,v] of Object.entries(inc.projects||{})){const m=out.projects[k];if(!m){out.projects[k]=v;continue}if(!m.done&&v.done)m.done=v.done;m.best=Math.max(m.best||0,v.best||0);const seen=new Set((m.attempts||[]).map(a=>a.at));m.attempts=[...(m.attempts||[]),...(v.attempts||[]).filter(a=>!seen.has(a.at))].sort((a,b)=>b.at<a.at?-1:1).slice(0,5)}
+ out.review=out.review||{items:{},log:{}};for(const [k,v] of Object.entries((inc.review||{}).items||{})){const m=out.review.items[k];if(!m||v.b>m.b)out.review.items[k]=v}
+ out.own=Object.assign({},inc.own||{},out.own||{});for(const [k,v] of Object.entries(inc.own||{}))if(out.own[k].at<v.at)out.own[k]=v;
+ out.legacy=[...new Set([...(out.legacy||[]),...(inc.legacy||[])])];
  out.days=[...new Set([...(out.days||[]),...(inc.days||[])])].sort().slice(-400);
  out.xp=Math.max(out.xp||0,inc.xp||0);return out;
 }
 function progressCode(){return JSON.stringify({app:'shipwright-academy',exported:new Date().toISOString(),progress:P})}
 function importProgress(txt){let data;try{data=JSON.parse(txt.trim())}catch(e){return 'That text is not a valid progress backup. Paste the whole backup, starting with {'}
  const inc=data&&data.progress?data.progress:data;if(!inc||typeof inc!=='object'||!inc.lessons)return 'That backup has no lesson progress in it.';
- P=mergeProgress(inc);creditNewLessons();store.save();renderAll();return null}
+ P=mergeProgress(inc);migrateProgress();store.save();renderAll();return null}
 
 /* ---------- tabs + events ---------- */
-function showTab(id){for(const b of $$('.tabs button'))b.setAttribute('aria-selected',b.dataset.tab===id);for(const v of ['road','learn','proj','quiz','real','notes'])$('#view-'+v).hidden=v!==id;if(id==='proj')renderProjects();
+function showTab(id){for(const b of $$('.tabs button'))b.setAttribute('aria-selected',b.dataset.tab===id);for(const v of ['road','learn','proj','review','quiz','real','notes'])$('#view-'+v).hidden=v!==id;if(id==='review')renderReview();if(id==='proj')renderProjects();
  if(id==='learn'&&!L){const t=currentTrack();const nx=t.lessons.find(l=>!P.lessons[l.id])||t.lessons[0];openLesson(P.last&&ACAD.lessonById[P.last]&&unlocked(ACAD.tracks[ACAD.lessonById[P.last].track])?P.last:nx.id)}}
-function renderAll(){renderStats();renderRoad();renderQuiz();renderReal();renderNotes();renderProjects();renderChip();if(L)renderSide()}
+function renderAll(){renderStats();renderRoad();renderQuiz();renderReal();renderNotes();renderProjects();renderReview();renderChip();if(L)renderSide()}
 function bindEvents(){
  document.addEventListener('click',e=>{
-  if(projClick(e))return;
+  if(reviewClick(e)||projClick(e))return;
   const t=e.target.closest('[data-tab],[data-tab-go],[data-lesson],[data-hint],[data-quiz],[data-q],[data-copy],[data-note-go],[data-note-copy],[data-note-save],[data-choice],[data-track-open],#copyAll,#saveAll,#resetLesson,#goLearn,#quizReset,#bkCopy,#bkSave,#bkImport,#bkToggle');if(!t)return;
   const nv=id=>P.notes[id][Math.min(noteVer[id]||0,P.notes[id].length-1)];
   if(t.dataset.noteGo){showTab('notes');renderNotes();const n=$('#note-'+t.dataset.noteGo);if(n)n.scrollIntoView({block:'start'});return}
@@ -276,7 +294,7 @@ function bindEvents(){
   else if(t.dataset.lesson){showTab('learn');openLesson(t.dataset.lesson);window.scrollTo({top:0})}
   else if(t.dataset.hint!=null){hints[t.dataset.hint]=!hints[t.dataset.hint];renderTasks()}
   else if(t.dataset.quiz){quizKey=t.dataset.quiz;renderQuiz()}
-  else if(t.dataset.q!=null){const set=quizSets().find(s=>s.key===quizKey);if(!unlocked(set.track))return;const i=+t.dataset.q,j=+t.dataset.o;P.quiz[quizKey]=P.quiz[quizKey]||{};if(P.quiz[quizKey][i]!=null)return;P.quiz[quizKey][i]=j;const q=set.qs[i];P.quiz.xpGiven=P.quiz.xpGiven||{};const key=quizKey+i;if(j===q.a&&!P.quiz.xpGiven[key]){P.quiz.xpGiven[key]=1;award(20)}else{touch();store.save()}renderQuiz()}
+  else if(t.dataset.q!=null){const set=quizSets().find(s=>s.key===quizKey);if(!unlocked(set.track))return;const i=+t.dataset.q,j=+t.dataset.o;P.quiz[quizKey]=P.quiz[quizKey]||{};if(P.quiz[quizKey][i]!=null)return;P.quiz[quizKey][i]=j;reviewAddQuiz(quizKey,i);const q=set.qs[i];P.quiz.xpGiven=P.quiz.xpGiven||{};const key=quizKey+i;if(j===q.a&&!P.quiz.xpGiven[key]){P.quiz.xpGiven[key]=1;award(20)}else{touch();store.save()}renderQuiz()}
   else if(t.dataset.copy){const r=tracks().flatMap(x=>x.real||[]).find(x=>x.id===t.dataset.copy);copyText(r.s,t)}
   else if(t.id==='resetLesson')openLesson(L.id);
   else if(t.id==='goLearn'){showTab('learn');const ct=currentTrack();openLesson((ct.lessons.find(l=>!P.lessons[l.id])||ct.lessons[0]).id)}

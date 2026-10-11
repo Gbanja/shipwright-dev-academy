@@ -193,6 +193,91 @@ console.log(\`\${user.name} is \${user.age}\`);     // template string: Ada is 3
   {t:'Write describe(person) that returns "Ada is 36" for { name: "Ada", age: 36 }, using a template string.',hint:'function describe(person) {\n  return `${person.name} is ${person.age}`;\n}',x:"describe({ name: 'Ada', age: 36 }) === 'Ada is 36' && describe({ name: 'Linus', age: 21 }) === 'Linus is 21'",c:ctx=>/`[^`]*\$\{/.test(ctx.code)},
   {t:'When should you use let instead of const?',o:['Always','When the variable will be given a new value later','For text only','For numbers only'],a:1,e:'const prevents accidental reassignment, so it is the safer default. Reach for let when you really need to change the value, like a running total.'},
  ]},
+
+{id:'fb4',title:'Debugging: read the error, find the bug, fix it',kind:'code',lang:'js',starter:`// This shopping-cart code has four bugs. Don't read it line by line looking for them.
+// Run it, read what goes wrong, and fix ONE thing at a time. Then run again.
+
+function cartTotal(items) {
+  let total = 0;
+  for (let i = 0; i <= items.length; i++) {
+    total = total + items[i].price * items[i].qty;
+  }
+  return total;
+}
+
+function isFreeShipping(total) {
+  if (total = 50) {
+    return true;
+  }
+  return false;
+}
+
+function formatPrice(amount) {
+  '$' + amount.toFixed(2);
+}
+
+const cart = [
+  { name: 'Mug', price: 12, qty: 2 },
+  { name: 'Tea', price: 8.5, qty: 1 },
+];
+
+console.log('Total:', formatPrise(cartTotal(cart)));
+console.log('Free shipping?', isFreeShipping(cartTotal(cart)));
+`,
+ sum:'Debugging is a method, not luck. Run the code and read the error: its type, its message and its line number. Reproduce the problem, guess the cause, test the guess (console.log the values), then fix one thing and run again. ReferenceError means a name doesn\'t exist (often a typo). TypeError on "undefined" often means an index past the end of an array. A function that returns undefined is usually missing return. = assigns; === compares.',
+ keys:['read: type + message + line','ReferenceError → typo / missing name','TypeError: reading of undefined','console.log(value)','one change, then re-run','= vs ===','missing return → undefined'],
+ concept:`<p>Every programmer, at every level, spends a large part of their day debugging. The difference between a beginner and a professional isn't writing fewer bugs. It's finding them <b>calmly and quickly</b>, with a method.</p>
+<h4>The debugging loop</h4>
+<div class="flow"><span>1. Run it</span><em>→</em><span>2. Read the error</span><em>→</em><span>3. Guess the cause</span><em>→</em><span>4. Test the guess</span><em>→</em><span>5. Fix one thing</span><em>→</em><span>run again</span></div>
+<h4>Reading an error message</h4>
+<pre class="snip" style="margin-bottom:12px">ReferenceError: formatPrise is not defined
+↑ the TYPE      ↑ the MESSAGE: what went wrong, in plain words</pre>
+<p>Read it slowly, word by word. It names the exact thing that's wrong. Errors stop the program at the <b>first</b> problem, so after you fix one, the next one appears. That's progress, not failure.</p>
+<div class="tbl-wrap"><table><tr><th>You see</th><th>It usually means</th></tr>
+<tr><td><code>ReferenceError: x is not defined</code></td><td>A typo in a name, or using something before creating it</td></tr>
+<tr><td><code>TypeError: Cannot read properties of undefined</code></td><td>You used something that doesn't exist, like <code>items[2]</code> in a list of 2 items</td></tr>
+<tr><td><code>SyntaxError: Unexpected token</code></td><td>A missing bracket, quote or comma near that spot</td></tr>
+<tr><td>No error, but a wrong answer</td><td>A <b>logic bug</b>: the code runs, but does the wrong thing</td></tr></table></div>
+<h4>Logic bugs: test your guess</h4>
+<p>When there's no error, add <code>console.log()</code> to see the real values: <code>console.log('i =', i, 'total =', total)</code>. Compare what you <i>expected</i> with what actually happened. The bug is where they first differ.</p>
+<h4>Three classics hiding in this code</h4>
+<ul><li><b>Off by one:</b> list positions go from 0 to <code>length - 1</code>, so <code>i &lt;= items.length</code> goes one step too far.</li><li><b><code>=</code> vs <code>===</code>:</b> <code>if (total = 50)</code> <i>sets</i> total to 50, which counts as true.</li><li><b>Missing <code>return</code>:</b> a function that calculates a value but never returns it gives back <code>undefined</code>.</li></ul>
+<div class="tip"><b>Habit</b>Change one thing, then run again. If you change five things at once and it works (or breaks), you won't know which change mattered.</div>`,
+ tasks:[
+  {t:'Run the code and read the first error. What name does it say is not defined?',sol:`function cartTotal(items) {
+  let total = 0;
+  for (let i = 0; i < items.length; i++) {
+    total = total + items[i].price * items[i].qty;
+  }
+  return total;
+}
+
+function isFreeShipping(total) {
+  if (total >= 50) {
+    return true;
+  }
+  return false;
+}
+
+function formatPrice(amount) {
+  return '$' + amount.toFixed(2);
+}
+
+const cart = [
+  { name: 'Mug', price: 12, qty: 2 },
+  { name: 'Tea', price: 8.5, qty: 1 },
+];
+
+console.log('Total:', formatPrice(cartTotal(cart)));
+console.log('Free shipping?', isFreeShipping(cartTotal(cart)));
+`,showSol:false,hint:'Press Run and read the red line under Output. It names the problem exactly.',c:ctx=>/is not defined/.test(ctx.err||'')||!/formatPrise/.test(ctx.code)},
+  {t:'Fix the typo that error points at, and run again.',hint:'formatPrise → formatPrice',c:ctx=>!/formatPrise/.test(ctx.code)&&!/is not defined/.test(ctx.err||'')},
+  {t:'Fix cartTotal: the next error is a TypeError reading "price" of undefined.',hint:'The loop runs one step too far. Positions go 0 … length − 1, so use i < items.length.',x:'cartTotal([{ price: 12, qty: 2 }, { price: 8.5, qty: 1 }]) === 32.5 && cartTotal([]) === 0'},
+  {t:'Fix formatPrice: it prints "Total: undefined".',hint:"The function calculates the text but never gives it back: return '$' + amount.toFixed(2);",x:"formatPrice(32.5) === '$32.50' && formatPrice(5) === '$5.00'"},
+  {t:'Fix isFreeShipping: free shipping is for totals of 50 or more, but it currently says yes to everything.',hint:'if (total = 50) sets total to 50. Compare instead: if (total >= 50)',x:'isFreeShipping(32.5) === false && isFreeShipping(50) === true && isFreeShipping(80) === true',c:ctx=>!/if\s*\(\s*total\s*=\s*\d/.test(ctx.code)},
+  {t:'The code runs with no error and prints "Total: $32.50" and "Free shipping? false".',c:ctx=>!ctx.err&&(ctx.logs||[]).some(l=>/Total: \$32\.50/.test(l))&&(ctx.logs||[]).some(l=>/Free shipping\? false/.test(l))},
+  {t:'Your code prints a wrong number but shows no error. What do you do first?',o:['Rewrite the whole function','console.log the values step by step to find where they first differ from what you expect','Delete the function','Ask someone to look at it'],a:1,e:'Make the invisible visible. Logging (or a debugger) shows you exactly where reality and your expectations split.'},
+ ]},
 ]);
 
 /* ================= PYTHON ================= */
