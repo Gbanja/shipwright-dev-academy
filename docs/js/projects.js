@@ -9,7 +9,7 @@ function defineProjects(tid,o){
 }
 const projState=id=>P.projects&&P.projects[id]||{};
 function projUnlocked(p){const t=ACAD.tracks[p.track];if(!t||!unlocked(t)||!trackDone(t))return false;return p.proj==='guided'||!!projState(ACAD.projects[p.track].guided.id).done}
-function projLockMsg(p){const t=ACAD.tracks[p.track];if(!unlocked(t))return 'Finish '+prevTrack(t).name+', then every '+t.name+' lesson, to open this project.';if(!trackDone(t))return 'Finish every '+t.name+' lesson to open this project. You have '+t.lessons.filter(l=>!P.lessons[l.id]).length+' left.';return 'Finish the guided project for '+t.name+' first. The solo project builds on it.'}
+function projLockMsg(p){const t=ACAD.tracks[p.track];if(!unlocked(t))return 'Finish '+prevTrack(t).name+', then every core '+t.name+' lesson, to open this project.';if(!trackDone(t))return 'Finish every core '+t.name+' lesson to open this project. You have '+coreLessons(t).filter(l=>!P.lessons[l.id]).length+' left.';return 'Finish the guided project for '+t.name+' first. The solo project builds on it.'}
 function projLockBox(p){return '<div class="card lockbox"><div class="eyebrow">Preview mode</div><h3>The sandbox opens when you reach this project</h3><p>'+esc(projLockMsg(p))+'</p><p class="note-meta">Sandbox: '+esc(BENCH_LABEL[p.kind]||p.kind)+'</p></div>'}
 function projReset(){projLog=[];projStart=Date.now();projShowRef=false;projAi=null;projLastReport=null}
 function projRecord(e){if(projLog.length<600)projLog.push(Object.assign({at:Date.now()},e))}

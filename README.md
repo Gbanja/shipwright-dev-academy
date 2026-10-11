@@ -1,15 +1,25 @@
 # Shipwright Dev Academy
 
-A hands-on software engineering academy that runs entirely in your browser. There are 15 tracks, 113 lessons and 30 projects, and every lesson and project has a sandbox that checks your work as you go. There is no backend and no build step.
+A hands-on software engineering academy that runs entirely in your browser. There are 15 tracks, 114 lessons and 30 projects, and every lesson and project has a sandbox that checks your work as you go. There is no backend and no build step.
 
 | Phase | Tracks |
 | --- | --- |
-| 1 · Developer tools | Git & GitHub · Docker · Deployment & CI/CD |
-| 2 · Building apps | Frontend libraries · Next.js + TypeScript · PHP · Python |
-| 3 · Engineering depth | SQL & databases · Testing · Linux & the shell · Web security · Data structures & algorithms · System design · Cloud (AWS + Terraform) · AI integration |
+| 1 · Foundations | Linux & the shell · Git & GitHub · Frontend (HTML, CSS, JavaScript, React) |
+| 2 · Building apps | Python **or** PHP (choose one) · SQL & databases · Testing · Next.js + TypeScript |
+| 3 · Shipping | Docker · Deployment & CI/CD · Web security |
+| 4 · Engineering depth | Data structures & algorithms · System design · Cloud (AWS + Terraform) · AI integration |
+
+Tracks open in prerequisite order: each one only uses skills from the tracks before it.
 
 ## What's inside
 
+- **Built on learning science**
+  - **Prerequisite order**: you learn the terminal before tools that use it, and code before deploying code.
+  - **Daily spaced review** (Review tab): every question you meet comes back after 1, 3, 7, 16, 35 and 90 days. Right answers wait longer; wrong ones come back tomorrow. Mixed practice rounds blend topics from a whole phase.
+  - **Try first**: hints unlock after your first attempt.
+  - **Explain it in your own words** after each lesson, saved to your notes.
+  - **A core path**: a few lessons are marked optional, and you pick one backend language.
+  - **An early debugging lesson** on reading errors and fixing bugs one at a time.
 - **Four levels in every track**: Beginner, Intermediate, Advanced and Pro, ordered from easiest to hardest. Every track starts from zero experience. Each lesson shows where you are on the level ladder, what you'll be able to do at the end of the level, what the lesson builds on, and an "In plain English" explanation before the technical detail. Learners with experience can read the level goals and jump straight to their level.
 
 - **Sandboxes that check your work**
@@ -70,6 +80,7 @@ docs/
   js/design.js          # system design simulator
   js/beginner.js        # beginner lessons that open the tracks that used to start too deep
   js/levels.js          # level order, level goals and plain-English explanations for every lesson
+  js/review.js          # spaced review, mixed practice, own-words notes, progress migrations
   js/projects.js        # guided + solo projects: steps, review reports, Projects tab
   js/projects/*.js      # project content, one file per track
   js/tracks/*.js        # lesson content, one file per track

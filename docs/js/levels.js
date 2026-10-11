@@ -8,7 +8,7 @@ const PLAN={
  git:{Beginner:['g1','g2','g3','g4'],Intermediate:['g5','g6','g7','g8'],Advanced:['g9','g10','g11','g12'],Pro:['g13']},
  docker:{Beginner:['d1','d2'],Intermediate:['d3','d4'],Advanced:['d5'],Pro:['d6']},
  deploy:{Beginner:['p1','p2'],Intermediate:['p4','p5'],Advanced:['p3'],Pro:['p6']},
- frontend:{Beginner:['fb1','fb2','fb3','f1'],Intermediate:['f2','f3','f4'],Advanced:['f5','f6','f8'],Pro:['f7','f9']},
+ frontend:{Beginner:['fb1','fb2','fb3','fb4','f1'],Intermediate:['f2','f3','f4'],Advanced:['f5','f6','f8'],Pro:['f7','f9']},
  next:{Beginner:['nb1','n1','n2'],Intermediate:['n3','n4'],Advanced:['n5','n6'],Pro:['n7','n8']},
  php:{Beginner:['hb1','hb2','h1'],Intermediate:['h2','h3'],Advanced:['h4','h5'],Pro:['h6']},
  python:{Beginner:['yb1','yb2','y1'],Intermediate:['y2','y3','y6'],Advanced:['y5'],Pro:['y4']},
@@ -147,10 +147,12 @@ const PLAIN={
  ai6:'You can\'t improve what you don\'t measure. An evaluation is a test set of examples with known right answers, used to score your AI feature every time you change it.',
 };
 
+/* Optional lessons: deeper or alternative material, not needed to finish a track. */
+const ELECTIVE=['f7','f9','s6','a6'];
 for(const [tid,plan] of Object.entries(PLAN)){const t=ACAD.tracks[tid];if(!t)continue;
  const order=[];for(const lv of LEVEL_NAMES)for(const id of plan[lv]||[]){const l=ACAD.lessonById[id];if(!l)continue;l.lvl=lv;order.push(l)}
  for(const l of t.lessons)if(!order.includes(l)){l.lvl=l.lvl&&LEVEL_NAMES.includes(l.lvl)?l.lvl:'Pro';order.push(l)}
- order.forEach((l,i)=>{l.idx=i;if(PLAIN[l.id])l.plain=PLAIN[l.id]});t.lessons=order}
+ order.forEach((l,i)=>{l.idx=i;if(PLAIN[l.id])l.plain=PLAIN[l.id];if(ELECTIVE.includes(l.id))l.elective=true});t.lessons=order}
 })();
 
 /* Learners who already passed a track's original lessons get its new beginner lessons credited,
