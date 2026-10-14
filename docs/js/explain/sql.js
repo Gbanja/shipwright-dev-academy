@@ -867,7 +867,7 @@ redis-cli GET greeting           # (nil), no such key</pre>
 <p><code>(nil)</code> is how redis-cli shows "nothing stored under that key". Redis command names are not case-sensitive, but key names are: <code>Greeting</code> and <code>greeting</code> are different keys.</p>
 <p>The feature that makes Redis perfect for sessions and caches is <b>expiry</b>. Add <code>EX</code> and a number of seconds, and Redis deletes the key by itself when the time is up:</p>
 <pre class="snip">redis-cli SET session:42 "ada" EX 60
-redis-cli TTL session:42         # (integer) 57, seconds left</pre>
+redis-cli TTL session:42         # (integer) 60, then counts down</pre>
 <p><code>TTL</code> means "time to live". It returns the seconds remaining, <code>-1</code> if the key exists but never expires, and <code>-2</code> if the key does not exist (perhaps because it already expired). A login session that expires on its own is exactly what you want: an abandoned session cleans itself up. In the sandbox, <code>sleep 61</code> waits 61 seconds of simulated time so you can watch the key disappear.</p>
 
 <h4>Counters, queues and hashes</h4>
@@ -894,8 +894,8 @@ redis-cli RPOP jobs                      # take one from the right (back)</pre>
 <text class="t-s t-a" x="150" y="52">1 ask the cache</text>
 <path class="ln" d="M110 120L272 162"/><polygon class="ah" points="268,168 272,156 280,166"/>
 <text class="t-s" x="128" y="164">2 on a miss, query</text>
-<path class="ln-d" d="M345 140v-62"/><polygon class="ah" points="339,82 351,82 345,72"/>
-<text class="t-s" x="355" y="110">3 store</text><text class="t-s" x="355" y="126">with TTL</text>
+<path class="ln-d" d="M110 110L270 64"/><polygon class="ah" points="266,58 270,70 278,62"/>
+<text class="t-s" x="176" y="116">3 save a copy, TTL</text>
 </svg><figcaption>Step 1, the app asks Redis. If the data is there, a hit, it is used straight away. Step 2, on a miss, the app runs the real query on Postgres. Step 3, the app saves the answer in Redis with an expiry, so the next request is a hit until the copy expires.</figcaption></figure>
 <p>The expiry is what keeps the cache honest. Without it, a price change in Postgres might never reach users, because they keep getting the old copy. Postgres stays the <b>source of truth</b>; Redis only ever holds a copy that is allowed to disappear.</p>
 

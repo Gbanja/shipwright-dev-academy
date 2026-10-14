@@ -258,3 +258,274 @@ explain('ai3',`
 <li>Parse defensively: strip code fences, <code>JSON.parse</code> inside <code>try</code> / <code>catch</code>, validate (for example with Zod), then retry or fail gracefully.</li>
 </ul>
 `);
+
+explain('ai4',`
+<h4>Why models need tools</h4>
+<p>A model only knows two things: what it learned in training, and what is in the current request. It doesn't know today's weather in Lagos, what is in your database, or whether an order has shipped. And on its own it can't <i>do</i> anything: it can't send an email or look up a customer. It can only write text.</p>
+<p><b>Tool use</b>, also called <b>function calling</b>, bridges that gap. You describe some functions your code can run. When the model decides one would help, it replies with a structured request: "please run <code>get_weather</code> with city Lagos". <b>Your code</b> runs the function and sends the result back, and the model uses it to write the final answer.</p>
+<div class="analogy"><b>Think of it like</b>A brilliant consultant on the phone who can't leave their desk. They can't look in your filing cabinet, but they can say "read me the March invoice". You fetch it, read it out, and they carry on. You stay in control of the filing cabinet the whole time.</div>
+
+<h4>Describing a tool</h4>
+<p>The model can't see your code. It only sees a description you send with the request, and every tool description has three parts:</p>
+<ul>
+<li><code>name</code>: a short identifier, such as <code>get_weather</code>. The model uses it to say which tool it wants.</li>
+<li><code>description</code>: plain-language documentation: what the tool does and when to use it. The model chooses tools mainly from this, so write it as you would for a new teammate.</li>
+<li><code>input_schema</code>: a <b>JSON Schema</b> describing the input the tool expects.</li>
+</ul>
+<p>JSON Schema is a standard way to describe the shape of JSON data. For <code>get_weather</code>, the input is an object (<code>type: 'object'</code>) with one property, <code>city</code>, which is a string, and <code>required: ['city']</code> says it must always be present. Each property can have its own <code>description</code> too, like "City name, e.g. Lagos", which helps the model fill it in correctly.</p>
+<pre class="snip">input_schema: {
+  type: 'object',
+  properties: { city: { type: 'string', description: 'City name, e.g. Lagos' } },
+  required: ['city'],
+}</pre>
+<p>In this sandbox each tool object also carries a <code>run</code> function, an <code>async</code> function that receives the input object and returns the result. For <code>get_weather</code> that means looking up the city in the lesson's <code>weather</code> object, and returning something like <code>{ error: 'Unknown city' }</code> if it isn't there. With the real API, only the name, description and schema are sent to the model; your own code keeps the matching functions and decides which one to run.</p>
+
+<h4>The tool-use loop</h4>
+<p>Here is the full round trip for "Should I take an umbrella in Lagos today?":</p>
+<figure class="fig"><svg viewBox="0 0 420 270" role="img" aria-label="The tool-use loop between your code and the model">
+<g text-anchor="middle">
+<rect class="bx" x="10" y="10" width="180" height="56" rx="8"/><text class="t-b" x="100" y="34">1 Your code</text><text class="t-s" x="100" y="54">question + tools</text>
+<rect class="bx-a" x="230" y="10" width="180" height="56" rx="8"/><text class="t-b" x="320" y="34">2 Model asks</text><text class="t-s" x="320" y="54">get_weather(Lagos)</text>
+<rect class="bx-info" x="230" y="104" width="180" height="56" rx="8"/><text class="t-b" x="320" y="128">3 Code runs it</text><text class="t-s" x="320" y="148">31 C, sunny</text>
+<rect class="bx" x="10" y="104" width="180" height="56" rx="8"/><text class="t-b" x="100" y="128">4 Result sent</text><text class="t-s" x="100" y="148">tool_result block</text>
+<rect class="bx-ok" x="10" y="200" width="180" height="56" rx="8"/><text class="t-b" x="100" y="224">5 Model answers</text><text class="t-s" x="100" y="244">no umbrella needed</text>
+</g>
+<path class="ln" d="M190 38h32"/><polygon class="ah" points="222,32 222,44 230,38"/>
+<path class="ln" d="M320 66v30"/><polygon class="ah" points="314,96 326,96 320,104"/>
+<path class="ln" d="M230 132h-32"/><polygon class="ah" points="198,126 198,138 190,132"/>
+<path class="ln-ok" d="M100 160v32"/><polygon class="ah-ok" points="94,192 106,192 100,200"/>
+<path class="ln-d" d="M190 120h10l30-54"/>
+<text class="t-s" x="230" y="200">or asks for</text><text class="t-s" x="230" y="218">another tool</text>
+</svg><figcaption>Your code sends the question and the tool descriptions. The model replies asking for get_weather with the city Lagos. Your code runs the function and gets 31 degrees and sunny, then sends that back as a tool result. The model either asks for another tool or writes the final answer: no umbrella needed.</figcaption></figure>
+<p>Notice who does what. The model <b>decides</b> whether a tool is needed and with what input. Your code <b>executes</b> it. The model never runs anything itself; it can only ask.</p>
+
+<h4>The loop with the raw Messages API</h4>
+<p>This sandbox's <code>client.runAgent({ prompt, tools })</code> runs the loop for you, so you can focus on designing tools; it returns the final <code>text</code> and a list of <code>toolCalls</code>. The official SDKs offer a similar tool-runner helper. But it is worth knowing what happens underneath, because that is what you'll debug:</p>
+<ol>
+<li>You call <code>client.messages.create()</code> with a <code>tools</code> array as well as the messages.</li>
+<li>If the model wants a tool, the response has <code>stop_reason: 'tool_use'</code>, and its <code>content</code> includes a block with <code>type: 'tool_use'</code>, an <code>id</code>, the tool <code>name</code> and an <code>input</code> object such as <code>{ city: 'Lagos' }</code>.</li>
+<li>Your code runs the matching function with that input.</li>
+<li>You append the model's reply to the history as an <code>assistant</code> message, then append a <code>user</code> message containing a block with <code>type: 'tool_result'</code>, the same <code>tool_use_id</code>, and the result as its <code>content</code>.</li>
+<li>You call the API again. The model either asks for another tool (repeat) or finishes with <code>stop_reason: 'end_turn'</code> and a text answer.</li>
+</ol>
+<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="The messages array after one tool round trip">
+<g text-anchor="middle">
+<rect class="bx-a" x="10" y="10" width="104" height="38" rx="6"/><text class="t-m" x="62" y="34">user</text>
+<rect class="bx-ok" x="10" y="58" width="104" height="38" rx="6"/><text class="t-m" x="62" y="82">assistant</text>
+<rect class="bx-a" x="10" y="106" width="104" height="38" rx="6"/><text class="t-m" x="62" y="130">user</text>
+<rect class="bx-ok" x="10" y="154" width="104" height="38" rx="6"/><text class="t-m" x="62" y="178">assistant</text>
+</g>
+<rect class="bx" x="124" y="10" width="286" height="38" rx="6"/><text class="t" x="138" y="34">Umbrella in Lagos?</text>
+<rect class="bx-warn" x="124" y="58" width="286" height="38" rx="6"/><text class="t" x="138" y="82">tool_use: get_weather</text>
+<rect class="bx-info" x="124" y="106" width="286" height="38" rx="6"/><text class="t" x="138" y="130">tool_result: 31 C, sunny</text>
+<rect class="bx" x="124" y="154" width="286" height="38" rx="6"/><text class="t" x="138" y="178">No umbrella needed.</text>
+</svg><figcaption>After one round trip, the conversation has four messages: the user's question, the assistant's tool use request for get_weather, a user message carrying the tool result, and the assistant's final answer.</figcaption></figure>
+<p>The tool result travels in a <i>user</i> message because, from the model's point of view, everything that isn't the model comes from the user's side of the conversation.</p>
+
+<h4>Two tools, and letting the model chain them</h4>
+<p>The third task adds <code>to_fahrenheit</code>, with its own schema: one required property, <code>celsius</code>, of type <code>number</code>. Its <code>run</code> applies the formula: multiply by 9, divide by 5, add 32. Now if someone asks "How hot is Lagos in Fahrenheit?", the model can call <code>get_weather</code>, read 31, then call <code>to_fahrenheit</code> with 31 and get about 88. You never wrote that plan; the model put the steps together from the descriptions. That is the start of an <b>agent</b>: a model that works through a task by choosing tools in a loop.</p>
+<div class="mistake"><b>Common mistake</b>Vague names and descriptions, such as a tool called <code>data</code> described as "gets data". The model has nothing to go on, so it calls the wrong tool or none. Say what the tool does, what it returns and when to use it. And always include <code>required</code>, or the model may call the tool without the input you need.</div>
+
+<h4>Safety: tools that change things</h4>
+<p>Looking up the weather is harmless. Sending money is not. Remember prompt injection from the last lesson: text the model reads, such as an email or a web page, may try to steer it. So treat every tool call like a request from an untrusted user:</p>
+<ul>
+<li><b>Validate</b> the input in code: is the amount positive, is the recipient on an allowed list?</li>
+<li><b>Least privilege</b>: give tools the smallest power that works. A support bot's refund tool might allow refunds only on that customer's orders, under a limit.</li>
+<li><b>Confirm risky actions</b> with a human before they happen: "The assistant wants to send 50 pounds to Sam. Approve?"</li>
+<li>Return errors as results, like <code>{ error: 'Unknown city' }</code>, so the model can explain the problem instead of your program crashing. The raw API also lets you mark a tool result as an error.</li>
+</ul>
+
+<h4>Reading the results you will see</h4>
+<ul>
+<li><code>tools called: []</code>: the model didn't use your tool. Check the description mentions when to use it, and that the tools array is actually passed in.</li>
+<li><code>TypeError: run is not a function</code>, or a result of <code>undefined</code>: a tool is missing its <code>run</code>, or <code>run</code> forgot to <code>return</code>.</li>
+<li>An offline-sample answer: outside Claude the sandbox simulates the loop and calls your first tool with a guessed input, so make sure <code>get_weather</code> comes first.</li>
+</ul>
+<div class="try"><b>Try it in your head</b>The user asks "Is it raining in London?" with both tools available. Which tools run, and in what order? Only <code>get_weather</code> with city London, which returns 12 degrees and rain. The model then answers "Yes, it's raining". No conversion was asked for, so <code>to_fahrenheit</code> isn't needed. The model picks tools based on the question.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>A tool is a name, a description and an <code>input_schema</code> (JSON Schema) for its input.</li>
+<li>The model chooses when to call a tool; your code runs it and sends the result back; the model then answers.</li>
+<li>Raw API: <code>stop_reason: 'tool_use'</code>, a <code>tool_use</code> block, then a <code>tool_result</code> block with the matching <code>tool_use_id</code> in a user message. Repeat until <code>'end_turn'</code>.</li>
+<li>Clear names and descriptions decide whether tools get used correctly.</li>
+<li>Validate inputs, use least privilege and confirm risky actions before anything irreversible happens.</li>
+</ul>
+`);
+
+explain('ai5',`
+<h4>Why "look it up first" beats "hope it knows"</h4>
+<p>Your shop's refund policy isn't in the model's training data, and if it were, it might be out of date. You could paste every help article into every prompt, but as you saw in lesson one, that is slow and costly, and it stops working once you have thousands of documents.</p>
+<p><b>Retrieval-augmented generation</b>, or <b>RAG</b>, is the standard answer. Before asking the model, you <b>retrieve</b> the few documents most relevant to the question, put them in the prompt, and tell the model to answer only from them. The answer is <b>grounded</b> in your real, current data. When a document changes, the next answer reflects it, with no retraining. And because you know which documents you sent, the model can cite them.</p>
+<p>The hard part is "find the most relevant documents". Searching for exact words fails when the user says "get my money back" and the article says "refund". That is where embeddings come in.</p>
+
+<h4>Embeddings: meaning as a point in space</h4>
+<p>An <b>embedding</b> is a list of numbers, called a <b>vector</b>, that represents the meaning of a piece of text. An <b>embedding model</b> is trained so that texts with similar meanings get similar vectors. You can picture each vector as an arrow, or a point, in space. "Refund policy" and "get my money back" point in nearly the same direction; "shipping times" points somewhere else.</p>
+<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="Text embeddings drawn as arrows; similar meanings point in similar directions">
+<path class="ln-d" d="M40 210h360"/><path class="ln-d" d="M40 210v-195"/>
+<line class="ln-a" x1="40" y1="210" x2="300" y2="150"/><circle class="dot" cx="300" cy="150" r="5"/>
+<line class="ln-a" x1="40" y1="210" x2="290" y2="110"/><circle class="dot" cx="290" cy="110" r="5"/>
+<line class="ln" x1="40" y1="210" x2="130" y2="40"/><circle class="dot-m" cx="130" cy="40" r="5"/>
+<text class="t-s" x="308" y="162">refund policy</text>
+<text class="t-s" x="298" y="106">money back</text>
+<text class="t-s" x="140" y="44">shipping times</text>
+<text class="t-s t-a" x="160" y="196">small angle: similar</text>
+<text class="t-s" x="88" y="110">large angle</text>
+</svg><figcaption>Each text becomes an arrow. "Refund policy" and "money back" point in almost the same direction, a small angle apart, because they mean similar things. "Shipping times" points in a very different direction, so the angle is large and the texts are unrelated.</figcaption></figure>
+<p>Real embeddings have hundreds or thousands of numbers, not two, so you can't draw them. But the idea is the same: closeness of direction means closeness of meaning. In this lesson's sandbox, <code>embed(text)</code> is a simple stand-in: one number per vocabulary word, counting how often it appears. It only matches shared words, while a real embedding model, such as those from Voyage AI or open-source ones, captures meaning. The search code you write works the same with either.</p>
+
+<h4>Cosine similarity: measuring the angle</h4>
+<p>To compare two vectors we use <b>cosine similarity</b>: a number that is 1 when they point the same way, 0 when they are unrelated (at right angles), and lower for opposite directions. The formula looks scary but uses three simple sums:</p>
+<pre class="snip">cosine(a, b) = dot / (lengthA * lengthB)
+// dot     = a[0]*b[0] + a[1]*b[1] + ...   (multiply pairs, add up)
+// lengthA = square root of (a[0]*a[0] + a[1]*a[1] + ...)</pre>
+<p>Worked through with the task's own test values:</p>
+<ol>
+<li><code>[1, 0]</code> and <code>[0, 1]</code>: dot = 1 times 0 plus 0 times 1 = 0. So the cosine is 0: unrelated.</li>
+<li><code>[1, 2]</code> and <code>[2, 4]</code>: dot = 2 + 8 = 10. Length of the first = square root of 5; of the second = square root of 20. Multiplied, that is the square root of 100, which is 10. So the cosine is 10 divided by 10 = 1. Same direction, even though one is twice as long. Cosine cares about direction, not length, which is why a long document isn't automatically "more similar".</li>
+<li><code>[0, 0]</code> and anything: both the dot and one length are 0, and 0 divided by 0 is <code>NaN</code> ("not a number") in JavaScript. The test expects 0, so return 0 early when either length is zero.</li>
+</ol>
+<p>In code it is a single <code>for</code> loop that builds all three sums at once, then one division.</p>
+
+<h4>Search: top-k most similar</h4>
+<p>Now <code>search(query, k)</code> finds the <code>k</code> best matches, the <b>top-k</b>:</p>
+<ol>
+<li>Embed the query with the <i>same</i> embedding function as the documents.</li>
+<li>Score every document: the cosine between the query vector and the document's vector.</li>
+<li>Sort by score, <b>highest first</b>. In JavaScript, <code>.sort((a, b) =&gt; b.score - a.score)</code> sorts descending.</li>
+<li>Keep the first <code>k</code> with <code>.slice(0, k)</code>, and return objects that include each document's <code>id</code>.</li>
+</ol>
+<p>Embed the documents <b>once</b>, up front, and keep the vectors alongside them. That stored collection is your <b>index</b>. Only the query needs embedding at question time. At scale the index lives in a <b>vector database</b>, such as Postgres with the pgvector extension, Pinecone or Weaviate, which can find the nearest vectors among millions in milliseconds.</p>
+
+<h4>The whole RAG pipeline</h4>
+<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="RAG pipeline: indexing ahead of time and answering each question">
+<text class="t-b" x="10" y="18">Once, ahead of time</text>
+<g text-anchor="middle">
+<rect class="bx" x="10" y="28" width="86" height="38" rx="6"/><text class="t" x="53" y="52">Docs</text>
+<rect class="bx" x="114" y="28" width="86" height="38" rx="6"/><text class="t" x="157" y="52">Chunk</text>
+<rect class="bx" x="218" y="28" width="86" height="38" rx="6"/><text class="t" x="261" y="52">Embed</text>
+<rect class="bx-info" x="322" y="28" width="88" height="38" rx="6"/><text class="t" x="366" y="52">Store</text>
+<text class="t-s" x="53" y="84">articles</text><text class="t-s" x="157" y="84">split up</text><text class="t-s" x="261" y="84">to vectors</text><text class="t-s" x="366" y="84">vector DB</text>
+</g>
+<path class="ln" d="M96 47h10"/><polygon class="ah" points="106,41 106,53 114,47"/>
+<path class="ln" d="M200 47h10"/><polygon class="ah" points="210,41 210,53 218,47"/>
+<path class="ln" d="M304 47h10"/><polygon class="ah" points="314,41 314,53 322,47"/>
+<line class="ln-d" x1="10" y1="104" x2="410" y2="104"/>
+<text class="t-b" x="10" y="130">Every question</text>
+<g text-anchor="middle">
+<rect class="bx-a" x="10" y="140" width="86" height="38" rx="6"/><text class="t" x="53" y="164">Question</text>
+<rect class="bx" x="114" y="140" width="86" height="38" rx="6"/><text class="t" x="157" y="164">Embed</text>
+<rect class="bx-info" x="218" y="140" width="86" height="38" rx="6"/><text class="t" x="261" y="164">Top-k</text>
+<rect class="bx-ok" x="322" y="140" width="88" height="38" rx="6"/><text class="t" x="366" y="164">Answer</text>
+<text class="t-s" x="53" y="196">user asks</text><text class="t-s" x="157" y="196">same model</text><text class="t-s" x="261" y="196">most similar</text><text class="t-s" x="366" y="196">from sources</text>
+</g>
+<path class="ln" d="M96 159h10"/><polygon class="ah" points="106,153 106,165 114,159"/>
+<path class="ln" d="M200 159h10"/><polygon class="ah" points="210,153 210,165 218,159"/>
+<path class="ln" d="M304 159h10"/><polygon class="ah" points="314,153 314,165 322,159"/>
+<path class="ln-d" d="M366 92v10h-105v34"/>
+</svg><figcaption>Ahead of time, documents are split into chunks, each chunk is embedded into a vector, and the vectors are stored. For every question, the question is embedded with the same model, the most similar chunks are retrieved from the store, and the model answers using only those chunks.</figcaption></figure>
+<p>One step this lesson's tiny documents skip is <b>chunking</b>. Real documents are long, and one vector for a 40-page manual would blur all its topics together. So you split documents into passages of a few hundred tokens each, often overlapping slightly so no sentence is cut off from its context, and embed each chunk separately. Each chunk keeps the id of its source, so answers can cite it.</p>
+
+<h4>Answering: putting the documents in the prompt</h4>
+<p>The last task, <code>answer(question)</code>, ties it together. Search for the top two documents, then format them as context, wrapping each one in a tag such as <code>&lt;doc id="refunds"&gt;...&lt;/doc&gt;</code> and joining them with newlines. Send a message containing that context followed by the question, with a system prompt along the lines of "Answer using only the documents provided. If the answer is not in them, say you do not know." That last sentence is what keeps the model from filling gaps with guesses. The task checks that the refund document, with its "30 days", reached the prompt, and that your system prompt says to use only the documents.</p>
+<div class="mistake"><b>Common mistake</b>Sorting ascending, so the <i>least</i> relevant documents reach the prompt. If <code>search('reset my password', 1)</code> doesn't return <code>accounts</code>, check the sort comparison first: it should be <code>b.score - a.score</code>.</div>
+<div class="mistake"><b>Common mistake</b>Embedding documents and questions with different models, or re-embedding every document on every question. Vectors from different models live in different "spaces" and can't be compared, and re-embedding wastes time and money. Index once with one model; embed only the query each time.</div>
+<div class="try"><b>Try it in your head</b>With this lesson's word-count <code>embed</code>, which document best matches "How long does express delivery take?" The words "express" and "take" appear only in the shipping article, so <code>shipping</code> wins. Now try "get my money back": none of those words appear in any document, so every score is 0. A real embedding model would still find the refunds article, because it matches meaning, not spelling.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>RAG: retrieve relevant documents, put them in the prompt, and answer only from them. Grounded, current and citable, with no retraining.</li>
+<li>An embedding is a vector representing meaning; similar meanings point in similar directions.</li>
+<li>Cosine similarity is dot product divided by the product of lengths: 1 means same direction, 0 means unrelated. Guard against zero vectors.</li>
+<li>Index once (chunk, embed, store), then per question embed the query, take the top-k by score, and build the prompt.</li>
+<li>Tell the model to use only the provided documents and to say when it doesn't know.</li>
+</ul>
+`);
+
+explain('ai6',`
+<h4>Why AI features need tests too</h4>
+<p>In ordinary code, the same input always gives the same output, so a unit test that passes today passes tomorrow. AI features are different. Change one word in a prompt, switch to a newer model, or tweak your retrieval, and some answers improve while others quietly break. Looking at three examples and thinking "seems better" is a guess, not a measurement.</p>
+<p>An <b>evaluation</b>, usually shortened to <b>eval</b>, is the fix. It is a fixed set of realistic inputs with known correct outputs. You run your feature on all of them and get a score. Run it again after every change and you know, with a number, whether you made things better or worse. Evals are to AI features what regression tests are to normal code: a <b>regression</b> is something that used to work and now doesn't.</p>
+
+<h4>The feature under test</h4>
+<p>This lesson's <code>classify(ticket)</code> sorts support tickets into one of three labels: <code>billing</code>, <code>bug</code> or <code>feature</code>. It uses a system prompt that demands exactly one word, a tiny <code>max_tokens</code> of 10 (a single word needs only a token or two, so this also caps cost), and cleans the reply with <code>.trim().toLowerCase()</code> so " Billing" becomes "billing".</p>
+<p>Classification is the easiest kind of AI output to evaluate, because there is one right answer per input. That makes it the perfect place to learn the method.</p>
+
+<h4>Building the eval set</h4>
+<p>Each <b>test case</b> is an object with an <code>input</code> (the ticket text) and an <code>expected</code> label. The first task asks for at least six, covering all three labels. Good cases share a few qualities:</p>
+<ul>
+<li><b>Realistic.</b> Write them the way customers actually write: "I was charged twice this month", "The app crashes when I upload a photo", "Please add a dark mode". Real tickets from your support inbox are the best source of all.</li>
+<li><b>Balanced.</b> Include every label. A set with only billing tickets can't tell you that bugs are being misfiled.</li>
+<li><b>Edge cases.</b> The tricky inputs where failures hide: very short ones like "Refund?", ambiguous ones ("the payment page is broken" is it billing or a bug?), typos, other languages, and angry walls of text.</li>
+</ul>
+<p>Start small, then grow the set every time you find a real failure in production: add that input as a new case so it can never silently return. Teams typically aim for a few dozen to a few hundred cases.</p>
+
+<h4>Scoring: accuracy</h4>
+<p>The simplest score for classification is <b>accuracy</b>: the fraction of cases the feature got right.</p>
+<pre class="snip">accuracy = correct / total
+// 6 right out of 7 cases: 6 / 7 = 0.857..., which is about 86%</pre>
+<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="An eval scoreboard with expected and actual labels">
+<g>
+<text class="t-s" x="10" y="18">input</text><text class="t-s" x="200" y="18">expected</text><text class="t-s" x="290" y="18">got</text>
+<line class="ln-d" x1="10" y1="26" x2="410" y2="26"/>
+<text class="t" x="10" y="52">Charged twice</text><text class="t-m" x="200" y="52">billing</text><text class="t-m" x="290" y="52">billing</text>
+<text class="t" x="10" y="84">Crashes on upload</text><text class="t-m" x="200" y="84">bug</text><text class="t-m" x="290" y="84">bug</text>
+<text class="t" x="10" y="116">Add dark mode</text><text class="t-m" x="200" y="116">feature</text><text class="t-m" x="290" y="116">feature</text>
+<text class="t" x="10" y="148">Refund?</text><text class="t-m" x="200" y="148">billing</text><text class="t-m" x="290" y="148">feature</text>
+<text class="t" x="10" y="180">Login does nothing</text><text class="t-m" x="200" y="180">bug</text><text class="t-m" x="290" y="180">bug</text>
+</g>
+<g text-anchor="middle">
+<rect class="bx-ok" x="364" y="34" width="46" height="26" rx="5"/><text class="t-s" x="387" y="52">ok</text>
+<rect class="bx-ok" x="364" y="66" width="46" height="26" rx="5"/><text class="t-s" x="387" y="84">ok</text>
+<rect class="bx-ok" x="364" y="98" width="46" height="26" rx="5"/><text class="t-s" x="387" y="116">ok</text>
+<rect class="bx-bad" x="364" y="130" width="46" height="26" rx="5"/><text class="t-s" x="387" y="148">miss</text>
+<rect class="bx-ok" x="364" y="162" width="46" height="26" rx="5"/><text class="t-s" x="387" y="180">ok</text>
+<rect class="bx-info" x="10" y="204" width="400" height="36" rx="6"/><text class="t-b" x="210" y="227">4 of 5 correct: accuracy 0.8</text>
+</g>
+</svg><figcaption>An eval scoreboard. Each row has an input, the expected label and the label the model returned. Four rows match and are marked ok. The ticket "Refund?" was expected to be billing but came back as feature, so it is a miss. Four correct out of five gives an accuracy of 0.8.</figcaption></figure>
+<p>For the second task, <code>evaluate(cases)</code> works through the list one case at a time: <code>await classify(c.input)</code>, compare the result with <code>c.expected</code>, and count matches. Return <code>correct / cases.length</code>, a number between 0 and 1 (the task checks that range, so don't multiply by 100 inside the function). Then print it with the word "accuracy", converting to a percentage only for display.</p>
+<p>How strict should the comparison be? Exact equality, <code>got === c.expected</code>, fails if the model adds a full stop. A slightly lenient check, <code>got.includes(c.expected)</code>, accepts "billing." too. Lenient matching is fine here, but be aware of what you are allowing; a reply like "billing or bug" would also pass.</p>
+
+<h4>Log the misses</h4>
+<p>A score tells you <i>how much</i> is wrong; the misses tell you <i>what</i>. For the third task, print every failure with its input and what came back, for example with a line starting <code>MISS:</code>. Reading misses is where the real learning happens: you'll spot patterns such as "every one-word ticket is misread" and fix the prompt, perhaps by adding examples or clearer label definitions.</p>
+<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="The evaluation loop: change, run, score, read misses">
+<g text-anchor="middle">
+<rect class="bx-a" x="20" y="20" width="160" height="50" rx="8"/><text class="t-b" x="100" y="50">Change prompt</text>
+<rect class="bx-info" x="240" y="20" width="160" height="50" rx="8"/><text class="t-b" x="320" y="50">Run eval set</text>
+<rect class="bx-ok" x="240" y="140" width="160" height="50" rx="8"/><text class="t-b" x="320" y="170">Score it</text>
+<rect class="bx-warn" x="20" y="140" width="160" height="50" rx="8"/><text class="t-b" x="100" y="170">Read the misses</text>
+<text class="t-s" x="210" y="110">repeat</text>
+</g>
+<path class="ln" d="M180 45h52"/><polygon class="ah" points="232,39 232,51 240,45"/>
+<path class="ln" d="M320 70v62"/><polygon class="ah" points="314,132 326,132 320,140"/>
+<path class="ln" d="M240 165h-52"/><polygon class="ah" points="188,159 188,171 180,165"/>
+<path class="ln" d="M100 140v-62"/><polygon class="ah" points="94,78 106,78 100,70"/>
+</svg><figcaption>The evaluation loop. Change the prompt, model or retrieval, run the whole eval set, score it, read the misses to understand what went wrong, and use that to make the next change. Keep a change only if the score goes up.</figcaption></figure>
+
+<h4>Making evals part of your routine</h4>
+<ul>
+<li><b>Re-run on every change</b> to the prompt, the model or the retrieved data, and record the score next to the version, like a test suite in CI (continuous integration, the automatic checks that run on every push).</li>
+<li><b>Expect some noise.</b> The model may answer a borderline case differently on different runs. Run important comparisons more than once, and don't celebrate a one-case difference.</li>
+<li><b>Keep some cases hidden.</b> If you tune the prompt against the same cases forever, you can end up fitting those cases rather than improving in general. Hold a few back and check them only occasionally.</li>
+<li><b>Mind the cost.</b> Each run makes one API call per case, so keep <code>max_tokens</code> small where you can.</li>
+</ul>
+
+<h4>Open-ended outputs: rubrics and LLM-as-judge</h4>
+<p>Summaries and chat answers have no single right string, so accuracy doesn't fit. Two techniques help:</p>
+<ul>
+<li>A <b>rubric</b>: a list of checkable criteria. Some can be checked in plain code: is it under 100 words, does it mention the order number, is it valid JSON? Others need judgement: does it cite a source, is the tone polite?</li>
+<li><b>LLM-as-judge</b>: a second model call that reads the output and the rubric and returns a score or a pass or fail with a reason. It scales far better than humans, but it can be wrong too, so check a sample of its verdicts against your own judgement now and then.</li>
+</ul>
+<p>The best setups combine all three: automatic code checks, a model judge, and regular human spot checks.</p>
+<div class="mistake"><b>Common mistake</b>Forgetting <code>await</code> before <code>classify</code>. You then compare a Promise with a label, every case is a miss, and accuracy is 0. If the score is suspiciously exactly zero, look for a missing <code>await</code>. And if accuracy prints as <code>NaN</code>, your cases array is empty: 0 divided by 0.</div>
+<div class="try"><b>Try it in your head</b>Version A of your prompt scores 18 out of 20; version B scores 19 out of 20, but now misfiles "Refund?", which A got right. Which is better? B scores higher overall, 0.95 against 0.90, but read the misses before deciding. If "Refund?" is a very common real ticket, losing it might matter more than the case B gained. The score starts the conversation; the misses finish it.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>An eval is a set of realistic inputs with expected outputs, including edge cases, used to score your AI feature.</li>
+<li>For classification, accuracy is correct divided by total, a number from 0 to 1.</li>
+<li>Log every miss and read them; they show you what to fix.</li>
+<li>Re-run the eval on every prompt, model or data change, and track the score over time, like CI.</li>
+<li>For open-ended output, use rubric checks and an LLM-as-judge, backed by human spot checks.</li>
+</ul>
+`);

@@ -931,3 +931,210 @@ git pull</pre>
 <li>Delete merged branches with <code>git branch -d</code>, after pulling.</li>
 </ul>
 `);
+
+explain('g10',`
+<h4>Three tools for three awkward moments</h4>
+<p>By now you can commit, branch, merge and share. This lesson covers three situations that come up every week on a real team:</p>
+<ul>
+<li>You are halfway through something and need a clean folder <i>right now</i>, without committing half-done work. That is <b>stash</b>.</li>
+<li>A commit that is already on GitHub turns out to be wrong, and teammates already have it. That is <b>revert</b>.</li>
+<li>You made some local commits you want to throw away completely. That is <b>reset</b>, which you met briefly in the undo lesson.</li>
+</ul>
+<p>The sandbox starts with three commits that each change <code>app.js</code>: "Create app", "Add login" and "Add dashboard".</p>
+
+<h4>Stash: a shelf for unfinished work</h4>
+<p>Picture this. You are editing <code>app.js</code> when someone asks you to check something on another branch. Your edit is not ready to commit. Switching might be refused ("your local changes would be overwritten"), and even if it is allowed, your half-done edit would come along to the other branch.</p>
+<p><code>git stash</code> takes all your uncommitted changes to tracked files, staged and unstaged, saves them on a private shelf inside <code>.git</code>, and resets your folder to match the last commit. Your working tree is clean. Later, <code>git stash pop</code> takes the changes off the shelf and puts them back.</p>
+<div class="analogy"><b>Think of it like</b>A drawer in your desk. Someone needs the desk urgently, so you sweep your papers into the drawer. When they leave, you take the papers out and carry on exactly where you were.</div>
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="git stash moves changes from the working directory to a shelf; git stash pop brings them back">
+<g text-anchor="middle">
+<rect class="bx" x="10" y="30" width="160" height="140" rx="8"/><text class="t-b" x="90" y="56">Working dir</text>
+<rect class="bx-a" x="25" y="76" width="130" height="34" rx="6"/><text class="t-s" x="90" y="98">app.js: v4 wip</text>
+<text class="t-s" x="90" y="136">after stash:</text><text class="t-s" x="90" y="154">clean</text>
+<rect class="bx-warn" x="250" y="30" width="160" height="140" rx="8"/><text class="t-b" x="330" y="56">Stash shelf</text>
+<rect class="bx" x="265" y="76" width="130" height="34" rx="6"/><text class="t-m" x="330" y="98">stash@{0}</text>
+<rect class="bx" x="265" y="118" width="130" height="34" rx="6"/><text class="t-m" x="330" y="140">stash@{1}</text>
+<text class="t-s" x="210" y="80">git stash</text><text class="t-s" x="210" y="130">stash pop</text>
+</g>
+<line class="ln-a" x1="174" y1="92" x2="238" y2="92"/><polygon class="ah-a" points="236,86 236,98 246,92"/>
+<line class="ln-ok" x1="184" y1="142" x2="246" y2="142"/><polygon class="ah-ok" points="186,136 186,148 176,142"/>
+</svg><figcaption>git stash moves your uncommitted edits off the desk onto a shelf, leaving the working directory clean. The newest shelf entry is called stash@{0}, the one before it stash@{1}, and so on. git stash pop moves the newest entry back into your files and removes it from the shelf.</figcaption></figure>
+<pre class="snip">git stash         # shelve: working tree becomes clean
+git stash list    # stash@{0}: WIP on main: 3c1e9a0 Add dashboard
+git stash pop     # bring the newest entry back and remove it from the shelf</pre>
+<p>A few details worth knowing:</p>
+<ul>
+<li>The shelf is a stack. The newest entry is <code>stash@{0}</code>, and <code>pop</code> always takes the top one first.</li>
+<li>"WIP" means "work in progress". <code>git stash push -m "half-done filters"</code> gives an entry a clearer name.</li>
+<li>By default, brand-new untracked files are <b>not</b> stashed. Add <code>-u</code> (<code>git stash -u</code>) to include them.</li>
+<li>The stash is local only. It is never pushed to GitHub, so do not use it as long-term storage.</li>
+<li>If the popped changes clash with the current files, you get a normal conflict to resolve, and the entry stays on the shelf until you drop it with <code>git stash drop</code>.</li>
+</ul>
+
+<h4>Committing tracked changes in one step: <code>-am</code></h4>
+<p>After popping, the lesson commits with <code>git commit -am "Add settings page"</code>. The <code>-a</code> option means "stage every modified tracked file first", and <code>-m</code> is the message, so <code>-am</code> combines them. It skips <code>git add</code> for files Git already knows. It does not pick up brand-new files; those still need <code>git add</code>.</p>
+
+<h4>Revert: undo by adding a commit</h4>
+<p>Suppose "Add settings page" has been pushed, and it breaks something. In the undo lesson you learned that resetting pushed commits causes trouble, because teammates have them. The safe tool is <code>git revert</code>.</p>
+<pre class="snip">git revert HEAD</pre>
+<p><code>git revert</code> works out exactly what the chosen commit changed, and makes a <b>new commit that does the opposite</b>. If the commit added a line, the revert removes it; if it removed one, the revert puts it back. The new commit's message is <code>Revert "Add settings page"</code>, and its description notes which commit it reverses. On a real computer an editor opens so you can explain why; <code>--no-edit</code> accepts the default.</p>
+<p>The original commit stays in the history. Nothing is rewritten. Teammates just pull one more ordinary commit. That is why revert is safe on shared branches. You can revert any commit by its id, not just <code>HEAD</code>: <code>git revert 3c1e9a0</code>.</p>
+
+<h4>Reset: move the branch back</h4>
+<p><code>git reset</code> does something completely different. It moves the branch label itself back to an earlier commit. Later commits are no longer part of the branch, as if they never happened. With <code>--hard</code>, your files are also reset to match, and any uncommitted changes are destroyed.</p>
+<p>In the lesson, after reverting, you run <code>git reset --hard HEAD~1</code>. <code>HEAD~1</code> is the commit before the revert, so this simply drops the revert commit and puts "Add settings page" back on top.</p>
+<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="Revert adds an undo commit; reset moves the branch back and drops a commit">
+<text class="t-m" x="10" y="75">revert</text><text class="t-m" x="10" y="185">reset</text>
+<line class="ln" x1="110" y1="70" x2="390" y2="70"/><line class="ln" x1="110" y1="180" x2="270" y2="180"/>
+<line class="ln-d" x1="270" y1="180" x2="330" y2="180"/>
+<g text-anchor="middle">
+<circle class="bx-a" cx="110" cy="70" r="15"/><text class="t-s" x="110" y="75">v1</text>
+<circle class="bx-a" cx="180" cy="70" r="15"/><text class="t-s" x="180" y="75">v2</text>
+<circle class="bx-a" cx="250" cy="70" r="15"/><text class="t-s" x="250" y="75">v3</text>
+<circle class="bx-a" cx="320" cy="70" r="15"/><text class="t-s" x="320" y="75">S</text>
+<circle class="bx-ok" cx="390" cy="70" r="15"/><text class="t-s" x="390" y="75">R</text>
+<rect class="bx-ok" x="360" y="20" width="60" height="26" rx="6"/><text class="t-b" x="390" y="38">main</text>
+<text class="t-s" x="390" y="104">undoes S</text>
+<text class="t-s t-ok" x="230" y="130">History grows: safe to share</text>
+<circle class="bx-a" cx="110" cy="180" r="15"/><text class="t-s" x="110" y="185">v1</text>
+<circle class="bx-a" cx="180" cy="180" r="15"/><text class="t-s" x="180" y="185">v2</text>
+<circle class="bx-a" cx="250" cy="180" r="15"/><text class="t-s" x="250" y="185">v3</text>
+<circle class="ln-d" cx="320" cy="180" r="15" fill="none"/><text class="t-s" x="320" y="185">S</text>
+<rect class="bx-ok" x="220" y="142" width="60" height="22" rx="6"/><text class="t-b" x="250" y="158">main</text>
+<text class="t-s t-bad" x="230" y="226">History rewritten: local only</text>
+</g>
+</svg><figcaption>Top: git revert keeps commit S, "Add settings page", and adds a new commit R that undoes it, so the history only grows. Bottom: git reset moves main back to v3, and commit S drops off the branch, which rewrites history.</figcaption></figure>
+
+<h4>Revert or reset?</h4>
+<div class="tbl-wrap"><table><tr><th></th><th><code>git revert</code></th><th><code>git reset</code></th></tr>
+<tr><td>How it undoes</td><td>Adds a new commit that cancels an old one</td><td>Moves the branch back; later commits leave it</td></tr>
+<tr><td>Rewrites history?</td><td>No</td><td>Yes</td></tr>
+<tr><td>Safe on shared branches?</td><td>Yes</td><td>No</td></tr>
+<tr><td>Use it for</td><td>Undoing something already pushed</td><td>Cleaning up your own unpushed commits</td></tr></table></div>
+<p>A simple rule: if the commit has left your computer, revert it. If it has not, reset is fine.</p>
+
+<h4>Errors and safety nets</h4>
+<ul>
+<li><b><code>your local changes would be overwritten by revert</code></b>: revert needs a clean working tree. Commit or stash first.</li>
+<li><b>Lost commits after a hard reset</b>: a reset does not delete commits straight away; they are just no longer on a branch. <code>git reflog</code> lists every commit HEAD has recently pointed at, so you can find the id and run <code>git reset --hard &lt;id&gt;</code> to get it back. Uncommitted edits destroyed by <code>--hard</code> are not recoverable.</li>
+</ul>
+<div class="mistake"><b>Common mistake</b>Fixing a bad pushed commit with <code>git reset --hard HEAD~1</code> and then <code>git push --force</code>. Your teammates still have the commit, their next pull gets confused, and anything they built on it is at risk. On shared branches, revert.</div>
+<div class="mistake"><b>Common mistake</b>Stashing, getting distracted, and forgetting. Weeks later the work is still on the shelf, and nobody else can see it. Run <code>git stash list</code> now and then, and pop or commit what you find.</div>
+<div class="try"><b>Try it in your head</b>Your history is A, B, C, all pushed. B introduced a bug. What does <code>git revert B</code> produce? A new commit D on top of C that removes B's changes. The history becomes A, B, C, D, and nobody's copy is rewritten.</div>
+
+<h4>Recap</h4>
+<ul>
+<li><code>git stash</code> shelves uncommitted changes and cleans the working tree; <code>git stash list</code> shows the shelf; <code>git stash pop</code> brings the newest back.</li>
+<li><code>git commit -am</code> stages modified tracked files and commits in one step.</li>
+<li><code>git revert &lt;commit&gt;</code> adds a new commit that undoes an old one, without rewriting history: safe for pushed work.</li>
+<li><code>git reset --hard HEAD~1</code> moves the branch back and discards changes: local, unpushed work only.</li>
+<li><code>git reflog</code> can find commits that a reset removed from a branch.</li>
+</ul>
+`);
+
+explain('g11',`
+<h4>Two more ways to move commits around</h4>
+<p>Merging is not the only way to combine work. This lesson adds two tools professionals use every day:</p>
+<ul>
+<li><b>Rebase</b> moves a whole branch so it starts from a newer commit, giving a straight, tidy history.</li>
+<li><b>Cherry-pick</b> copies one single commit from anywhere onto your current branch.</li>
+</ul>
+<p>Both work by <b>replaying</b> changes: Git looks at what a commit changed, and applies the same change somewhere else, making a new commit. Understanding that one idea explains everything else in this lesson, including why rebasing shared work is dangerous.</p>
+
+<h4>The starting picture</h4>
+<p>The sandbox has three branches. <code>feature/api</code> split off from "Init app" and has two commits, "Add API client" and "Add retries". Meanwhile <code>main</code> moved on with "Add README". A third branch, <code>hotfix</code>, holds a security fix. You are on <code>feature/api</code>.</p>
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="feature/api branches from an older main; main has moved on">
+<line class="ln" x1="75" y1="150" x2="165" y2="150"/><line class="ln" x1="72" y1="139" x2="168" y2="71"/><line class="ln" x1="195" y1="60" x2="275" y2="60"/>
+<g text-anchor="middle">
+<circle class="bx-a" cx="60" cy="150" r="15"/><text class="t-s" x="60" y="155">C1</text>
+<circle class="bx-a" cx="180" cy="150" r="15"/><text class="t-s" x="180" y="155">C4</text>
+<circle class="bx-a" cx="180" cy="60" r="15"/><text class="t-s" x="180" y="65">C2</text>
+<circle class="bx-a" cx="290" cy="60" r="15"/><text class="t-s" x="290" y="65">C3</text>
+<text class="t-s" x="60" y="186">Init app</text><text class="t-s" x="180" y="186">Add README</text>
+<text class="t-s" x="180" y="30">API client</text><text class="t-s" x="290" y="30">retries</text>
+<rect class="bx-ok" x="205" y="137" width="60" height="26" rx="6"/><text class="t-b" x="235" y="155">main</text>
+<rect class="bx-info" x="314" y="47" width="100" height="26" rx="6"/><text class="t-b" x="364" y="65">feature/api</text>
+<rect class="bx-dark" x="332" y="90" width="64" height="26" rx="6"/><text class="t-term" x="364" y="108">HEAD</text>
+</g>
+<line class="ln" x1="364" y1="90" x2="364" y2="80"/><polygon class="ah" points="358,82 370,82 364,74"/>
+</svg><figcaption>Before rebasing. main went from C1, Init app, to C4, Add README. feature/api split off from C1 earlier and has C2, API client, and C3, retries. You are on feature/api, so it does not yet have the README.</figcaption></figure>
+
+<h4>Rebase: "as if I had started today"</h4>
+<p>You could merge <code>main</code> into your feature, which would add a merge commit. Rebase takes a different approach. Running <code>git rebase main</code> while on <code>feature/api</code> does this:</p>
+<ol>
+<li>Find the commits on your branch that <code>main</code> does not have: C2 and C3.</li>
+<li>Set them aside, and move your branch to the tip of <code>main</code>, C4.</li>
+<li>Replay C2's change on top of C4, making a new commit, C2 prime. Then replay C3's change on top of that, making C3 prime.</li>
+<li>Point <code>feature/api</code> at the last new commit.</li>
+</ol>
+<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="After rebase, new copies of the feature commits sit on top of main">
+<line class="ln" x1="55" y1="150" x2="125" y2="150"/><line class="ln-ok" x1="155" y1="150" x2="235" y2="150"/><line class="ln-ok" x1="265" y1="150" x2="345" y2="150"/>
+<line class="ln-d" x1="52" y1="139" x2="128" y2="71"/><line class="ln-d" x1="155" y1="60" x2="235" y2="60"/>
+<g text-anchor="middle">
+<circle class="bx-a" cx="40" cy="150" r="15"/><text class="t-s" x="40" y="155">C1</text>
+<circle class="bx-a" cx="140" cy="150" r="15"/><text class="t-s" x="140" y="155">C4</text>
+<circle class="ln-d" cx="140" cy="60" r="15" fill="none"/><text class="t-s" x="140" y="65">C2</text>
+<circle class="ln-d" cx="250" cy="60" r="15" fill="none"/><text class="t-s" x="250" y="65">C3</text>
+<text class="t-s" x="340" y="65">old copies</text>
+<circle class="bx-ok" cx="250" cy="150" r="16"/><text class="t-s" x="250" y="155">C2'</text>
+<circle class="bx-ok" cx="360" cy="150" r="16"/><text class="t-s" x="360" y="155">C3'</text>
+<rect class="bx-ok" x="110" y="172" width="60" height="26" rx="6"/><text class="t-b" x="140" y="190">main</text>
+<rect class="bx-info" x="310" y="102" width="100" height="26" rx="6"/><text class="t-b" x="360" y="120">feature/api</text>
+<text class="t-s" x="250" y="190">new ids</text>
+</g>
+</svg><figcaption>After git rebase main. Git replayed the two feature commits on top of C4, creating new commits C2 prime and C3 prime with new ids. feature/api now points at C3 prime. The old C2 and C3, dashed, are no longer on any branch.</figcaption></figure>
+<p>The changes are the same, but the commits are <b>new</b>. Their parent is different, and the id is a fingerprint that includes the parent, so every replayed commit gets a <b>new id</b>. You can check with <code>git log --oneline</code>: the messages are familiar, the ids are not.</p>
+<div class="analogy"><b>Think of it like</b>Re-recording two songs on top of a newer backing track. The tunes are the same, but they are new recordings, and the old ones are no longer in the playlist.</div>
+
+<h4>Why bother? A straight history</h4>
+<p>Now switch to <code>main</code> and run <code>git merge feature/api</code>. Because the feature branch now starts from the tip of <code>main</code>, <code>main</code> has nothing the feature lacks, so the merge is a <b>fast-forward</b>: no merge commit. The project history is a single straight line, easy to read and easy to search.</p>
+<div class="tbl-wrap"><table><tr><th></th><th>Merge</th><th>Rebase</th></tr>
+<tr><td>History shape</td><td>True record, with merge commits</td><td>Straight line</td></tr>
+<tr><td>Commit ids</td><td>Unchanged</td><td>New ids for replayed commits</td></tr>
+<tr><td>Safe on shared branches?</td><td>Yes</td><td>No</td></tr>
+<tr><td>Typical use</td><td>Combining shared branches</td><td>Tidying your own local work</td></tr></table></div>
+
+<h4>The golden rule of rebasing</h4>
+<p><b>Never rebase commits that other people already have.</b> Rebase throws away the old commits and creates new ones. If a teammate already pulled your old C2 and C3 and built on them, their history now refers to commits that no longer exist on your branch. When they next pull, Git sees two different versions of the same work, and the result is duplicated commits and confusing conflicts.</p>
+<p>Rebasing your own unpushed commits is completely safe. If you rebase a branch that you pushed but nobody else uses, the next push must replace the old commits, which needs <code>git push --force-with-lease</code>. That flag forces the push, but refuses if someone else has pushed to the branch since you last fetched.</p>
+
+<h4>When a rebase hits a conflict</h4>
+<p>Replaying a commit can conflict, just like a merge. The rebase pauses on that commit. You fix the file exactly as in the conflicts lesson, then:</p>
+<pre class="snip">git add file               # mark it resolved
+git rebase --continue      # replay the remaining commits
+git rebase --abort         # or: give up and return to how things were</pre>
+<p>Note that it is <code>--continue</code>, not <code>git commit</code>. Because rebase replays one commit at a time, you may have to resolve conflicts more than once.</p>
+
+<h4>Cherry-pick: copy one commit</h4>
+<p>Sometimes you want one particular commit, not a whole branch. Here, <code>hotfix</code> contains "Patch XSS bug", an urgent security fix, and you want it on <code>main</code> right now without anything else from that branch.</p>
+<pre class="snip">git log hotfix --oneline   # find the commit you want
+git cherry-pick hotfix     # copy the commit at the tip of hotfix onto main</pre>
+<p><code>git cherry-pick</code> takes a commit id or a branch name. A branch name means "the commit that branch points at". Git replays that one commit's change on top of your current branch, as a new commit with the same message and a new id. The <code>hotfix</code> branch itself is not merged; <code>main</code> just gains a copy of that one fix.</p>
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="cherry-pick copies the hotfix commit onto main as a new commit">
+<line class="ln" x1="75" y1="150" x2="325" y2="150"/><line class="ln" x1="70" y1="138" x2="140" y2="72"/>
+<path class="ln-d" d="M166 60H340V124"/><polygon class="ah-a" points="334,124 346,124 340,133"/>
+<g text-anchor="middle">
+<circle class="bx-a" cx="60" cy="150" r="15"/><text class="t-s" x="60" y="155">C4</text>
+<circle class="bx-a" cx="150" cy="150" r="16"/><text class="t-s" x="150" y="155">C2'</text>
+<circle class="bx-a" cx="240" cy="150" r="16"/><text class="t-s" x="240" y="155">C3'</text>
+<circle class="bx-a" cx="150" cy="60" r="15"/><text class="t-s" x="150" y="65">C5</text>
+<circle class="bx-ok" cx="340" cy="150" r="16"/><text class="t-s" x="340" y="155">C5'</text>
+<text class="t-s t-a" x="260" y="50">cherry-pick</text>
+<text class="t-s" x="150" y="28">hotfix: Patch XSS</text>
+<text class="t-s" x="340" y="186">copy, new id</text>
+<rect class="bx-ok" x="362" y="137" width="54" height="26" rx="6"/><text class="t-b" x="389" y="155">main</text>
+</g>
+</svg><figcaption>The hotfix branch holds C5, Patch XSS bug. git cherry-pick hotfix, run on main, replays just that commit's change on top of main as a new commit, C5 prime, with a new id. The hotfix branch is left as it was and is not merged.</figcaption></figure>
+<p>Cherry-pick is handy for moving a fix onto a release branch, or rescuing one good commit from an abandoned branch. Do not use it to move lots of commits around: copies with different ids make history harder to follow.</p>
+<div class="mistake"><b>Common mistake</b>Rebasing in the wrong direction. To update your feature, stand on the <b>feature</b> branch and run <code>git rebase main</code>. Standing on <code>main</code> and running <code>git rebase feature/api</code> would replay main's commits onto your feature and rewrite the shared branch.</div>
+<div class="try"><b>Try it in your head</b>You rebase your local, unpushed branch onto main. Its two commits had ids <code>a1b2c3d</code> and <code>e4f5a6b</code>. Will they keep those ids? No. They are replayed onto a new parent, so both get new ids, even though their changes and messages are the same.</div>
+
+<h4>Recap</h4>
+<ul>
+<li><code>git rebase main</code>, run on your feature branch, replays your commits on top of the latest main for a straight history.</li>
+<li>Replayed commits are new commits with new ids; the originals drop off the branch.</li>
+<li>Golden rule: never rebase commits others already have. Rebase local work; merge shared branches.</li>
+<li>Rebase conflicts: fix, <code>git add</code>, <code>git rebase --continue</code>, or <code>git rebase --abort</code>.</li>
+<li><code>git cherry-pick &lt;commit or branch&gt;</code> copies one commit onto your current branch as a new commit.</li>
+</ul>
+`);
