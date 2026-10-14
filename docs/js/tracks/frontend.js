@@ -596,7 +596,7 @@ export default function App() {
 <div class="tip"><b>Motion with care</b>Some people get dizzy from motion. Framer Motion's <code>useReducedMotion()</code> and the CSS <code>prefers-reduced-motion</code> media query let you tone it down.</div>`,
  tasks:[
   {t:'Fade and slide the heading in with motion.h1.',sol:F7_SOL(false),showSol:false,hint:'<motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>Analytics</motion.h1>',c:async ctx=>/motion\.(h1|div)/.test(ctx.code)&&/initial=/.test(ctx.code)&&/animate=/.test(ctx.code)&&await waitFor(()=>{const h=ctx.$('h1');return h&&(+ctx.css(h,'opacity')>0.95||/opacity/.test(h.getAttribute('style')||''))},2500)},
-  {t:'Render a bar chart of the visitors data with Recharts (4 months).',hint:'<BarChart width={420} height={220} data={data}><XAxis dataKey="month" /><YAxis /><Bar dataKey="visitors" /></BarChart>',c:async ctx=>waitFor(()=>ctx.$$('.recharts-bar-rectangle').length===4,2500)},
+  {t:'Add Mar (180 visitors) and Apr (320 visitors) to the data, then render it as a Recharts bar chart (4 bars).',hint:'<BarChart width={420} height={220} data={data}><XAxis dataKey="month" /><YAxis /><Bar dataKey="visitors" /></BarChart>',c:async ctx=>waitFor(()=>ctx.$$('.recharts-bar-rectangle').length===4,2500)},
   {t:'Add May (410 visitors) to the data and see the chart update to 5 bars.',sol:F7_SOL(true),showSol:false,hint:"{ month: 'May', visitors: 410 }",c:async ctx=>waitFor(()=>ctx.$$('.recharts-bar-rectangle').length===5,2500)},
   {t:'A user has "reduce motion" turned on in their OS. You should…',o:['Ignore it','Tone down or skip non-essential animation','Make animations slower','Show a warning'],a:1,e:'Respecting prefers-reduced-motion is an accessibility requirement, not decoration.'},
  ]},
