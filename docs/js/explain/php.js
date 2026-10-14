@@ -906,3 +906,99 @@ Post::where('published', true)   // start a query with a condition
 <li><code>{{ }}</code> prints escaped text, <code>@foreach</code> loops, and <code>function (Post $post)</code> with <code>{post}</code> loads the record or returns 404.</li>
 </ul>
 `);
+
+explain('h6',`
+<h4>Why build an API</h4>
+<p>In the last lesson your Laravel app answered with HTML pages, made for people reading in a browser. But many of your "visitors" are not people. A phone app, a JavaScript front end, or another company's server wants the <b>data</b>, not a page, so it can display or process it its own way.</p>
+<p>An <b>API</b> (application programming interface) is a set of URLs designed for programs to call. Instead of HTML, it answers with <b>JSON</b>, a plain text format for data that every language can read. A task looks like this in JSON:</p>
+<pre class="snip">{ "id": 1, "title": "Write tests", "done": false }</pre>
+<p>Curly braces hold named fields, much like a PHP associative array. A list of tasks is the same thing inside square brackets. This lesson builds a to-do API that can list, create, read, update and delete tasks, the four basic data jobs often called <b>CRUD</b> (create, read, update, delete).</p>
+
+<h4>REST: nouns in the URL, verbs in the method</h4>
+<p>Every HTTP request has a <b>method</b> (also called a verb) and a <b>URL</b>. <b>REST</b> is a widely used style for designing APIs around that pair. The URL names a <b>resource</b>, a thing such as "all tasks" or "task number 1". The method says what to do with it. The URLs stay simple nouns; you never need <code>/deleteTask</code>.</p>
+<div class="tbl-wrap"><table><tr><th>Method and URL</th><th>Meaning</th><th>Success status</th></tr>
+<tr><td><code>GET /api/tasks</code></td><td>List all tasks</td><td>200 OK</td></tr>
+<tr><td><code>POST /api/tasks</code></td><td>Create a new task from the request body</td><td>201 Created</td></tr>
+<tr><td><code>GET /api/tasks/1</code></td><td>Read task 1</td><td>200 OK, or 404 if it does not exist</td></tr>
+<tr><td><code>PATCH /api/tasks/1</code></td><td>Change some fields of task 1</td><td>200 OK</td></tr>
+<tr><td><code>DELETE /api/tasks/1</code></td><td>Remove task 1</td><td>204 No Content</td></tr></table></div>
+<p>GET only ever reads; it must never change data, because browsers, search engines and caches repeat GET requests freely. POST and PATCH carry a <b>body</b>: the JSON data being sent. You may also meet <code>PUT</code>, which replaces a whole resource, whereas <code>PATCH</code> changes only the fields you send.</p>
+
+<h4>Status codes: the answer before the answer</h4>
+<p>Every response starts with a three-digit <b>status code</b>. Programs read it before anything else to know whether the request worked. The first digit tells you the family:</p>
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Status code families: 2xx success, 4xx client mistakes, 5xx server failures">
+<rect class="bx-ok" x="10" y="10" width="120" height="50" rx="8"/><text class="t-b" x="70" y="32" text-anchor="middle">2xx</text><text class="t-s" x="70" y="50" text-anchor="middle">it worked</text>
+<text class="t-s" x="145" y="31">200 OK, 201 Created</text><text class="t-s" x="145" y="51">204 No Content</text>
+<rect class="bx-warn" x="10" y="75" width="120" height="50" rx="8"/><text class="t-b" x="70" y="97" text-anchor="middle">4xx</text><text class="t-s" x="70" y="115" text-anchor="middle">client's mistake</text>
+<text class="t-s" x="145" y="96">404 Not Found</text><text class="t-s" x="145" y="116">422 Unprocessable Content</text>
+<rect class="bx-bad" x="10" y="140" width="120" height="50" rx="8"/><text class="t-b" x="70" y="162" text-anchor="middle">5xx</text><text class="t-s" x="70" y="180" text-anchor="middle">server's fault</text>
+<text class="t-s" x="145" y="161">500 Internal Server Error</text><text class="t-s" x="145" y="181">a bug or crash on your side</text>
+</svg><figcaption>Status codes come in families. Codes in the 200s mean success. Codes in the 400s mean the client sent something wrong and must fix it, such as a missing record or invalid data. Codes in the 500s mean the server itself failed.</figcaption></figure>
+<p>Choosing the right code is part of the API's design. A client that receives 422 knows to show the user the form errors; a client that receives 500 knows to try again later or report a bug. Returning 200 with "error" hidden in the body forces every client to guess.</p>
+
+<h4>API routes and controllers</h4>
+<p>API routes live in <code>routes/api.php</code>, and Laravel automatically puts <code>/api</code> in front of every URL in that file. So <code>Route::get('/tasks', ...)</code> answers <code>/api/tasks</code>. (In new Laravel 11 and later projects that file does not exist until you run <code>php artisan install:api</code>; this lesson's project already has it.)</p>
+<p>Last lesson, small functions inside the routes file did the work. For an API with five actions, that gets crowded, so the code moves into a <b>controller</b>: a class whose methods each handle one action. The route points at a method using an array of the class name and the method name:</p>
+<pre class="snip">Route::get('/tasks', [TaskController::class, 'index']);
+Route::post('/tasks', [TaskController::class, 'store']);
+Route::get('/tasks/{task}', [TaskController::class, 'show']);</pre>
+<p><code>TaskController::class</code> is simply the class's full name as a string, written in a way your editor can check. Laravel's usual method names are <code>index</code> (list), <code>store</code> (create), <code>show</code> (read one), <code>update</code> and <code>destroy</code>. Following them pays off: once you know the pattern, <code>Route::apiResource('tasks', TaskController::class)</code> registers all five routes in one line.</p>
+<p>Here is the nicest shortcut in Laravel APIs: if a controller method <b>returns a model or a collection</b>, Laravel converts it to JSON and sends it with status 200. So <code>index()</code> can simply return <code>Task::orderBy('id')-&gt;get()</code>. The model's <code>$casts</code> setting, <code>'done' =&gt; 'boolean'</code>, makes sure <code>done</code> comes out as a real <code>true</code> or <code>false</code> in JSON, not the 0 or 1 the database stores.</p>
+
+<h4>Creating with validation: 201 or 422</h4>
+<p>Never trust incoming data. A client might send no title, a number instead of text, or a title ten thousand characters long. <code>$request-&gt;validate()</code> checks the request body against <b>rules</b>, written as text separated by vertical bars:</p>
+<pre class="snip">$data = $request-&gt;validate([
+    'title' =&gt; 'required|string|max:100',   // must exist, be text, at most 100 chars
+    'done'  =&gt; 'boolean',                    // optional, but true/false if sent
+]);</pre>
+<figure class="fig"><svg viewBox="0 0 420 236" role="img" aria-label="POST request: validation fails with 422, or passes and creates the task with 201">
+<rect class="bx-info" x="120" y="10" width="180" height="36" rx="6"/><text class="t-m" x="210" y="33" text-anchor="middle">POST /api/tasks</text>
+<path class="ln" d="M210 46v12"/><polygon class="ah" points="204,58 216,58 210,66"/>
+<rect class="bx-a" x="120" y="66" width="180" height="36" rx="6"/><text class="t-m" x="210" y="89" text-anchor="middle">validate()</text>
+<path class="ln" d="M210 102V112H100V126M210 112H320V126"/>
+<polygon class="ah" points="94,126 106,126 100,134"/><polygon class="ah-ok" points="314,126 326,126 320,134"/>
+<text class="t-s t-bad" x="150" y="128" text-anchor="middle">fails</text>
+<text class="t-s t-ok" x="268" y="128" text-anchor="middle">passes</text>
+<rect class="bx-bad" x="10" y="134" width="180" height="40" rx="6"/><text class="t-b" x="100" y="159" text-anchor="middle">422 + errors</text>
+<text class="t-s" x="100" y="194" text-anchor="middle">nothing is saved</text>
+<rect class="bx" x="230" y="134" width="180" height="40" rx="6"/><text class="t-m" x="320" y="159" text-anchor="middle">Task::create</text>
+<path class="ln-ok" d="M320 174v12"/><polygon class="ah-ok" points="314,186 326,186 320,194"/>
+<rect class="bx-ok" x="230" y="194" width="180" height="36" rx="6"/><text class="t-b" x="320" y="217" text-anchor="middle">201 + new task</text>
+</svg><figcaption>Every POST passes through validation first. If a rule fails, Laravel stops immediately and answers 422 with the errors for each field, and nothing is saved. If every rule passes, the task is created and returned with status 201.</figcaption></figure>
+<p>If any rule fails, <code>validate()</code> stops the method right there. When the client asks for JSON, as API clients do with an <code>Accept: application/json</code> header, Laravel answers <b>422 Unprocessable Content</b> with a body like this:</p>
+<pre class="snip">{
+  "message": "The title field is required.",
+  "errors": { "title": ["The title field is required."] }
+}</pre>
+<p>The <code>errors</code> object lists the problems field by field, so a front end can show each message next to the right input. If validation passes, <code>validate()</code> returns <b>only the validated fields</b>. Extra fields a client slipped in are dropped, which works hand in hand with <code>$fillable</code> from the last lesson.</p>
+<p>Returning the new task directly would send status 200. For a creation, the correct code is 201 Created, so you build the response yourself: <code>response()-&gt;json($task, 201)</code>, meaning "send this as JSON with status 201".</p>
+
+<h4>Reading, updating and deleting one task</h4>
+<p>The three single-task actions all use a <code>{task}</code> route parameter with <b>route-model binding</b>, which you met last lesson: a method parameter <code>Task $task</code> receives the task whose id is in the URL. When there is no such task, Laravel answers <b>404 Not Found</b> before your method even runs. That means <code>show()</code> can be one line that returns <code>$task</code>.</p>
+<ul>
+<li><b>update</b> takes both the request and the task: <code>update(Request $request, Task $task)</code>. Because PATCH changes only some fields, its rules leave out <code>required</code>. Then <code>$task-&gt;update($data)</code> saves the changes, and returning <code>$task</code> sends back the updated version with 200.</li>
+<li><b>destroy</b> calls <code>$task-&gt;delete()</code>. There is nothing useful left to send back, so it returns <code>response()-&gt;noContent()</code>, which is status <b>204 No Content</b>: success, with an empty body.</li>
+</ul>
+<p>The last task checks the whole story in order: PATCH sets <code>done</code> to true, DELETE answers 204, and a GET for the same task afterwards answers 404, proving it is really gone.</p>
+<div class="tip"><b>Tip</b>Run <code>php artisan migrate</code> before anything else, or every request fails because the tasks table does not exist. Then use the request panel: choose the method, type the path, add a JSON body for POST and PATCH, and press Send. Always look at the status code first, then the body.</div>
+<div class="mistake"><b>Common mistake</b>Keeping <code>required</code> in the PATCH rules. Then a client that only wants to tick a task as done must also resend the title, or gets a 422. Partial updates need rules without <code>required</code>.</div>
+<div class="mistake"><b>Common mistake</b>Adding a method to the controller but not a route for it. The method exists, yet the URL gives 404 or "405 Method Not Allowed", because Laravel only knows the routes in <code>routes/api.php</code>. Every action needs both.</div>
+
+<h4>Reading the errors you will hit</h4>
+<ul>
+<li><b>404 Not Found</b>: either no route matches that method and URL, or route-model binding found no record with that id.</li>
+<li><b>405 Method Not Allowed</b>: the URL exists, but not with that method, for example a DELETE route that was never added.</li>
+<li><b>422</b> with <code>errors</code>: your own validation rejected the body. Read the field messages.</li>
+<li><b>500</b>: your code crashed. Common causes are a missing table (run the migration) or a column missing from <code>$fillable</code>.</li>
+</ul>
+<div class="try"><b>Try it in your head</b>A client sends <code>POST /api/tasks</code> with the body <code>{"title": ""}</code>, then <code>DELETE /api/tasks/42</code> when no task 42 exists. What status codes come back? The empty title fails <code>required</code>, so 422. The delete finds no task through route-model binding, so 404.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>A REST API names resources in URLs and uses the method for the action: GET reads, POST creates, PATCH updates, DELETE removes.</li>
+<li>Status families: 2xx success, 4xx the client's mistake, 5xx the server's fault. Create with 201, delete with 204, missing with 404, invalid with 422.</li>
+<li>Routes in <code>routes/api.php</code> get the <code>/api</code> prefix and point at controller methods with <code>[TaskController::class, 'store']</code>.</li>
+<li>Returning a model or collection sends JSON with 200; <code>response()-&gt;json($task, 201)</code> and <code>response()-&gt;noContent()</code> set other codes.</li>
+<li><code>$request-&gt;validate()</code> returns only checked fields, or answers 422 with errors for each field.</li>
+</ul>
+`);

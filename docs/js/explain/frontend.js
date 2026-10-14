@@ -1017,8 +1017,8 @@ explain('f4',`
 <rect class="bx-ok" x="40" y="62" width="340" height="52" rx="8"/><text class="t-b" x="210" y="84" text-anchor="middle">components/ui/button.tsx</text><text class="t-s" x="210" y="104" text-anchor="middle">copied in by shadcn: yours to edit</text>
 <rect class="bx-info" x="40" y="126" width="164" height="52" rx="8"/><text class="t-b" x="122" y="148" text-anchor="middle">Tailwind</text><text class="t-s" x="122" y="168" text-anchor="middle">the look</text>
 <rect class="bx-warn" x="216" y="126" width="164" height="52" rx="8"/><text class="t-b" x="298" y="148" text-anchor="middle">Radix UI</text><text class="t-s" x="298" y="168" text-anchor="middle">the behaviour</text>
-<text class="t-s" x="210" y="200" text-anchor="middle">Only the bottom layer stays a package you install.</text>
-</svg><figcaption>How shadcn/ui fits together. Your pages use component files that live in your own project. Each component gets its look from Tailwind classes and its accessible behaviour, such as keyboard handling and focus, from Radix UI primitives, which stay an installed package.</figcaption></figure>
+<text class="t-s" x="210" y="200" text-anchor="middle">Tailwind and Radix stay as installed packages.</text>
+</svg><figcaption>How shadcn/ui fits together. Your pages use component files that live in your own project. Each component gets its look from Tailwind classes and its accessible behaviour, such as keyboard handling and focus, from Radix UI primitives. Tailwind and Radix remain packages you install; only the component file is copied in.</figcaption></figure>
 <p>Under the hood, many shadcn components wrap <b>Radix UI</b> primitives, unstyled components that handle the hard accessibility behaviour, and style them with Tailwind. Buttons use the variant pattern you just learnt, written with a small helper library called class-variance-authority. Today's Button task is a hand-made version of exactly that idea.</p>
 
 <h4>Working through the tasks</h4>
@@ -1037,5 +1037,130 @@ explain('f4',`
 <li>Prefixes such as <code>md:</code> and <code>hover:</code> apply a class only from that screen width up, or in that state.</li>
 <li>Write full class names; wrap repeated class lists in components, with variant props for different looks.</li>
 <li>shadcn/ui copies accessible components into your codebase, built on Radix UI and Tailwind, so you own and can change them.</li>
+</ul>
+`);
+
+explain('f5',`
+<h4>When useState is not enough</h4>
+<p>In the React lesson, each piece of state lived inside one component: the Counter owned its count. That is the right default. Keep state as close as possible to where it is used.</p>
+<p>But real apps have data that many distant components need. Picture a shop. The "Add to cart" button sits deep inside a product page. The cart badge showing "Cart: 3" sits in the header at the top. They are far apart in the component tree, yet they share one number.</p>
+<p>With only <code>useState</code>, the number has to live in a component above both of them, usually App. Then App passes it down as props through every layer in between, even layers that do not care about it. That is called <b>prop drilling</b>, and it makes components cluttered and hard to move around.</p>
+<figure class="fig"><svg viewBox="0 0 420 265" role="img" aria-label="Prop drilling on the left threads the cart through every layer; a store on the right is read directly by the two components that need it">
+<text class="t-b" x="100" y="20" text-anchor="middle">prop drilling</text>
+<g text-anchor="middle">
+<rect class="bx-a" x="60" y="32" width="80" height="30" rx="6"/><text class="t-m" x="100" y="52">App</text>
+<rect class="bx" x="10" y="92" width="80" height="30" rx="6"/><text class="t-m" x="50" y="112">Header</text>
+<rect class="bx" x="110" y="92" width="80" height="30" rx="6"/><text class="t-m" x="150" y="112">Page</text>
+<rect class="bx-ok" x="10" y="152" width="80" height="30" rx="6"/><text class="t-m" x="50" y="172">Badge</text>
+<rect class="bx" x="110" y="152" width="80" height="30" rx="6"/><text class="t-m" x="150" y="172">Product</text>
+<rect class="bx-ok" x="110" y="212" width="80" height="30" rx="6"/><text class="t-m" x="150" y="232">AddBtn</text>
+</g>
+<path class="ln-a" d="M90 62l-36 30M110 62l36 30M50 122v30M150 122v30M150 182v30"/>
+<path class="ln-d" d="M210 20v240"/>
+<text class="t-b" x="315" y="20" text-anchor="middle">shared store</text>
+<g text-anchor="middle">
+<rect class="bx-warn" x="265" y="32" width="100" height="40" rx="8"/><text class="t-b" x="315" y="57">useCart</text>
+<rect class="bx-ok" x="230" y="200" width="80" height="30" rx="6"/><text class="t-m" x="270" y="220">Badge</text>
+<rect class="bx-ok" x="325" y="200" width="85" height="30" rx="6"/><text class="t-m" x="367" y="220">AddBtn</text>
+</g>
+<path class="ln-ok" d="M290 72L272 192M340 72l26 120"/>
+<polygon class="ah-ok" points="266,190 278,192 271,200"/><polygon class="ah-ok" points="360,191 372,189 368,199"/>
+<text class="t-s" x="315" y="256" text-anchor="middle">read directly, no middlemen</text>
+</svg><figcaption>On the left, the cart lives in App and is passed down as props through Header, Page and Product, which do not use it, just to reach the Badge and the Add button. On the right, the cart lives in a store, and only the two components that need it read from it directly.</figcaption></figure>
+<p>A <b>store</b> solves this. It is a piece of state that lives outside the component tree, and any component can read from it or change it directly. This lesson covers the two most common store libraries, Zustand and Redux Toolkit, and then a third tool for a different kind of data altogether.</p>
+
+<h4>Two kinds of state</h4>
+<p>Before choosing a tool, sort your data into two piles. This is the single most useful idea in this lesson.</p>
+<div class="tbl-wrap"><table><tr><th></th><th>Client state</th><th>Server state</th></tr>
+<tr><td>Examples</td><td>Is the menu open? What is in the cart? Light or dark theme?</td><td>The product list, the user's orders, comments</td></tr>
+<tr><td>Who owns it</td><td>The browser. It is the only copy.</td><td>The server. You only hold a copy, which can go out of date.</td></tr>
+<tr><td>Hard parts</td><td>Sharing it between components</td><td>Loading, errors, caching, keeping it fresh</td></tr>
+<tr><td>Tool</td><td><code>useState</code>, then Zustand or Redux Toolkit</td><td>TanStack Query</td></tr></table></div>
+<p>Mixing them up is a classic mistake: people copy API data into a global store, then write piles of code to track loading flags and decide when to fetch again. Server state has its own tool, which you will meet below.</p>
+
+<h4>Zustand: a small shared store</h4>
+<p><b>Zustand</b> (German for "state") makes a store in a few lines:</p>
+<pre class="snip">import { create } from 'zustand';
+
+const useCart = create((set) =&gt; ({
+  items: 0,                                         // the data
+  add: () =&gt; set((state) =&gt; ({ items: state.items + 1 })),  // an action
+}));</pre>
+<p>Step by step:</p>
+<ol>
+<li><code>create</code> builds the store and gives you back a hook. By convention its name starts with <code>use</code>, so <code>useCart</code>.</li>
+<li>You pass <code>create</code> a function that receives <code>set</code>, Zustand's tool for changing the store, and returns the starting contents: an object.</li>
+<li>That object holds both data (<code>items: 0</code>) and <b>actions</b>, functions that change the data (<code>add</code>).</li>
+<li>Inside <code>add</code>, <code>set</code> is given an <b>updater function</b>. It receives the current state and returns only the keys that change. Zustand merges that into the store, so <code>add</code> stays as it was.</li>
+</ol>
+<p>Notice the round brackets in <code>({ items: … })</code>. An arrow function that should return an object needs them, because a bare curly brace after the arrow would be read as the start of a function body.</p>
+<p>Now any component, anywhere, can use the store:</p>
+<pre class="snip">function CartBadge() {
+  const items = useCart((s) =&gt; s.items);   // pick one value
+  return &lt;p id="badge"&gt;Cart: {items}&lt;/p&gt;;
+}</pre>
+<p>The function <code>(s) =&gt; s.items</code> is a <b>selector</b>: it picks the part of the store this component cares about. Zustand re-renders the component only when that selected value changes. An <code>AddButton</code> selects <code>s.add</code> and calls it from <code>onClick</code>. Click the button, the store changes, the badge re-renders. Neither component knows the other exists.</p>
+
+<h4>Redux Toolkit: the same job with more structure</h4>
+<p><b>Redux</b> is the older, very widely used store library, and <b>Redux Toolkit</b> is the modern, official way to write it. You will meet it in many company codebases, so you need to be able to read it, even though this lesson's tasks use Zustand.</p>
+<pre class="snip">const cartSlice = createSlice({
+  name: 'cart',
+  initialState: { items: 0 },
+  reducers: {
+    add: (state) =&gt; { state.items += 1; },
+  },
+});
+// in a component:
+dispatch(cartSlice.actions.add());</pre>
+<p>The ideas map closely onto Zustand. A <b>slice</b> is one section of the store, with its starting state and its <b>reducers</b>, the functions that say how state changes. Components do not call those directly: they <b>dispatch</b> an <b>action</b>, a small object describing what happened, and Redux runs the matching reducer. The reducer looks like it changes state directly; Redux Toolkit uses a library called Immer to turn that into a safe, fresh copy behind the scenes.</p>
+<p>That extra ceremony buys you a strict, predictable pattern and excellent developer tools that record every action, so you can replay how the state got where it is. Large teams like that. For most apps, Zustand's lighter approach is enough. Reach for the simplest tool first.</p>
+
+<h4>Server state and TanStack Query</h4>
+<p>Fetching a list sounds simple: call <code>fetch</code> in an effect and put the result in state. In practice you also need a loading message, an error message, a way to avoid fetching the same list twice when two components need it, a cache so going back to a page is instant, and a way to refresh data that may have changed on the server. Writing all of that for every request is a lot of fiddly code.</p>
+<p><b>TanStack Query</b> (formerly React Query) does it for you:</p>
+<pre class="snip">const { data, isLoading, error } = useQuery({
+  queryKey: ['products'],
+  queryFn: () =&gt; fetch('/api/products').then((r) =&gt; r.json()),
+});</pre>
+<ul>
+<li><code>queryFn</code> is how to get the data. It must return a promise. <code>.then(fn)</code> is another way to wait for a promise, instead of <code>await</code>: "when the response arrives, run this function on it". Returning <code>r.json()</code> from it gives you the parsed array.</li>
+<li><code>queryKey</code> is the data's name in the cache. Any component asking for <code>['products']</code> shares the same cached copy and the same request.</li>
+<li>The hook returns an object; you destructure <code>data</code>, <code>isLoading</code> (true while the first load is in progress) and <code>error</code> (set if it failed).</li>
+</ul>
+<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Query lifecycle: loading, then success with fresh data, cached and stale, then a background refetch">
+<g text-anchor="middle">
+<rect class="bx-warn" x="10" y="20" width="110" height="50" rx="8"/><text class="t-b" x="65" y="42">loading</text><text class="t-s" x="65" y="60">isLoading true</text>
+<rect class="bx-ok" x="155" y="20" width="110" height="50" rx="8"/><text class="t-b" x="210" y="42">success</text><text class="t-s" x="210" y="60">data is ready</text>
+<rect class="bx-info" x="300" y="20" width="110" height="50" rx="8"/><text class="t-b" x="355" y="42">cached</text><text class="t-s" x="355" y="60">later: stale</text>
+<rect class="bx-bad" x="10" y="130" width="110" height="50" rx="8"/><text class="t-b" x="65" y="152">error</text><text class="t-s" x="65" y="170">error is set</text>
+<rect class="bx" x="230" y="130" width="180" height="50" rx="8"/><text class="t-b" x="320" y="152">background refetch</text><text class="t-s" x="320" y="170">old data stays on screen</text>
+</g>
+<path class="ln" d="M120 45h26"/><polygon class="ah" points="144,39 144,51 154,45"/>
+<path class="ln" d="M265 45h26"/><polygon class="ah" points="289,39 289,51 299,45"/>
+<path class="ln-a" d="M65 70v50"/><polygon class="ah-a" points="59,118 71,118 65,128"/>
+<path class="ln" d="M355 70v50"/><polygon class="ah" points="349,118 361,118 355,128"/>
+<path class="ln-ok" d="M260 130l-40 -50"/><polygon class="ah-ok" points="214,86 224,79 215,72"/>
+<text class="t-s" x="410" y="104" text-anchor="end">e.g. window focus</text>
+</svg><figcaption>The life of a query. It starts loading. It either fails, setting error, or succeeds with data. The data is cached and, after a while, marked stale. A trigger such as returning to the browser tab fetches it again in the background while the old data stays on screen, then swaps in the fresh copy.</figcaption></figure>
+<p>A component using it follows a simple shape: if loading, return a loading message; if error, return an error message; otherwise map <code>data</code> to list items with keys. In TanStack Query version 5 you will also see <code>isPending</code>, which is closely related; both work for a first load.</p>
+<p>One setup step: the cache has to live somewhere. You create one <code>QueryClient</code> outside your components and wrap the app in <code>&lt;QueryClientProvider client={queryClient}&gt;</code>. Any component inside that wrapper can call <code>useQuery</code>.</p>
+<div class="mistake"><b>Common mistake</b>Forgetting the provider. <code>useQuery</code> outside a <code>QueryClientProvider</code> throws an error saying no QueryClient is set. Wrap everything that App returns, and create the client once, outside App, so it is not recreated on every render.</div>
+<div class="mistake"><b>Common mistake</b>Using <code>data</code> before it exists. On the first render <code>data</code> is <code>undefined</code>, so <code>data.map</code> crashes with "Cannot read properties of undefined". Handle the loading state first and return early.</div>
+
+<h4>Putting the tasks together</h4>
+<ol>
+<li>Create the <code>useCart</code> store with <code>items</code> and <code>add</code>. Write <code>CartBadge</code>, rendering a paragraph with id <code>badge</code>, and <code>AddButton</code>, a button labelled "Add to cart". Render both in App.</li>
+<li>Write <code>Products</code> with <code>useQuery</code> for <code>/api/products</code>, a loading message, and one <code>li</code> per product. This preview's pretend API answers that address with three products.</li>
+<li>Wrap App's content in the provider.</li>
+</ol>
+<div class="try"><b>Try it in your head</b>Two components on the same page both call <code>useQuery</code> with the key <code>['products']</code>. How many network requests are made? One: they share the cache entry, and the second simply reads the same result. And is "the search box is open" client or server state? Client state: only the browser knows it, so a <code>useState</code> or a store is the right home.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>Keep state local first. When distant components share it, use a store instead of drilling props through every layer.</li>
+<li>Zustand: <code>create((set) =&gt; ({ … }))</code> makes a hook; components pick values with selectors and re-render only when those change.</li>
+<li>Redux Toolkit does the same with slices, reducers and dispatched actions, adding structure and devtools for large teams.</li>
+<li>Server data is a cached copy: let TanStack Query fetch, cache, share and refresh it.</li>
+<li><code>useQuery({ queryKey, queryFn })</code> gives <code>data</code>, <code>isLoading</code> and <code>error</code>, inside a <code>QueryClientProvider</code>.</li>
 </ul>
 `);

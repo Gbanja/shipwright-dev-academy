@@ -658,108 +658,138 @@ except requests.exceptions.Timeout:
 </ul>
 `);
 
-explain('y6',`
-<h4>Why write scripts for chores</h4>
-<p>Some computer jobs are boring, repetitive and easy to get wrong by hand: sorting a messy downloads folder, renaming a hundred photos, turning a weekly spreadsheet into a report. A <b>script</b> is a short program that does a chore like that for you. Write it once, and the job takes one command forever after. It can even run on a schedule while you sleep.</p>
-<p>This lesson's chore: a <code>downloads/</code> folder with eight files of mixed types, all dumped in one place. Your script sorts them into sub-folders by type and writes a <code>report.txt</code> saying what it did. You already have the building blocks: loops, dicts, functions, and opening files with <code>with</code>. The new pieces are two modules for working with the file system.</p>
-<figure class="fig"><svg viewBox="0 0 420 300" role="img" aria-label="A flat downloads folder of eight files becomes four sub-folders">
-<text class="t-b" x="20" y="22">before</text><text class="t-b" x="222" y="22">after</text>
-<rect class="bx-warn" x="10" y="32" width="170" height="196" rx="8"/>
-<text class="t-m" x="22" y="56">downloads/</text>
-<text class="t-s" x="34" y="78">IMG_2041.jpg</text><text class="t-s" x="34" y="96">IMG_2042.JPG</text><text class="t-s" x="34" y="114">photo.png</text><text class="t-s" x="34" y="132">report-q3.pdf</text><text class="t-s" x="34" y="150">budget.xlsx</text><text class="t-s" x="34" y="168">notes.txt</text><text class="t-s" x="34" y="186">song.mp3</text><text class="t-s" x="34" y="204">setup.zip</text>
-<path class="ln-a" d="M180 130h22"/><polygon class="ah-a" points="200,124 200,136 208,130"/>
-<rect class="bx-ok" x="210" y="32" width="200" height="262" rx="8"/>
-<text class="t-m" x="222" y="56">downloads/</text>
-<text class="t-b t-ok" x="230" y="80">images/</text>
-<text class="t-s" x="246" y="98">IMG_2041.jpg</text><text class="t-s" x="246" y="116">IMG_2042.JPG</text><text class="t-s" x="246" y="134">photo.png</text>
-<text class="t-b t-ok" x="230" y="158">documents/</text>
-<text class="t-s" x="246" y="176">report-q3.pdf</text><text class="t-s" x="246" y="194">budget.xlsx</text><text class="t-s" x="246" y="212">notes.txt</text>
-<text class="t-b t-ok" x="230" y="236">audio/</text><text class="t-s" x="300" y="236">song.mp3</text>
-<text class="t-b t-ok" x="230" y="264">other/</text><text class="t-s" x="300" y="264">setup.zip</text>
-</svg><figcaption>Before, all eight files sit loose in downloads. After the script, three images, three documents, one audio file and one other file each live in their own sub-folder, and a report records the counts.</figcaption></figure>
+explain('y4',`
+<h4>From calling APIs to building one</h4>
+<p>In the files and APIs lesson you were the <b>client</b>: your script sent a request to <code>api.example.com</code> and got JSON back. Now you build the other side, the <b>server</b>. A web API is a program that sits waiting for HTTP requests, works out what each one is asking for, and sends back a response, usually JSON.</p>
+<p>Doing that from scratch means reading raw network text, picking out the path, converting text to numbers, checking the input and writing correct HTTP replies. A <b>web framework</b> does that plumbing for you, so you only write the interesting part: what each address should do.</p>
+<p><b>FastAPI</b> is one of the most popular Python web frameworks. Its big idea is that you describe your inputs with ordinary Python <b>type hints</b>, and FastAPI uses them to convert, validate and document everything automatically.</p>
 
-<h4>The tools: <code>os</code>, <code>os.path</code> and <code>shutil</code></h4>
-<p>Python's <code>os</code> module talks to the operating system: listing folders, making folders, checking what a path is. Inside it, <code>os.path</code> works with <b>paths</b>, the text addresses of files like <code>downloads/notes.txt</code>. The <code>shutil</code> module ("shell utilities") does bigger file operations like moving and copying.</p>
-<div class="tbl-wrap"><table><tr><th>Call</th><th>Does</th></tr>
-<tr><td><code>os.listdir("downloads")</code></td><td>Returns a list of the <b>names</b> inside the folder, files and folders alike.</td></tr>
-<tr><td><code>os.path.join("downloads", "a.pdf")</code></td><td>Glues path parts with the right separator: <code>downloads/a.pdf</code>.</td></tr>
-<tr><td><code>os.path.isdir(path)</code></td><td>True if the path is a folder.</td></tr>
-<tr><td><code>os.path.splitext(name)</code></td><td>Splits off the extension: a pair of the base name and the extension.</td></tr>
-<tr><td><code>os.makedirs(path, exist_ok=True)</code></td><td>Creates a folder, and any missing parent folders.</td></tr>
-<tr><td><code>shutil.move(src, dst)</code></td><td>Moves a file from one path to another.</td></tr></table></div>
-<p>Two of these hide traps worth understanding.</p>
-<p><code>os.listdir</code> returns bare names like <code>"notes.txt"</code>, not full paths. To do anything with the file, you must join the folder back on: <code>os.path.join("downloads", name)</code>. Also, the order of the names is not guaranteed, so never rely on it.</p>
-<p>Why <code>os.path.join</code> instead of just writing <code>"downloads/" + name</code>? Windows separates folders with a backslash and Linux and macOS use a forward slash. <code>join</code> uses the right one for the computer the script runs on, so the same script works everywhere.</p>
+<h4>A quick HTTP refresher, from the server's side</h4>
+<p>Every request a server receives has a <b>method</b>, which says what kind of action it is, and a <b>path</b>, which says what it is about. The two you need here:</p>
+<ul>
+<li><b>GET</b> asks to read something, like <code>GET /items/1</code>, "show me item 1".</li>
+<li><b>POST</b> asks to create something. It carries a <b>body</b>: the JSON data for the new thing.</li>
+</ul>
+<p>Requests can also carry <b>query parameters</b> after a question mark, like <code>/search?q=key</code>. Every response carries a status code. This lesson uses four:</p>
+<div class="tbl-wrap"><table><tr><th>Code</th><th>Meaning</th><th>When you send it</th></tr>
+<tr><td>200</td><td>OK</td><td>The default for a successful request.</td></tr>
+<tr><td>201</td><td>Created</td><td>A POST successfully made something new.</td></tr>
+<tr><td>404</td><td>Not Found</td><td>The thing asked for doesn't exist.</td></tr>
+<tr><td>422</td><td>Unprocessable</td><td>The request arrived, but its data is invalid. FastAPI sends this for you.</td></tr></table></div>
 
-<h4>Finding a file's type from its extension</h4>
-<p>The <b>extension</b> is the part of a file name after the last dot, like <code>.pdf</code>. It is how we decide where each file belongs. Walk one awkward name through the steps:</p>
-<figure class="fig"><svg viewBox="0 0 420 268" role="img" aria-label="IMG_2042.JPG is split, the extension taken, lowered, and looked up to give images">
-<rect class="bx" x="110" y="10" width="200" height="34" rx="6"/><text class="t-m" x="210" y="32" text-anchor="middle">"IMG_2042.JPG"</text>
-<path class="ln" d="M210 44v14"/><polygon class="ah" points="204,56 216,56 210,64"/><text class="t-s" x="222" y="58">splitext</text>
-<rect class="bx" x="70" y="66" width="280" height="34" rx="6"/><text class="t-m" x="210" y="88" text-anchor="middle">("IMG_2042", ".JPG")</text>
-<path class="ln" d="M210 100v14"/><polygon class="ah" points="204,112 216,112 210,120"/><text class="t-s" x="222" y="114">take item [1]</text>
-<rect class="bx-warn" x="150" y="122" width="120" height="34" rx="6"/><text class="t-m" x="210" y="144" text-anchor="middle">".JPG"</text>
-<path class="ln-a" d="M210 156v14"/><polygon class="ah-a" points="204,168 216,168 210,176"/><text class="t-s t-a" x="222" y="170">.lower()</text>
-<rect class="bx-a" x="150" y="178" width="120" height="34" rx="6"/><text class="t-m" x="210" y="200" text-anchor="middle">".jpg"</text>
-<path class="ln-ok" d="M270 195h40"/><polygon class="ah-ok" points="308,189 308,201 316,195"/><text class="t-s" x="292" y="226" text-anchor="middle">look up</text>
-<rect class="bx-ok" x="318" y="178" width="92" height="34" rx="6"/><text class="t-m" x="364" y="200" text-anchor="middle">images</text>
-<text class="t-s" x="210" y="256" text-anchor="middle">Without .lower(), ".JPG" would not match ".jpg".</text>
-</svg><figcaption>splitext splits the name into the base and the extension. Index 1 picks the extension, .JPG. Lowering it gives .jpg, which is found in the images list. Without lowering, the capital letters would not match and the photo would land in other.</figcaption></figure>
-<p><code>splitext</code> splits at the <b>last</b> dot, so <code>"archive.tar.gz"</code> gives <code>".gz"</code>, and a name with no dot gives an empty extension <code>""</code>. Both are fine here: they simply land in <code>other</code>.</p>
-<p>To map extensions to folders, a dict of lists keeps all the rules in one readable place, and a function hides the details:</p>
-<pre class="snip">CATEGORIES = {
-    "images": [".jpg", ".jpeg", ".png", ".gif"],
-    "documents": [".pdf", ".docx", ".xlsx", ".txt"],
-    "audio": [".mp3", ".wav"],
-}
-# category_for(filename): get the lowered extension, loop over
-# CATEGORIES.items(), return the folder whose list contains it,
-# and return "other" if none does.</pre>
-<p>Writing a constant like <code>CATEGORIES</code> in capitals is a Python convention meaning "this is a setting, don't change it while running". Adding a new type later is a one-line edit, not a new <code>elif</code>.</p>
+<h4>Your first endpoint</h4>
+<pre class="snip">from fastapi import FastAPI
 
-<h4>Moving the files</h4>
-<p>The main loop goes through every name, skips anything that is already a folder, works out the category, makes sure the target folder exists, and moves the file:</p>
-<pre class="snip">for name in os.listdir(folder):
-    path = os.path.join(folder, name)
-    if os.path.isdir(path):
-        continue                      # skip folders: go to the next name
-    target = category_for(name)
-    os.makedirs(os.path.join(folder, target), exist_ok=True)
-    shutil.move(path, os.path.join(folder, target, name))</pre>
-<p><code>continue</code> means "stop this round of the loop now and start the next one". It keeps the rest of the loop body un-nested and easy to read.</p>
-<p><code>exist_ok=True</code> matters a lot. Without it, <code>os.makedirs</code> raises <code>FileExistsError</code> the second time it is asked to create <code>images/</code>, which happens as soon as there is a second image. With it, an existing folder is quietly accepted.</p>
-<p>To build the report, count as you go with the dict counting idiom from the lists and dicts lesson: <code>moved[target] = moved.get(target, 0) + 1</code>. Then write one line per folder, using <code>sorted(moved.items())</code> so the report is in a stable alphabetical order rather than whatever order the files happened to be listed in.</p>
+app = FastAPI()                # the application object
 
-<h4>Idempotent: safe to run twice</h4>
-<p>A script is <b>idempotent</b> when running it a second time does no extra harm: the result is the same as running it once. This is the most important property of any script that might run on a schedule, be run by a colleague, or be re-run after a crash halfway through.</p>
-<div class="tbl-wrap"><table><tr><th></th><th>First run</th><th>Second run</th></tr>
-<tr><td>What <code>listdir</code> sees</td><td>8 loose files</td><td>4 folders, no loose files</td></tr>
-<tr><td>Without the <code>isdir</code> check</td><td>Works</td><td>Tries to move the folder <code>images</code> into <code>other/</code></td></tr>
-<tr><td>Without <code>exist_ok=True</code></td><td>Crashes on the second image</td><td>Crashes straight away</td></tr>
-<tr><td>Written carefully</td><td>Moves 8 files</td><td>Moves nothing, no errors</td></tr></table></div>
-<p>On the second run the summary is empty, so the report honestly says nothing was moved. That is correct behaviour: the job was already done.</p>
-<div class="mistake"><b>Common mistake</b>Forgetting that folders show up in <code>os.listdir</code> too. After the first run, <code>images</code> has no extension, so <code>category_for</code> says "other", and without the <code>isdir</code> check your script moves your sorted folders into <code>other/</code>. Always decide explicitly what to do with folders.</div>
-<div class="mistake"><b>Common mistake</b>Testing a destructive script on real files first. Moving and deleting can't be undone with Ctrl+Z. Try it on a copy, and consider a <b>dry run</b> mode that only prints what it <i>would</i> do. Also note that if a file with the same name already exists in the target folder, <code>shutil.move</code> may silently replace it on Linux and macOS.</div>
+@app.get("/")                  # GET requests for the path "/" ...
+def home():                    # ... are handled by this function
+    return {"message": "Hello from FastAPI"}</pre>
+<p><code>app = FastAPI()</code> creates the application. The line <code>@app.get("/")</code> is a <b>decorator</b>, the same <code>@</code> syntax you saw in the pytest lesson. It registers the function below it: "when a GET request for <code>/</code> arrives, call <code>home</code>". A path plus a method plus its function is called a <b>route</b> or <b>endpoint</b>.</p>
+<p>Whatever the function returns, FastAPI turns into JSON. A dict becomes a JSON object and a list becomes a JSON array, so you never call <code>json.dumps</code> yourself.</p>
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="A request goes to FastAPI, which calls your function, and the returned dict comes back as JSON">
+<rect class="bx" x="10" y="20" width="120" height="56" rx="8"/><text class="t-b" x="70" y="44" text-anchor="middle">client</text><text class="t-m" x="70" y="66" text-anchor="middle">GET /items/1</text>
+<rect class="bx-a" x="150" y="20" width="120" height="56" rx="8"/><text class="t-b" x="210" y="44" text-anchor="middle">FastAPI</text><text class="t-s" x="210" y="64" text-anchor="middle">match, convert</text>
+<rect class="bx-ok" x="290" y="20" width="120" height="56" rx="8"/><text class="t-b" x="350" y="44" text-anchor="middle">your function</text><text class="t-m" x="350" y="66" text-anchor="middle">get_item(1)</text>
+<path class="ln" d="M130 40h12"/><polygon class="ah" points="140,34 140,46 148,40"/>
+<path class="ln" d="M270 40h12"/><polygon class="ah" points="280,34 280,46 288,40"/>
+<path class="ln-ok" d="M350 76v50h-132"/><polygon class="ah-ok" points="220,120 220,132 212,126"/>
+<text class="t-s t-ok" x="290" y="146" text-anchor="middle">returns a dict</text>
+<path class="ln-a" d="M210 76v50"/>
+<path class="ln-a" d="M210 126h-132"/><polygon class="ah-a" points="80,120 80,132 72,126"/><path class="ln-a" d="M70 126v-42"/><polygon class="ah-a" points="64,86 76,86 70,78"/>
+<text class="t-s t-a" x="140" y="146" text-anchor="middle">200 + JSON</text>
+</svg><figcaption>The client sends GET slash items slash 1. FastAPI finds the matching route, converts the 1 from text to a number and calls your function. Your function returns a plain dict, and FastAPI sends it back to the client as JSON with status 200.</figcaption></figure>
 
-<h4>Writing a useful report</h4>
-<p>Scripts that run unattended must leave a trace, otherwise nobody knows what happened. Write the report with mode <code>"w"</code> so each run replaces the last one, and include the date so readers know when it ran:</p>
-<pre class="snip">from datetime import date
+<h4>Type hints: telling Python what a value should be</h4>
+<p>A <b>type hint</b> is a note after a name, written with a colon, saying what type it should hold: <code>item_id: int</code> means "item_id should be an int". Plain Python mostly ignores hints; they are documentation for humans and editors. FastAPI is different: it reads your hints and <b>enforces</b> them on incoming data.</p>
+<p>That matters because everything arriving over HTTP is text. The path <code>/items/1</code> contains the character "1", not the number 1. In this lesson's data, items are stored in a dict whose keys are numbers, <code>{1: {...}}</code>, so looking up the text <code>"1"</code> would find nothing. The hint makes FastAPI convert it for you.</p>
 
-with open("report.txt", "w") as f:
-    f.write(f"Organized on {date.today()}\\n")
-    # then one line per folder, e.g. "images: 3\\n"</pre>
-<p><code>f.write</code> does not add line breaks for you, so end each line with <code>\\n</code>. The report lives outside <code>downloads/</code>, so the script never tries to sort its own report.</p>
-<div class="tip"><b>Tip</b>Modern Python code often uses the <code>pathlib</code> module instead, where paths are objects: <code>Path("downloads") / name</code> joins paths and <code>path.suffix</code> gives the extension. It does the same jobs; <code>os</code> and <code>shutil</code> are what this lesson's checks expect, and you will see both styles in real projects.</div>
+<h4>Path parameters: <code>/items/{item_id}</code></h4>
+<p>Curly braces in a path mark a <b>path parameter</b>, a part of the URL that changes. FastAPI passes it to the function argument of the <b>same name</b>:</p>
+<pre class="snip">@app.get("/items/{item_id}")
+def get_item(item_id: int):        # "/items/1" calls get_item(1)
+    if item_id not in items:       # is this key in the dict?
+        raise HTTPException(status_code=404, detail="Item not found")
+    return items[item_id]</pre>
+<p>Three different requests take three different routes through this code:</p>
+<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="items 1 returns 200, items 42 returns 404 from your code, items abc returns 422 from FastAPI">
+<text class="t-s" x="10" y="20">request</text><text class="t-s" x="232" y="20">status</text><text class="t-s" x="318" y="20">decided by</text>
+<text class="t-m" x="10" y="62">GET /items/1</text>
+<path class="ln" d="M160 57h56"/><polygon class="ah" points="214,51 214,63 222,57"/>
+<rect class="bx-ok" x="226" y="38" width="76" height="36" rx="6"/><text class="t-b t-ok" x="264" y="61" text-anchor="middle">200</text>
+<text class="t-s" x="318" y="61">your return</text>
+<text class="t-m" x="10" y="122">GET /items/42</text>
+<path class="ln" d="M160 117h56"/><polygon class="ah" points="214,111 214,123 222,117"/>
+<rect class="bx-warn" x="226" y="98" width="76" height="36" rx="6"/><text class="t-b t-warn" x="264" y="121" text-anchor="middle">404</text>
+<text class="t-s" x="318" y="121">your raise</text>
+<text class="t-m" x="10" y="182">GET /items/abc</text>
+<path class="ln-a" d="M160 177h56"/><polygon class="ah-a" points="214,171 214,183 222,177"/>
+<rect class="bx-bad" x="226" y="158" width="76" height="36" rx="6"/><text class="t-b t-bad" x="264" y="181" text-anchor="middle">422</text>
+<text class="t-s" x="318" y="181">FastAPI</text>
+<text class="t-s" x="10" y="218">For abc, your function never even runs.</text>
+</svg><figcaption>Item 1 exists, so your function returns it with status 200. Item 42 is a valid number but missing, so your code raises a 404. The text abc cannot become an int, so FastAPI answers 422 on its own, before your function is called.</figcaption></figure>
+<p>For the third request, FastAPI replies with a JSON body explaining exactly what was wrong: a list under <code>"detail"</code> saying the input in the path parameter <code>item_id</code> should be a valid integer. You wrote no code for that. This is FastAPI's main idea, and the answer to the lesson's last question.</p>
 
-<div class="try"><b>Try it in your head</b>Which folder does <code>"Holiday.PNG"</code> go to? The extension is <code>.PNG</code>, lowered to <code>.png</code>, which is in the images list: <code>images</code>. And <code>"Makefile"</code>? There is no dot, so the extension is empty and it goes to <code>other</code>.</div>
+<h4>Sending errors with <code>HTTPException</code></h4>
+<p>When something is missing, you don't return an error, you <b>raise</b> one: <code>raise HTTPException(status_code=404, detail="Item not found")</code>. FastAPI catches it and sends status 404 with the body <code>{"detail": "Item not found"}</code>. Raising also stops the function immediately, so the lookup below it never runs.</p>
+<div class="mistake"><b>Common mistake</b>Writing <code>return {"error": "Item not found"}</code> instead of raising. The client receives that message with status <b>200 OK</b>, so any program checking the status code believes it succeeded. The status code is part of your answer; make it honest.</div>
+
+<h4>Query parameters: optional extras</h4>
+<p>Any function argument that is <b>not</b> in the path becomes a query parameter. Give it a default and it becomes optional:</p>
+<pre class="snip">@app.get("/search")
+def search(q: str = "", max_price: float = 1000):
+    # /search?q=key            gives q="key", max_price=1000
+    # /search?q=key&amp;max_price=30 gives max_price=30.0
+    ...</pre>
+<p>The body is ordinary Python: go through <code>items.values()</code> and keep those whose lower-cased name contains the lower-cased <code>q</code> and whose price is at most <code>max_price</code>. A list comprehension from the lists and dicts lesson does it in one line, and the list is returned as a JSON array. Like path parameters, query values are converted by type, so <code>?max_price=cheap</code> gets a 422.</p>
+
+<h4>Request bodies with Pydantic models</h4>
+<p>A POST that creates an item sends a JSON body like <code>{"name": "Mouse", "price": 19.5}</code>. To describe what a valid body looks like, you write a small <b>class</b>, a blueprint for a kind of object, based on Pydantic's <code>BaseModel</code>. <b>Pydantic</b> is the validation library FastAPI is built on.</p>
+<pre class="snip">from pydantic import BaseModel
+
+class Item(BaseModel):
+    name: str
+    price: float
+    in_stock: bool = True     # a default makes this field optional</pre>
+<p>Each line is a field name with a type hint. Use the class as the type of a function argument, and FastAPI reads the request body, checks it against the model and hands you a ready-made <code>Item</code>:</p>
+<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="A JSON body is checked against the Item model; valid data becomes an Item, invalid data gets 422">
+<rect class="bx-dark" x="6" y="20" width="174" height="64" rx="6"/><text class="t-term" x="16" y="46">"name": "Mouse"</text><text class="t-term" x="16" y="70">"price": 19.5</text>
+<path class="ln" d="M180 52h6"/><polygon class="ah" points="186,46 186,58 194,52"/>
+<rect class="bx-info" x="196" y="14" width="102" height="76" rx="8"/><text class="t-b" x="247" y="38" text-anchor="middle">Item</text><text class="t-s" x="247" y="58" text-anchor="middle">name: str</text><text class="t-s" x="247" y="78" text-anchor="middle">price: float</text>
+<path class="ln-ok" d="M298 52h18"/><polygon class="ah-ok" points="314,46 314,58 322,52"/>
+<rect class="bx-ok" x="324" y="30" width="86" height="44" rx="6"/><text class="t-b t-ok" x="367" y="57" text-anchor="middle">201</text>
+<rect class="bx-dark" x="6" y="120" width="174" height="64" rx="6"/><text class="t-term" x="16" y="146">"name": "X"</text><text class="t-term" x="16" y="170">"price": "cheap"</text>
+<path class="ln-a" d="M180 152h134"/><polygon class="ah-a" points="314,146 314,158 322,152"/>
+<rect class="bx-bad" x="324" y="130" width="86" height="44" rx="6"/><text class="t-b t-bad" x="367" y="157" text-anchor="middle">422</text>
+<text class="t-s" x="250" y="142" text-anchor="middle">not a float</text>
+</svg><figcaption>A body with a text name and a numeric price matches the Item model, so your function runs and the new item comes back with status 201. A body whose price is the word cheap cannot become a float, so FastAPI rejects it with 422 and your function never runs.</figcaption></figure>
+<pre class="snip">@app.post("/items", status_code=201)
+def create_item(item: Item):
+    new_id = max(items) + 1                       # highest key, plus one
+    items[new_id] = {"id": new_id, **item.model_dump()}
+    return items[new_id]</pre>
+<p>Line by line: <code>status_code=201</code> changes the success code from the default 200 to Created. <code>max(items)</code> on a dict looks at its keys, so it gives the highest id so far. <code>item.model_dump()</code> turns the Item back into a plain dict. Inside a dict literal, <code>**</code> <b>unpacks</b> another dict, copying all its pairs in, so the result is one dict with the id plus every field.</p>
+<p>Pydantic is sensible about conversion: a price sent as the text <code>"19.5"</code> is accepted and converted, because it clearly is a number. <code>"cheap"</code> is not, so it gets a 422, and so does a body with a required field such as <code>name</code> missing.</p>
+
+<h4>Running it for real, and testing it here</h4>
+<p>On your own computer, install with <code>pip install "fastapi[standard]"</code> inside a virtual environment, save the code as <code>main.py</code> and run <code>fastapi dev main.py</code>, or the long-standing equivalent <code>uvicorn main:app --reload</code>. <b>Uvicorn</b> is the server program that listens for network connections and passes requests to your <code>app</code>. Then open <code>http://127.0.0.1:8000/docs</code> to see interactive documentation that FastAPI generated from your type hints.</p>
+<p>This sandbox has no real network server, so it uses FastAPI's <code>TestClient</code>, which sends requests straight to your <code>app</code> object in memory. It is the same tool you would use with pytest:</p>
+<pre class="snip">from fastapi.testclient import TestClient
+client = TestClient(app)
+resp = client.get("/items/1")
+print(resp.status_code, resp.json())   # 200 {'id': 1, 'name': 'Keyboard', ...}</pre>
+<p>The request panel in this lesson does that for you: type a path such as <code>/items/1</code> and send it.</p>
+<div class="mistake"><b>Common mistake</b>A path in the decorator that doesn't match the function argument, such as <code>"/items/{id}"</code> with <code>def get_item(item_id: int)</code>. FastAPI then treats <code>item_id</code> as a required query parameter, and every request gets a 422 saying the field is missing. The name in braces and the argument name must be identical.</div>
+
+<div class="try"><b>Try it in your head</b>With the lesson's code, what does <code>GET /items/2</code> return before you have posted anything? Only item 1 exists, so your code raises a 404 with detail "Item not found". And <code>GET /items/2.5</code>? 2.5 is not a whole number, so FastAPI answers 422 before your function runs.</div>
 
 <h4>Recap</h4>
 <ul>
-<li><code>os.listdir(folder)</code> gives bare names, including folders; rebuild full paths with <code>os.path.join</code>.</li>
-<li><code>os.path.splitext(name)[1].lower()</code> gets a lower-case extension, so <code>.JPG</code> and <code>.jpg</code> match.</li>
-<li><code>os.makedirs(path, exist_ok=True)</code> creates folders without failing if they exist; <code>shutil.move(src, dst)</code> moves files.</li>
-<li>Idempotent scripts are safe to run twice: skip work already done and never crash on things that already exist.</li>
-<li>Always write a report of what changed, with a date, and test destructive scripts on copies or with a dry run first.</li>
+<li><code>app = FastAPI()</code> creates the app; <code>@app.get(path)</code> and <code>@app.post(path)</code> register functions as endpoints, and returned dicts become JSON.</li>
+<li>Type hints like <code>item_id: int</code> make FastAPI convert and validate input; bad input gets 422 automatically.</li>
+<li><code>{item_id}</code> in the path fills the argument of the same name; other arguments are query parameters, optional when they have defaults.</li>
+<li>A Pydantic <code>BaseModel</code> class describes the JSON body; <code>status_code=201</code> marks creation.</li>
+<li><code>raise HTTPException(status_code=404, detail=...)</code> sends an honest error. Run locally with <code>fastapi dev main.py</code> and test with <code>TestClient(app)</code>.</li>
 </ul>
 `);
 
@@ -882,5 +912,110 @@ def test_cart_total(cart):          # pytest sees the name "cart"
 <li><code>with pytest.raises(ValueError):</code> passes only if that error is raised.</li>
 <li><code>@pytest.fixture</code> provides shared setup to any test that names it as a parameter.</li>
 <li>Test the edges: zero, the maximum, and just-invalid values. Remember <code>import pytest</code>.</li>
+</ul>
+`);
+
+explain('y6',`
+<h4>Why write scripts for chores</h4>
+<p>Some computer jobs are boring, repetitive and easy to get wrong by hand: sorting a messy downloads folder, renaming a hundred photos, turning a weekly spreadsheet into a report. A <b>script</b> is a short program that does a chore like that for you. Write it once, and the job takes one command forever after. It can even run on a schedule while you sleep.</p>
+<p>This lesson's chore: a <code>downloads/</code> folder with eight files of mixed types, all dumped in one place. Your script sorts them into sub-folders by type and writes a <code>report.txt</code> saying what it did. You already have the building blocks: loops, dicts, functions, and opening files with <code>with</code>. The new pieces are two modules for working with the file system.</p>
+<figure class="fig"><svg viewBox="0 0 420 300" role="img" aria-label="A flat downloads folder of eight files becomes four sub-folders">
+<text class="t-b" x="20" y="22">before</text><text class="t-b" x="222" y="22">after</text>
+<rect class="bx-warn" x="10" y="32" width="170" height="196" rx="8"/>
+<text class="t-m" x="22" y="56">downloads/</text>
+<text class="t-s" x="34" y="78">IMG_2041.jpg</text><text class="t-s" x="34" y="96">IMG_2042.JPG</text><text class="t-s" x="34" y="114">photo.png</text><text class="t-s" x="34" y="132">report-q3.pdf</text><text class="t-s" x="34" y="150">budget.xlsx</text><text class="t-s" x="34" y="168">notes.txt</text><text class="t-s" x="34" y="186">song.mp3</text><text class="t-s" x="34" y="204">setup.zip</text>
+<path class="ln-a" d="M180 130h22"/><polygon class="ah-a" points="200,124 200,136 208,130"/>
+<rect class="bx-ok" x="210" y="32" width="200" height="262" rx="8"/>
+<text class="t-m" x="222" y="56">downloads/</text>
+<text class="t-b t-ok" x="230" y="80">images/</text>
+<text class="t-s" x="246" y="98">IMG_2041.jpg</text><text class="t-s" x="246" y="116">IMG_2042.JPG</text><text class="t-s" x="246" y="134">photo.png</text>
+<text class="t-b t-ok" x="230" y="158">documents/</text>
+<text class="t-s" x="246" y="176">report-q3.pdf</text><text class="t-s" x="246" y="194">budget.xlsx</text><text class="t-s" x="246" y="212">notes.txt</text>
+<text class="t-b t-ok" x="230" y="236">audio/</text><text class="t-s" x="300" y="236">song.mp3</text>
+<text class="t-b t-ok" x="230" y="264">other/</text><text class="t-s" x="300" y="264">setup.zip</text>
+</svg><figcaption>Before, all eight files sit loose in downloads. After the script, three images, three documents, one audio file and one other file each live in their own sub-folder, and a report records the counts.</figcaption></figure>
+
+<h4>The tools: <code>os</code>, <code>os.path</code> and <code>shutil</code></h4>
+<p>Python's <code>os</code> module talks to the operating system: listing folders, making folders, checking what a path is. Inside it, <code>os.path</code> works with <b>paths</b>, the text addresses of files like <code>downloads/notes.txt</code>. The <code>shutil</code> module ("shell utilities") does bigger file operations like moving and copying.</p>
+<div class="tbl-wrap"><table><tr><th>Call</th><th>Does</th></tr>
+<tr><td><code>os.listdir("downloads")</code></td><td>Returns a list of the <b>names</b> inside the folder, files and folders alike.</td></tr>
+<tr><td><code>os.path.join("downloads", "a.pdf")</code></td><td>Glues path parts with the right separator: <code>downloads/a.pdf</code>.</td></tr>
+<tr><td><code>os.path.isdir(path)</code></td><td>True if the path is a folder.</td></tr>
+<tr><td><code>os.path.splitext(name)</code></td><td>Splits off the extension: a pair of the base name and the extension.</td></tr>
+<tr><td><code>os.makedirs(path, exist_ok=True)</code></td><td>Creates a folder, and any missing parent folders.</td></tr>
+<tr><td><code>shutil.move(src, dst)</code></td><td>Moves a file from one path to another.</td></tr></table></div>
+<p>Two of these hide traps worth understanding.</p>
+<p><code>os.listdir</code> returns bare names like <code>"notes.txt"</code>, not full paths. To do anything with the file, you must join the folder back on: <code>os.path.join("downloads", name)</code>. Also, the order of the names is not guaranteed, so never rely on it.</p>
+<p>Why <code>os.path.join</code> instead of just writing <code>"downloads/" + name</code>? Windows separates folders with a backslash and Linux and macOS use a forward slash. <code>join</code> uses the right one for the computer the script runs on, so the same script works everywhere.</p>
+
+<h4>Finding a file's type from its extension</h4>
+<p>The <b>extension</b> is the part of a file name after the last dot, like <code>.pdf</code>. It is how we decide where each file belongs. Walk one awkward name through the steps:</p>
+<figure class="fig"><svg viewBox="0 0 420 268" role="img" aria-label="IMG_2042.JPG is split, the extension taken, lowered, and looked up to give images">
+<rect class="bx" x="110" y="10" width="200" height="34" rx="6"/><text class="t-m" x="210" y="32" text-anchor="middle">"IMG_2042.JPG"</text>
+<path class="ln" d="M210 44v14"/><polygon class="ah" points="204,56 216,56 210,64"/><text class="t-s" x="222" y="58">splitext</text>
+<rect class="bx" x="70" y="66" width="280" height="34" rx="6"/><text class="t-m" x="210" y="88" text-anchor="middle">("IMG_2042", ".JPG")</text>
+<path class="ln" d="M210 100v14"/><polygon class="ah" points="204,112 216,112 210,120"/><text class="t-s" x="222" y="114">take item [1]</text>
+<rect class="bx-warn" x="150" y="122" width="120" height="34" rx="6"/><text class="t-m" x="210" y="144" text-anchor="middle">".JPG"</text>
+<path class="ln-a" d="M210 156v14"/><polygon class="ah-a" points="204,168 216,168 210,176"/><text class="t-s t-a" x="222" y="170">.lower()</text>
+<rect class="bx-a" x="150" y="178" width="120" height="34" rx="6"/><text class="t-m" x="210" y="200" text-anchor="middle">".jpg"</text>
+<path class="ln-ok" d="M270 195h40"/><polygon class="ah-ok" points="308,189 308,201 316,195"/><text class="t-s" x="292" y="226" text-anchor="middle">look up</text>
+<rect class="bx-ok" x="318" y="178" width="92" height="34" rx="6"/><text class="t-m" x="364" y="200" text-anchor="middle">images</text>
+<text class="t-s" x="210" y="256" text-anchor="middle">Without .lower(), ".JPG" would not match ".jpg".</text>
+</svg><figcaption>splitext splits the name into the base and the extension. Index 1 picks the extension, .JPG. Lowering it gives .jpg, which is found in the images list. Without lowering, the capital letters would not match and the photo would land in other.</figcaption></figure>
+<p><code>splitext</code> splits at the <b>last</b> dot, so <code>"archive.tar.gz"</code> gives <code>".gz"</code>, and a name with no dot gives an empty extension <code>""</code>. Both are fine here: they simply land in <code>other</code>.</p>
+<p>To map extensions to folders, a dict of lists keeps all the rules in one readable place, and a function hides the details:</p>
+<pre class="snip">CATEGORIES = {
+    "images": [".jpg", ".jpeg", ".png", ".gif"],
+    "documents": [".pdf", ".docx", ".xlsx", ".txt"],
+    "audio": [".mp3", ".wav"],
+}
+# category_for(filename): get the lowered extension, loop over
+# CATEGORIES.items(), return the folder whose list contains it,
+# and return "other" if none does.</pre>
+<p>Writing a constant like <code>CATEGORIES</code> in capitals is a Python convention meaning "this is a setting, don't change it while running". Adding a new type later is a one-line edit, not a new <code>elif</code>.</p>
+
+<h4>Moving the files</h4>
+<p>The main loop goes through every name, skips anything that is already a folder, works out the category, makes sure the target folder exists, and moves the file:</p>
+<pre class="snip">for name in os.listdir(folder):
+    path = os.path.join(folder, name)
+    if os.path.isdir(path):
+        continue                      # skip folders: go to the next name
+    target = category_for(name)
+    os.makedirs(os.path.join(folder, target), exist_ok=True)
+    shutil.move(path, os.path.join(folder, target, name))</pre>
+<p><code>continue</code> means "stop this round of the loop now and start the next one". It keeps the rest of the loop body un-nested and easy to read.</p>
+<p><code>exist_ok=True</code> matters a lot. Without it, <code>os.makedirs</code> raises <code>FileExistsError</code> the second time it is asked to create <code>images/</code>, which happens as soon as there is a second image. With it, an existing folder is quietly accepted.</p>
+<p>To build the report, count as you go with the dict counting idiom from the lists and dicts lesson: <code>moved[target] = moved.get(target, 0) + 1</code>. Then write one line per folder, using <code>sorted(moved.items())</code> so the report is in a stable alphabetical order rather than whatever order the files happened to be listed in.</p>
+
+<h4>Idempotent: safe to run twice</h4>
+<p>A script is <b>idempotent</b> when running it a second time does no extra harm: the result is the same as running it once. This is the most important property of any script that might run on a schedule, be run by a colleague, or be re-run after a crash halfway through.</p>
+<div class="tbl-wrap"><table><tr><th></th><th>First run</th><th>Second run</th></tr>
+<tr><td>What <code>listdir</code> sees</td><td>8 loose files</td><td>4 folders, no loose files</td></tr>
+<tr><td>Without the <code>isdir</code> check</td><td>Works</td><td>Tries to move the folder <code>images</code> into <code>other/</code></td></tr>
+<tr><td>Without <code>exist_ok=True</code></td><td>Crashes on the second image</td><td>Crashes straight away</td></tr>
+<tr><td>Written carefully</td><td>Moves 8 files</td><td>Moves nothing, no errors</td></tr></table></div>
+<p>On the second run the summary is empty, so the report honestly says nothing was moved. That is correct behaviour: the job was already done.</p>
+<div class="mistake"><b>Common mistake</b>Forgetting that folders show up in <code>os.listdir</code> too. After the first run, <code>images</code> has no extension, so <code>category_for</code> says "other", and without the <code>isdir</code> check your script moves your sorted folders into <code>other/</code>. Always decide explicitly what to do with folders.</div>
+<div class="mistake"><b>Common mistake</b>Testing a destructive script on real files first. Moving and deleting can't be undone with Ctrl+Z. Try it on a copy, and consider a <b>dry run</b> mode that only prints what it <i>would</i> do. Also note that if a file with the same name already exists in the target folder, <code>shutil.move</code> may silently replace it on Linux and macOS.</div>
+
+<h4>Writing a useful report</h4>
+<p>Scripts that run unattended must leave a trace, otherwise nobody knows what happened. Write the report with mode <code>"w"</code> so each run replaces the last one, and include the date so readers know when it ran:</p>
+<pre class="snip">from datetime import date
+
+with open("report.txt", "w") as f:
+    f.write(f"Organized on {date.today()}\\n")
+    # then one line per folder, e.g. "images: 3\\n"</pre>
+<p><code>f.write</code> does not add line breaks for you, so end each line with <code>\\n</code>. The report lives outside <code>downloads/</code>, so the script never tries to sort its own report.</p>
+<div class="tip"><b>Tip</b>Modern Python code often uses the <code>pathlib</code> module instead, where paths are objects: <code>Path("downloads") / name</code> joins paths and <code>path.suffix</code> gives the extension. It does the same jobs; <code>os</code> and <code>shutil</code> are what this lesson's checks expect, and you will see both styles in real projects.</div>
+
+<div class="try"><b>Try it in your head</b>Which folder does <code>"Holiday.PNG"</code> go to? The extension is <code>.PNG</code>, lowered to <code>.png</code>, which is in the images list: <code>images</code>. And <code>"Makefile"</code>? There is no dot, so the extension is empty and it goes to <code>other</code>.</div>
+
+<h4>Recap</h4>
+<ul>
+<li><code>os.listdir(folder)</code> gives bare names, including folders; rebuild full paths with <code>os.path.join</code>.</li>
+<li><code>os.path.splitext(name)[1].lower()</code> gets a lower-case extension, so <code>.JPG</code> and <code>.jpg</code> match.</li>
+<li><code>os.makedirs(path, exist_ok=True)</code> creates folders without failing if they exist; <code>shutil.move(src, dst)</code> moves files.</li>
+<li>Idempotent scripts are safe to run twice: skip work already done and never crash on things that already exist.</li>
+<li>Always write a report of what changed, with a date, and test destructive scripts on copies or with a dry run first.</li>
 </ul>
 `);

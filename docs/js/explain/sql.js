@@ -721,3 +721,199 @@ WHERE user_email = 'user42@example.com' AND created_at &gt;= '2025-06-01';</pre>
 <li>In PostgreSQL, use <code>EXPLAIN ANALYZE</code> and watch for "Seq Scan" on big tables.</li>
 </ul>
 `);
+
+explain('s5',`
+<h4>The problem: a job that takes two steps</h4>
+<p>Ada has 500 in her bank account and Grace has 300. Ada sends Grace 200. To the bank's database that is two separate changes:</p>
+<pre class="snip">UPDATE accounts SET balance = balance - 200 WHERE id = 1;  -- Ada pays
+UPDATE accounts SET balance = balance + 200 WHERE id = 2;  -- Grace receives</pre>
+<p>Now imagine the server crashes, or loses power, or the app hits a bug, in the tiny gap between those two lines. Ada's 200 has left her account, but it never reached Grace's. Before the transfer the bank held 800 in total. Afterwards it holds 600. Money has simply vanished.</p>
+<p>Crashes are rare, but a busy system runs millions of transfers, so "rare" happens every week. The database needs a way to treat several changes as <b>one indivisible unit</b>. That unit is a <b>transaction</b>.</p>
+<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="Without a transaction a crash loses 200; with one, the change is undone">
+<text class="t-b t-bad" x="10" y="22">No transaction</text>
+<rect class="bx-ok" x="10" y="34" width="85" height="40" rx="6"/><text class="t" x="52" y="59" text-anchor="middle">Ada −200</text>
+<rect class="bx-bad" x="115" y="34" width="85" height="40" rx="6"/><text class="t-b t-bad" x="157" y="59" text-anchor="middle">crash</text>
+<rect class="bx" x="220" y="34" width="85" height="40" rx="6"/><text class="t-s" x="262" y="51" text-anchor="middle">Grace +200</text><text class="t-s" x="262" y="67" text-anchor="middle">never runs</text>
+<rect class="bx-bad" x="325" y="34" width="85" height="40" rx="6"/><text class="t-s" x="367" y="51" text-anchor="middle">total</text><text class="t-b t-bad" x="367" y="68" text-anchor="middle">600</text>
+<path class="ln" d="M95 54h14"/><polygon class="ah" points="107,49 107,59 114,54"/>
+<path class="ln-d" d="M200 54h14"/><path class="ln" d="M305 54h14"/><polygon class="ah" points="317,49 317,59 324,54"/>
+<line class="ln-d" x1="10" y1="100" x2="410" y2="100"/>
+<text class="t-b t-ok" x="10" y="128">Inside a transaction</text>
+<rect class="bx" x="10" y="140" width="85" height="40" rx="6"/><text class="t-m" x="52" y="165" text-anchor="middle">BEGIN</text>
+<rect class="bx-ok" x="115" y="140" width="85" height="40" rx="6"/><text class="t" x="157" y="165" text-anchor="middle">Ada −200</text>
+<rect class="bx-bad" x="220" y="140" width="85" height="40" rx="6"/><text class="t-b t-bad" x="262" y="165" text-anchor="middle">crash</text>
+<rect class="bx-ok" x="325" y="140" width="85" height="40" rx="6"/><text class="t-s" x="367" y="157" text-anchor="middle">undone:</text><text class="t-b t-ok" x="367" y="174" text-anchor="middle">total 800</text>
+<path class="ln" d="M95 160h14"/><polygon class="ah" points="107,155 107,165 114,160"/>
+<path class="ln" d="M200 160h14"/><polygon class="ah" points="212,155 212,165 219,160"/>
+<path class="ln-ok" d="M305 160h14"/><polygon class="ah-ok" points="317,155 317,165 324,160"/>
+<text class="t-s" x="210" y="208" text-anchor="middle">never committed, so the database rolls it back</text>
+</svg><figcaption>Top: without a transaction, the first update is saved, the crash stops the second, and 200 disappears. Bottom: inside a transaction nothing is final until COMMIT. After the crash the database undoes the half-finished work, so both balances are back as they were and the total is still 800.</figcaption></figure>
+
+<h4>BEGIN, COMMIT and ROLLBACK</h4>
+<p>You mark the start of a transaction with <code>BEGIN</code> and the end with one of two words:</p>
+<ul>
+<li><code>COMMIT</code>: "I'm done, make all of it permanent".</li>
+<li><code>ROLLBACK</code>: "Forget it, undo everything since BEGIN".</li>
+</ul>
+<pre class="snip">BEGIN;
+UPDATE accounts SET balance = balance - 200 WHERE id = 1;
+UPDATE accounts SET balance = balance + 200 WHERE id = 2;
+COMMIT;
+SELECT * FROM accounts;   -- Ada 300, Grace 500</pre>
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="BEGIN, then statements, then either COMMIT or ROLLBACK">
+<rect class="bx" x="10" y="72" width="80" height="40" rx="8"/><text class="t-m" x="50" y="97" text-anchor="middle">BEGIN</text>
+<path class="ln" d="M90 92h18"/><polygon class="ah" points="106,86 106,98 114,92"/>
+<rect class="bx-a" x="116" y="62" width="130" height="60" rx="8"/><text class="t" x="181" y="88" text-anchor="middle">changes,</text><text class="t" x="181" y="108" text-anchor="middle">not final yet</text>
+<path class="ln-ok" d="M246 80L286 46"/><polygon class="ah-ok" points="280,42 290,50 292,40"/>
+<path class="ln" d="M246 104L286 138"/><polygon class="ah" points="280,142 290,134 292,144"/>
+<rect class="bx-ok" x="292" y="20" width="118" height="40" rx="8"/><text class="t-m" x="351" y="45" text-anchor="middle">COMMIT</text>
+<text class="t-s" x="351" y="78" text-anchor="middle">all saved for good</text>
+<rect class="bx-warn" x="292" y="124" width="118" height="40" rx="8"/><text class="t-m" x="351" y="149" text-anchor="middle">ROLLBACK</text>
+<text class="t-s" x="351" y="182" text-anchor="middle">all undone</text>
+</svg><figcaption>After BEGIN, every change is provisional. COMMIT makes all of them permanent at once. ROLLBACK, or a crash before COMMIT, throws all of them away, as if the transaction never happened.</figcaption></figure>
+<p>What if you never write BEGIN? Then the database runs in <b>autocommit</b> mode: each statement on its own is a tiny transaction that commits the moment it finishes. That is fine for single changes, and dangerous for jobs that need two or more.</p>
+<p>ROLLBACK is worth trying deliberately, because seeing it work builds trust:</p>
+<pre class="snip">BEGIN;
+UPDATE accounts SET balance = 0 WHERE id = 1;   -- oops
+ROLLBACK;
+SELECT * FROM accounts;   -- Ada still has 500</pre>
+<p>In a real app the code usually looks like this: begin, run the statements, and if anything goes wrong, roll back; otherwise commit. Most database libraries give you a helper that does exactly that.</p>
+
+<h4>ACID: the four promises</h4>
+<p>Transactions in databases like PostgreSQL, MySQL and SQLite come with four guarantees, remembered as <b>ACID</b>:</p>
+<div class="tbl-wrap"><table><tr><th>Letter</th><th>Promise</th><th>In the bank example</th></tr>
+<tr><td><b>A</b>tomic</td><td>All of the changes happen, or none do.</td><td>No half transfers.</td></tr>
+<tr><td><b>C</b>onsistent</td><td>Every rule (constraint) holds after each transaction.</td><td>No balance ever ends below zero.</td></tr>
+<tr><td><b>I</b>solated</td><td>Transactions running at the same time don't see each other's half-done work.</td><td>A report running mid-transfer never sees the 600 total.</td></tr>
+<tr><td><b>D</b>urable</td><td>Once COMMIT returns, the change survives a crash or power cut.</td><td>The bank can tell Ada "sent" and mean it.</td></tr></table></div>
+<p>"Atomic" comes from the Greek for "cannot be cut": the transaction cannot be split in half. Durability is achieved by writing changes to a log on disk before COMMIT reports success.</p>
+
+<h4>Constraints: rules the database refuses to break</h4>
+<p>Transactions protect against half-done work. <b>Constraints</b> protect against wrong work. Look at how this lesson's tables are defined:</p>
+<pre class="snip">balance INTEGER NOT NULL CHECK (balance &gt;= 0)
+email   TEXT NOT NULL UNIQUE</pre>
+<p>A <code>CHECK</code> constraint is a condition every row must satisfy. <code>UNIQUE</code> means no two rows may share the value. You met both, along with NOT NULL and foreign keys, in the schema lesson. Here is the point of them: they are enforced <b>by the database, on every change</b>, no matter which part of which app sent it. Your code may have a bug that forgets to check Ada's balance. The CHECK does not forget.</p>
+<pre class="snip">UPDATE accounts SET balance = balance - 1000 WHERE id = 1;
+-- Error: CHECK constraint failed: balance &gt;= 0
+INSERT INTO users (email) VALUES ('ada@example.com');
+-- Error: UNIQUE constraint failed: users.email</pre>
+<p>Read these errors as good news. The bad change was refused, the row is untouched, and the message even names the rule and the column. A UNIQUE error on sign-up is how many apps detect "this email is already registered".</p>
+
+<h4>When a statement fails inside a transaction</h4>
+<p>Constraints and transactions work as a team. Suppose a transfer's second UPDATE breaks a rule. The failed statement makes no change. What happens to the rest of the transaction depends on the database:</p>
+<ul>
+<li><b>SQLite</b> undoes only the failed statement and leaves the transaction open. Your code must then decide, and almost always the right decision is <code>ROLLBACK</code>.</li>
+<li><b>PostgreSQL</b> marks the whole transaction as failed. Every further statement is refused with "current transaction is aborted" until you ROLLBACK.</li>
+</ul>
+<p>Either way, the rule for your app is the same: <b>on any error inside a transaction, roll back.</b></p>
+<div class="mistake"><b>Common mistake</b>Reading a balance into your app, doing the maths there, then writing the new number back: "Ada has 500, so set it to 300". If two transfers do that at the same moment, both read 500 and one change is lost. Let the database do the arithmetic in one statement, <code>SET balance = balance - 200</code>, inside a transaction.</div>
+<div class="mistake"><b>Common mistake</b>Writing <code>BEGIN</code> and forgetting <code>COMMIT</code>. Your changes look fine from inside your own connection, but nobody else sees them, and they vanish when the connection closes. Every BEGIN needs a COMMIT or a ROLLBACK.</div>
+<div class="try"><b>Try it in your head</b>Starting from Ada 500 and Grace 300, you run: <code>BEGIN;</code> take 200 from Ada; give 200 to Grace; <code>ROLLBACK;</code>. Then you take 100 from Ada with no transaction. What are the balances? The rollback undoes both transfer steps, so Ada is back to 500 and Grace to 300. The last update commits on its own, leaving Ada 400 and Grace 300.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>A transaction groups statements: <code>BEGIN;</code> ... <code>COMMIT;</code> saves all of them, <code>ROLLBACK;</code> undoes all of them.</li>
+<li>Without BEGIN, each statement commits on its own (autocommit), so multi-step jobs can be left half done.</li>
+<li>ACID: atomic (all or nothing), consistent (rules hold), isolated (no peeking at half-done work), durable (committed means saved).</li>
+<li>Constraints like <code>CHECK (balance &gt;= 0)</code>, <code>UNIQUE</code> and <code>NOT NULL</code> make the database refuse bad data, whoever sends it.</li>
+<li>If anything fails inside a transaction, roll back.</li>
+</ul>
+`);
+
+explain('s6',`
+<h4>Why there is more than one kind of database</h4>
+<p>Everything in this track so far has used a <b>relational</b> database: tables, SQL, joins, constraints and transactions. For an app's main records, such as users, orders and payments, that is almost always the right choice. But some jobs have a very different shape:</p>
+<ul>
+<li>"Is this person logged in?" is asked on every single page view, and only needs a tiny piece of data.</li>
+<li>"How many times was this page viewed?" means thousands of +1s per second.</li>
+<li>"Send this email later" needs a waiting line of jobs.</li>
+</ul>
+<p>A relational database can do all of these, but it is built for safety and rich queries, not raw speed on tiny lookups. So teams usually keep their main data in PostgreSQL or MySQL and add a second, specialised store for the fast, temporary jobs. The most popular one is <b>Redis</b>.</p>
+
+<h4>PostgreSQL and MySQL: the relational workhorses</h4>
+<p>Both are mature, free, open-source relational databases, and both speak SQL with ACID transactions. Everything you learned in SQLite carries over, with small differences in syntax and types.</p>
+<ul>
+<li><b>PostgreSQL</b> ("Postgres") is the usual default for new projects. It has strict, careful behaviour, rich types including <code>JSONB</code> for storing JSON documents inside a column, and powerful extensions such as PostGIS for maps and pgvector for AI search.</li>
+<li><b>MySQL</b> (and its close cousin MariaDB) is everywhere, especially behind PHP apps such as WordPress. It does the same core job very well.</li>
+</ul>
+<p>SQLite, which you have been using, is a third option: a whole database in a single file, built into your program. It is ideal for phones, desktop apps, tests and small sites, but a busy web app with many servers writing at once normally uses Postgres or MySQL.</p>
+
+<h4>Redis: a key-value store in memory</h4>
+<p>Redis has no tables and no SQL. It is a <b>key-value store</b>: a giant dictionary where you store a value under a name, the <b>key</b>, and later fetch it by that exact name. There are no joins and no WHERE clauses. You always ask for a key you already know.</p>
+<p>Its second big idea is that it keeps all its data in <b>memory</b> (RAM) rather than on disk. Memory is many times faster to reach than even a fast SSD, so a Redis lookup typically takes well under a millisecond. The trade-off is that memory is smaller and more expensive than disk, and data held only in memory is lost if the server stops. Redis can save snapshots and a log of writes to disk, but the safest mental model is: <b>Redis holds copies and temporary things; your relational database holds the truth.</b></p>
+<figure class="fig"><svg viewBox="0 0 420 236" role="img" aria-label="Redis keys with string, counter, list and hash values">
+<g class="t-s"><text class="t-s" x="12" y="20">key</text><text class="t-s" x="160" y="20">type</text><text class="t-s" x="240" y="20">value</text></g>
+<rect class="bx" x="10" y="30" width="400" height="34" rx="6"/>
+<text class="t-m" x="20" y="52">greeting</text><text class="t-s" x="160" y="52">string</text><text class="t" x="240" y="52">"hello"</text>
+<rect class="bx-warn" x="10" y="70" width="400" height="34" rx="6"/>
+<text class="t-m" x="20" y="92">session:42</text><text class="t-s" x="160" y="92">string</text><text class="t" x="240" y="92">"ada"</text><text class="t-s t-warn" x="320" y="92">TTL 60s</text>
+<rect class="bx" x="10" y="110" width="400" height="34" rx="6"/>
+<text class="t-m" x="20" y="132">page:views</text><text class="t-s" x="160" y="132">counter</text><text class="t" x="240" y="132">"3"</text>
+<rect class="bx" x="10" y="150" width="400" height="34" rx="6"/>
+<text class="t-m" x="20" y="172">jobs</text><text class="t-s" x="160" y="172">list</text>
+<rect class="bx-a" x="236" y="156" width="80" height="22" rx="4"/><text class="t-s" x="276" y="172" text-anchor="middle">resize…</text>
+<rect class="bx-a" x="322" y="156" width="80" height="22" rx="4"/><text class="t-s" x="362" y="172" text-anchor="middle">send…</text>
+<rect class="bx" x="10" y="190" width="400" height="34" rx="6"/>
+<text class="t-m" x="20" y="212">user:1</text><text class="t-s" x="160" y="212">hash</text><text class="t-s" x="240" y="212">name=Ada, city=London</text>
+</svg><figcaption>Each line is one key and its value. Most values are plain strings, and a counter is a string that holds a number. session:42 has a time to live of 60 seconds, after which Redis deletes it. jobs is a list in order, newest first, and user:1 is a hash: a small set of named fields under one key.</figcaption></figure>
+<p>Keys are just text. The habit is to build them from parts separated by colons, like <code>session:42</code> or <code>user:1</code>, so related keys are easy to recognise.</p>
+
+<h4>Strings, expiry and TTL</h4>
+<p>In this lesson's terminal you type <code>redis-cli</code> followed by a Redis command. The most basic commands store, read and delete a value:</p>
+<pre class="snip">redis-cli SET greeting "hello"   # OK
+redis-cli GET greeting           # "hello"
+redis-cli DEL greeting           # (integer) 1, one key deleted
+redis-cli GET greeting           # (nil), no such key</pre>
+<p><code>(nil)</code> is how redis-cli shows "nothing stored under that key". Redis command names are not case-sensitive, but key names are: <code>Greeting</code> and <code>greeting</code> are different keys.</p>
+<p>The feature that makes Redis perfect for sessions and caches is <b>expiry</b>. Add <code>EX</code> and a number of seconds, and Redis deletes the key by itself when the time is up:</p>
+<pre class="snip">redis-cli SET session:42 "ada" EX 60
+redis-cli TTL session:42         # (integer) 57, seconds left</pre>
+<p><code>TTL</code> means "time to live". It returns the seconds remaining, <code>-1</code> if the key exists but never expires, and <code>-2</code> if the key does not exist (perhaps because it already expired). A login session that expires on its own is exactly what you want: an abandoned session cleans itself up. In the sandbox, <code>sleep 61</code> waits 61 seconds of simulated time so you can watch the key disappear.</p>
+
+<h4>Counters, queues and hashes</h4>
+<p><code>INCR</code> adds 1 to a number stored under a key, creating it at 0 first if it does not exist, and returns the new value:</p>
+<pre class="snip">redis-cli INCR page:views        # (integer) 1
+redis-cli INCR page:views        # (integer) 2</pre>
+<p>The important word is <b>atomic</b>: Redis handles one command at a time, so if a thousand visitors call INCR at the same moment, every single +1 counts. Compare that with "read the number, add one, write it back" in your app, where two visitors can read the same old number and one view is lost. The same trick powers <b>rate limits</b>: INCR a key like <code>login:ada</code> with a short expiry, and refuse when the count gets too high.</p>
+<p>A Redis <b>list</b> is an ordered sequence, handy as a queue of jobs for background workers:</p>
+<pre class="snip">redis-cli LPUSH jobs "send-email:7"      # add to the left (front)
+redis-cli LPUSH jobs "resize-image:12"
+redis-cli LRANGE jobs 0 -1               # show all, front to back
+redis-cli RPOP jobs                      # take one from the right (back)</pre>
+<p><code>LRANGE</code> takes a start and a stop position. Positions count from 0, and <code>-1</code> means "the last one", so <code>0 -1</code> means the whole list. Because LPUSH adds at the front, the newest job is shown first. Pushing at one end and popping at the other makes a fair first-in, first-out queue.</p>
+<p>A <b>hash</b> stores several named fields under one key, like a tiny record: <code>HSET user:1 name Ada city London</code>, then <code>HGETALL user:1</code> returns every field and value.</p>
+<div class="mistake"><b>Common mistake</b>Using a command on the wrong kind of value, such as <code>LPUSH greeting x</code> when <code>greeting</code> holds a string. Redis replies <code>WRONGTYPE Operation against a key holding the wrong kind of value</code>. Similarly, INCR on a non-number gives "value is not an integer". Pick a fresh key, or DEL the old one.</div>
+
+<h4>Caching: Redis in front of Postgres</h4>
+<p>The most common use of Redis is as a <b>cache</b>: a fast copy of data that is slow to work out. Suppose every page shows a product list that takes a heavy query and rarely changes. The usual pattern is called <b>cache-aside</b>:</p>
+<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Cache-aside: the app checks Redis first and falls back to Postgres on a miss">
+<rect class="bx" x="10" y="80" width="100" height="50" rx="8"/><text class="t-b" x="60" y="110" text-anchor="middle">Your app</text>
+<rect class="bx-a" x="280" y="20" width="130" height="50" rx="8"/><text class="t-b" x="345" y="50" text-anchor="middle">Redis</text>
+<rect class="bx-info" x="280" y="140" width="130" height="50" rx="8"/><text class="t-b" x="345" y="170" text-anchor="middle">Postgres</text>
+<path class="ln-a" d="M110 92L272 40"/><polygon class="ah-a" points="268,34 272,46 280,38"/>
+<text class="t-s t-a" x="150" y="52">1 ask the cache</text>
+<path class="ln" d="M110 120L272 162"/><polygon class="ah" points="268,168 272,156 280,166"/>
+<text class="t-s" x="128" y="164">2 on a miss, query</text>
+<path class="ln-d" d="M345 140v-62"/><polygon class="ah" points="339,82 351,82 345,72"/>
+<text class="t-s" x="355" y="110">3 store</text><text class="t-s" x="355" y="126">with TTL</text>
+</svg><figcaption>Step 1, the app asks Redis. If the data is there, a hit, it is used straight away. Step 2, on a miss, the app runs the real query on Postgres. Step 3, the app saves the answer in Redis with an expiry, so the next request is a hit until the copy expires.</figcaption></figure>
+<p>The expiry is what keeps the cache honest. Without it, a price change in Postgres might never reach users, because they keep getting the old copy. Postgres stays the <b>source of truth</b>; Redis only ever holds a copy that is allowed to disappear.</p>
+
+<h4>Document databases, and how to choose</h4>
+<p>Document databases such as <b>MongoDB</b> store JSON-like documents instead of rows, and each document can have a different shape. They suit data whose structure really does vary a lot. The cost is that joins, constraints and multi-record transactions exist but are less natural, so relational data tends to end up duplicated. Remember that Postgres can also store flexible JSON in a <code>JSONB</code> column, which covers many of these cases.</p>
+<div class="tbl-wrap"><table><tr><th>Need</th><th>Reach for</th></tr>
+<tr><td>Users, orders, payments: the main records</td><td>PostgreSQL (or MySQL)</td></tr>
+<tr><td>Sessions, caches, counters, rate limits, simple queues</td><td>Redis, alongside the main database</td></tr>
+<tr><td>Documents whose shape truly varies</td><td>A Postgres JSONB column, or MongoDB</td></tr></table></div>
+<div class="mistake"><b>Common mistake</b>Using Redis as the only home for important data. A restart or a memory limit can throw keys away, and Redis cannot enforce your business rules or join records. Keep anything you cannot afford to lose in the relational database.</div>
+<div class="try"><b>Try it in your head</b>You run <code>SET code:ada "4821" EX 300</code> for a login code. After 100 seconds, what does <code>TTL code:ada</code> return? About 200. After 400 seconds, what do <code>GET code:ada</code> and <code>TTL code:ada</code> return? <code>(nil)</code> and <code>-2</code>, because the key has expired and no longer exists.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>Default to a relational database, usually PostgreSQL, for your main data. MySQL does the same job and is very widespread.</li>
+<li>Redis is an in-memory key-value store: very fast, ideal for temporary data, not the source of truth.</li>
+<li><code>SET key value EX 60</code> stores with an expiry; <code>GET</code>, <code>DEL</code> and <code>TTL</code> read, delete and check time left.</li>
+<li><code>INCR</code> is an atomic counter; <code>LPUSH</code> and <code>LRANGE</code> build and show a list; <code>HSET</code> and <code>HGETALL</code> store fields under one key.</li>
+<li>Cache-aside: check Redis, fall back to Postgres on a miss, store the answer with a TTL.</li>
+</ul>
+`);

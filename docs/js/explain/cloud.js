@@ -195,3 +195,192 @@ cat out.json     # {"statusCode":200,"body":"{\\"message\\":\\"Hello, Ada!\\"}"}
 <li>Choose EC2 for steady, long-running work and Lambda for spiky, event-driven work.</li>
 </ul>
 `);
+
+explain('c3',`
+<h4>Where should your data live?</h4>
+<p>In the last lesson you ran code. But almost every app also needs to <b>keep</b> things: the photos people upload, your site's images, nightly backups, and the rows of a database such as users and orders. Where you put them matters, because a server can be terminated at any moment, and anything stored only on its disk goes with it.</p>
+<p>AWS has a storage service for each kind of data. This lesson covers the two you will use most:</p>
+<div class="tbl-wrap"><table><tr><th>Service</th><th>Stores</th><th>Use for</th></tr>
+<tr><td><b>S3</b></td><td>Files, called objects, in containers called buckets</td><td>Uploads, images, backups, static websites</td></tr>
+<tr><td><b>EBS</b></td><td>A virtual disk attached to one EC2 instance</td><td>The server's own operating system and files</td></tr>
+<tr><td><b>RDS</b></td><td>A managed relational database</td><td>Postgres or MySQL without running the database server yourself</td></tr></table></div>
+<p>EBS you met without knowing it: it is the disk that stays billed when an instance is stopped. The rest of this lesson is about S3 and RDS.</p>
+
+<h4>S3: buckets and objects</h4>
+<p><b>S3</b> (Simple Storage Service) is storage for files on the internet. You never think about disks or how full they are; you simply put files in and take them out, and AWS stores each one redundantly across several availability zones. It is designed to be extremely durable: losing a file you stored is vanishingly rare.</p>
+<p>Two words to learn:</p>
+<ul>
+<li>A <b>bucket</b> is a named container for files. You create it once.</li>
+<li>An <b>object</b> is one stored file, plus a little information about it. Each object has a <b>key</b>, its name inside the bucket, such as <code>logo.png</code> or <code>images/2026/logo.png</code>.</li>
+</ul>
+<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="A bucket holds objects, each identified by a key; the full address is s3 colon slash slash bucket slash key">
+<rect class="bx-info" x="10" y="10" width="400" height="160" rx="10"/>
+<text class="t-b" x="24" y="34">bucket: you-portfolio-assets-2026</text>
+<rect class="bx" x="24" y="48" width="180" height="50" rx="6"/><text class="t-m" x="114" y="70" text-anchor="middle">logo.png</text><text class="t-s" x="114" y="88" text-anchor="middle">an object</text>
+<rect class="bx" x="216" y="48" width="180" height="50" rx="6"/><text class="t-m" x="306" y="70" text-anchor="middle">index.html</text><text class="t-s" x="306" y="88" text-anchor="middle">an object</text>
+<rect class="bx" x="24" y="108" width="372" height="50" rx="6"/><text class="t-m" x="210" y="130" text-anchor="middle">backups/2026-10-01.sql</text><text class="t-s" x="210" y="148" text-anchor="middle">the key contains slashes; there is no real folder</text>
+<text class="t-s" x="10" y="196">Full address of one object:</text>
+<text class="t-m" x="10" y="222"><tspan class="t-info">s3://you-portfolio-assets-2026</tspan>/logo.png</text>
+<text class="t-s" x="10" y="242">bucket name, then the object's key</text>
+</svg><figcaption>A bucket is one big container. Inside it, each file is an object with a key, its name. Slashes in a key only look like folders. You address an object as s3, colon, two slashes, the bucket name, a slash and the key.</figcaption></figure>
+<p>Inside a bucket there are no real folders. A key like <code>backups/2026-10-01.sql</code> is just a name that happens to contain a slash, and the console draws it as a folder to be friendly. The part before the last slash is called a <b>prefix</b>.</p>
+
+<h4>Bucket names are global</h4>
+<p>Here is the surprise that catches everyone. A bucket name must be unique across <b>every AWS account in the world</b>, not just yours, because it becomes part of a web address like <code>you-portfolio-assets-2026.s3.amazonaws.com</code>. Names must be 3 to 63 characters of lowercase letters, numbers, dots and hyphens.</p>
+<p>So <code>aws s3 mb s3://photos</code> fails even on a brand-new account: somebody claimed <code>photos</code> years ago. The error is <code>BucketAlreadyExists</code>. Pick something distinctive, usually starting with your name, organisation or project, like <code>you-portfolio-assets-2026</code>.</p>
+
+<h4>Working with S3 from the CLI</h4>
+<p>The S3 commands deliberately look like Linux file commands:</p>
+<pre class="snip">aws s3 mb s3://you-portfolio-assets-2026        # make bucket
+aws s3 cp logo.png s3://you-portfolio-assets-2026/   # copy up
+aws s3 ls                                        # list your buckets
+aws s3 ls s3://you-portfolio-assets-2026         # list objects inside</pre>
+<p><code>mb</code> means "make bucket", and <code>cp</code> copies just like the Linux <code>cp</code>: from the first place to the second. Ending the destination with a slash keeps the file's own name as the key. Swap the two arguments to download. <code>ls</code> with no argument lists your buckets; with a bucket address it lists the objects, showing date, size in bytes and key.</p>
+
+<h4>Private by default, and presigned URLs</h4>
+<p>New buckets block all public access by default, and you should keep it that way. Some of the largest data leaks in history were S3 buckets someone made public "just for a moment". Remember shared responsibility: AWS secures S3, but who may read your bucket is your setting.</p>
+<p>So how do you let someone download one private file, say a customer's invoice? You create a <b>presigned URL</b>: a normal web link that includes a signature made with your credentials and an expiry time. Anyone holding the link can fetch that one object until it expires, and nothing else.</p>
+<pre class="snip">aws s3 presign s3://you-portfolio-assets-2026/logo.png --expires-in 600
+# prints https://...amazonaws.com/logo.png?X-Amz-Expires=600&amp;X-Amz-Signature=...</pre>
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="You sign a link to one private object; the recipient can fetch it until it expires">
+<rect class="bx-a" x="10" y="20" width="110" height="50" rx="6"/><text class="t-b" x="65" y="42" text-anchor="middle">You</text><text class="t-s" x="65" y="60" text-anchor="middle">aws s3 presign</text>
+<path class="ln-a" d="M120 45h36"/><polygon class="ah-a" points="154,39 154,51 162,45"/>
+<rect class="bx-info" x="164" y="20" width="110" height="50" rx="6"/><text class="t-b" x="219" y="42" text-anchor="middle">Link</text><text class="t-s" x="219" y="60" text-anchor="middle">valid 10 min</text>
+<path class="ln-a" d="M274 45h36"/><polygon class="ah-a" points="308,39 308,51 316,45"/>
+<rect class="bx" x="318" y="20" width="92" height="50" rx="6"/><text class="t-b" x="364" y="49" text-anchor="middle">Friend</text>
+<path class="ln-ok" d="M364 70v40h-150v14"/><polygon class="ah-ok" points="208,122 220,122 214,130"/>
+<rect class="bx-ok" x="120" y="132" width="190" height="50" rx="6"/><text class="t-b" x="215" y="154" text-anchor="middle">private bucket</text><text class="t-s" x="215" y="172" text-anchor="middle">returns logo.png</text>
+<text class="t-s t-bad" x="10" y="160">after 10 min:</text><text class="t-s t-bad" x="10" y="178">access denied</text>
+</svg><figcaption>You sign a link for one object. Your friend uses it to fetch that file from the private bucket. After ten minutes the same link is refused, and the bucket itself was never made public.</figcaption></figure>
+<p><code>--expires-in</code> is in seconds, so 600 is ten minutes. The signature is checked by S3 on every use, so the link cannot be edited to point at a different file. The link can only do what your own credentials could, so it fails if you lack read access.</p>
+<div class="mistake"><b>Common mistake</b>Making a whole bucket public because one image needed sharing. Share single files with presigned URLs, and for a public website put a CDN such as CloudFront in front of a private bucket. "Public bucket" should always feel alarming.</div>
+
+<h4>Managed databases with RDS</h4>
+<p>Running a database yourself on a server means installing it, applying security patches, taking backups, testing that the backups restore, and replacing the server when it fails, ideally without losing data. That is a lot of careful, boring work. A <b>managed database</b> does it for you. On AWS that is <b>RDS</b> (Relational Database Service), which runs Postgres, MySQL and others; outside AWS, Neon and Supabase offer managed Postgres too.</p>
+<pre class="snip">aws rds create-db-instance --db-instance-identifier shop-db \\
+    --engine postgres --db-instance-class db.t3.micro \\
+    --allocated-storage 20 --master-username shop \\
+    --manage-master-user-password</pre>
+<ul>
+<li><code>--db-instance-identifier</code> is your name for it. <code>--engine postgres</code> picks the database software.</li>
+<li><code>--db-instance-class db.t3.micro</code> is the machine size, named like EC2 types with <code>db.</code> in front. <code>--allocated-storage 20</code> is 20 GiB of disk.</li>
+<li><code>--master-username</code> is the administrator login. <code>--manage-master-user-password</code> tells AWS to generate the password and keep it in <b>Secrets Manager</b>, AWS's vault for secrets. You never type it, never see it in your shell history, and it can be rotated automatically.</li>
+</ul>
+<p>The database starts in the state <code>creating</code>, which takes several minutes in real life. <code>aws rds describe-db-instances</code> shows when it becomes <code>available</code>, and gives its <b>endpoint</b>: the host name and port (5432 for Postgres) your app connects to, which goes into your <code>DATABASE_URL</code>.</p>
+
+<h4>Keep the database off the internet</h4>
+<p>Look for <code>"PubliclyAccessible": false</code> in the output. A production database should only be reachable from your own app servers, inside a private network, never from the whole internet. If attackers cannot even connect, a guessed or leaked password is far less dangerous. Whether a new instance is public by default depends on your network setup, so in real projects say it explicitly with <code>--no-publicly-accessible</code>. The networking lesson shows how to build that private network.</p>
+<div class="try"><b>Try it in your head</b>You run <code>aws s3 cp report.pdf s3://you-portfolio-assets-2026/docs/</code>. What is the object's key, and is there now a folder called <code>docs</code>? The key is <code>docs/report.pdf</code>. There is no real folder; <code>docs/</code> is just the start of the name, which the console displays as a folder.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>S3 stores objects (files) under keys inside buckets; address them as <code>s3://bucket/key</code>.</li>
+<li>Bucket names are global across all AWS accounts: choose distinctive names.</li>
+<li><code>aws s3 mb</code>, <code>cp</code> and <code>ls</code> work like their Linux cousins.</li>
+<li>Keep buckets private and share single files with <code>aws s3 presign --expires-in</code>.</li>
+<li>RDS runs, patches and backs up databases for you; <code>--manage-master-user-password</code> keeps the password in Secrets Manager.</li>
+<li>Production databases are not publicly accessible: only your app can reach them.</li>
+</ul>
+`);
+
+explain('c4',`
+<h4>Why permissions are the heart of cloud security</h4>
+<p>Your AWS account can do almost anything: launch hundreds of servers, read every file, delete every database. Every request to AWS, from the console, the CLI or your own code, arrives with credentials, and AWS must decide: <b>is this identity allowed to do this action to this thing?</b> The service that answers is <b>IAM</b>, Identity and Access Management.</p>
+<p>In this lesson your CI pipeline needs to upload files to the portfolio bucket. The lazy answer is to give it full admin rights. The professional answer is to give it exactly "upload and read files in that one bucket", and nothing more. You will build that, and then prove it works.</p>
+<div class="analogy"><b>Think of it like</b>Key cards in an office building. The cleaner's card opens the corridors and the store cupboard, not the server room. If a card is lost, the damage is limited to the doors it opens. IAM policies decide which doors each card opens.</div>
+
+<h4>Identities: users, groups and roles</h4>
+<p>IAM has three kinds of identity, each called a <b>principal</b> (the "who" in a request):</p>
+<ul>
+<li>An <b>IAM user</b> is a long-lived identity for one person or program. It can have a password for the console and <b>access keys</b> for the CLI, the AKIA keys you met in the first lesson.</li>
+<li>A <b>group</b> is a set of users that share permissions, like "developers". Attach permissions to the group, and every member gets them.</li>
+<li>A <b>role</b> is an identity with no password or keys of its own. Instead, something trusted <b>assumes</b> the role and receives <b>temporary credentials</b> that expire on their own, usually within an hour. EC2 instances, Lambda functions and GitHub Actions all use roles. The <code>--role</code> you passed to Lambda in the compute lesson was exactly this.</li>
+</ul>
+<p>Creating a user is one command:</p>
+<pre class="snip">aws iam create-user --user-name deploy-bot</pre>
+<p>A brand-new user can do <b>nothing</b>. IAM starts from "no" for everything. Permissions only exist when you attach a policy.</p>
+
+<h4>Names for everything: ARNs</h4>
+<p>To say which thing a permission applies to, IAM uses <b>ARNs</b> (Amazon Resource Names), the unique full names you saw in <code>get-caller-identity</code>. They look long, but they are built from parts separated by colons:</p>
+<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="Two ARNs split into their parts: service, account and resource">
+<text class="t-m" x="10" y="34">arn:aws:<tspan class="t-a">iam</tspan>::<tspan class="t-info">123456789012</tspan>:<tspan class="t-ok">user/deploy-bot</tspan></text>
+<text class="t-s t-a" x="106" y="58" text-anchor="middle">service</text><text class="t-s t-info" x="192" y="58" text-anchor="middle">account</text><text class="t-s t-ok" x="306" y="58" text-anchor="middle">resource</text>
+<text class="t-m" x="10" y="118">arn:aws:<tspan class="t-a">s3</tspan>:::<tspan class="t-ok">you-portfolio-</tspan></text>
+<text class="t-m" x="100" y="140"><tspan class="t-ok">assets-2026/*</tspan></text>
+<text class="t-s t-a" x="102" y="164" text-anchor="middle">service</text><text class="t-s t-ok" x="250" y="164" text-anchor="middle">bucket, then every object</text>
+<text class="t-s" x="10" y="200">S3 names are global, so its ARNs leave region and account empty.</text>
+</svg><figcaption>An ARN starts with arn, colon, aws, then the service, the region, the account number and the resource, separated by colons. A user ARN names the IAM service, your account and the user. An S3 ARN has empty region and account parts, because bucket names are already global, and ends with the bucket and a pattern for its objects.</figcaption></figure>
+<p>The star is a <b>wildcard</b> meaning "anything here". So <code>arn:aws:s3:::you-portfolio-assets-2026/*</code> means "every object inside that bucket". Note that the bucket itself, <code>arn:aws:s3:::you-portfolio-assets-2026</code> without the slash and star, is a different resource from the objects in it.</p>
+
+<h4>Policies: Effect, Action, Resource</h4>
+<p>A <b>policy</b> is a JSON document listing permissions. Each entry is a <b>statement</b> with three key parts that answer: allow or deny, which actions, on which resources.</p>
+<pre class="snip">{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": ["s3:PutObject", "s3:GetObject"],
+    "Resource": "arn:aws:s3:::you-portfolio-assets-2026/*"
+  }]
+}</pre>
+<ul>
+<li><code>Version</code> is the version of the policy language, and is always the literal date <code>2012-10-17</code>. It is not today's date; do not change it.</li>
+<li><code>Effect</code> is <code>Allow</code> or <code>Deny</code>.</li>
+<li><code>Action</code> lists operations, written <code>service:Operation</code>. <code>s3:PutObject</code> is uploading an object, <code>s3:GetObject</code> is downloading one.</li>
+<li><code>Resource</code> is the ARN, or ARNs, the actions may touch.</li>
+</ul>
+<p>Read that statement aloud: "Allow uploading and downloading objects, but only in the portfolio bucket." It does not allow deleting objects, listing other buckets, or touching EC2. Real JSON files cannot contain comments, so keep notes outside the file.</p>
+<p>You save it as <code>policy.json</code>, turn it into a named policy in AWS, then attach it to the user:</p>
+<pre class="snip">aws iam create-policy --policy-name portfolio-uploads \\
+    --policy-document file://policy.json
+aws iam attach-user-policy --user-name deploy-bot \\
+    --policy-arn arn:aws:iam::123456789012:policy/portfolio-uploads</pre>
+<p><code>file://</code> tells the CLI to read the document from a local file. The <code>create-policy</code> output includes the new policy's ARN, which is what <code>attach-user-policy</code> needs. If the JSON has a typo, such as a missing comma or quote, you get a <code>MalformedPolicyDocument</code> error.</p>
+
+<h4>How AWS decides: deny wins</h4>
+<p>When a request arrives, AWS gathers every policy that applies to that principal and works through a fixed order:</p>
+<figure class="fig"><svg viewBox="0 0 420 290" role="img" aria-label="Policy evaluation: an explicit deny wins, then an allow, otherwise denied by default">
+<rect class="bx" x="70" y="10" width="280" height="40" rx="8"/><text class="t-b" x="210" y="35" text-anchor="middle">Request: who, action, resource</text>
+<path class="ln" d="M210 50v16"/><polygon class="ah" points="204,64 216,64 210,72"/>
+<rect class="bx-bad" x="40" y="74" width="230" height="44" rx="8"/><text class="t" x="155" y="101" text-anchor="middle">Any statement Denies it?</text>
+<path class="ln" d="M270 96h40"/><polygon class="ah" points="308,90 308,102 316,96"/><text class="t-s" x="290" y="88" text-anchor="middle">yes</text>
+<rect class="bx-bad" x="318" y="76" width="92" height="40" rx="6"/><text class="t-s t-bad" x="364" y="101" text-anchor="middle">DENIED</text>
+<path class="ln" d="M155 118v18"/><polygon class="ah" points="149,134 161,134 155,142"/><text class="t-s" x="166" y="134">no</text>
+<rect class="bx-ok" x="40" y="144" width="230" height="44" rx="8"/><text class="t" x="155" y="171" text-anchor="middle">Any statement Allows it?</text>
+<path class="ln-ok" d="M270 166h40"/><polygon class="ah-ok" points="308,160 308,172 316,166"/><text class="t-s" x="290" y="158" text-anchor="middle">yes</text>
+<rect class="bx-ok" x="318" y="146" width="92" height="40" rx="6"/><text class="t-s t-ok" x="364" y="171" text-anchor="middle">ALLOWED</text>
+<path class="ln" d="M155 188v18"/><polygon class="ah" points="149,204 161,204 155,212"/><text class="t-s" x="166" y="204">no</text>
+<rect class="bx-warn" x="40" y="214" width="230" height="44" rx="8"/><text class="t" x="155" y="241" text-anchor="middle">Denied by default</text>
+<text class="t-s" x="155" y="280" text-anchor="middle">"implicit deny": nobody said yes</text>
+</svg><figcaption>AWS first looks for any statement that explicitly denies the request; if it finds one, the answer is no, whatever else says yes. Then it looks for an allow. If nothing allows it, the request is refused by default.</figcaption></figure>
+<ol>
+<li>An <b>explicit Deny</b> anywhere beats every Allow.</li>
+<li>Otherwise, an <b>Allow</b> that matches the action and the resource permits it.</li>
+<li>Otherwise, it is denied: an <b>implicit deny</b>, because nothing said yes.</li>
+</ol>
+<p>Everything starts as "no". That is why you only ever need to write down what <b>is</b> allowed.</p>
+
+<h4>Proving it with the policy simulator</h4>
+<p>Do not just hope a policy is right. IAM has a simulator that evaluates it without doing anything for real:</p>
+<pre class="snip">aws iam simulate-principal-policy \\
+    --policy-source-arn arn:aws:iam::123456789012:user/deploy-bot \\
+    --action-names s3:PutObject s3:DeleteBucket \\
+    --resource-arns arn:aws:s3:::you-portfolio-assets-2026/logo.png</pre>
+<p>In the output, find <code>EvalDecision</code> for each action. You want <code>allowed</code> for <code>s3:PutObject</code> and <code>implicitDeny</code> for <code>s3:DeleteBucket</code>, because nothing allowed it. If you ever see <code>explicitDeny</code>, some statement says Deny.</p>
+
+<h4>Least privilege and the blast radius</h4>
+<p><b>Least privilege</b> means every identity gets exactly the permissions its job needs, and no more: the same habit you learned with <code>chmod 600</code> and <code>sudo</code> on Linux. The reason is the <b>blast radius</b>: how much damage is possible if those credentials leak. CI keys end up in logs, laptops get stolen, dependencies get compromised. If <code>deploy-bot</code> has <code>AdministratorAccess</code>, a leak hands an attacker your whole account, including the bill. With your policy, the worst they can do is upload files to one bucket.</p>
+<div class="mistake"><b>Common mistake</b>Writing <code>"Action": "s3:*"</code> or <code>"Resource": "*"</code> to make an <code>AccessDenied</code> error go away. It works, and it quietly grants deleting every bucket in the account. Read the error instead: it names the exact action that was denied, so add just that action on just that resource.</div>
+
+<h4>Roles over access keys</h4>
+<p>Access keys for an IAM user never expire on their own, so a leaked key works until someone notices and deletes it. Roles fix that. A Lambda function or EC2 instance is given a role, and AWS hands it fresh temporary credentials automatically. GitHub Actions can do the same through <b>OIDC</b> (OpenID Connect): GitHub proves to AWS "this is a run of workflow X in repository Y", and AWS lets that run assume a role for a short time. No long-lived secret is stored anywhere. The <code>deploy-bot</code> user in this lesson is fine for learning, but in a real project you would give the same policy to a role.</p>
+<div class="try"><b>Try it in your head</b><code>deploy-bot</code> has only your policy. It tries <code>s3:DeleteObject</code> on <code>logo.png</code> in the portfolio bucket. Result? Denied, an implicit deny: the policy allows only PutObject and GetObject, and nothing allows deleting.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>IAM decides whether a principal (user, group member or role) may perform an action on a resource.</li>
+<li>A policy is JSON: statements with <code>Effect</code>, <code>Action</code> (<code>service:Operation</code>) and <code>Resource</code> (an ARN). <code>Version</code> is always <code>2012-10-17</code>.</li>
+<li>Explicit Deny beats Allow; with no Allow, the answer is an implicit deny.</li>
+<li><code>create-policy</code>, then <code>attach-user-policy</code>, then check with <code>simulate-principal-policy</code>.</li>
+<li>Least privilege keeps the blast radius small. Prefer roles with temporary credentials over access keys.</li>
+</ul>
+`);

@@ -678,3 +678,114 @@ function fib(n) {
 <li>Memoisation, "remember answers to smaller problems", is the core idea of dynamic programming.</li>
 </ul>
 `);
+
+explain('a6',`
+<h4>Patterns, not memorised answers</h4>
+<p>Coding interviews draw on thousands of questions, and nobody memorises them all. The good news is that most of them are built from a small number of <b>patterns</b>: reusable ideas you can recognise from the wording of the question. Spot the pattern and you already know the shape of the answer.</p>
+<p>This lesson covers three of the most common ones. The <b>sliding window</b> scans a string or array with a moving frame. <b>One pass with running state</b> remembers one useful fact, like the cheapest price so far, as it goes. <b>Dynamic programming</b> builds the answer to a big problem out of answers to smaller ones, which you started in the last two lessons with memoised Fibonacci. Finally, you will see how to work through a problem out loud in a live interview.</p>
+
+<h4>The sliding window</h4>
+<p>The first task: find the length of the longest <b>substring</b> without a repeated character. A substring is an unbroken run of characters, so in <code>"pwwkew"</code>, <code>"wke"</code> is a substring but <code>"pwke"</code> is not, because it skips a letter.</p>
+<p>Brute force would check every possible substring, and there are about n² of them, each needing its own check. The sliding window does it in one pass. Picture a frame over the string with a left edge, <code>start</code>, and a right edge, <code>i</code>:</p>
+<ul>
+<li>Each step, move the right edge one character further, growing the window.</li>
+<li>If the new character is already inside the window, the rule is broken. Move the left edge to just past the earlier copy of that character, shrinking the window until it is valid again.</li>
+<li>After each step, the window is valid, so compare its length, <code>i - start + 1</code>, with the best so far.</li>
+</ul>
+<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="A window sliding over the string pwwkew, step by step">
+<g text-anchor="middle"><text class="t-s" x="40" y="22">i</text><text class="t-s" x="345" y="22">length</text><text class="t-s" x="395" y="22">best</text></g>
+<g text-anchor="middle" class="t-s"><text class="t-s" x="40" y="54">0</text><text class="t-s" x="40" y="88">1</text><text class="t-s" x="40" y="122">2</text><text class="t-s" x="40" y="156">3</text><text class="t-s" x="40" y="190">4</text><text class="t-s" x="40" y="224">5</text></g>
+<rect class="bx-info" x="80" y="32" width="36" height="30"/><rect class="bx" x="116" y="32" width="36" height="30"/><rect class="bx" x="152" y="32" width="36" height="30"/><rect class="bx" x="188" y="32" width="36" height="30"/><rect class="bx" x="224" y="32" width="36" height="30"/><rect class="bx" x="260" y="32" width="36" height="30"/>
+<rect class="bx-info" x="80" y="66" width="36" height="30"/><rect class="bx-info" x="116" y="66" width="36" height="30"/><rect class="bx" x="152" y="66" width="36" height="30"/><rect class="bx" x="188" y="66" width="36" height="30"/><rect class="bx" x="224" y="66" width="36" height="30"/><rect class="bx" x="260" y="66" width="36" height="30"/>
+<rect class="bx" x="80" y="100" width="36" height="30"/><rect class="bx" x="116" y="100" width="36" height="30"/><rect class="bx-warn" x="152" y="100" width="36" height="30"/><rect class="bx" x="188" y="100" width="36" height="30"/><rect class="bx" x="224" y="100" width="36" height="30"/><rect class="bx" x="260" y="100" width="36" height="30"/>
+<rect class="bx" x="80" y="134" width="36" height="30"/><rect class="bx" x="116" y="134" width="36" height="30"/><rect class="bx-info" x="152" y="134" width="36" height="30"/><rect class="bx-info" x="188" y="134" width="36" height="30"/><rect class="bx" x="224" y="134" width="36" height="30"/><rect class="bx" x="260" y="134" width="36" height="30"/>
+<rect class="bx" x="80" y="168" width="36" height="30"/><rect class="bx" x="116" y="168" width="36" height="30"/><rect class="bx-ok" x="152" y="168" width="36" height="30"/><rect class="bx-ok" x="188" y="168" width="36" height="30"/><rect class="bx-ok" x="224" y="168" width="36" height="30"/><rect class="bx" x="260" y="168" width="36" height="30"/>
+<rect class="bx" x="80" y="202" width="36" height="30"/><rect class="bx" x="116" y="202" width="36" height="30"/><rect class="bx" x="152" y="202" width="36" height="30"/><rect class="bx-info" x="188" y="202" width="36" height="30"/><rect class="bx-info" x="224" y="202" width="36" height="30"/><rect class="bx-warn" x="260" y="202" width="36" height="30"/>
+<g text-anchor="middle" class="t-m">
+<text class="t-m" x="98" y="53">p</text><text class="t-m" x="134" y="53">w</text><text class="t-m" x="170" y="53">w</text><text class="t-m" x="206" y="53">k</text><text class="t-m" x="242" y="53">e</text><text class="t-m" x="278" y="53">w</text>
+<text class="t-m" x="98" y="87">p</text><text class="t-m" x="134" y="87">w</text><text class="t-m" x="170" y="87">w</text><text class="t-m" x="206" y="87">k</text><text class="t-m" x="242" y="87">e</text><text class="t-m" x="278" y="87">w</text>
+<text class="t-m" x="98" y="121">p</text><text class="t-m" x="134" y="121">w</text><text class="t-m" x="170" y="121">w</text><text class="t-m" x="206" y="121">k</text><text class="t-m" x="242" y="121">e</text><text class="t-m" x="278" y="121">w</text>
+<text class="t-m" x="98" y="155">p</text><text class="t-m" x="134" y="155">w</text><text class="t-m" x="170" y="155">w</text><text class="t-m" x="206" y="155">k</text><text class="t-m" x="242" y="155">e</text><text class="t-m" x="278" y="155">w</text>
+<text class="t-m" x="98" y="189">p</text><text class="t-m" x="134" y="189">w</text><text class="t-m" x="170" y="189">w</text><text class="t-m" x="206" y="189">k</text><text class="t-m" x="242" y="189">e</text><text class="t-m" x="278" y="189">w</text>
+<text class="t-m" x="98" y="223">p</text><text class="t-m" x="134" y="223">w</text><text class="t-m" x="170" y="223">w</text><text class="t-m" x="206" y="223">k</text><text class="t-m" x="242" y="223">e</text><text class="t-m" x="278" y="223">w</text>
+<text class="t-m" x="345" y="53">1</text><text class="t-m" x="345" y="87">2</text><text class="t-m" x="345" y="121">1</text><text class="t-m" x="345" y="155">2</text><text class="t-m" x="345" y="189">3</text><text class="t-m" x="345" y="223">3</text>
+<text class="t-m" x="395" y="53">1</text><text class="t-m" x="395" y="87">2</text><text class="t-m" x="395" y="121">2</text><text class="t-m" x="395" y="155">2</text><text class="t-b t-ok" x="395" y="189">3</text><text class="t-b t-ok" x="395" y="223">3</text>
+</g>
+</svg><figcaption>The window sliding over "pwwkew". The shaded boxes are the window after each step. At i equals 2 the second w repeats, so the left edge jumps past the first w and the window shrinks to just "w". It then grows to "wke", length 3. At i equals 5 another w repeats, so the window becomes "kew", still length 3. The best is 3.</figcaption></figure>
+<p>How do you know where the earlier copy is? Keep a Map from each character to the index where you <b>last saw</b> it, which is the hash map habit from earlier lessons. Each character enters and leaves the window at most once, so the whole thing is O(n).</p>
+<div class="mistake"><b>Common mistake</b>Moving the left edge backwards. Take <code>"abba"</code>. At the second b, start jumps to 2. At the final a, the map says a was last seen at index 0. That copy is already <i>outside</i> the window, so you must ignore it. Only move <code>start</code> when the last-seen index is <code>&gt;= start</code>. Without that check you set start back to 1 and get 3 instead of the correct 2.</div>
+
+<h4>One pass with running state: the stock problem</h4>
+<p>The second task: given a list of daily prices, find the best profit from buying on one day and selling on a <i>later</i> day. If prices only fall, the answer is 0, meaning "don't trade".</p>
+<p>Brute force tries every buy day with every later sell day: O(n²). The insight is that if you are selling today, the best day to have bought was the <b>cheapest day so far</b>. So walk the prices once and remember two things: the lowest price seen, and the best profit seen.</p>
+<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="A line chart of the prices 7, 1, 5, 3, 6, 4 with the best buy and sell days marked">
+<line class="ln" x1="40" y1="200" x2="400" y2="200"/>
+<polyline class="ln-a" fill="none" points="60,46 120,178 180,90 240,134 300,68 360,112"/>
+<circle class="dot" cx="60" cy="46" r="5"/><circle class="dot-ok" cx="120" cy="178" r="7"/><circle class="dot" cx="180" cy="90" r="5"/><circle class="dot" cx="240" cy="134" r="5"/><circle class="dot-ok" cx="300" cy="68" r="7"/><circle class="dot" cx="360" cy="112" r="5"/>
+<g text-anchor="middle"><text class="t-m" x="60" y="34">7</text><text class="t-m" x="96" y="182">1</text><text class="t-m" x="180" y="78">5</text><text class="t-m" x="240" y="122">3</text><text class="t-m" x="300" y="56">6</text><text class="t-m" x="360" y="100">4</text>
+<text class="t-s" x="60" y="220">day 0</text><text class="t-s" x="120" y="220">1</text><text class="t-s" x="180" y="220">2</text><text class="t-s" x="240" y="220">3</text><text class="t-s" x="300" y="220">4</text><text class="t-s" x="360" y="220">5</text>
+<text class="t-s t-ok" x="120" y="196">buy</text><text class="t-b t-ok" x="374" y="160">profit 5</text></g>
+<line class="ln-d" x1="120" y1="178" x2="330" y2="178"/><path class="ln-ok" d="M330 176V76"/><polygon class="ah-ok" points="324,78 336,78 330,70"/>
+</svg><figcaption>The prices 7, 1, 5, 3, 6 and 4 as a line. The lowest point so far is 1, on day 1, marked as the buy. The highest price after it is 6, on day 4. Selling there makes a profit of 6 minus 1, which is 5.</figcaption></figure>
+<p>Trace <code>[7, 1, 5, 3, 6, 4]</code>: lowest starts as <code>Infinity</code>, a value bigger than any price, so the first price always replaces it. After 7, lowest is 7 and best is 0. After 1, lowest is 1. At 5, profit 4 becomes best. At 3, profit 2, no change. At 6, profit 5, the new best. At 4, profit 3, no change. Answer: 5. For an empty list the loop never runs and you return 0.</p>
+
+<h4>Dynamic programming: big answers from small ones</h4>
+<p><b>Dynamic programming</b>, or DP, is a fancy name for a simple idea: if the answer for n can be built from answers for smaller numbers, work out the small answers first, store them, and build upwards. It is memoisation from the Fibonacci exercise, done in a loop instead of with recursion.</p>
+<p>Every DP solution answers three questions:</p>
+<ol>
+<li><b>What does dp[x] mean?</b> Say it in one plain sentence.</li>
+<li><b>What are the base cases?</b> The smallest answers you know without calculating.</li>
+<li><b>What is the rule</b> that builds dp[x] from smaller entries?</li>
+</ol>
+
+<h4>Worked example: climbing stairs</h4>
+<p>You climb a staircase taking 1 or 2 steps at a time. How many different ways are there to reach step n?</p>
+<p>Think about your <b>last move</b>. To stand on step n, you either came from step n − 1 with a single step, or from step n − 2 with a double step. Those are the only options, and they never overlap. So the number of ways is <code>ways(n - 1) + ways(n - 2)</code>.</p>
+<div class="tbl-wrap"><table><tr><th>n</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr>
+<tr><td>ways</td><td>1</td><td>1</td><td>2</td><td>3</td><td>5</td><td>8</td></tr></table></div>
+<p>The base cases: 1 way to be on step 0 (do nothing) and 1 way to reach step 1. Every later entry is the sum of the two before it, so this is the Fibonacci pattern again. Since each step only needs the previous two values, you can keep just two variables, <code>a</code> and <code>b</code>, and slide them forward. That makes it O(n) time and O(1) space, and n = 45 finishes instantly.</p>
+
+<h4>Worked example: coin change, filling a DP table</h4>
+<p>The last task: given coin values, find the <b>fewest</b> coins that add up to an amount, or -1 if it cannot be done. With coins <code>[1, 2, 5]</code> and amount 11, the answer is 3: 5 + 5 + 1.</p>
+<p>Greedy guessing, always taking the biggest coin, can fail with odd coin sets, so DP it is. The three questions:</p>
+<ul>
+<li><b>Meaning:</b> <code>dp[x]</code> is the fewest coins that make the amount x.</li>
+<li><b>Base case:</b> <code>dp[0] = 0</code>. Making 0 takes no coins. Every other entry starts as <code>Infinity</code>, meaning "not possible yet".</li>
+<li><b>Rule:</b> to make x, your last coin was some coin c. Before it you had made x − c, which took <code>dp[x - c]</code> coins. So try every coin and keep the smallest <code>dp[x - c] + 1</code>.</li>
+</ul>
+<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="The coin change table for coins 1, 2 and 5, filled from amount 0 to 11">
+<text class="t-m" x="210" y="24" text-anchor="middle">coins [1, 2, 5], amount 11</text>
+<path class="ln-a" fill="none" d="M245 130Q320 40 393 130"/><path class="ln-a" fill="none" d="M335 130Q365 95 393 130"/><path class="ln-a" fill="none" d="M365 130Q380 110 393 130"/>
+<text class="t-s" x="4" y="153">dp[x]</text><text class="t-s" x="4" y="186">x</text>
+<rect class="bx" x="50" y="130" width="30" height="36"/><rect class="bx" x="80" y="130" width="30" height="36"/><rect class="bx" x="110" y="130" width="30" height="36"/><rect class="bx" x="140" y="130" width="30" height="36"/><rect class="bx" x="170" y="130" width="30" height="36"/><rect class="bx" x="200" y="130" width="30" height="36"/><rect class="bx-info" x="230" y="130" width="30" height="36"/><rect class="bx" x="260" y="130" width="30" height="36"/><rect class="bx" x="290" y="130" width="30" height="36"/><rect class="bx-info" x="320" y="130" width="30" height="36"/><rect class="bx-info" x="350" y="130" width="30" height="36"/><rect class="bx-ok" x="380" y="130" width="30" height="36"/>
+<g text-anchor="middle">
+<text class="t-m" x="65" y="154">0</text><text class="t-m" x="95" y="154">1</text><text class="t-m" x="125" y="154">1</text><text class="t-m" x="155" y="154">2</text><text class="t-m" x="185" y="154">2</text><text class="t-m" x="215" y="154">1</text><text class="t-m" x="245" y="154">2</text><text class="t-m" x="275" y="154">2</text><text class="t-m" x="305" y="154">3</text><text class="t-m" x="335" y="154">3</text><text class="t-m" x="365" y="154">2</text><text class="t-b t-ok" x="395" y="154">3</text>
+<text class="t-s" x="65" y="186">0</text><text class="t-s" x="95" y="186">1</text><text class="t-s" x="125" y="186">2</text><text class="t-s" x="155" y="186">3</text><text class="t-s" x="185" y="186">4</text><text class="t-s" x="215" y="186">5</text><text class="t-s" x="245" y="186">6</text><text class="t-s" x="275" y="186">7</text><text class="t-s" x="305" y="186">8</text><text class="t-s" x="335" y="186">9</text><text class="t-s" x="365" y="186">10</text><text class="t-s" x="395" y="186">11</text>
+<text class="t-s" x="210" y="222">dp[11] = 1 + smallest of dp[10], dp[9], dp[6] = 3</text>
+</g>
+</svg><figcaption>The table is filled from left to right, starting with dp of 0 equals 0. To fill dp of 11, look back by each coin: 1 step back to dp of 10, 2 back to dp of 9, and 5 back to dp of 6. The smallest of those is 2, so dp of 11 is 2 plus 1, which is 3 coins.</figcaption></figure>
+<p>Check one entry by hand. dp[6]: coin 1 gives dp[5] + 1 = 2; coin 2 gives dp[4] + 1 = 3; coin 5 gives dp[1] + 1 = 2. The smallest is 2 (5 + 1). Filling the table is O(amount × number of coins).</p>
+<p>At the end, if <code>dp[amount]</code> is still <code>Infinity</code>, no combination worked, so return -1. With coins <code>[2]</code> and amount 3, dp[1] stays Infinity, and dp[3] = dp[1] + 1 is Infinity too. <code>Infinity + 1</code> is still Infinity in JavaScript, which is why it makes a safe "impossible" marker.</p>
+<div class="mistake"><b>Common mistake</b>Filling the array with 0 instead of <code>Infinity</code>. Then <code>Math.min</code> always picks the 0, every amount looks free, and you return 0 coins. Start every entry except dp[0] as "impossible", and let the rule improve them.</div>
+
+<h4>How to work through a problem in an interview</h4>
+<p>Interviewers grade how you think as much as the final code. A reliable routine:</p>
+<ol>
+<li><b>Clarify.</b> Repeat the problem in your own words and ask about edge cases: can the input be empty? Are there negative numbers?</li>
+<li><b>Work an example by hand</b>, out loud, like the traces in this lesson.</li>
+<li><b>State the brute force</b> and its Big-O. It proves you can solve it, and gives you something to improve.</li>
+<li><b>Optimise.</b> Ask which pattern the wording suggests: "longest substring" suggests a window, "how many ways" or "fewest" suggests DP, "have I seen this?" suggests a hash map.</li>
+<li><b>Test edge cases</b>: empty input, one item, all the same, impossible cases.</li>
+</ol>
+
+<div class="try"><b>Try it in your head</b>How many ways are there to climb 6 stairs? The table continues 5, 8, so the next is 5 + 8 = 13. And what is the longest substring without repeats in <code>"bbbbb"</code>? Every new b repeats, so the window never grows past 1.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>Sliding window: grow the right edge, and when the rule breaks, move the left edge forward, never back.</li>
+<li>One pass with running state: remember the lowest price so far and the best profit so far.</li>
+<li>Dynamic programming: define dp[x] in words, set the base cases, then build each entry from smaller ones.</li>
+<li>climbStairs adds the two previous answers; coin change takes the best of <code>dp[x - c] + 1</code>, with Infinity meaning impossible.</li>
+<li>In interviews: clarify, work an example, state the brute force, optimise, then test edge cases.</li>
+</ul>
+`);

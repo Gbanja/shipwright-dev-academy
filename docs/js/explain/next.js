@@ -898,3 +898,104 @@ export const config = { matcher: ['/dashboard/:path*'] };</pre>
 <li>Real sessions must be unforgeable, and checked again near the data. Use Auth.js or Clerk in production.</li>
 </ul>
 `);
+
+explain('n8',`
+<h4>Why write tests at all?</h4>
+<p>Every time you change code, you risk breaking something that used to work. You could click through the whole app after each change, but that gets slower as the app grows, and people skip steps. A <b>test</b> is a small piece of code that runs your code with a known input and checks the output is what you expected. A computer can run hundreds of them in a second, after every change, and never gets bored.</p>
+<p>The smallest kind is a <b>unit test</b>: it checks one function on its own, like "does <code>formatPrice(1250)</code> give <code>$12.50</code>?" <b>Vitest</b> is the tool that finds your tests, runs them and reports which passed. It is called a <b>test runner</b>, and it is the usual choice for TypeScript projects built with Vite or Next.js. Its commands match Jest, an older runner, so tutorials for either mostly apply.</p>
+<div class="analogy"><b>Think of it like</b>A safety net under a trapeze. It doesn't stop you trying new moves; it lets you try them without fear. When a change breaks something, a red test catches it in seconds instead of a customer finding it next week.</div>
+
+<h4>The parts of a test</h4>
+<p>Tests live in files ending <code>.test.ts</code>, next to the code they check. This lesson has <code>lib/price.ts</code> (the code) and <code>lib/price.test.ts</code> (its tests), open as two tabs.</p>
+<pre class="snip">import { formatPrice } from './price';
+
+describe('formatPrice', () =&gt; {            // a group of related tests
+  it('formats cents', () =&gt; {               // one test, named in plain words
+    expect(formatPrice(1250)).toBe('$12.50');  // the check
+  });
+});</pre>
+<ul>
+<li><code>describe(name, fn)</code> groups tests under a heading, usually the function's name.</li>
+<li><code>it(name, fn)</code> is one test. Read it as a sentence: "it formats cents". <code>test(...)</code> is the same thing with a different name.</li>
+<li><code>expect(...)</code> plus a <b>matcher</b> such as <code>toBe</code> is an <b>assertion</b>: a claim that must be true. If it isn't, the test fails.</li>
+</ul>
+<figure class="fig"><svg viewBox="0 0 420 175" role="img" aria-label="An assertion: expect wraps the actual value from your code, and the matcher compares it with the expected value">
+<rect class="bx-dark" x="10" y="15" width="400" height="44" rx="6"/>
+<text class="t-term" x="210" y="43" text-anchor="middle">expect(formatPrice(1250)).toBe('$12.50')</text>
+<path class="ln-a" d="M30 66v10h205v-10"/><path class="ln-ok" d="M250 66v10h145v-10"/>
+<rect class="bx-a" x="40" y="96" width="170" height="60" rx="8"/><text class="t-b" x="125" y="121" text-anchor="middle">actual</text><text class="t-s" x="125" y="142" text-anchor="middle">what your code gave</text>
+<rect class="bx-ok" x="235" y="96" width="170" height="60" rx="8"/><text class="t-b" x="320" y="121" text-anchor="middle">expected</text><text class="t-s" x="320" y="142" text-anchor="middle">what it should give</text>
+<path class="ln" d="M132 76v18M322 76v18"/>
+</svg><figcaption>Every assertion has two halves. Inside expect goes the actual value, produced by running your code. The matcher holds the expected value. The test passes only if the two agree.</figcaption></figure>
+<p>The common matchers:</p>
+<div class="tbl-wrap"><table><tr><th>Matcher</th><th>Passes when</th></tr>
+<tr><td><code>toBe(x)</code></td><td>The value is exactly <code>x</code>. Use it for text, numbers and true or false.</td></tr>
+<tr><td><code>toEqual(x)</code></td><td>Objects or arrays have the same contents. <code>toBe</code> would fail here, because two separate objects are never "the same object".</td></tr>
+<tr><td><code>toThrow('text')</code></td><td>Calling the function throws an error whose message contains that text.</td></tr></table></div>
+<div class="tip"><b>Tip</b>In a real project you either import the helpers, <code>import { describe, it, expect } from 'vitest'</code>, or switch on <code>globals: true</code> in the Vitest config so they are always available. This sandbox provides them for you. Run the tests with <code>npx vitest</code>, which keeps watching and re-runs on every save, or <code>npx vitest run</code> to run once, as CI does.</div>
+
+<h4>Reading a failing test</h4>
+<p>The starter <code>formatPrice</code> returns empty text, so both its tests fail. A failure tells you three things: which test, what was expected, and what actually came back. Vitest's message reads like <i>expected '' to be '$12.00'</i>: the code gave empty text, the test wanted $12.00. Read the first value as "actual" and the second as "expected", and you know exactly what to fix.</p>
+<p>Why are prices in <b>cents</b>, whole numbers, rather than 12.5 dollars? Computers store decimals in binary and can't hold most of them exactly: in JavaScript, <code>0.1 + 0.2</code> is <code>0.30000000000000004</code>. Money in whole cents avoids those tiny errors. You only turn cents into dollars when showing them: divide by 100, then <code>toFixed(2)</code> writes the number with exactly two decimal places, so 1200 becomes "12.00". Put a dollar sign in front and both tests pass.</p>
+
+<h4>Test-driven development: red, green, refactor</h4>
+<p><b>Test-driven development</b>, or <b>TDD</b>, flips the usual order: you write the test <i>before</i> the code. It works in a short loop with three steps.</p>
+<figure class="fig"><svg viewBox="0 0 420 255" role="img" aria-label="The TDD loop: red, write a failing test; green, simplest code to pass; refactor, tidy up with tests still green; then repeat">
+<rect class="bx-bad" x="135" y="10" width="150" height="62" rx="10"/><text class="t-b t-bad" x="210" y="36" text-anchor="middle">1. Red</text><text class="t-s" x="210" y="57" text-anchor="middle">write a failing test</text>
+<rect class="bx-ok" x="255" y="150" width="155" height="62" rx="10"/><text class="t-b t-ok" x="332" y="176" text-anchor="middle">2. Green</text><text class="t-s" x="332" y="197" text-anchor="middle">simplest code passes</text>
+<rect class="bx-info" x="10" y="150" width="155" height="62" rx="10"/><text class="t-b t-info" x="87" y="176" text-anchor="middle">3. Refactor</text><text class="t-s" x="87" y="197" text-anchor="middle">tidy, still green</text>
+<path class="ln" d="M285 60L325 140"/><polygon class="ah" points="318,140 330,138 328,149"/>
+<path class="ln" d="M255 181H175"/><polygon class="ah" points="177,175 177,187 169,181"/>
+<path class="ln" d="M95 150L135 70"/><polygon class="ah" points="128,72 139,66 139,78"/>
+<text class="t-s" x="210" y="240" text-anchor="middle">then repeat with the next behaviour</text>
+</svg><figcaption>The TDD cycle. Red: write one test for behaviour that doesn't exist yet, and watch it fail. Green: write the simplest code that makes it pass. Refactor: clean the code up while the tests stay green. Then start again with the next small behaviour.</figcaption></figure>
+<ol>
+<li><b>Red.</b> Write a test for something the code doesn't do yet, and run it. It must fail. A test you have never seen fail might not be testing anything at all.</li>
+<li><b>Green.</b> Write the <i>simplest</i> code that makes the test pass. No extra features "just in case".</li>
+<li><b>Refactor.</b> Now improve the code, better names or less repetition, re-running the tests after each change. If they stay green, you didn't break anything.</li>
+</ol>
+<p>The benefit is more than catching bugs. Writing the test first forces you to decide exactly what the function should do, with real examples, before you get lost in how.</p>
+
+<h4>Worked example: <code>applyDiscount</code></h4>
+<p><b>Red.</b> The starter <code>applyDiscount</code> just returns the price unchanged. Add a new <code>describe('applyDiscount', ...)</code> block with two tests: 25% off 1000 cents should be 750, and 10% off 999 should be 899. Run them: the first fails with <i>expected 1000 to be 750</i>. Good, that's red, and it proves the test can detect a wrong answer.</p>
+<p><b>Green.</b> Work it out by hand first. 25% off means you pay 75%, so multiply by <code>1 - 25 / 100</code>, which is 0.75: 1000 × 0.75 = 750. For the second test, 999 × 0.9 = 899.1, but money has whole cents. <code>Math.round</code> rounds to the nearest whole number, giving 899. So the body is <code>return Math.round(cents * (1 - percent / 100));</code>. Every test passes.</p>
+<p><b>Refactor.</b> The code is one line already, so there's little to tidy. The point is that you could, safely.</p>
+
+<h4>Edge cases: testing what should go wrong</h4>
+<p>An <b>edge case</b> is an unusual input at the limits: zero, empty text, huge numbers, negative numbers. What should a 150% discount do? Paying a negative price is nonsense, so the function should refuse by throwing an error. Write that test first (red), then add the check (green):</p>
+<pre class="snip">it('rejects discounts over 100%', () =&gt; {
+  expect(() =&gt; applyDiscount(1000, 150)).toThrow('between 0 and 100');
+});
+
+// in price.ts, before the calculation:
+if (percent &lt; 0 || percent &gt; 100) {
+  throw new Error('percent must be between 0 and 100');
+}</pre>
+<p><code>throw new Error(message)</code> stops the function and reports a problem. <code>toThrow('between 0 and 100')</code> passes if the error's message <i>contains</i> that text, so the full sentence matches.</p>
+<div class="mistake"><b>Common mistake</b>Writing <code>expect(applyDiscount(1000, 150)).toThrow(...)</code> without the arrow function. The function runs, and throws, <i>before</i> <code>expect</code> is even called, so the error crashes the test instead of being caught. Wrap the call in <code>() =&gt; ...</code> so <code>expect</code> can run it and watch for the throw.</div>
+<div class="mistake"><b>Common mistake</b>Using <code>toBe</code> to compare objects or arrays. <code>expect([1, 2]).toBe([1, 2])</code> fails, because they are two different arrays that happen to look alike. Use <code>toEqual</code> to compare contents.</div>
+
+<h4>Unit tests are not the whole story</h4>
+<p>Vitest unit tests are fast and precise, but they check pieces in isolation. A login page could have perfect functions and still be broken because a button isn't wired up. <b>End-to-end tests</b> drive a real browser through a whole journey, like "sign up, see the welcome page, log out". <b>Playwright</b> is the usual tool. They are slower and more fragile, so teams follow the <b>testing pyramid</b>.</p>
+<figure class="fig"><svg viewBox="0 0 420 228" role="img" aria-label="The testing pyramid: many unit tests at the bottom, fewer integration tests, a few end-to-end tests at the top">
+<polygon class="bx-a" points="210,12 260,72 160,72"/>
+<polygon class="bx-warn" points="160,78 260,78 305,132 115,132"/>
+<polygon class="bx-ok" points="115,138 305,138 355,198 65,198"/>
+<text class="t-s" x="210" y="62" text-anchor="middle">E2E</text>
+<text class="t-b" x="210" y="111" text-anchor="middle">integration</text>
+<text class="t-b" x="210" y="173" text-anchor="middle">unit (Vitest)</text>
+<text class="t-s" x="275" y="45">few, slow</text><text class="t-s" x="275" y="62">Playwright</text>
+<text class="t-s" x="210" y="220" text-anchor="middle">many, fast</text>
+</svg><figcaption>The testing pyramid. The wide base is many fast unit tests. Above them are fewer integration tests that check pieces working together. At the narrow top are a handful of slow end-to-end tests, in Playwright, for the most important user journeys.</figcaption></figure>
+
+<div class="try"><b>Try it in your head</b>What does <code>applyDiscount(200, 50)</code> return, and what about <code>applyDiscount(200, -10)</code>? Then: which tool would you use to check that a user can add an item to the basket and pay? Answer: 100, because half of 200 is 100. The second throws "percent must be between 0 and 100". The checkout journey is a Playwright end-to-end test.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>A unit test runs one function with a known input and checks the output. Vitest finds and runs <code>.test.ts</code> files.</li>
+<li><code>describe</code> groups tests, <code>it</code> is one test, and <code>expect(actual).toBe(expected)</code> asserts. Use <code>toEqual</code> for objects and <code>toThrow</code> for errors.</li>
+<li>TDD: red (a failing test first), green (the simplest code that passes), refactor (tidy up with tests green).</li>
+<li>Test edge cases like invalid input, and wrap throwing calls in <code>() =&gt;</code>.</li>
+<li>Many fast unit tests, fewer integration tests, a few Playwright end-to-end tests for critical flows.</li>
+</ul>
+`);
