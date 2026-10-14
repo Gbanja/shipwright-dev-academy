@@ -299,3 +299,89 @@ beforeEach(() =&gt; {
 <li>Build fresh fixtures in <code>beforeEach</code>, and mock only what you don't control.</li>
 </ul>
 `);
+
+explain('t4',`
+<h4>Mocks can lie</h4>
+<p>In the last lesson you replaced the database with a mock. That made the tests fast and safe, but it also hid something: a mock agrees with whatever you told it. Suppose your code says <code>INSRT INTO users</code>, with a typo. A mocked <code>db.run</code> records the call and returns happily, and the test is green. The real database would have refused the statement on the first try.</p>
+<p>The same goes for anything the database itself is responsible for: whether a column name is right, whether a <code>UNIQUE</code> rule really exists, whether <code>ORDER BY</code> sorts the way you assumed. Unit tests with mocks cannot check any of that, because the database is not there.</p>
+<p>An <b>integration test</b> checks that pieces really work <b>together</b>. Here, that means running your data functions against a real database. It sits in the middle of the testing pyramid: slower than a unit test, but it catches a whole class of bugs that unit tests never see.</p>
+<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="A unit test with a mock stops before the database; an integration test goes all the way">
+<rect class="bx" x="140" y="14" width="140" height="36" rx="6"/><text class="t" x="210" y="37" text-anchor="middle">your test</text>
+<rect class="bx-a" x="140" y="66" width="140" height="36" rx="6"/><text class="t-m" x="210" y="89" text-anchor="middle">createUser()</text>
+<rect class="bx" x="140" y="118" width="140" height="36" rx="6"/><text class="t" x="210" y="141" text-anchor="middle">SQL statement</text>
+<rect class="bx-info" x="140" y="170" width="140" height="36" rx="6"/><text class="t" x="210" y="193" text-anchor="middle">real database</text>
+<path class="ln" d="M210 50v8"/><polygon class="ah" points="205,57 215,57 210,65"/>
+<path class="ln" d="M210 102v8"/><polygon class="ah" points="205,109 215,109 210,117"/>
+<path class="ln" d="M210 154v8"/><polygon class="ah" points="205,161 215,161 210,169"/>
+<path class="ln-a" d="M128 16h-10v94h10"/>
+<text class="t-s t-a" x="108" y="56" text-anchor="end">unit test,</text><text class="t-s t-a" x="108" y="72" text-anchor="end">mock below</text>
+<path class="ln-ok" d="M292 16h10v190h-10"/>
+<text class="t-s t-ok" x="312" y="104">integration</text><text class="t-s t-ok" x="312" y="120">test: the</text><text class="t-s t-ok" x="312" y="136">whole path</text>
+<text class="t-s t-bad" x="108" y="141" text-anchor="end">never checked</text>
+</svg><figcaption>A unit test with a mocked database only covers the top half: your test and your function's logic. The SQL and the database never run, so mistakes there go unseen. An integration test runs the whole path, down to the real database.</figcaption></figure>
+
+<h4>The tools in this sandbox</h4>
+<p>In this lesson, <code>db</code> is a real SQLite database, created from the lesson's schema, with a table <code>users(id, email UNIQUE, name)</code>. It offers two methods:</p>
+<ul>
+<li><code>db.run(sql, params)</code> runs a statement that changes data, such as INSERT or DELETE.</li>
+<li><code>db.query(sql, params)</code> runs a SELECT and returns an array of row objects, like <code>[{ id: 1, email: 'ada@example.com', name: 'Ada' }]</code>.</li>
+</ul>
+<p>Look at how the starter functions pass values: <code>'SELECT * FROM users WHERE email = ?'</code> with <code>[email]</code>. Each <code>?</code> is a <b>placeholder</b>, and the database fills it with the matching value from the array. This is called a <b>parameterised query</b>. It is not just tidier than gluing strings together: it makes the value always count as data, never as SQL, which is the standard defence against an attack called SQL injection. Real database libraries for PostgreSQL and MySQL work the same way.</p>
+<p>These functions are synchronous: they return their answer straight away, so no <code>await</code> is needed in this lesson's tests.</p>
+
+<h4>Writing the tests</h4>
+<p>An integration test still follows Arrange-Act-Assert. The difference is that "Arrange" puts real rows into a real table:</p>
+<pre class="snip">test('finds a user by email', () =&gt; {
+  createUser(db, { email: 'grace@example.com', name: 'Grace' }); // Arrange
+  const found = findByEmail(db, 'grace@example.com');          // Act
+  expect(found.name).toBe('Grace');                             // Assert
+});</pre>
+<p>Think about the edge cases too. What should <code>findByEmail</code> return for an address that isn't there? The code says <code>|| null</code>, so a good test checks that the answer is exactly <code>null</code>, not <code>undefined</code> and not a crash.</p>
+<p>The real database lets you test its <b>constraints</b>. Inserting the same email twice must fail. SQLite reports <code>UNIQUE constraint failed: users.email</code>, and that error is thrown out of <code>createUser</code>, so the wrapped-function form of <code>toThrow</code> from the unit testing lesson catches it. Passing <code>'UNIQUE'</code> to <code>toThrow</code> checks that the message contains that word. This test proves something no mock could: that the rule really exists in the schema.</p>
+<p>For <code>listUsers</code>, which sorts by name, insert the users in the <i>wrong</i> order on purpose, then check the order that comes back. If you insert them already sorted, the test passes even if the ORDER BY is missing. Comparing a whole array needs <code>toEqual</code>, and <code>.map((u) =&gt; u.name)</code> turns the rows into a simple list of names that is easy to compare.</p>
+
+<h4>The big rule: every test starts from a known state</h4>
+<p>A real database <b>remembers</b>. Rows inserted by one test are still in the table when the next test runs. That causes the most confusing kind of failure:</p>
+<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Without a reset, the second test fails on leftover data; with beforeEach, both pass">
+<text class="t-b t-bad" x="10" y="20">No reset</text>
+<rect class="bx" x="10" y="32" width="90" height="46" rx="6"/><text class="t-s" x="55" y="52" text-anchor="middle">test A:</text><text class="t-s" x="55" y="68" text-anchor="middle">add Ada</text>
+<rect class="bx-warn" x="115" y="32" width="90" height="46" rx="6"/><text class="t-s" x="160" y="52" text-anchor="middle">table still</text><text class="t-s" x="160" y="68" text-anchor="middle">has Ada</text>
+<rect class="bx" x="220" y="32" width="90" height="46" rx="6"/><text class="t-s" x="265" y="52" text-anchor="middle">test B:</text><text class="t-s" x="265" y="68" text-anchor="middle">add Ada</text>
+<rect class="bx-bad" x="325" y="32" width="85" height="46" rx="6"/><text class="t-b t-bad" x="367" y="52" text-anchor="middle">fails</text><text class="t-s" x="367" y="68" text-anchor="middle">UNIQUE</text>
+<path class="ln" d="M100 55h9"/><path class="ln" d="M205 55h9"/><path class="ln" d="M310 55h9"/>
+<line class="ln-d" x1="10" y1="100" x2="410" y2="100"/>
+<text class="t-b t-ok" x="10" y="124">beforeEach resets</text>
+<rect class="bx-ok" x="10" y="136" width="90" height="46" rx="6"/><text class="t-s" x="55" y="164" text-anchor="middle">empty table</text>
+<rect class="bx" x="115" y="136" width="90" height="46" rx="6"/><text class="t-s" x="160" y="156" text-anchor="middle">test A:</text><text class="t-s" x="160" y="172" text-anchor="middle">add Ada</text>
+<rect class="bx-ok" x="220" y="136" width="90" height="46" rx="6"/><text class="t-s" x="265" y="164" text-anchor="middle">empty table</text>
+<rect class="bx-ok" x="325" y="136" width="85" height="46" rx="6"/><text class="t-s" x="367" y="156" text-anchor="middle">test B:</text><text class="t-b t-ok" x="367" y="172" text-anchor="middle">passes</text>
+<path class="ln" d="M100 159h9"/><path class="ln" d="M205 159h9"/><path class="ln" d="M310 159h9"/>
+</svg><figcaption>Top: test A leaves Ada in the table, so test B, which also adds Ada, fails on the UNIQUE rule even though the code is fine. Bottom: beforeEach empties the table before every test, so each one starts clean and both pass.</figcaption></figure>
+<p>Tests that lean on each other's leftovers pass alone and fail together, or pass in one order and fail in another. The fix is to reset the state before every test:</p>
+<pre class="snip">beforeEach(() =&gt; {
+  db.run('DELETE FROM users');   // every test starts with an empty table
+});</pre>
+<p>Now every test is <b>independent</b>: it creates exactly the rows it needs and makes no assumptions about what ran before. Independent tests can run in any order, one at a time or all at once, with the same result.</p>
+<div class="tip"><b>Tip</b>Deleting rows is the simplest reset. Bigger projects often wrap each test in a transaction and roll it back at the end, which undoes everything the test did and is very fast. Either way, the goal is a known starting state.</div>
+
+<h4>In real projects: a throwaway database</h4>
+<p>Never point tests at your production database: they delete data on purpose. Teams run a separate, disposable database just for tests, ideally the <b>same kind</b> as production, because SQLite, PostgreSQL and MySQL differ in small ways that matter. In continuous integration (CI), the automated system that runs your tests on every change, the usual approach is to start PostgreSQL in a Docker container for the test run. Libraries called <b>Testcontainers</b> do that from inside the test code, starting a fresh container before the tests and removing it afterwards.</p>
+
+<h4>Errors and mistakes you will meet</h4>
+<div class="tbl-wrap"><table><tr><th>Message</th><th>What it means</th></tr>
+<tr><td><code>UNIQUE constraint failed: users.email</code> in a test you didn't expect</td><td>Leftover rows from an earlier test. Reset in beforeEach.</td></tr>
+<tr><td><code>Cannot read properties of null (reading 'name')</code></td><td><code>findByEmail</code> returned null: the row wasn't there, perhaps a typo in the email.</td></tr>
+<tr><td><code>expected [...] to equal [...]</code></td><td>The order or the contents differ. Read both arrays carefully.</td></tr></table></div>
+<div class="mistake"><b>Common mistake</b>One test that creates the data and a second test that relies on it. It works until someone runs the second test alone, or the runner reorders them. Each test should arrange its own data.</div>
+<div class="mistake"><b>Common mistake</b>Testing <code>listUsers</code> with users inserted already in alphabetical order. The test cannot fail, so it proves nothing about sorting. Insert them out of order.</div>
+<div class="try"><b>Try it in your head</b>There is no beforeEach. Test 1 creates Grace and Alan and checks <code>listUsers</code> gives Alan then Grace. Test 2 creates Ada and checks <code>listUsers</code> returns exactly one name. Does test 2 pass? No: the table still has Grace and Alan, so it returns three names, Ada, Alan and Grace. Add the reset and it passes.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>Integration tests run your code against the real thing, here a real database, catching wrong SQL and missing constraints that mocks hide.</li>
+<li>Use parameterised queries with <code>?</code> placeholders, and test constraints directly, such as a duplicate email throwing a UNIQUE error.</li>
+<li>Choose data that could fail: insert out of order to test sorting, and check the "not found" case returns null.</li>
+<li>Reset state in <code>beforeEach</code> so every test is independent and order doesn't matter.</li>
+<li>In CI, use a throwaway database of the same kind as production, for example PostgreSQL in Docker or via Testcontainers.</li>
+</ul>
+`);

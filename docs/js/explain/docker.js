@@ -545,17 +545,17 @@ curl localhost:8080</pre>
 
 <h4>Image names, and what a tag really is</h4>
 <p>To share an image you push it to a <b>registry</b>, and the image's name says exactly where it goes. A full name has up to four parts:</p>
-<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="The parts of an image name: registry, user, repository and tag">
+<figure class="fig"><svg viewBox="0 0 420 172" role="img" aria-label="The parts of an image name: registry, user, repository and tag">
 <rect class="bx-dark" x="10" y="12" width="400" height="46" rx="6"/>
 <text class="t-term" x="210" y="41" text-anchor="middle" style="font-size:18px">docker.io/you/site:1.0</text>
-<path class="ln" d="M100 60v20M175 60v52M230 60v20M287 60v52"/>
+<path class="ln" d="M134 60v20M209 60v52M257 60v20M305 60v52"/>
 <g text-anchor="middle">
-<text class="t" x="100" y="98">registry</text>
-<text class="t" x="175" y="130">your user</text>
-<text class="t" x="230" y="98">repository</text>
-<text class="t-b t-a" x="300" y="130">tag</text>
+<text class="t" x="124" y="98">registry</text>
+<text class="t" x="209" y="130">your user</text>
+<text class="t" x="262" y="98">repository</text>
+<text class="t-b t-a" x="305" y="130">tag</text>
 </g>
-<text class="t-s" x="210" y="154" text-anchor="middle">docker.io is the default, so you can leave it out</text>
+<text class="t-s" x="210" y="164" text-anchor="middle">docker.io is the default, so you can leave it out</text>
 </svg><figcaption>An image name is the registry, your user name, the repository and the tag. docker dot io is Docker Hub and is assumed when you leave it out, so you slash site colon 1 point 0 means the same thing.</figcaption></figure>
 <p>Official images like <code>nginx</code> have no user part because they live in Docker Hub's special <code>library</code> collection. Your own images must start with your Docker Hub user name, because that is the space you are allowed to push into.</p>
 <p><code>docker tag site:slim you/site:1.0</code> does not copy anything. It adds a second name that points at the <b>same</b> image; in <code>docker images</code> both rows show the same <code>IMAGE ID</code>. Think of it as a second label on the same box.</p>

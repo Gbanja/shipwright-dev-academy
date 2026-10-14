@@ -254,3 +254,94 @@ return value</pre>
 <li>A CDN serves static files from edge locations near users, which is faster for them and takes load off your servers.</li>
 </ul>
 `);
+
+explain('k4',`
+<h4>Why users should not wait for slow work</h4>
+<p>When someone signs up, your app does three things: it saves the new user in the database, sends a welcome email, and generates a PDF receipt. Saving takes a few milliseconds. The email and PDF take about <b>400 milliseconds</b>, because they involve talking to an email provider and building a document. If the app does all of it before replying, the new user stares at a spinner for the whole time.</p>
+<p>But does the user need the email to have been sent before they see "Welcome!"? No. They need to know their account exists. The email can arrive a few seconds later and nobody will notice. This lesson is about splitting work into "must happen now" and "can happen soon", and using a <b>queue</b> to do the second kind in the background.</p>
+<div class="analogy"><b>Think of it like</b>A restaurant. The waiter takes your order, clips the ticket to the kitchen rail and comes straight back to you. They do not stand at the stove while your meal cooks. The rail is the queue, and the cooks are the workers.</div>
+
+<h4>The pieces: producers, a queue and workers</h4>
+<p>A <b>message queue</b> is a service that holds a list of <b>jobs</b> (also called messages) in order, until something takes them. Popular choices are Amazon SQS, RabbitMQ, and Redis-based libraries such as BullMQ. It is the first-in, first-out queue from the algorithms track, run as a reliable shared service.</p>
+<ul>
+<li>A <b>producer</b> adds jobs to the queue. Here, your app servers are the producers: "send the welcome email to user 42".</li>
+<li>A <b>worker</b>, or consumer, is a separate program that takes jobs off the queue one by one and does the actual work.</li>
+<li>A job is small: usually just the facts needed to do the work, such as a user ID, not the whole email.</li>
+</ul>
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Three app servers add jobs to a queue, and two workers take jobs from it">
+<rect class="bx-a" x="10" y="20" width="80" height="36" rx="6"/><rect class="bx-a" x="10" y="80" width="80" height="36" rx="6"/><rect class="bx-a" x="10" y="140" width="80" height="36" rx="6"/>
+<g text-anchor="middle"><text class="t" x="50" y="43">App 1</text><text class="t" x="50" y="103">App 2</text><text class="t" x="50" y="163">App 3</text></g>
+<path class="ln" d="M90 38L130 86"/><path class="ln" d="M90 98h40"/><path class="ln" d="M90 158L130 110"/><polygon class="ah" points="128,92 128,104 136,98"/>
+<rect class="bx-info" x="138" y="76" width="140" height="44" rx="6"/>
+<rect class="bx" x="146" y="84" width="24" height="28"/><rect class="bx" x="174" y="84" width="24" height="28"/><rect class="bx" x="202" y="84" width="24" height="28"/><rect class="bx" x="230" y="84" width="24" height="28"/>
+<text class="t-b" x="208" y="66" text-anchor="middle">Queue</text><text class="t-s" x="208" y="140" text-anchor="middle">80 jobs/s arrive</text>
+<path class="ln-ok" d="M278 92L318 56"/><polygon class="ah-ok" points="313,52 320,61 324,50"/>
+<path class="ln-ok" d="M278 104L318 140"/><polygon class="ah-ok" points="313,144 320,135 324,146"/>
+<rect class="bx-ok" x="326" y="30" width="86" height="36" rx="6"/><rect class="bx-ok" x="326" y="130" width="86" height="36" rx="6"/>
+<g text-anchor="middle"><text class="t" x="369" y="53">Worker 1</text><text class="t" x="369" y="153">Worker 2</text><text class="t-s" x="369" y="86">50 jobs/s</text><text class="t-s" x="369" y="186">50 jobs/s</text></g>
+</svg><figcaption>The app servers are producers: each sign-up adds a small job to the queue. Two workers take jobs from the front and do the slow work. Together they can finish 100 jobs a second, more than the 80 a second arriving, so the queue stays short.</figcaption></figure>
+<p>The request now goes: save the user, add one job to the queue, reply. Adding a job is a quick network call, a millisecond or two, so the user gets their answer almost at once.</p>
+
+<h4>Before and after, on a timeline</h4>
+<figure class="fig"><svg viewBox="0 0 420 215" role="img" aria-label="Timeline: without a queue the user waits for the email and PDF; with a queue they get a reply at once and a worker does the slow part later">
+<text class="t-b" x="10" y="22">without a queue</text>
+<rect class="bx-info" x="60" y="34" width="16" height="26"/><rect class="bx-warn" x="76" y="34" width="308" height="26"/>
+<text class="t-s" x="230" y="52" text-anchor="middle">email + PDF, about 400 ms</text>
+<path class="ln-a" d="M60 72h324"/><polygon class="ah-a" points="382,66 382,78 390,72"/>
+<text class="t-s t-a" x="225" y="92" text-anchor="middle">user waits about 420 ms</text>
+<text class="t-b" x="10" y="124">with a queue</text>
+<rect class="bx-info" x="60" y="136" width="16" height="26"/><rect class="bx-ok" x="76" y="136" width="6" height="26"/>
+<text class="t-s t-ok" x="92" y="154">reply: about 25 ms</text>
+<rect class="bx-warn" x="90" y="176" width="308" height="26"/>
+<text class="t-s" x="244" y="194" text-anchor="middle">worker: email + PDF, later</text>
+</svg><figcaption>Top: without a queue, the user waits for the save, shown in blue, and the slow email and PDF work, in amber, before getting a reply. Bottom: with a queue, the app saves the user, quickly adds a job, shown in green, and replies straight away. A background worker does the same slow work afterwards, while the user is already using the app.</figcaption></figure>
+<p>The total work is the same. What changes is <b>who waits for it</b>. In the simulator, 10% of the 800 requests per second trigger the slow task, and without a queue that pushes p95 latency well over the 150 ms goal. With a queue, the slow part disappears from the request path.</p>
+
+<h4>Keeping up: throughput must beat the arrival rate</h4>
+<p>A queue does not make work vanish. It only lets work wait. So you must check that the workers can keep up on average:</p>
+<pre class="snip">jobs arriving  = 800 requests/s × 10% = 80 jobs/s
+one worker     = 50 jobs/s
+workers needed = 80 ÷ 50 = 1.6  →  round up to 2
+two workers    = 100 jobs/s, about 80% busy</pre>
+<p><b>Throughput</b> is how many jobs your workers finish per second. The <b>arrival rate</b> is how many jobs are added per second. If throughput is higher, the queue drains and stays short. If it is lower, even slightly, the queue grows every second, forever: with one worker, 30 extra jobs pile up each second, over 100,000 an hour, and emails arrive later and later. A short burst above capacity is fine, because the queue absorbs it and workers catch up afterwards. That buffering is one of the queue's biggest benefits.</p>
+<div class="mistake"><b>Common mistake</b>Adding a queue with zero workers. Jobs go in and nothing ever takes them out. The simulator warns you when this happens; in real life you notice when customers complain that no emails arrived. Always watch the queue's length: a number that only grows means your workers are not keeping up, or are not running.</div>
+
+<h4>At-least-once delivery and idempotent jobs</h4>
+<p>Here is a subtle problem. A worker takes a job, sends the email, and then crashes before telling the queue "done". The queue cannot know the email went out. To be safe, it makes the job visible again after a timeout, and another worker runs it. The user gets two welcome emails.</p>
+<p>This is called <b>at-least-once delivery</b>: the queue promises every job will run, but some may run more than once. Most queues work this way, because the alternative, risking jobs that never run, is worse. So the rule is: <b>make every job idempotent</b>. Running it twice must have the same effect as running it once. You met idempotency with HTTP methods; here it applies to jobs.</p>
+<p>How, in practice? Record what was done, and check before doing it:</p>
+<pre class="snip">job: send welcome email to user 42
+if user 42 already has welcome_email_sent:
+    skip                      # a repeat delivery: do nothing
+else:
+    send the email
+    mark welcome_email_sent for user 42</pre>
+<p>Another common approach is to give each job a unique ID and store the IDs of finished jobs. Email and payment providers often accept such an ID themselves and ignore repeats.</p>
+
+<h4>Retries and the dead-letter queue</h4>
+<p>Sometimes a job fails for a passing reason: the email provider is briefly down. The queue <b>retries</b> it later, usually waiting a little longer between each attempt so it does not hammer a struggling service. But some jobs will never succeed, for example an email address that does not exist. Retrying those forever wastes worker time.</p>
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="A job is retried after failing, and after several failures moves to a dead-letter queue">
+<rect class="bx-info" x="10" y="60" width="90" height="44" rx="6"/><text class="t-b" x="55" y="87" text-anchor="middle">Queue</text>
+<rect class="bx-ok" x="160" y="60" width="90" height="44" rx="6"/><text class="t-b" x="205" y="87" text-anchor="middle">Worker</text>
+<rect class="bx-ok" x="320" y="14" width="92" height="40" rx="6"/><text class="t" x="366" y="39" text-anchor="middle">done</text>
+<rect class="bx-bad" x="320" y="112" width="92" height="52" rx="6"/><text class="t-b" x="366" y="134" text-anchor="middle">dead-letter</text><text class="t-s" x="366" y="152" text-anchor="middle">for a human</text>
+<path class="ln" d="M100 82h52"/><polygon class="ah" points="150,76 150,88 158,82"/>
+<path class="ln-ok" d="M250 72L312 40"/><polygon class="ah-ok" points="308,35 313,46 320,36"/><text class="t-s t-ok" x="300" y="28" text-anchor="end">success</text>
+<path class="ln-a" d="M250 96L312 132"/><polygon class="ah-a" points="306,135 313,126 320,138"/><text class="t-s t-a" x="304" y="154" text-anchor="end">failed 5 times</text>
+<path class="ln-d" d="M175 104v40H55v-32"/><polygon class="ah" points="49,114 61,114 55,106"/><text class="t-s" x="115" y="162" text-anchor="middle">failed: retry later</text>
+</svg><figcaption>A worker takes a job from the queue. If it succeeds, the job is done. If it fails, it goes back to the queue to be retried later. After too many failures, say five, it moves to a dead-letter queue, where a person can look at what went wrong.</figcaption></figure>
+<p>A <b>dead-letter queue</b> is a separate queue where jobs go after failing too many times. Nothing processes it automatically. Engineers check it, fix the cause, and replay the jobs if needed. It keeps one broken job from blocking or slowing everything else.</p>
+
+<h4>What belongs on a queue, and what does not</h4>
+<p>Good candidates are anything the user does not need to see finished right now: sending emails and notifications, resizing uploaded photos, generating reports and PDFs, calling other companies' webhooks. Bad candidates are anything the response depends on. Checking a password at login must happen before you can reply "welcome back" or "wrong password", so it stays in the request.</p>
+<div class="try"><b>Try it in your head</b>Jobs arrive at 230 per second, and each worker handles 50 per second. How many workers do you need to keep up? 230 ÷ 50 = 4.6, so round up to 5. And with only 4 workers, what happens to the queue? It grows by 30 jobs every second.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>Put slow work the user does not need right now on a queue, and reply immediately.</li>
+<li>Producers add small jobs; workers take them from the front and do the work in the background.</li>
+<li>Worker throughput must beat the arrival rate, or the queue grows forever. Watch the queue length.</li>
+<li>Queues usually deliver at least once, so make every job idempotent.</li>
+<li>Failed jobs are retried with growing delays, then moved to a dead-letter queue for a human.</li>
+</ul>
+`);

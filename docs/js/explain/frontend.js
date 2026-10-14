@@ -1395,7 +1395,7 @@ explain('f7',`
 <path class="ln" d="M50 30v100h350"/>
 <path class="ln-a" d="M50 128C100 50 220 40 400 38"/>
 <text class="t-b t-a" x="400" y="62" text-anchor="end">opacity 0 to 1</text>
-<text class="t-s" x="58" y="122">invisible</text>
+
 <g text-anchor="middle">
 <rect class="bx" x="18" y="146" width="64" height="26" rx="4"/><text class="t-s" x="50" y="164">y: -20</text>
 <rect class="bx-info" x="190" y="146" width="70" height="26" rx="4"/><text class="t-s" x="225" y="164">y: -3</text>
@@ -1469,5 +1469,111 @@ const reduce = useReducedMotion();   // Motion's hook: true or false</pre>
 <li>Prefer animating opacity and transforms, and honour <code>prefers-reduced-motion</code>.</li>
 <li>Recharts composes charts from components fed by an array; <code>dataKey</code> picks which key labels or sizes each bar.</li>
 <li>Change the data and React redraws the chart: the chart is a function of its data.</li>
+</ul>
+`);
+
+explain('f9',`
+<h4>Why look beyond React?</h4>
+<p>React is the most common frontend library in job adverts, which is why most of this track uses it. But it is not the only good answer. <b>Vue</b> and <b>Svelte</b> are popular, well-supported alternatives, and you will meet them at companies, in open-source projects and in job listings, especially Vue in parts of Europe and Asia.</p>
+<p>There is a second, bigger reason to look. Seeing the same ideas in a different syntax shows you which parts are <i>React</i> and which parts are simply <i>how frontend works</i>. Components, props, state, events and lists exist in all three. Once you can spot them, a new framework is a new accent, not a new language.</p>
+<div class="tbl-wrap"><table><tr><th>Idea</th><th>React</th><th>Vue</th><th>Svelte 5</th></tr>
+<tr><td>Show a value</td><td><code>{count}</code></td><td><code>{{ count }}</code></td><td><code>{count}</code></td></tr>
+<tr><td>State</td><td><code>useState(0)</code></td><td><code>ref(0)</code></td><td><code>$state(0)</code></td></tr>
+<tr><td>Click</td><td><code>onClick={…}</code></td><td><code>@click="…"</code></td><td><code>onclick={…}</code></td></tr>
+<tr><td>List</td><td><code>items.map(…)</code></td><td><code>v-for</code></td><td><code>{#each}</code></td></tr>
+<tr><td>Full-stack framework</td><td>Next.js</td><td>Nuxt</td><td>SvelteKit</td></tr></table></div>
+
+<h4>A Vue app from the ground up</h4>
+<p>Open the starter code. Vue splits a component into two parts: an HTML <b>template</b> that describes what to show, and JavaScript that provides the data. Here the template is the HTML inside <code>&lt;div id="app"&gt;</code>, and the script sets things up:</p>
+<pre class="snip">const { createApp, ref } = Vue;
+
+createApp({
+  setup() {
+    const title = ref('Frameworks');   // reactive state
+    return { title };                   // expose to template
+  },
+}).mount('#app');                       // take over #app</pre>
+<ol>
+<li><code>createApp({ … })</code> creates a Vue application from a component definition.</li>
+<li><code>setup()</code> runs once when the component starts. It creates the state and returns an object of everything the template is allowed to use. Forget to return something and the template cannot see it.</li>
+<li><code>.mount('#app')</code> tells Vue to take control of the element with id <code>app</code>, read the template inside it, and keep it up to date.</li>
+</ol>
+<p>In the template, double curly braces show a value: <code>&lt;h1&gt;{{ title }}&lt;/h1&gt;</code>. That is called <b>interpolation</b>, and people often call the braces "mustaches".</p>
+
+<h4>ref: a reactive box</h4>
+<p><code>ref(0)</code> creates a <b>ref</b>: a small box holding a value, which Vue watches. In JavaScript you read and change the value through <code>.value</code>, as in <code>count.value++</code>. In the template, Vue unwraps it for you, so you just write <code>count</code>.</p>
+<p>Here is the big difference from React. In React, when state changes, the whole component function runs again and React compares the old and new output. Vue instead records which components read which refs. When a ref changes, Vue knows exactly who depends on it and updates only those, and because Vue compiles your template ahead of time, it already knows which parts of the HTML can change, so the patch touches just them. This tracking is called <b>reactivity</b>, and it is finer-grained than React's approach. (Vue still uses a virtual DOM inside, as the quick reference notes, but it does far less comparing.)</p>
+<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="React re-runs the whole component function on a state change; Vue updates only the template parts that read the changed ref">
+<text class="t-b" x="105" y="20" text-anchor="middle">React</text><text class="t-b" x="315" y="20" text-anchor="middle">Vue</text>
+<path class="ln-d" d="M210 10v210"/>
+<rect class="bx-warn" x="20" y="34" width="170" height="36" rx="6"/><text class="t" x="105" y="58" text-anchor="middle">setCount(1)</text>
+<path class="ln" d="M105 70v14"/><polygon class="ah" points="99,82 111,82 105,90"/>
+<rect class="bx-a" x="20" y="92" width="170" height="60" rx="6"/><text class="t-b" x="105" y="116" text-anchor="middle">whole function</text><text class="t" x="105" y="138" text-anchor="middle">runs again</text>
+<path class="ln" d="M105 152v14"/><polygon class="ah" points="99,164 111,164 105,172"/>
+<rect class="bx-ok" x="20" y="174" width="170" height="40" rx="6"/><text class="t" x="105" y="199" text-anchor="middle">compare, patch DOM</text>
+<rect class="bx-warn" x="230" y="34" width="170" height="36" rx="6"/><text class="t" x="315" y="58" text-anchor="middle">count++</text>
+<path class="ln" d="M315 70v14"/><polygon class="ah" points="309,82 321,82 315,90"/>
+<rect class="bx" x="230" y="92" width="170" height="122" rx="6"/>
+<rect class="bx" x="244" y="104" width="142" height="28" rx="4"/><text class="t-m" x="256" y="123">h1: title</text>
+<rect class="bx-ok" x="244" y="140" width="142" height="28" rx="4"/><text class="t-m" x="256" y="159">button: count</text>
+<rect class="bx" x="244" y="176" width="142" height="28" rx="4"/><text class="t-m" x="256" y="195">ul: list</text>
+</svg><figcaption>Two ways to react to a change. In React, calling the setter runs the whole component function again, and React compares the result with the previous one before patching the DOM. In Vue, changing count updates only what reads count, here the button text; the heading and the list are not touched.</figcaption></figure>
+<p>Both approaches work well in practice. The point is to understand that "re-render everything and compare" and "track and update precisely" are two different designs for the same goal.</p>
+
+<h4>Directives: special attributes in the template</h4>
+<p>Vue adds behaviour to HTML through <b>directives</b>, attributes that start with <code>v-</code> or a shorthand symbol. Their values are JavaScript expressions.</p>
+<p><b>Events with <code>@click</code>.</b> <code>@click</code> is short for <code>v-on:click</code>. Its value can be a small statement that runs on each click:</p>
+<pre class="snip">&lt;button @click="count++"&gt;Clicked {{ count }} times&lt;/button&gt;</pre>
+<p>For this to work, create <code>count</code> with <code>ref(0)</code> in <code>setup</code> and add it to the returned object. In the template, <code>count++</code> changes the ref's value directly, because Vue unwraps it.</p>
+<p><b>Lists with <code>v-for</code>.</b> Put it on the element you want repeated:</p>
+<pre class="snip">&lt;li v-for="fw in frameworks" :key="fw.name"&gt;{{ fw.name }}&lt;/li&gt;</pre>
+<p>Read it as "one <code>li</code> for each <code>fw</code> in <code>frameworks</code>". The array lives in <code>setup</code> and must be returned like everything else. <code>:key</code> plays exactly the role <code>key</code> played in React's lists: a stable, unique identity for each item. The colon is short for <code>v-bind:</code>, which means "this attribute's value is a JavaScript expression, not plain text". Without the colon, every item's key would be the literal string <code>fw.name</code>.</p>
+<p><b>Two-way binding with <code>v-model</code>.</b> In React, connecting an input to state takes a value prop and a change handler. Vue does both with one directive:</p>
+<pre class="snip">&lt;input v-model="title"&gt;</pre>
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="v-model links an input and a ref both ways, and the heading reading the ref updates too">
+<rect class="bx-info" x="20" y="60" width="120" height="44" rx="8"/><text class="t-m" x="80" y="87" text-anchor="middle">input</text>
+<rect class="bx-warn" x="230" y="60" width="170" height="44" rx="8"/><text class="t-m" x="315" y="87" text-anchor="middle">title (ref)</text>
+<path class="ln-a" d="M140 72h80"/><polygon class="ah-a" points="218,66 218,78 228,72"/>
+<path class="ln-ok" d="M230 92h-80"/><polygon class="ah-ok" points="152,86 152,98 142,92"/>
+<text class="t-s t-a" x="185" y="56" text-anchor="middle">typing</text>
+<text class="t-s t-ok" x="185" y="124" text-anchor="middle">code change</text>
+<path class="ln" d="M315 104v26"/><polygon class="ah" points="309,128 321,128 315,136"/>
+<rect class="bx-ok" x="230" y="138" width="170" height="36" rx="8"/><text class="t-m" x="315" y="161" text-anchor="middle">h1 shows title</text>
+<text class="t-s" x="80" y="30" text-anchor="middle">v-model links</text><text class="t-s" x="80" y="46" text-anchor="middle">both directions</text>
+</svg><figcaption>v-model ties an input to a ref in both directions. Typing in the box updates title, and changing title in code updates the box. Because the heading also reads title, it changes as you type.</figcaption></figure>
+<p>Typing updates <code>title</code>; changing <code>title</code> in code updates the box. Since the heading shows <code>{{ title }}</code>, it changes letter by letter as you type, which is exactly what the third task checks.</p>
+<p>There are more directives you will meet soon: <code>v-if</code> shows an element only when a condition is true, like <code>&amp;&amp;</code> in JSX, and <code>:class</code> sets classes from an expression.</p>
+<div class="mistake"><b>Common mistake</b>Creating state in <code>setup</code> but not returning it. The template then sees nothing, and Vue logs a warning that a property was accessed during render but is not defined. Every name the template uses must be in the object <code>setup</code> returns.</div>
+<div class="mistake"><b>Common mistake</b>Writing <code>key="fw.name"</code> without the colon. That passes the text "fw.name" as every item's key. Remember: colon means "evaluate this as JavaScript".</div>
+
+<h4>Svelte: the framework that compiles away</h4>
+<p>React and Vue both ship a <b>runtime</b>: library code downloaded into the user's browser that does the work of tracking changes and updating the DOM. <b>Svelte</b> takes a different route. It is a <b>compiler</b>: a tool that runs on your computer when you build the app, reads your components, and turns them into plain JavaScript that updates exactly the right DOM nodes directly. There is no virtual DOM to compare, and much less framework code reaches the browser.</p>
+<pre class="snip">&lt;script&gt;
+  let count = $state(0);     // Svelte 5 "rune": reactive state
+&lt;/script&gt;
+
+&lt;button onclick={() =&gt; count++}&gt;Clicked {count} times&lt;/button&gt;</pre>
+<p>A <code>.svelte</code> file looks like an HTML page: a script, your markup, and optionally a style block whose CSS only applies to that component. Since Svelte 5, reactive state is declared with <b>runes</b>, special compiler instructions that start with a dollar sign, such as <code>$state</code>. To the compiler, <code>count++</code> means "update the number in the button". Older Svelte code makes every top-level <code>let</code> reactive without a rune, so you will see both styles online.</p>
+<p>The trade-offs: very small, fast output and code that feels close to plain HTML, against a smaller ecosystem and job market than React's.</p>
+
+<h4>How to choose a framework</h4>
+<p>Arguments online about the "best" framework generate a lot of heat. Professionals choose with practical questions:</p>
+<ul>
+<li><b>The team.</b> What does the team already know? Retraining costs months.</li>
+<li><b>The ecosystem.</b> Are there mature libraries for what you need: forms, charts, UI kits, testing?</li>
+<li><b>Hiring.</b> Can you find developers who know it? React has the largest pool.</li>
+<li><b>The project.</b> A tiny widget on a slow phone network benefits from Svelte's small output. A huge app with many teams may benefit from React's size of ecosystem.</li>
+</ul>
+<p>Not GitHub stars, not novelty. And whichever you pick, the fundamentals you have learnt, components, one-way data flow, state, effects and accessible HTML, carry straight over.</p>
+<div class="try"><b>Try it in your head</b>In Vue, <code>setup</code> returns <code>{ title }</code> but the template uses <code>{{ count }}</code>. What happens? count is undefined in the template, so nothing shows and Vue warns about it; count must be created with ref and returned. And what is the Vue equivalent of React's <code>items.map(i =&gt; &lt;li key={i.id}&gt;…)</code>? An <code>li</code> with <code>v-for="i in items"</code> and <code>:key="i.id"</code>.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>Components, props, state, events and lists exist in every framework; only the syntax differs.</li>
+<li>Vue: <code>createApp</code> with a <code>setup</code> that returns state, mounted onto an element; <code>{{ }}</code> shows values.</li>
+<li><code>ref()</code> is a reactive box; Vue updates only the template parts that read it.</li>
+<li>Directives: <code>@click</code> for events, <code>v-for</code> with <code>:key</code> for lists, <code>v-model</code> for two-way input binding.</li>
+<li>Svelte is a compiler: components become plain JavaScript with no virtual DOM shipped; Svelte 5 uses runes like <code>$state</code>.</li>
+<li>Choose by team, ecosystem, hiring and project needs, not hype.</li>
 </ul>
 `);
