@@ -288,7 +288,7 @@ C.ping=a=>{const d=a.filter(v=>!v.startsWith('-')&&!/^\d+$/.test(v))[0];const r=
 C.ss=()=>{const h=H();return R('State   Local Address:Port   Process\n'+Object.entries(h.services).filter(([,s])=>s.active&&s.port).map(([n,s])=>'LISTEN  0.0.0.0:'+String(s.port).padEnd(14)+'users:(("'+n+'"))').join('\n'))};C.netstat=C.ss;
 
 /* --- docker --- */
-const BASE={'hello-world:latest':0.013,'nginx:latest':188,'nginx:alpine':43,'node:20':1100,'node:20-alpine':135,'node:22-alpine':140,'postgres:16':432,'postgres:16-alpine':240,'redis:7':117,'redis:7-alpine':41,'python:3.12':1020,'python:3.12-slim':130,'ubuntu:latest':78,'ubuntu:24.04':78,'alpine:latest':7.8,'alpine:3.20':7.8,'mysql:8':603};
+const BASE={'hello-world:latest':0.013,'nginx:latest':188,'nginx:alpine':43,'node:24':1100,'node:24-alpine':135,'node:22-alpine':140,'node:20-alpine':135,'postgres:16':432,'postgres:16-alpine':240,'redis:7':117,'redis:7-alpine':41,'python:3.12':1020,'python:3.12-slim':130,'ubuntu:latest':78,'ubuntu:24.04':78,'alpine:latest':7.8,'alpine:3.20':7.8,'mysql:8':603};
 const refOf=s=>{if(!s)return s;const n=s.includes(':')&&!s.endsWith(':')?s:s+':latest';return n};
 const D=()=>st.docker;
 const cid=()=>rnd(12);
@@ -426,7 +426,7 @@ function redis(t){if(!t.length){st.redisMode=true;return R('{m}(connected to 127
 C['redis-cli']=a=>redis(a);
 
 /* --- node / npm / python / php / composer --- */
-C.node=async a=>{if(a[0]==='-v'||a[0]==='--version')return R('v20.17.0');if(!a[0])return R('{m}(the interactive Node REPL is not available here: run a file with node file.js){/}');const c=read(a[0]);if(c==null)return R("node:internal/modules/cjs/loader:1228\n  throw err;\n  ^\n\nError: Cannot find module '"+norm(a[0])+"'",true);if(typeof RUN!=='undefined'&&RUN.nodeFile){const r=await RUN.nodeFile(c,a.slice(1));return R(r.out,r.err)}return R('{m}(ran '+a[0]+'){/}')};
+C.node=async a=>{if(a[0]==='-v'||a[0]==='--version')return R('v24.11.0');if(!a[0])return R('{m}(the interactive Node REPL is not available here: run a file with node file.js){/}');const c=read(a[0]);if(c==null)return R("node:internal/modules/cjs/loader:1228\n  throw err;\n  ^\n\nError: Cannot find module '"+norm(a[0])+"'",true);if(typeof RUN!=='undefined'&&RUN.nodeFile){const r=await RUN.nodeFile(c,a.slice(1));return R(r.out,r.err)}return R('{m}(ran '+a[0]+'){/}')};
 C.npm=a=>{const sub=a[0];const pkg=read('package.json');if(sub==='-v'||sub==='--version')return R('10.8.2');if(sub==='init'){write('package.json',JSON.stringify({name:base(H().cwd),version:'1.0.0',main:'index.js',scripts:{test:'echo "Error: no test specified" && exit 1'},license:'ISC'},null,2)+'\n');return R('Wrote to '+H().cwd+'/package.json')}
  if(pkg==null)return R('npm error code ENOENT\nnpm error path '+H().cwd+'/package.json\nnpm error enoent Could not read package.json',true);let pj;try{pj=JSON.parse(pkg)}catch(e){return R('npm error JSON.parse Invalid package.json: '+e.message,true)}
  if(sub==='install'||sub==='i'||sub==='ci'){const add=a.slice(1).filter(v=>!v.startsWith('-'));if(add.length){pj.dependencies=pj.dependencies||{};for(const p of add)pj.dependencies[p]='^'+({express:'4.21.0',react:'18.3.1',next:'14.2.15',zod:'3.23.8',prisma:'5.20.0',vitest:'2.1.2',typescript:'5.6.2'}[p]||'1.0.0');write('package.json',JSON.stringify(pj,null,2)+'\n')}mkdirp('node_modules');write('package-lock.json','{"lockfileVersion":3}');st.flags.npmInstalled=true;return R('\nadded '+(add.length?add.length*31:142)+' packages, and audited '+(add.length*31+143)+' packages in 3s\n\nfound 0 vulnerabilities')}

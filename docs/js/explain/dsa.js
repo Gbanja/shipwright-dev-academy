@@ -502,20 +502,20 @@ return 1 + Math.max(maxDepth(root.left), maxDepth(root.right));</pre>
 <p>Why BFS for shortest paths? Because it explores in rings of distance. Every cell 1 step away is reached before any cell 2 steps away, and so on. So the first time BFS reaches the target, it has found it by the shortest route. DFS gives no such promise: it might wander a long way round first.</p>
 <figure class="fig"><svg viewBox="0 0 420 215" role="img" aria-label="The four by four grid with walls and the BFS distance from the top left corner written in each open cell">
 <g text-anchor="middle" class="t-s"><text class="t-s" x="132" y="14">0</text><text class="t-s" x="176" y="14">1</text><text class="t-s" x="220" y="14">2</text><text class="t-s" x="264" y="14">3</text><text class="t-s" x="96" y="47">0</text><text class="t-s" x="96" y="91">1</text><text class="t-s" x="96" y="135">2</text><text class="t-s" x="96" y="179">3</text></g>
-<rect class="bx-a" x="110" y="20" width="44" height="44"/><rect class="bx" x="154" y="20" width="44" height="44"/><rect class="bx" x="198" y="20" width="44" height="44"/><rect class="bx-dark" x="242" y="20" width="44" height="44"/>
-<rect class="bx-dark" x="110" y="64" width="44" height="44"/><rect class="bx-dark" x="154" y="64" width="44" height="44"/><rect class="bx" x="198" y="64" width="44" height="44"/><rect class="bx-dark" x="242" y="64" width="44" height="44"/>
+<rect class="bx-info" x="110" y="20" width="44" height="44"/><rect class="bx" x="154" y="20" width="44" height="44"/><rect class="bx" x="198" y="20" width="44" height="44"/><rect class="bx-bad" x="242" y="20" width="44" height="44"/>
+<rect class="bx-bad" x="110" y="64" width="44" height="44"/><rect class="bx-bad" x="154" y="64" width="44" height="44"/><rect class="bx" x="198" y="64" width="44" height="44"/><rect class="bx-bad" x="242" y="64" width="44" height="44"/>
 <rect class="bx" x="110" y="108" width="44" height="44"/><rect class="bx" x="154" y="108" width="44" height="44"/><rect class="bx" x="198" y="108" width="44" height="44"/><rect class="bx" x="242" y="108" width="44" height="44"/>
-<rect class="bx" x="110" y="152" width="44" height="44"/><rect class="bx-dark" x="154" y="152" width="44" height="44"/><rect class="bx-dark" x="198" y="152" width="44" height="44"/><rect class="bx-ok" x="242" y="152" width="44" height="44"/>
+<rect class="bx" x="110" y="152" width="44" height="44"/><rect class="bx-bad" x="154" y="152" width="44" height="44"/><rect class="bx-bad" x="198" y="152" width="44" height="44"/><rect class="bx-ok" x="242" y="152" width="44" height="44"/>
 <g text-anchor="middle">
 <text class="t-b" x="132" y="47">0</text><text class="t-m" x="176" y="47">1</text><text class="t-m" x="220" y="47">2</text>
 <text class="t-m" x="220" y="91">3</text>
 <text class="t-m" x="132" y="135">6</text><text class="t-m" x="176" y="135">5</text><text class="t-m" x="220" y="135">4</text><text class="t-m" x="264" y="135">5</text>
 <text class="t-m" x="132" y="179">7</text><text class="t-b" x="264" y="179">6</text>
 </g>
-<rect class="bx-a" x="310" y="40" width="16" height="16"/><text class="t-s" x="334" y="53">start</text>
+<rect class="bx-info" x="310" y="40" width="16" height="16"/><text class="t-s" x="334" y="53">start</text>
 <rect class="bx-ok" x="310" y="70" width="16" height="16"/><text class="t-s" x="334" y="83">target</text>
-<rect class="bx-dark" x="310" y="100" width="16" height="16"/><text class="t-s" x="334" y="113">wall</text>
-</svg><figcaption>The lesson's grid, with walls shown dark. Each open cell holds its distance from the start in the top-left corner, in the order BFS discovers them. The route must squeeze through the single gap at row 1, column 2, and the target in the bottom-right corner is reached in 6 steps.</figcaption></figure>
+<rect class="bx-bad" x="310" y="100" width="16" height="16"/><text class="t-s" x="334" y="113">wall</text>
+</svg><figcaption>The lesson's grid, with walls shown in red. Each open cell holds its distance from the start in the top-left corner, in the order BFS discovers them. The route must squeeze through the single gap at row 1, column 2, and the target in the bottom-right corner is reached in 6 steps.</figcaption></figure>
 <p>The algorithm:</p>
 <ol>
 <li>Put the start in a queue as <code>[row, col, steps]</code> with 0 steps, and add it to a <code>seen</code> set.</li>

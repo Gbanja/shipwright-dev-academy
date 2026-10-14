@@ -408,7 +408,7 @@ jobs:
       - uses: actions/checkout@v4</pre>
 <pre class="snip">      - uses: actions/setup-node@v4
         with:
-          node-version: 20     # an input for that action
+          node-version: 24     # an input for that action
       - run: npm ci            # clean install
       - run: npm test          # run the test suite</pre>
 <p>The two kinds of step are worth slowing down for:</p>

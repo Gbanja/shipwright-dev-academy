@@ -2,7 +2,7 @@
 (()=>{
 const O=()=>OPS.st,H=re=>OPS.Hx(re),C=n=>OPS.ctr(n),F=p=>OPS.file(p)||'';
 const body=()=>(O().lastHttp&&O().lastHttp.body)||'';
-const DOCKERFILE_NODE='FROM node:20-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm install\nCOPY . .\nEXPOSE 3000\nCMD ["node", "server.js"]\n';
+const DOCKERFILE_NODE='FROM node:24-alpine\nWORKDIR /app\nCOPY package*.json ./\nRUN npm install\nCOPY . .\nEXPOSE 3000\nCMD ["node", "server.js"]\n';
 defineTrack({id:'docker',name:'Docker',weeks:'~2 weeks',
 lessons:[
 {id:'d1',lvl:'Foundations',title:'Why containers exist',kind:'ops',
@@ -47,10 +47,10 @@ lessons:[
  setup:o=>{o.mkdirp('/home/you/hello-api');o.H().cwd='/home/you/hello-api';o.write('package.json','{\n  "name": "hello-api",\n  "scripts": { "start": "node server.js" },\n  "dependencies": { "express": "^4.21.0" }\n}\n');o.write('server.js',"const express = require('express');\nconst app = express();\n\napp.get('/', (req, res) => res.send('Hello from Docker'));\n\napp.listen(3000, () => console.log('Server listening on port 3000'));\n");},
  intro:'You are in ~/hello-api, a small Express app. Run ls and cat server.js to look around.',
  sum:'A Dockerfile is the recipe for an image. FROM picks a base image, WORKDIR sets the folder, COPY brings files in, RUN executes build steps, EXPOSE documents the port, and CMD is the command the container runs. Copy package.json and install dependencies before copying the rest of the code so Docker can reuse the cached layer.',
- keys:['FROM node:20-alpine','WORKDIR /app','COPY package*.json ./','RUN npm install','CMD ["node","server.js"]','docker build -t name .'],
+ keys:['FROM node:24-alpine','WORKDIR /app','COPY package*.json ./','RUN npm install','CMD ["node","server.js"]','docker build -t name .'],
  concept:`<p>A <b>Dockerfile</b> is a text file of instructions that builds an image, one layer per instruction.</p>
 <div class="tbl-wrap"><table><tr><th>Instruction</th><th>Purpose</th></tr>
-<tr><td><code>FROM node:20-alpine</code></td><td>Start from a base image (Node 20 on tiny Alpine Linux)</td></tr>
+<tr><td><code>FROM node:24-alpine</code></td><td>Start from a base image (Node 24 on tiny Alpine Linux)</td></tr>
 <tr><td><code>WORKDIR /app</code></td><td>Set the working folder inside the image</td></tr>
 <tr><td><code>COPY package*.json ./</code></td><td>Copy files from your project into the image</td></tr>
 <tr><td><code>RUN npm install</code></td><td>Run a command at <i>build</i> time</td></tr>
@@ -111,13 +111,13 @@ lessons:[
   {t:'Why did "localhost" fail inside the web container?',o:['Postgres was still starting','localhost inside a container is the container itself; other services are reached by service name','Compose doesn\'t support environment variables','Port 5432 was blocked by a firewall'],a:1,e:'Each container has its own network namespace. On the Compose network, the database is at db:5432.'},
  ]},
 {id:'d6',lvl:'Shipping images',title:'Multi-stage builds & registries',kind:'ops',
- setup:o=>{o.mkdirp('/home/you/site/src');o.H().cwd='/home/you/site';o.write('package.json','{\n  "name": "site",\n  "scripts": { "build": "vite build" },\n  "devDependencies": { "vite": "^5.4.0" }\n}\n');o.write('src/index.html','<h1>My portfolio</h1>\n');o.write('index.html','<!doctype html><title>Portfolio</title><div id="app"></div>\n');o.write('Dockerfile','FROM node:20\nWORKDIR /app\nCOPY . .\nRUN npm install\nRUN npm run build\nCMD ["npx", "vite", "preview"]\n')},
+ setup:o=>{o.mkdirp('/home/you/site/src');o.H().cwd='/home/you/site';o.write('package.json','{\n  "name": "site",\n  "scripts": { "build": "vite build" },\n  "devDependencies": { "vite": "^5.4.0" }\n}\n');o.write('src/index.html','<h1>My portfolio</h1>\n');o.write('index.html','<!doctype html><title>Portfolio</title><div id="app"></div>\n');o.write('Dockerfile','FROM node:24\nWORKDIR /app\nCOPY . .\nRUN npm install\nRUN npm run build\nCMD ["npx", "vite", "preview"]\n')},
  intro:'You are in ~/site, a static site built with Vite. The current Dockerfile ships the whole Node toolchain. Run cat Dockerfile.',
  sum:'A multi-stage build uses one stage with the full toolchain to build the app, then copies only the output into a small runtime image (FROM nginx:alpine + COPY --from=build). Images are shared through registries: docker login, tag the image as username/name:version, then docker push.',
- keys:['FROM node:20-alpine AS build','COPY --from=build /app/dist /usr/share/nginx/html','docker login','docker tag site:slim you/site:1.0','docker push you/site:1.0'],
+ keys:['FROM node:24-alpine AS build','COPY --from=build /app/dist /usr/share/nginx/html','docker login','docker tag site:slim you/site:1.0','docker push you/site:1.0'],
  concept:`<p>To build a frontend you need Node, npm and hundreds of packages. To <i>serve</i> it you only need the built HTML/JS/CSS files and a web server. Shipping the build tools to production wastes space and adds security risk.</p>
 <p>A <b>multi-stage build</b> has several <code>FROM</code> lines. Earlier stages build; the last stage is what ships:</p>
-<pre class="snip" style="margin-bottom:12px">FROM node:20-alpine AS build
+<pre class="snip" style="margin-bottom:12px">FROM node:24-alpine AS build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
@@ -131,7 +131,7 @@ COPY --from=build /app/dist /usr/share/nginx/html</pre>
 <div class="tip"><b>Tag versions</b>Avoid relying on <code>:latest</code> in production. Tag every release (<code>:1.0</code>, <code>:1.1</code>) so you know exactly what runs and can roll back.</div>`,
  tasks:[
   {t:'Build the current single-stage image as site:fat.',h:'docker build -t site:fat .',c:()=>!!O().docker.images['site:fat']},
-  {t:'Rewrite the Dockerfile as a multi-stage build that ships with nginx:alpine, and build it as site:slim.',h:'nano Dockerfile\ndocker build -t site:slim .',f:{'Dockerfile':'FROM node:20-alpine AS build\nWORKDIR /app\nCOPY package*.json ./\nRUN npm install\nCOPY . .\nRUN npm run build\n\nFROM nginx:alpine\nCOPY --from=build /app/dist /usr/share/nginx/html\n'},c:()=>{const i=O().docker.images['site:slim'];return i&&i.stages>=2&&i.size<100}},
+  {t:'Rewrite the Dockerfile as a multi-stage build that ships with nginx:alpine, and build it as site:slim.',h:'nano Dockerfile\ndocker build -t site:slim .',f:{'Dockerfile':'FROM node:24-alpine AS build\nWORKDIR /app\nCOPY package*.json ./\nRUN npm install\nCOPY . .\nRUN npm run build\n\nFROM nginx:alpine\nCOPY --from=build /app/dist /usr/share/nginx/html\n'},c:()=>{const i=O().docker.images['site:slim'];return i&&i.stages>=2&&i.size<100}},
   {t:'Compare the two image sizes.',h:'docker images',c:()=>H(/^docker (images|image ls)/)&&!!O().docker.images['site:slim']},
   {t:'Run the slim image on port 8080 and check it serves your site.',h:'docker run -d -p 8080:80 --name site site:slim\ncurl localhost:8080',c:()=>/Built app|portfolio/i.test(body())&&C('site')&&C('site').image==='site:slim'},
   {t:'Log in to Docker Hub (any username and password work in the sandbox).',h:'docker login\nyou\nmy-password',c:()=>!!O().docker.login},

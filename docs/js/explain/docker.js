@@ -4,13 +4,13 @@ explain('d1',`
 <h4>The problem: "it works on my machine"</h4>
 <p>An app is never just your code. To run, it needs a lot of other things around it:</p>
 <ul>
-<li>a <b>runtime</b>, the program that runs your code, such as Node.js 20 or Python 3.12, in the right version;</li>
+<li>a <b>runtime</b>, the program that runs your code, such as Node.js 24 or Python 3.12, in the right version;</li>
 <li><b>libraries</b>, the packages your code imports, in the right versions;</li>
 <li><b>system tools</b> some of those packages expect, such as an image-processing library installed on the operating system;</li>
 <li><b>configuration</b>, such as environment variables and settings files.</li>
 </ul>
 <p>Your laptop has one particular mix of all that. Your teammate's laptop has a slightly different mix, the test server another, and the production server another again. If any piece differs, the app can break somewhere it worked before. Then someone says the most famous sentence in software: "but it works on my machine".</p>
-<p>The old fix was a long setup document ("install Node 20, then this, then that") that was always out of date. Docker's fix is different: <b>ship the machine's setup together with the app</b>.</p>
+<p>The old fix was a long setup document ("install Node 24, then this, then that") that was always out of date. Docker's fix is different: <b>ship the machine's setup together with the app</b>.</p>
 
 <h4>The idea: a container</h4>
 <p>Docker packages your app and everything it needs into one sealed unit called a <b>container</b>. Inside it are the runtime, the libraries, the system files and your code, all at the exact versions you tested. Wherever Docker is installed, the container runs the same way, because it brings its own world with it.</p>
@@ -213,7 +213,7 @@ explain('d3',`
 <p>The lesson's folder, <code>~/hello-api</code>, holds a tiny Express app: <code>package.json</code> lists its one dependency, and <code>server.js</code> answers "Hello from Docker" on port 3000.</p>
 
 <h4>The Dockerfile, line by line</h4>
-<pre class="snip">FROM node:20-alpine
+<pre class="snip">FROM node:24-alpine
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
@@ -222,7 +222,7 @@ EXPOSE 3000
 CMD ["node", "server.js"]</pre>
 <p>Each line is one <b>instruction</b>: an uppercase keyword, then its arguments. Read it top to bottom, like a recipe.</p>
 <ol>
-<li><code>FROM node:20-alpine</code> picks the <b>base image</b> to start from. You never build from nothing. This one already contains Node.js 20 on <b>Alpine Linux</b>, a tiny Linux distribution designed for containers, which keeps the image small. Every Dockerfile starts with <code>FROM</code>.</li>
+<li><code>FROM node:24-alpine</code> picks the <b>base image</b> to start from. You never build from nothing. This one already contains Node.js 24 on <b>Alpine Linux</b>, a tiny Linux distribution designed for containers, which keeps the image small. Every Dockerfile starts with <code>FROM</code>.</li>
 <li><code>WORKDIR /app</code> sets the working folder inside the image, creating it if needed. It is <code>cd</code> for the rest of the Dockerfile: later relative paths, and the final command, all happen in <code>/app</code>.</li>
 <li><code>COPY package*.json ./</code> copies files from your project into the image. The <code>*</code> wildcard matches both <code>package.json</code> and <code>package-lock.json</code> if it exists, and <code>./</code> means "into the working folder", <code>/app</code>.</li>
 <li><code>RUN npm install</code> runs a command <b>while the image is being built</b>, and saves the result into the image. Here it downloads Express into <code>/app/node_modules</code>.</li>
@@ -492,7 +492,7 @@ docker compose down        # stop and remove containers and network</pre>
 explain('d6',`
 <h4>Why a smaller image matters</h4>
 <p>Your site in <code>~/site</code> is built with <b>Vite</b>, a frontend build tool. To <b>build</b> it you need Node.js, npm and a folder full of packages. But the result of the build is just a handful of plain HTML, CSS and JavaScript files. To <b>serve</b> those files to visitors you only need them and a small web server.</p>
-<p>The current Dockerfile ignores that difference. It starts from <code>node:20</code>, copies everything, installs, builds, and then ships the lot: Node, npm, the source code, every package in <code>node_modules</code>, and the build output. That image weighs around a gigabyte. Shipping it costs you three ways:</p>
+<p>The current Dockerfile ignores that difference. It starts from <code>node:24</code>, copies everything, installs, builds, and then ships the lot: Node, npm, the source code, every package in <code>node_modules</code>, and the build output. That image weighs around a gigabyte. Shipping it costs you three ways:</p>
 <ul>
 <li><b>Speed:</b> every deploy uploads and downloads far more data than it needs.</li>
 <li><b>Storage:</b> every version you keep takes that space again in the registry and on servers.</li>
@@ -505,7 +505,7 @@ explain('d6',`
 
 <h4>Multi-stage builds: build in one place, ship from another</h4>
 <p>A multi-stage Dockerfile simply has more than one <code>FROM</code>. Each <code>FROM</code> starts a new, empty <b>stage</b> on a new base image. You can name a stage with <code>AS</code>, and a later stage can copy files out of an earlier one with <code>COPY --from=name</code>. Only the <b>last</b> stage becomes the image you tag and ship; earlier stages are scaffolding that gets left behind.</p>
-<pre class="snip">FROM node:20-alpine AS build      # stage 1, named "build"
+<pre class="snip">FROM node:24-alpine AS build      # stage 1, named "build"
 WORKDIR /app
 COPY package*.json ./
 RUN npm install

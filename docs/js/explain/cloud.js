@@ -160,7 +160,7 @@ explain('c2',`
 <p>Lambda receives code as a <b>zip file</b>. Then <code>create-function</code> tells AWS everything it needs:</p>
 <pre class="snip">zip function.zip index.js
 aws lambda create-function --function-name hello \\
-    --runtime nodejs20.x --handler index.handler \\
+    --runtime nodejs24.x --handler index.handler \\
     --role arn:aws:iam::123456789012:role/lambda-basic \\
     --zip-file fileb://function.zip</pre>
 <ul>
