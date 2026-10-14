@@ -93,3 +93,209 @@ expect([1, 2].concat(3)).toEqual([1, 2, 3]);   // arrays: toEqual</pre>
 <li>Test behaviour (inputs and outputs), not implementation details.</li>
 </ul>
 `);
+
+explain('t2',`
+<h4>Passing is easy; catching bugs is the skill</h4>
+<p>In the last lesson you saw that <code>expect(add(2, 2)).toBe(4)</code> would happily pass even if <code>add</code> multiplied instead of adding. The test ran, it was green, and it protected nothing. Writing tests that pass is easy. Writing tests that <b>fail when the code is wrong</b> is the real skill, and it comes down to choosing good examples.</p>
+<p>This lesson's code is a shopping cart in <code>cart.js</code>, with three small functions:</p>
+<ul>
+<li><code>subtotal(items)</code> adds up price times quantity for every item.</li>
+<li><code>applyCoupon(total, code)</code> takes 10% off for <code>SAVE10</code>, leaves the total alone for <code>FREESHIP</code>, and throws an error for any other code.</li>
+<li><code>shipping(total)</code> is free when the total is 50 or more, and 4.99 otherwise.</li>
+</ul>
+<p>Small, pure functions like these, where the same input always gives the same output and nothing else is touched, are the perfect target for <b>unit tests</b>.</p>
+
+<h4>Two files: the code and its tests</h4>
+<p>Real projects keep tests in their own files next to the code, named like <code>cart.test.js</code>. The test file pulls in the functions it needs:</p>
+<pre class="snip">import { subtotal, applyCoupon, shipping } from './cart.js';</pre>
+<p>That works because <code>cart.js</code> marks those functions with <code>export</code>, meaning "other files may use this". The <code>./</code> means "in the same folder".</p>
+<p>To keep many tests tidy, you group them with <code>describe</code>, and write each test with <code>it</code>. <code>it</code> is simply another name for <code>test</code>, chosen so the name reads as a sentence:</p>
+<pre class="snip">describe('subtotal', () =&gt; {
+  it('is 0 for an empty cart', () =&gt; {
+    expect(subtotal([])).toBe(0);
+  });
+});
+// results show: subtotal &gt; is 0 for an empty cart</pre>
+
+<h4>Arrange, Act, Assert</h4>
+<p>Almost every good unit test has the same three-step shape, called <b>Arrange-Act-Assert</b>:</p>
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="Arrange, Act, Assert as three steps">
+<rect class="bx-info" x="10" y="20" width="120" height="80" rx="8"/>
+<rect class="bx-a" x="150" y="20" width="120" height="80" rx="8"/>
+<rect class="bx-ok" x="290" y="20" width="120" height="80" rx="8"/>
+<g text-anchor="middle">
+<text class="t-b" x="70" y="48">1 Arrange</text><text class="t-s" x="70" y="72">build the</text><text class="t-s" x="70" y="88">inputs</text>
+<text class="t-b" x="210" y="48">2 Act</text><text class="t-s" x="210" y="72">call the code</text><text class="t-s" x="210" y="88">once</text>
+<text class="t-b" x="350" y="48">3 Assert</text><text class="t-s" x="350" y="72">check the</text><text class="t-s" x="350" y="88">result</text>
+<text class="t-m" x="70" y="132">items</text><text class="t-m" x="210" y="132">subtotal()</text><text class="t-m" x="350" y="132">toBe(25)</text>
+</g>
+<path class="ln" d="M130 60h14"/><polygon class="ah" points="142,54 142,66 150,60"/>
+<path class="ln" d="M270 60h14"/><polygon class="ah" points="282,54 282,66 290,60"/>
+</svg><figcaption>Arrange sets up the inputs, such as a list of cart items. Act calls the function being tested, once. Assert checks the result against the answer you worked out by hand.</figcaption></figure>
+<pre class="snip">it('adds price × qty for each item', () =&gt; {
+  const items = [{ price: 10, qty: 2 }, { price: 5, qty: 1 }]; // Arrange
+  const result = subtotal(items);                              // Act
+  expect(result).toBe(25);                                     // Assert
+});</pre>
+<p>Notice the expected value, 25, is worked out by hand (10 × 2 + 5 × 1), not by calling code. A test that keeps this shape is easy to read months later: what was set up, what was done, what should be true.</p>
+
+<h4>Choosing examples: happy path, edges and errors</h4>
+<p>Bugs are not spread evenly. They cluster in a few predictable places, so good testers aim their examples there:</p>
+<ul>
+<li><b>The happy path:</b> the normal case, like a cart with two items. Confirm the basic job works.</li>
+<li><b>Edge cases:</b> the extremes. An empty cart. A single item. A quantity of zero. Code often forgets these. For <code>subtotal</code>, an empty cart must give 0, not crash.</li>
+<li><b>Error cases:</b> invalid input should fail loudly and clearly. <code>applyCoupon(80, 'BOGUS')</code> must throw, not silently give a discount.</li>
+<li><b>Boundaries:</b> wherever the code makes a decision with <code>&gt;</code>, <code>&gt;=</code>, <code>&lt;</code> or <code>&lt;=</code>. More on these below.</li>
+</ul>
+<p>Testing that something <b>throws</b> needs one extra detail:</p>
+<pre class="snip">expect(() =&gt; applyCoupon(80, 'BOGUS')).toThrow('Invalid coupon');</pre>
+<p>The call is wrapped in <code>() =&gt;</code>, a tiny function. If you wrote <code>expect(applyCoupon(80, 'BOGUS'))</code>, the error would be thrown while JavaScript is still working out the argument, before <code>expect</code> even runs, and the test would simply crash. Handing <code>expect</code> a function lets <code>toThrow</code> call it itself, catch the error and inspect it. The text you pass, <code>'Invalid coupon'</code>, only needs to appear somewhere inside the error message.</p>
+
+<h4>Boundaries, and how mutation testing proves your tests work</h4>
+<p>The shipping rule is "free from 50": <code>total &gt;= 50 ? 0 : 4.99</code>. One of the most common bugs in all of programming is writing <code>&gt;</code> where <code>&gt;=</code> was meant, or the other way round. It is called an <b>off-by-one</b> error, and it only shows up at the exact boundary.</p>
+<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="The correct rule and the buggy rule only disagree at exactly 50">
+<text class="t-m" x="20" y="28">total &gt;= 50  (correct)</text>
+<rect class="bx-warn" x="20" y="38" width="220" height="30"/><rect class="bx-ok" x="240" y="38" width="160" height="30"/>
+<text class="t" x="120" y="58" text-anchor="middle">4.99</text><text class="t" x="320" y="58" text-anchor="middle">free</text>
+<text class="t-m t-bad" x="20" y="100">total &gt; 50  (bug)</text>
+<rect class="bx-warn" x="20" y="110" width="244" height="30"/><rect class="bx-ok" x="264" y="110" width="136" height="30"/>
+<text class="t" x="140" y="130" text-anchor="middle">4.99</text><text class="t" x="330" y="130" text-anchor="middle">free</text>
+<path class="ln" d="M20 166h380"/>
+<path class="ln-d" d="M180 34v136"/><path class="ln-a" d="M240 34v136"/>
+<text class="t-s" x="180" y="188" text-anchor="middle">49.99</text><text class="t-b t-a" x="240" y="188" text-anchor="middle">50</text>
+<text class="t-s" x="172" y="208" text-anchor="end">same in both</text><text class="t-s t-a" x="248" y="208">they disagree</text>
+</svg><figcaption>Two versions of the shipping rule, drawn along a line of totals (not to scale). At 49.99 both versions charge 4.99, so a test there cannot tell them apart. At exactly 50 the correct rule says free and the buggy rule still charges, so only a test at 50 catches the bug.</figcaption></figure>
+<p>So test <b>both sides</b> of every boundary: the last value that should not qualify (49.99) and the first value that should (50). Values far away, like 10 and 100, pass under both versions and catch nothing.</p>
+<p>How do you know your tests are strong enough? <b>Mutation testing</b> answers that by attacking them. A tool makes a small change to your code, called a <b>mutant</b>: it flips <code>&gt;=</code> to <code>&gt;</code>, swaps <code>+</code> for <code>-</code>, or changes a number. Then it reruns your tests. If at least one test fails, the mutant is "killed": your tests noticed. If they all still pass, the mutant "survived", which means a real bug of that kind could slip through. The last task in this lesson does exactly this to <code>shipping()</code>. Tools such as Stryker do it across a whole project.</p>
+
+<h4>A word about decimals</h4>
+<p>Computers store most decimal numbers slightly inexactly, so <code>0.1 + 0.2</code> in JavaScript gives <code>0.30000000000000004</code>. A test like <code>expect(0.1 + 0.2).toBe(0.3)</code> fails. When a result is calculated with decimals, use <code>toBeCloseTo</code>, which allows a tiny difference: <code>expect(0.1 + 0.2).toBeCloseTo(0.3)</code>. Notice that <code>applyCoupon</code> avoids the problem by rounding to two decimal places, so <code>applyCoupon(80, 'SAVE10')</code> gives exactly 72.</p>
+
+<h4>Reading the failures you will meet</h4>
+<div class="tbl-wrap"><table><tr><th>Output</th><th>What it means</th></tr>
+<tr><td><code>expected 4.99 to be 0</code></td><td>The code charged shipping where your test expected free. Check the boundary.</td></tr>
+<tr><td><code>expected function to throw</code></td><td>The function finished normally. Either it really doesn't reject that input, or you passed a valid code.</td></tr>
+<tr><td><code>expected error "..." to include "..."</code></td><td>It threw, but with a different message than the text you gave toThrow.</td></tr>
+<tr><td><code>Invalid coupon: BOGUS</code> as a crash</td><td>You forgot the <code>() =&gt;</code> wrapper, so the error escaped before expect could catch it.</td></tr></table></div>
+<div class="mistake"><b>Common mistake</b>Testing only the happy path. A suite where every example is "a normal cart" stays green while empty carts crash and boundaries are wrong. For each function, ask: what is the emptiest input, the smallest, the biggest, the invalid one, and where are the edges?</div>
+<div class="mistake"><b>Common mistake</b>Several unrelated checks in one giant test. When it fails, the name doesn't tell you which behaviour broke, and the first failing assertion hides the rest. Prefer one behaviour per <code>it</code>, with a name that says what should happen.</div>
+<div class="try"><b>Try it in your head</b>A mutant changes <code>total * 0.9</code> to <code>total * 0.8</code> in <code>applyCoupon</code>. Would a test <code>expect(applyCoupon(80, 'SAVE10')).toBe(72)</code> kill it? Yes: 80 × 0.8 is 64, so the test fails. Would a test that only checks <code>applyCoupon(0, 'SAVE10')</code> is 0 kill it? No: 0 times anything is 0, so the mutant survives.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>Group tests with <code>describe</code>, write each with <code>it</code>, and import the code under test from its module.</li>
+<li>Shape each test as Arrange, Act, Assert, with the expected value worked out by hand.</li>
+<li>Cover the happy path, edge cases such as an empty cart, and error cases with <code>expect(() =&gt; fn()).toThrow('message')</code>.</li>
+<li>Test both sides of every boundary, such as 49.99 and 50 for a "50 or more" rule.</li>
+<li>Mutation testing makes small bugs on purpose; a good suite fails for each one.</li>
+</ul>
+`);
+
+explain('t3',`
+<h4>The problem with testing code that talks to the outside world</h4>
+<p>The cart functions in the last lesson were easy to test: numbers in, numbers out. Real code is rarely that tidy. Look at <code>signUp</code> in this lesson's <code>signup.js</code>. It checks the email, saves a user to a database, and sends a welcome email. <code>getWeather</code> calls a weather service over the internet.</p>
+<p>Run those for real inside a unit test and you hit trouble fast:</p>
+<ul>
+<li><b>Side effects:</b> every test run sends a real email, or worse, charges a real card.</li>
+<li><b>Slowness:</b> a network call takes hundreds of milliseconds; a thousand tests that each make one take minutes.</li>
+<li><b>Flakiness:</b> if the weather service is down, your tests fail even though your code is fine. A test that sometimes passes and sometimes fails with no code change is called <b>flaky</b>.</li>
+<li><b>Hard-to-reach cases:</b> how do you make a real API fail on demand, to test your error handling?</li>
+</ul>
+<p>The answer is to swap the real dependency for a stand-in during the test. A <b>dependency</b> is anything your code relies on to do its job, such as a database, a mailer or a <code>fetch</code> function. The stand-in is called a <b>test double</b>, after the stunt doubles used in films.</p>
+
+<h4>Dependency injection: leaving a door open for the double</h4>
+<p>Look closely at the function's signature:</p>
+<pre class="snip">export async function signUp(email, { db, mailer }) { ... }</pre>
+<p><code>signUp</code> does not create its own database connection or mailer. It receives them as arguments. The app passes in the real ones; a test passes in fakes. Handing a function the things it depends on, instead of letting it fetch them itself, is called <b>dependency injection</b>. It is the single biggest reason code is easy or hard to test.</p>
+<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="The same signUp function wired to real dependencies in the app and fakes in the test">
+<text class="t-b" x="10" y="20">In the app</text>
+<rect class="bx-a" x="10" y="44" width="110" height="40" rx="8"/><text class="t-m" x="65" y="69" text-anchor="middle">signUp</text>
+<rect class="bx-info" x="250" y="30" width="160" height="32" rx="6"/><text class="t" x="330" y="51" text-anchor="middle">real database</text>
+<rect class="bx-warn" x="250" y="68" width="160" height="32" rx="6"/><text class="t" x="330" y="89" text-anchor="middle">sends real email</text>
+<path class="ln" d="M120 58L242 46"/><polygon class="ah" points="240,40 241,52 250,45"/>
+<path class="ln" d="M120 72L242 84"/><polygon class="ah" points="241,78 240,90 250,85"/>
+<line class="ln-d" x1="10" y1="118" x2="410" y2="118"/>
+<text class="t-b" x="10" y="144">In the test</text>
+<rect class="bx-a" x="10" y="168" width="110" height="40" rx="8"/><text class="t-m" x="65" y="193" text-anchor="middle">signUp</text>
+<rect class="bx-ok" x="250" y="154" width="160" height="32" rx="6"/><text class="t" x="330" y="175" text-anchor="middle">fake db: vi.fn</text>
+<rect class="bx-ok" x="250" y="192" width="160" height="32" rx="6"/><text class="t" x="330" y="213" text-anchor="middle">fake mailer: vi.fn</text>
+<path class="ln-ok" d="M120 182L242 170"/><polygon class="ah-ok" points="240,164 241,176 250,169"/>
+<path class="ln-ok" d="M120 196L242 208"/><polygon class="ah-ok" points="241,202 240,214 250,209"/>
+</svg><figcaption>The same signUp code, unchanged, in two settings. In the app it is handed a real database and a real mailer. In the test it is handed fake versions made with vi.fn, which do nothing harmful and remember how they were called.</figcaption></figure>
+
+<h4>The family of test doubles</h4>
+<p>You will hear several names. They overlap, and many people say "mock" for all of them, but the differences are useful:</p>
+<div class="tbl-wrap"><table><tr><th>Name</th><th>What it does</th></tr>
+<tr><td><b>Stub</b></td><td>Returns a canned answer, such as "the API says 31 degrees".</td></tr>
+<tr><td><b>Spy</b></td><td>Records how it was called, so you can check afterwards.</td></tr>
+<tr><td><b>Mock</b></td><td>A stub and spy in one: returns what you choose and records its calls.</td></tr>
+<tr><td><b>Fake</b></td><td>A simple working version, such as an in-memory list pretending to be a database.</td></tr></table></div>
+
+<h4><code>vi.fn()</code>: a function that remembers</h4>
+<p>In Vitest, <code>vi.fn()</code> creates a mock function. (In Jest the same thing is called <code>jest.fn()</code>.) You can call it like any function. It does nothing real, but it keeps a log of every call and the arguments it received, in <code>.mock.calls</code>. You can also tell it what to return:</p>
+<pre class="snip">const greet = vi.fn().mockReturnValue('hi');
+greet('Ada');          // returns 'hi'
+greet.mock.calls;      // [['Ada']]: one call, with one argument</pre>
+<p>Database and email calls are <b>asynchronous</b>: they take time, so instead of an answer they return a <b>promise</b>, an object that delivers the answer later. Code waits for it with <code>await</code>. <code>signUp</code> does exactly that: <code>await db.createUser(...)</code>. So the fakes must return promises too, and <code>.mockResolvedValue(x)</code> does that: it makes the mock return a promise that delivers <code>x</code>.</p>
+<pre class="snip">const db = { createUser: vi.fn().mockResolvedValue({ id: 1, email: 'ada@example.com' }) };
+const mailer = { send: vi.fn().mockResolvedValue(true) };</pre>
+<p>Each fake is a plain object shaped like the real thing: <code>db</code> has a <code>createUser</code> method, <code>mailer</code> has a <code>send</code> method. <code>signUp</code> cannot tell the difference.</p>
+
+<h4>Asserting what happened</h4>
+<p>With mocks you can check two kinds of thing: the <b>result</b> the function returned, and the <b>interactions</b>, meaning which calls it made to its dependencies.</p>
+<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="signUp calls the mock, the mock logs the call, the assertion reads the log">
+<rect class="bx-dark" x="10" y="14" width="400" height="36" rx="6"/>
+<text class="t-term" x="22" y="38">mailer.send('ada@…', 'Welcome!')</text>
+<path class="ln" d="M210 50v18"/><polygon class="ah" points="204,66 216,66 210,74"/>
+<rect class="bx-a" x="60" y="76" width="300" height="84" rx="8"/>
+<text class="t-b" x="210" y="100" text-anchor="middle">mock: mailer.send</text>
+<text class="t-s" x="76" y="124">log: call 1 → 'ada@…', 'Welcome!'</text>
+<text class="t-s" x="76" y="146">returns: a promise of true</text>
+<path class="ln-ok" d="M210 160v18"/><polygon class="ah-ok" points="204,176 216,176 210,184"/>
+<rect class="bx-ok" x="30" y="186" width="360" height="52" rx="8"/>
+<text class="t-m" x="210" y="208" text-anchor="middle">toHaveBeenCalledWith(</text>
+<text class="t-m" x="210" y="228" text-anchor="middle">'ada@…', 'Welcome!')</text>
+</svg><figcaption>When signUp calls mailer.send, the mock does nothing harmful. It writes the arguments into its call log and hands back the answer you chose. Afterwards, toHaveBeenCalledWith reads that log and passes if one of the recorded calls matches exactly.</figcaption></figure>
+<pre class="snip">const user = await signUp('ada@example.com', { db, mailer });
+expect(user.id).toBe(1);                                   // the result
+expect(mailer.send).toHaveBeenCalledWith('ada@example.com', 'Welcome!');
+expect(db.createUser).toHaveBeenCalledTimes(1);</pre>
+<p>Just as useful is checking that something did <b>not</b> happen. For an invalid email, <code>signUp</code> should throw before touching the database: <code>expect(db.createUser).not.toHaveBeenCalled()</code>. <code>.not</code> flips any matcher.</p>
+
+<h4>Testing async errors with <code>rejects</code></h4>
+<p>An <code>async</code> function never throws in the normal way. It returns a promise that <b>rejects</b> with the error. So instead of the <code>() =&gt;</code> wrapper from the last lesson, you hand the promise itself to expect and use <code>.rejects</code>:</p>
+<pre class="snip">await expect(signUp('nope', { db, mailer })).rejects.toThrow('Invalid email');</pre>
+<p>Note the <code>await</code> at the front, and that the test function itself must be marked <code>async</code>: <code>it('...', async () =&gt; { ... })</code>.</p>
+<div class="mistake"><b>Common mistake</b>Forgetting that <code>await</code>. Without it the test finishes before the promise is checked, so the assertion runs too late, or not at all, and the test can pass even when the code is wrong. Every <code>expect(...).rejects</code> or <code>.resolves</code> needs <code>await</code> in front.</div>
+
+<h4>A fake <code>fetch</code> for <code>getWeather</code></h4>
+<p><code>getWeather(city, fetchFn)</code> also takes its dependency as an argument. The real <code>fetch</code> returns a response object with an <code>ok</code> flag and a <code>json()</code> method that delivers the data. So the fake returns an object of that shape:</p>
+<pre class="snip">const fakeFetch = vi.fn().mockResolvedValue({
+  ok: true,
+  json: async () =&gt; ({ temp_c: 31 }),
+});</pre>
+<p>Now you control the outside world completely. Want to test the failure path? Make the fake resolve to <code>{ ok: false }</code> and check that the function returns <code>null</code>. No real server needed, and the test gives the same answer every time.</p>
+
+<h4>Fresh fixtures with <code>beforeEach</code></h4>
+<p>The data and fakes a test needs are called <b>fixtures</b>. If two tests share one mock, the call log from the first test is still there in the second, and assertions like <code>not.toHaveBeenCalled()</code> fail for confusing reasons. <code>beforeEach</code> runs a function before every test in its <code>describe</code> block, so each test starts with brand-new fakes:</p>
+<pre class="snip">let db, mailer;
+beforeEach(() =&gt; {
+  db = { createUser: vi.fn().mockResolvedValue({ id: 1 }) };
+  mailer = { send: vi.fn().mockResolvedValue(true) };
+});</pre>
+<p>The variables are declared with <code>let</code> outside, so every test can see them, and filled in fresh inside <code>beforeEach</code>.</p>
+
+<h4>Don't over-mock</h4>
+<p>Mocks test that your code <i>asked</i> the right things. They cannot tell you whether the real thing would have <i>agreed</i>. A mocked <code>db.createUser</code> happily accepts a typo in your SQL. So mock what is slow, costly, random or outside your control: email, payments, third-party APIs, the clock. For your own database code, the next lesson uses a real test database instead.</p>
+<div class="mistake"><b>Common mistake</b>Mocking so much that the test only checks the mocks. If every line of a function is a call to a mock, and the test asserts exactly those calls in exactly that order, it will break on every refactor and catch very few real bugs.</div>
+<div class="try"><b>Try it in your head</b>In <code>signUp</code>, suppose someone swaps the order so the welcome email is sent <i>before</i> the email is validated. Which of your tests goes red? The invalid-email test: <code>signUp('nope', ...)</code> still rejects, but if you also assert <code>expect(mailer.send).not.toHaveBeenCalled()</code>, that fails, because the mock's log shows an email was sent to "nope".</div>
+
+<h4>Recap</h4>
+<ul>
+<li>Replace slow, costly or external dependencies with test doubles. Passing dependencies in as arguments (dependency injection) makes that easy.</li>
+<li><code>vi.fn()</code> makes a mock that records its calls; <code>.mockResolvedValue(x)</code> makes it return a promise of <code>x</code>.</li>
+<li>Check interactions with <code>toHaveBeenCalledWith(...)</code>, <code>toHaveBeenCalledTimes(n)</code> and <code>not.toHaveBeenCalled()</code>.</li>
+<li>Test async errors with <code>await expect(promise).rejects.toThrow('...')</code>, inside an <code>async</code> test.</li>
+<li>Build fresh fixtures in <code>beforeEach</code>, and mock only what you don't control.</li>
+</ul>
+`);

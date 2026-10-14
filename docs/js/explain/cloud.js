@@ -478,3 +478,107 @@ aws ec2 authorize-security-group-ingress --group-id sg-05a8c1e3f7b9d2468 \\
 <li>443 from <code>0.0.0.0/0</code> for a website; SSH only from your <code>/32</code>, or no SSH at all with Session Manager.</li>
 </ul>
 `);
+
+explain('c6',`
+<h4>Why describe infrastructure in code</h4>
+<p>Over this track you have created buckets, servers, users, policies, networks and firewall rules, each with a CLI command. Now imagine doing that again for a staging copy of your app. And again after someone changes a setting by hand and nobody remembers what it was. Clicking or typing infrastructure into existence works once, but it is hard to repeat, hard to review and impossible to undo neatly.</p>
+<p><b>Infrastructure as code</b> (IaC) means describing the infrastructure you want in text files, kept in Git like any other code. A tool reads those files and makes the cloud match them. The benefits are the ones you already get from Git for your app:</p>
+<ul>
+<li><b>Reviewable</b>: a change to a firewall rule is a pull request someone can read before it happens.</li>
+<li><b>Repeatable</b>: run the same files again for staging, or in another region, and you get the same result.</li>
+<li><b>History</b>: <code>git log</code> tells you who changed what and why.</li>
+</ul>
+<p><b>Terraform</b> is the most widely used IaC tool and works with almost every cloud. (Alternatives include OpenTofu, an open-source fork of Terraform with the same language, Pulumi and AWS CloudFormation.)</p>
+<div class="analogy"><b>Think of it like</b>An architect's blueprint. You do not tell the builders "add a brick here, now another one". You hand over a drawing of the finished house, and they work out what to build, change or knock down to match it.</div>
+
+<h4>Declarative: describe the result, not the steps</h4>
+<p>The CLI commands you used were <b>imperative</b>: each one says "do this now". Terraform files are <b>declarative</b>: they say "this is what should exist". If the bucket already exists exactly as described, running Terraform again does nothing. You never write "create" or "delete"; Terraform works that out by comparing what you want with what exists.</p>
+
+<h4>Reading <code>main.tf</code></h4>
+<p>Terraform files end in <code>.tf</code> and use a language called <b>HCL</b>. It is made of <b>blocks</b>: a keyword, some labels, and settings in curly braces.</p>
+<pre class="snip">terraform {
+  required_providers {
+    aws = { source = "hashicorp/aws", version = "~&gt; 5.0" }
+  }
+}
+provider "aws" {
+  region = "us-east-1"
+}</pre>
+<p>A <b>provider</b> is a plugin that teaches Terraform how to talk to one service's API. The <code>terraform</code> block says which provider you need and where to download it from. <code>~&gt; 5.0</code> means "any 5.x version, but not 6", so an upgrade with breaking changes never sneaks in. The <code>provider</code> block configures it, here with the region. Credentials come from the same place as the CLI: what you set up with <code>aws configure</code>.</p>
+<pre class="snip">resource "aws_s3_bucket" "assets" {
+  bucket = "you-portfolio-assets-tf-2026"
+  tags = {
+    Project = "portfolio"
+  }
+}</pre>
+<p>A <b>resource</b> block is one thing that should exist. It has two labels. The first, <code>aws_s3_bucket</code>, is the <b>type</b>, defined by the provider. The second, <code>assets</code>, is <b>your name for it inside Terraform</b>; AWS never sees it. Together they form its <b>address</b>, <code>aws_s3_bucket.assets</code>, which is how Terraform refers to it in plans and state. Inside are its settings, called <b>arguments</b>: the real bucket name (still globally unique) and some <b>tags</b>, labels that help you find and cost things later.</p>
+
+<h4>The loop: init, plan, apply</h4>
+<figure class="fig"><svg viewBox="0 0 420 270" role="img" aria-label="Terraform compares your files with its state and the real cloud, shows a plan, then applies it and updates the state">
+<rect class="bx-a" x="10" y="10" width="120" height="48" rx="6"/><text class="t-b" x="70" y="32" text-anchor="middle">.tf files</text><text class="t-s" x="70" y="50" text-anchor="middle">what you want</text>
+<rect class="bx-info" x="150" y="10" width="120" height="48" rx="6"/><text class="t-b" x="210" y="32" text-anchor="middle">state</text><text class="t-s" x="210" y="50" text-anchor="middle">what it made</text>
+<rect class="bx" x="290" y="10" width="120" height="48" rx="6"/><text class="t-b" x="350" y="32" text-anchor="middle">AWS</text><text class="t-s" x="350" y="50" text-anchor="middle">what exists</text>
+<path class="ln" d="M70 58v30h280v-30"/><path class="ln" d="M210 58v30"/>
+<path class="ln" d="M210 88v12"/><polygon class="ah" points="204,100 216,100 210,108"/>
+<rect class="bx-warn" x="110" y="110" width="200" height="44" rx="8"/><text class="t-b" x="210" y="130" text-anchor="middle">terraform plan</text><text class="t-s" x="210" y="147" text-anchor="middle">the difference</text>
+<path class="ln" d="M210 154v16"/><polygon class="ah" points="204,170 216,170 210,178"/>
+<text class="t-s" x="222" y="168">you read it</text>
+<rect class="bx-ok" x="110" y="180" width="200" height="44" rx="8"/><text class="t-b" x="210" y="200" text-anchor="middle">terraform apply</text><text class="t-s" x="210" y="217" text-anchor="middle">make it so</text>
+<path class="ln-ok" d="M310 202h80v-136"/><polygon class="ah-ok" points="384,68 396,68 390,60"/>
+<text class="t-s t-ok" x="380" y="196" text-anchor="end">changes</text>
+<text class="t-s" x="210" y="258" text-anchor="middle">then records the result in state</text>
+</svg><figcaption>Terraform compares three things: your files, its state record of what it created before, and what really exists in AWS. The plan is the difference. When you apply it, Terraform makes the changes in AWS and then updates the state to match.</figcaption></figure>
+<ol>
+<li><b><code>terraform init</code></b> prepares the folder. It downloads the providers into a hidden <code>.terraform</code> folder and writes <code>.terraform.lock.hcl</code>, which records the exact provider versions. Run it once per project, and again when you add a provider.</li>
+<li><b><code>terraform plan</code></b> works out what would change and prints it, <b>without changing anything</b>. This is your safety net.</li>
+<li><b><code>terraform apply</code></b> shows the plan again, asks you to type <code>yes</code>, then makes the changes. Anything other than exactly <code>yes</code> cancels.</li>
+</ol>
+
+<h4>Reading a plan</h4>
+<p>Each resource in a plan has a symbol in front of it, and the last line sums it up:</p>
+<pre class="snip">  # aws_s3_bucket.assets will be created
+  + resource "aws_s3_bucket" "assets" {
+      + bucket = "you-portfolio-assets-tf-2026"
+    }
+Plan: 1 to add, 0 to change, 0 to destroy.</pre>
+<div class="tbl-wrap"><table><tr><th>Symbol</th><th>Meaning</th></tr>
+<tr><td><code>+</code></td><td>will be created</td></tr>
+<tr><td><code>~</code></td><td>will be updated in place</td></tr>
+<tr><td><code>-</code></td><td>will be <b>destroyed</b></td></tr>
+<tr><td><code>-/+</code></td><td>will be destroyed and created again (replaced), because a setting cannot be changed in place</td></tr></table></div>
+<p>Always read the summary line, and look hard at any <code>-</code> or <code>-/+</code>. Replacing a database, for example, means a new, empty database. When you later add an <code>aws_instance</code> named <code>web</code> to the same file and plan again, you should see <code>1 to add, 0 to change</code>: Terraform knows the bucket already exists, so it leaves it alone. <code>terraform state list</code> then shows both addresses.</p>
+<p><code>terraform apply -auto-approve</code> skips the "type yes" question. That is handy in automation where a human already approved the plan, but dangerous by hand, because you lose your last look before changes happen.</p>
+<div class="mistake"><b>Common mistake</b>Fixing something by hand in the AWS console when it is managed by Terraform. The next plan sees the difference, called <b>drift</b>, and tries to undo your change. Make every change in the <code>.tf</code> files, so the code stays the truth.</div>
+
+<h4>State: Terraform's memory</h4>
+<p>How does Terraform know <code>aws_s3_bucket.assets</code> is that particular bucket in AWS? It keeps a <b>state</b> file, <code>terraform.tfstate</code>, a JSON record linking each address in your code to the real resource's ID and settings. Three rules:</p>
+<ul>
+<li><b>Never commit state to Git.</b> It can contain secrets in plain text, such as generated database passwords.</li>
+<li><b>Never edit it by hand.</b> Use <code>terraform state</code> commands if you must change it.</li>
+<li><b>Teams keep it remote, with locking.</b> A <b>backend</b> stores state somewhere shared, like an S3 bucket or HCP Terraform (formerly Terraform Cloud). <b>Locking</b> stops two people applying at the same moment and corrupting it. The S3 backend can now lock on its own; older setups use a DynamoDB table for the lock.</li>
+</ul>
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="The tf files and lock file go in Git; the state file goes in a locked remote backend">
+<rect class="bx-ok" x="10" y="10" width="190" height="140" rx="8"/><text class="t-b" x="105" y="36" text-anchor="middle">Git repository</text>
+<text class="t-m" x="24" y="70">main.tf</text><text class="t-m" x="24" y="96">.terraform</text><text class="t-m" x="24" y="118">  .lock.hcl</text>
+<text class="t-s" x="24" y="140">reviewed in PRs</text>
+<rect class="bx-info" x="220" y="10" width="190" height="140" rx="8"/><text class="t-b" x="315" y="36" text-anchor="middle">Remote backend</text>
+<text class="t-m" x="234" y="70">terraform</text><text class="t-m" x="234" y="92">  .tfstate</text>
+<text class="t-s" x="234" y="118">S3 bucket, locked</text><text class="t-s" x="234" y="140">may hold secrets</text>
+<text class="t-s t-bad" x="210" y="180" text-anchor="middle">Never commit: *.tfstate and the .terraform folder</text>
+</svg><figcaption>Your code and the provider lock file live in Git, where they are reviewed. The state file lives in a remote backend, such as an S3 bucket with locking, because it can contain secrets and must only be written by one person at a time.</figcaption></figure>
+<p>So what goes into Git? The <code>.tf</code> files and <code>.terraform.lock.hcl</code>. What stays out, in <code>.gitignore</code>? The <code>.terraform</code> folder and every <code>*.tfstate</code> file.</p>
+
+<h4>Tearing it down</h4>
+<pre class="snip">terraform destroy     # plans the removal of everything, then asks for yes</pre>
+<p><code>destroy</code> removes every resource in the state, shown as a plan full of <code>-</code> lines, and asks for <code>yes</code> first. Afterwards <code>terraform state list</code> is empty and nothing keeps billing. For learning projects, that is the cleanest way to make sure nothing is left running.</p>
+<div class="try"><b>Try it in your head</b>You change the bucket's tag from <code>Project = "portfolio"</code> to <code>Project = "site"</code> and run <code>terraform plan</code>. Which symbol and summary do you expect? A <code>~</code> on <code>aws_s3_bucket.assets</code>, and <code>0 to add, 1 to change, 0 to destroy</code>: tags can be updated in place. Change the <code>bucket</code> name instead, and you would see <code>-/+</code>, because S3 cannot rename a bucket.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>Infrastructure as code describes what should exist in files that are reviewed, versioned and repeatable.</li>
+<li>A <code>provider</code> talks to the cloud; each <code>resource "type" "name"</code> is one thing, addressed as <code>type.name</code>.</li>
+<li><code>init</code> downloads providers, <code>plan</code> shows the difference (+ create, ~ update, - destroy), <code>apply</code> makes it so after you type yes, <code>destroy</code> removes it all.</li>
+<li>Always read the plan, especially destroy and replace lines.</li>
+<li>Commit the <code>.tf</code> files and the lock file; keep state in a remote, locked backend, never in Git.</li>
+</ul>
+`);

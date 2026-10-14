@@ -127,7 +127,7 @@ explain('k2',`
 <g text-anchor="middle"><text class="t" x="345" y="38">App 1</text><text class="t" x="345" y="90">App 2</text><text class="t t-bad" x="345" y="142">App 3 down</text><text class="t" x="345" y="194">App 4</text></g>
 <path class="ln-ok" d="M212 98L282 36"/><polygon class="ah-ok" points="277,31 284,41 290,30"/>
 <path class="ln-ok" d="M212 106L282 86"/><polygon class="ah-ok" points="279,80 282,92 290,84"/>
-<path class="ln-d" d="M212 120L282 136"/><text class="t-s t-bad" x="252" y="150" text-anchor="middle">skipped</text>
+<path class="ln-d" d="M212 120L282 136"/><text class="t-s t-bad" x="246" y="121" text-anchor="middle">skipped</text>
 <path class="ln-ok" d="M212 128L282 188"/><polygon class="ah-ok" points="276,192 284,183 290,193"/>
 </svg><figcaption>Users send every request to the load balancer, which forwards each one to a healthy app server. App 3 has failed its health check, so the balancer skips it and shares the traffic between apps 1, 2 and 4. Users never notice.</figcaption></figure>
 <p>This is how horizontal scaling removes the <b>single point of failure</b>: any one part whose failure takes the whole system down. With one server, that server is a single point of failure. With four behind a balancer, losing one costs a quarter of your capacity, not your whole site. It also makes deployments safe, because you can update servers one at a time while the others keep serving. (Real setups run the load balancer itself as a redundant pair, or use a managed one from a cloud provider, so it is not a single point of failure either.)</p>
@@ -166,5 +166,91 @@ explain('k2',`
 <li>Servers must be stateless for this to work: keep sessions in a shared store.</li>
 <li>Waiting time explodes near 100% busy, so aim for about 75% at peak.</li>
 <li>Servers needed ≈ peak rps ÷ capacity per server ÷ target utilisation, rounded up.</li>
+</ul>
+`);
+
+explain('k3',`
+<h4>Black Friday: the same questions, over and over</h4>
+<p>It is the biggest sale of the year. Traffic hits <b>4,000 requests per second</b>, and 95% of them are <b>reads</b>: people looking at products, not buying them yet. Thousands of shoppers ask for the same few popular product pages, the same prices and the same images, again and again.</p>
+<p>Without help, every one of those requests travels all the way to your database, which works out the same answer it gave a millisecond ago. Remember the latency numbers from the first lesson: memory is far faster than disk or the network. This lesson uses that fact twice: a <b>cache</b> keeps popular answers in memory next to your servers, and a <b>CDN</b> keeps copies of your files close to your users.</p>
+<div class="analogy"><b>Think of it like</b>A librarian who keeps a notepad of questions they have already looked up. "What time does the library close?" gets answered from the notepad in a second, instead of a trip to the archive every time.</div>
+
+<h4>What a cache is</h4>
+<p>A <b>cache</b> is a fast, temporary store of answers you have already worked out. The most common one in web systems is <b>Redis</b>, a server that keeps <b>key-value pairs</b> in memory: you store a value under a key, such as <code>product:42</code>, and fetch it back by that key in about a millisecond or two. It is the hash map from the algorithms track, running as a shared service that all your app servers can reach.</p>
+<p>Two words describe every cache lookup. A <b>hit</b> means the answer was in the cache. A <b>miss</b> means it wasn't, so you must go to the slower source. The <b>hit rate</b> is the share of lookups that are hits. With an 80% hit rate, only 20 out of every 100 reads reach the database.</p>
+
+<h4>Cache-aside, step by step</h4>
+<p>The most common way to use a cache is called <b>cache-aside</b>, because the cache sits beside the database and your app code manages it:</p>
+<pre class="snip">value = redis.get(key)
+if value is missing:                  # cache miss
+    value = db.query(...)             # the slow, reliable source
+    redis.set(key, value, ttl=60)     # remember it for 60 seconds
+return value</pre>
+<figure class="fig"><svg viewBox="0 0 420 215" role="img" aria-label="A cache hit answered by the cache alone, beside a cache miss that queries the database and then saves the answer in the cache">
+<text class="t-b t-ok" x="100" y="16" text-anchor="middle">hit</text><text class="t-b t-warn" x="310" y="16" text-anchor="middle">miss</text>
+<rect class="bx-a" x="40" y="24" width="120" height="36" rx="6"/><text class="t" x="100" y="47" text-anchor="middle">App</text>
+<rect class="bx-ok" x="40" y="90" width="120" height="40" rx="6"/><text class="t" x="100" y="115" text-anchor="middle">Cache</text>
+<rect class="bx" x="40" y="160" width="120" height="40" rx="6"/><text class="t-s" x="100" y="185" text-anchor="middle">DB not touched</text>
+<path class="ln" d="M80 60v22"/><polygon class="ah" points="74,80 86,80 80,88"/><text class="t-s" x="74" y="79" text-anchor="end">get</text>
+<path class="ln-ok" d="M120 90v-22"/><polygon class="ah-ok" points="114,70 126,70 120,62"/><text class="t-s t-ok" x="128" y="79">value</text>
+<line class="ln-d" x1="210" y1="8" x2="210" y2="208"/>
+<rect class="bx-a" x="250" y="24" width="120" height="36" rx="6"/><text class="t" x="310" y="47" text-anchor="middle">App</text>
+<rect class="bx-warn" x="250" y="90" width="120" height="40" rx="6"/><text class="t" x="310" y="115" text-anchor="middle">Cache: empty</text>
+<rect class="bx-info" x="250" y="160" width="120" height="40" rx="6"/><text class="t" x="310" y="185" text-anchor="middle">Database</text>
+<path class="ln" d="M280 60v22"/><polygon class="ah" points="274,80 286,80 280,88"/><text class="t-s" x="274" y="79" text-anchor="end">1 get</text>
+<path class="ln-d" d="M335 60v22"/><polygon class="ah" points="329,80 341,80 335,88"/><text class="t-s" x="341" y="79">3 save</text>
+<path class="ln" d="M370 36h22v144h-14"/><polygon class="ah" points="380,174 380,186 372,180"/><text class="t-b" x="400" y="112">2</text>
+</svg><figcaption>Left, a hit: the app asks the cache, gets the value back in about two milliseconds, and the database is never touched. Right, a miss: step 1, the cache has nothing. Step 2, the app queries the database. Step 3, it saves the answer in the cache with a time limit, so the next request for the same key is a hit.</figcaption></figure>
+<p>Notice that the cache never has to be complete. It fills itself with whatever people actually ask for, which is usually a small set of popular items. That is why caches work so well for <b>read-heavy</b> workloads, where reads far outnumber writes: the same answers are reused many times before they change.</p>
+
+<h4>TTL and the hard part: invalidation</h4>
+<p>A cached answer is a copy, and copies go out of date. If a product's price changes in the database, the cache still holds the old price. Data that is out of date is called <b>stale</b>.</p>
+<p>The simplest defence is a <b>TTL</b>, short for "time to live": an expiry time attached to each cached value. With <code>ttl=60</code>, Redis deletes the value after 60 seconds, so the next request is a miss and fetches the fresh price. A TTL puts an upper limit on staleness: at worst, users see a price up to a minute old.</p>
+<p>When a minute is too long, you <b>invalidate</b> explicitly: whenever the app updates the price in the database, it also deletes that key from the cache. The next read is a miss and loads the new value. Deleting the key is usually safer than writing the new value into the cache, because two updates racing each other could leave the older value in the cache.</p>
+<div class="tip"><b>Tip</b>The old joke says there are only two hard things in computer science: cache invalidation and naming things. The practical answer is to decide, for each piece of data, how stale it may be. A product description can be an hour old. A stock count at checkout should not be cached at all.</div>
+<div class="mistake"><b>Common mistake</b>Caching without a TTL "because the data never changes". It always changes eventually, and without an expiry the stale value lives forever, or until someone restarts Redis. Always set a TTL, even a long one.</div>
+
+<h4>CDNs: files close to your users</h4>
+<p>Many requests are not questions for the database at all. They are <b>static files</b>: images, JavaScript, CSS and fonts, which are the same for every user. In this lesson's scenario, 30% of all requests are static files, and your app servers are wasting their time sending them.</p>
+<p>A <b>CDN</b>, or Content Delivery Network, is a company's network of servers in hundreds of cities worldwide, called <b>edge locations</b>. Examples are Cloudflare, Amazon CloudFront and Vercel's edge network. The first time someone near an edge asks for a file, the edge fetches it from your server, called the <b>origin</b>, and keeps a copy. Everyone nearby after that gets the copy from the edge.</p>
+<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="An origin server in the middle with CDN edge servers in four distant cities serving nearby users">
+<rect class="bx-a" x="160" y="90" width="100" height="44" rx="8"/><text class="t-b" x="210" y="117" text-anchor="middle">Origin</text>
+<rect class="bx-ok" x="10" y="14" width="110" height="36" rx="8"/><rect class="bx-ok" x="300" y="14" width="110" height="36" rx="8"/><rect class="bx-ok" x="10" y="166" width="110" height="36" rx="8"/><rect class="bx-ok" x="300" y="166" width="110" height="36" rx="8"/>
+<g text-anchor="middle"><text class="t" x="65" y="37">New York</text><text class="t" x="355" y="37">Tokyo</text><text class="t" x="65" y="189">São Paulo</text><text class="t" x="355" y="189">Lagos</text>
+<text class="t-s" x="65" y="70">users: ~20 ms</text><text class="t-s" x="355" y="70">users: ~20 ms</text><text class="t-s" x="65" y="158">users: ~20 ms</text><text class="t-s" x="355" y="158">users: ~20 ms</text></g>
+<path class="ln-d" d="M120 50L160 92"/><path class="ln-d" d="M300 50L260 92"/><path class="ln-d" d="M120 166L160 132"/><path class="ln-d" d="M300 166L260 132"/>
+<text class="t-s" x="210" y="152" text-anchor="middle">fetched once</text>
+</svg><figcaption>Your origin server sits in one place. CDN edge servers in New York, Tokyo, São Paulo and Lagos each fetch a file from the origin once, along the dashed lines, then serve it to nearby users in around 20 milliseconds instead of a long round trip across the world.</figcaption></figure>
+<p>A CDN wins twice. Users get files faster, because the round trip is short. And your servers never see those requests, so they have more capacity for real work. CDNs also use TTLs, set through HTTP caching headers. A common trick is to put a version or content hash in each file's name, such as <code>app.3f9a1c.js</code>, so a new release has a new name and old copies simply stop being requested.</p>
+
+<h4>Worked example: the Black Friday numbers</h4>
+<p>The lesson starts you with a load balancer and 9 app servers, which handle about 9 × 400 = 3,600 rps. That is less than 4,000, so the app tier is overloaded. Follow the traffic once you add both a CDN and a cache:</p>
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="4,000 requests per second split between the CDN, the app servers, the cache and the database">
+<rect class="bx-info" x="10" y="90" width="72" height="44" rx="6"/><text class="t-b" x="46" y="110" text-anchor="middle">Users</text><text class="t-s" x="46" y="126" text-anchor="middle">4,000/s</text>
+<rect class="bx-ok" x="110" y="14" width="84" height="44" rx="6"/><text class="t-b" x="152" y="34" text-anchor="middle">CDN</text><text class="t-s" x="152" y="50" text-anchor="middle">1,200/s</text>
+<rect class="bx" x="110" y="90" width="84" height="44" rx="6"/><text class="t-b" x="152" y="110" text-anchor="middle">App</text><text class="t-s" x="152" y="126" text-anchor="middle">2,800/s</text>
+<rect class="bx-ok" x="222" y="90" width="84" height="44" rx="6"/><text class="t-b" x="264" y="110" text-anchor="middle">Cache</text><text class="t-s" x="264" y="126" text-anchor="middle">2,128 hits</text>
+<rect class="bx-info" x="334" y="90" width="78" height="44" rx="6"/><text class="t-b" x="373" y="110" text-anchor="middle">DB</text><text class="t-s" x="373" y="126" text-anchor="middle">672/s</text>
+<path class="ln" d="M82 98L104 60"/><polygon class="ah" points="98,59 108,64 108,52"/>
+<path class="ln" d="M82 112h20"/><polygon class="ah" points="100,106 100,118 108,112"/>
+<path class="ln" d="M194 112h20"/><polygon class="ah" points="212,106 212,118 220,112"/>
+<path class="ln" d="M306 112h20"/><polygon class="ah" points="324,106 324,118 332,112"/>
+<text class="t-s" x="262" y="164" text-anchor="middle">DB gets 532 reads + 140 writes</text>
+</svg><figcaption>Of 4,000 requests per second, the 1,200 static ones are served by the CDN. The app servers handle the other 2,800. Of those, 2,660 are reads, and the cache answers 80 per cent of them, 2,128. Only 532 reads and 140 writes, 672 in all, reach the database.</figcaption></figure>
+<ul>
+<li><b>App servers:</b> 2,800 ÷ 3,600 is about 78% busy. Busy, but under the danger zone.</li>
+<li><b>Database:</b> without the cache it would get all 2,660 reads, about 89% of its 3,000-read capacity in the simulator. With the cache, 532 reads is about 18%.</li>
+<li><b>Cost:</b> balancer $20, nine servers $360, CDN $30, cache $60 and the database $120 add up to $590, inside the $620 budget.</li>
+</ul>
+<p>Notice the order matters for diagnosis: the CDN fixes the overloaded <i>app</i> tier, and the cache fixes the overloaded <i>database</i>. Read the load figures in the results to see which tier is struggling before you add anything.</p>
+<div class="try"><b>Try it in your head</b>Reads reaching the cache: 1,000 per second. Hit rate: 90%. How many reach the database? 10% of 1,000, so 100 per second. And a user updates their profile photo, but their friends still see the old one for a few minutes: why? The old image is still cached, in a CDN or cache, until its TTL runs out or it is invalidated.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>A cache keeps popular answers in memory (Redis), so repeated reads skip the database.</li>
+<li>Cache-aside: read the cache; on a miss, read the database and store the result with a TTL.</li>
+<li>The database only sees the misses: reads × (1 − hit rate).</li>
+<li>Stale data is the price. Use TTLs to limit it, and delete keys when the data changes.</li>
+<li>A CDN serves static files from edge locations near users, which is faster for them and takes load off your servers.</li>
 </ul>
 `);

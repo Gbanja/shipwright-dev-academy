@@ -305,3 +305,288 @@ curl localhost:3000        # Hello from Docker</pre>
 <li>Copy <code>package*.json</code> and install before <code>COPY . .</code>, so code edits do not trigger a reinstall.</li>
 </ul>
 `);
+
+explain('d4',`
+<h4>Three things every real container needs</h4>
+<p>The containers so far were simple: start, serve a page, get thrown away. A real app, and especially a database, needs three more things:</p>
+<ol>
+<li><b>Configuration.</b> The same image must run on your laptop and in production with different passwords and settings, without rebuilding.</li>
+<li><b>Data that survives.</b> You will delete and replace containers constantly, for new versions or new settings. The data must not disappear with them.</li>
+<li><b>A way to talk to each other.</b> Your app container has to find the database container.</li>
+</ol>
+<p>Docker's answers are <b>environment variables</b>, <b>volumes</b> and <b>networks</b>. You will use all three to run PostgreSQL, the database you met in the SQL track.</p>
+
+<h4>Configuration: environment variables with <code>-e</code></h4>
+<p>An <b>environment variable</b> is a named setting handed to a program when it starts, like <code>PORT=3000</code>. You have seen them in <code>.env</code> files; in Node.js a program reads them with <code>process.env.PORT</code>. They are the standard way to configure containers, because the image stays generic and each place that runs it supplies its own values.</p>
+<p><code>-e KEY=value</code> sets one for a container. You can repeat it as many times as you need:</p>
+<pre class="snip">docker run -d --name db -e POSTGRES_PASSWORD=secret postgres:16</pre>
+<p>The official Postgres image reads <code>POSTGRES_PASSWORD</code> the first time it starts, and uses it as the password of the main database user, called <code>postgres</code>. Which variables an image understands is listed on its page on Docker Hub.</p>
+<p>The settings are fixed when the container is created. To change one, you remove the container and run a new one with the new value.</p>
+
+<h4>A failure on purpose: reading the logs</h4>
+<p>The lesson first asks you to start Postgres <b>without</b> a password. <code>docker run</code> prints a container ID and looks fine. But <code>docker ps</code> shows nothing, and <code>docker ps -a</code> shows the container as <code>Exited (1)</code>: the main process stopped with an error. This is when you ask the container what happened:</p>
+<pre class="snip">$ docker logs db
+Error: Database is uninitialized and superuser password
+is not specified.
+You must specify POSTGRES_PASSWORD to a non-empty value...</pre>
+<p>The image refuses to create a database nobody could log in to safely, and it tells you exactly which setting is missing. Before you start it properly, remove the failed container with <code>docker rm db</code>; otherwise the name <code>db</code> is still taken.</p>
+
+<h4>Data that survives: volumes</h4>
+<p>Every container has its own writable layer on top of its image. Postgres saves its tables there by default, in <code>/var/lib/postgresql/data</code>. But that layer belongs to the container: <code>docker rm</code> deletes it, and every row of data with it.</p>
+<p>A <b>volume</b> is storage that Docker manages separately from any container. You create it once, then <b>mount</b> it into a container at a path, so that whatever the container writes to that path really goes into the volume. When the container is removed, the volume stays. Mount the same volume into a new container and the data is right there.</p>
+<pre class="snip">docker volume create pgdata
+-v pgdata:/var/lib/postgresql/data   # volume name : path inside</pre>
+<p>The <code>-v</code> option reads like <code>-p</code>: the left side is outside (the volume called <code>pgdata</code>), the right side is inside the container (the folder where Postgres 16 keeps its files). The right-hand path depends on the image, so check its documentation.</p>
+<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="The first db container is removed, a second one mounts the same pgdata volume and finds the data">
+<rect class="bx-bad" x="10" y="16" width="160" height="56" rx="8"/><text class="t-b" x="90" y="40" text-anchor="middle">db, first</text><text class="t-s t-bad" x="90" y="60" text-anchor="middle">removed with rm -f</text>
+<rect class="bx-ok" x="250" y="16" width="160" height="56" rx="8"/><text class="t-b" x="330" y="40" text-anchor="middle">db, second</text><text class="t-s t-ok" x="330" y="60" text-anchor="middle">new container</text>
+<path class="ln" d="M170 44h72"/><polygon class="ah" points="240,38 240,50 248,44"/><text class="t-s" x="208" y="36" text-anchor="middle">later</text>
+<path class="ln-d" d="M90 72v50h80"/><path class="ln-ok" d="M330 72v50h-80"/>
+<rect class="bx-a" x="140" y="110" width="140" height="56" rx="10"/><text class="t-b t-a" x="210" y="134" text-anchor="middle">pgdata</text><text class="t-s" x="210" y="154" text-anchor="middle">volume</text>
+<text class="t-s" x="210" y="192" text-anchor="middle">the users table lives here, not in either container</text>
+<text class="t-s" x="210" y="214" text-anchor="middle">mounted at /var/lib/postgresql/data</text>
+</svg><figcaption>The first database container writes its data into the pgdata volume. When that container is removed, the volume stays. A brand new container mounts the same volume and finds all the data waiting, so nothing is lost.</figcaption></figure>
+<p>There is a second kind of mount you will see often: a <b>bind mount</b>, such as <code>-v ./site:/usr/share/nginx/html</code>, which mounts a folder from your own machine instead of a Docker-managed volume. It is handy in development for live-editing files. For database data, named volumes are the usual choice.</p>
+
+<h4>Talking to each other: networks</h4>
+<p>As you saw with ports, each container has its own network. To let containers reach each other, you put them on the same <b>user-defined network</b>, one that you create yourself:</p>
+<pre class="snip">docker network create appnet
+docker run ... --network appnet --name db ... postgres:16</pre>
+<p>A user-defined network comes with a built-in phone book (DNS, the system that turns names into addresses). Any container on <code>appnet</code> can reach this database simply as <code>db</code>, on its normal port: <code>db:5432</code>. The name is the container's <code>--name</code>. Docker's default network, used when you give no <code>--network</code>, does not offer this lookup by name, which is why you create your own.</p>
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="On the appnet network, the api container reaches the db container at db:5432; only published ports are reachable from your machine">
+<rect class="bx-info" x="10" y="14" width="400" height="120" rx="12"/>
+<text class="t-b t-info" x="24" y="36">network: appnet</text>
+<rect class="bx-ok" x="30" y="54" width="120" height="56" rx="8"/><text class="t-b" x="90" y="78" text-anchor="middle">api</text><text class="t-s" x="90" y="98" text-anchor="middle">your app</text>
+<rect class="bx-a" x="270" y="54" width="120" height="56" rx="8"/><text class="t-b" x="330" y="78" text-anchor="middle">db</text><text class="t-s" x="330" y="98" text-anchor="middle">postgres :5432</text>
+<path class="ln-ok" d="M150 82h112"/><polygon class="ah-ok" points="260,76 260,88 268,82"/>
+<text class="t-m t-ok" x="208" y="74" text-anchor="middle">db:5432</text>
+<text class="t-s" x="210" y="162" text-anchor="middle">containers on one network find each other by name</text>
+<text class="t-s" x="210" y="184" text-anchor="middle">no -p needed for container to container traffic</text>
+</svg><figcaption>Both containers are on the appnet network. The app reaches the database by its container name, db, on port 5432. Publishing with dash p is only needed when your own machine must reach a container, not for containers talking to each other.</figcaption></figure>
+
+<h4>Getting inside: <code>docker exec</code></h4>
+<p><code>docker exec</code> runs an extra command inside a container that is already running. It does not start a new container; it adds a process to an existing one.</p>
+<pre class="snip">docker exec -it db psql -U postgres   # Postgres's command-line client
+docker exec -it db sh                 # a plain shell inside db</pre>
+<p><code>-i</code> (interactive) keeps the input open so you can type, and <code>-t</code> gives you a proper terminal; together, <code>-it</code>, they are what you want for anything you type into. <code>psql -U postgres</code> opens Postgres's own command line as the user <code>postgres</code>. Type <code>\\q</code> to leave it. In the sandbox, connecting also creates a <code>users</code> table in the volume, so you have something to keep.</p>
+
+<h4>Worked example: proving the data survives</h4>
+<p>Here is the full, correct command. The backslash at the end of a line lets one command continue on the next line, so it is easier to read:</p>
+<pre class="snip">docker run -d --name db \\
+  --network appnet \\
+  -e POSTGRES_PASSWORD=secret \\
+  -v pgdata:/var/lib/postgresql/data \\
+  postgres:16</pre>
+<ul>
+<li><code>--network appnet</code>: other containers on appnet can reach it as <code>db</code>.</li>
+<li><code>-e POSTGRES_PASSWORD=secret</code>: the configuration it was missing.</li>
+<li><code>-v pgdata:/var/lib/postgresql/data</code>: the data lives in the volume, not the container.</li>
+</ul>
+<p>Now the test. <code>docker rm -f db</code> destroys the container. Run the exact same command again, then <code>docker logs db</code>. On its very first start, Postgres had to create a new database. This time the logs say <code>PostgreSQL Database directory appears to contain a database; Skipping initialization</code>. That line is your proof: the new container found the old data in the volume.</p>
+<div class="mistake"><b>Common mistake</b>Forgetting <code>-v</code> on a database container. Everything works perfectly until the first time you remove the container to upgrade it, and then every table is gone. Decide where the data lives before you put anything in it.</div>
+<div class="mistake"><b>Common mistake</b>Thinking volumes are permanent no matter what. <code>docker volume rm pgdata</code> and <code>docker volume prune</code> really do delete the data, and <code>docker rm -v</code> also removes a container's unnamed volumes. Read twice before running anything that deletes volumes.</div>
+<div class="try"><b>Try it in your head</b>You start a second container, <code>api</code>, on <code>appnet</code>. What host name should its database setting use, and does <code>db</code> need <code>-p 5432:5432</code>? The host is <code>db</code>, the container's name, on port 5432. No <code>-p</code> is needed, because both containers are on the same network; you would only publish the port if a program on your own machine had to connect.</div>
+
+<h4>Recap</h4>
+<ul>
+<li><code>-e KEY=value</code> configures a container at creation; the image stays generic.</li>
+<li>When a container will not stay up, <code>docker ps -a</code> shows the exit code and <code>docker logs NAME</code> shows why.</li>
+<li>A container's own files vanish on <code>docker rm</code>. A volume, mounted with <code>-v name:/path</code>, keeps data across containers.</li>
+<li>Containers on the same user-defined network (<code>--network</code>) reach each other by container name, such as <code>db:5432</code>.</li>
+<li><code>docker exec -it NAME command</code> runs a command inside a running container.</li>
+</ul>
+`);
+
+explain('d5',`
+<h4>Why Compose exists</h4>
+<p>At the end of the last lesson, running one database took a command with a network, an environment variable and a volume. A real app has several containers: your API, a database, maybe a cache. Each one needs its own long <code>docker run</code> command, in the right order, with matching names, every time anyone on the team starts the project. That is slow and easy to get wrong.</p>
+<p><b>Docker Compose</b> solves it by moving all those settings into one file, <code>compose.yaml</code>, kept in the project folder. The file describes <b>what</b> you want running: which containers, with which ports, settings, volumes and connections. Then one command, <code>docker compose up</code>, makes it so. Because the file lives in Git, everyone gets the same setup.</p>
+
+<h4>Reading YAML in two minutes</h4>
+<p>Compose files are written in <b>YAML</b>, a format designed to be easy for humans to read. You only need three rules:</p>
+<ul>
+<li><code>key: value</code> sets a value. The space after the colon is required.</li>
+<li><b>Indentation shows nesting.</b> Lines indented under a key belong to it. Use spaces, never tabs, and keep the same depth for items at the same level. Two spaces per level is the habit.</li>
+<li>A line starting with <code>- </code> is one item in a list.</li>
+</ul>
+<pre class="snip">services:            # a key whose value is everything indented below
+  db:                # one service, nested inside services
+    image: postgres:16
+    volumes:
+      - pgdata:/var/lib/postgresql/data   # a list with one item</pre>
+
+<h4>The lesson's <code>compose.yaml</code>, piece by piece</h4>
+<p>Everything under <code>services</code> is one <b>service</b>: a container Compose will run, named by its key. This file has two, <code>web</code> and <code>db</code>. Nearly every setting matches a <code>docker run</code> option you already know:</p>
+<div class="tbl-wrap"><table><tr><th>In compose.yaml</th><th>Same as</th></tr>
+<tr><td><code>build: .</code></td><td><code>docker build .</code> using the Dockerfile in this folder</td></tr>
+<tr><td><code>image: postgres:16</code></td><td>The image name in <code>docker run</code></td></tr>
+<tr><td><code>ports: - "3000:3000"</code></td><td><code>-p 3000:3000</code></td></tr>
+<tr><td><code>environment:</code></td><td><code>-e KEY=value</code>, one per line</td></tr>
+<tr><td><code>volumes: - pgdata:/var/lib/...</code></td><td><code>-v pgdata:/var/lib/...</code></td></tr>
+<tr><td><code>depends_on: - db</code></td><td>Start <code>db</code> before <code>web</code></td></tr></table></div>
+<p>Two more details. The port is written in quotes, <code>"3000:3000"</code>, because YAML can misread some unquoted numbers containing colons; quoting ports is the safe habit. And the <code>volumes:</code> block at the very bottom, outside <code>services</code>, declares the named volume <code>pgdata</code> so Compose creates it for you.</p>
+
+<h4>One command: <code>docker compose up -d</code></h4>
+<p>Run it in the folder that contains <code>compose.yaml</code>. Compose then does everything you did by hand in the last lesson:</p>
+<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="docker compose up reads compose.yaml and creates a network, a volume and two containers">
+<rect class="bx-info" x="140" y="10" width="140" height="36" rx="8"/><text class="t-m" x="210" y="34" text-anchor="middle">compose.yaml</text>
+<path class="ln" d="M210 46v22"/><polygon class="ah" points="204,66 216,66 210,74"/>
+<text class="t-s" x="222" y="62">up -d</text>
+<rect class="bx" x="10" y="78" width="400" height="120" rx="12"/>
+<text class="t-b" x="24" y="100">network: shop_default</text>
+<rect class="bx-ok" x="30" y="116" width="130" height="62" rx="8"/><text class="t-b" x="95" y="142" text-anchor="middle">web</text><text class="t-s" x="95" y="164" text-anchor="middle">built from .</text>
+<rect class="bx-a" x="260" y="116" width="130" height="62" rx="8"/><text class="t-b" x="325" y="142" text-anchor="middle">db</text><text class="t-s" x="325" y="164" text-anchor="middle">postgres:16</text>
+<path class="ln" d="M160 147h92"/><polygon class="ah" points="250,141 250,153 258,147"/>
+<text class="t-s" x="208" y="139" text-anchor="middle">by name</text>
+<rect class="bx-warn" x="260" y="208" width="130" height="34" rx="14"/><text class="t-s" x="325" y="230" text-anchor="middle">volume pgdata</text>
+<path class="ln-d" d="M325 178v30M95 178v26"/>
+<text class="t-s" x="95" y="220" text-anchor="middle">localhost:3000</text>
+<text class="t-s" x="95" y="238" text-anchor="middle">published to you</text>
+</svg><figcaption>docker compose up reads compose dot yaml and creates everything in it: a private network named after the folder, the web container built from the Dockerfile, the db container from the postgres image, and the pgdata volume mounted into db. Services on the network reach each other by service name.</figcaption></figure>
+<ol>
+<li>It builds the <code>web</code> image from the Dockerfile, because of <code>build: .</code>.</li>
+<li>It creates a network for the project, named after the folder: <code>shop_default</code>.</li>
+<li>It creates the <code>pgdata</code> volume (shown as <code>shop_pgdata</code>, with the project name in front).</li>
+<li>It starts <code>db</code>, then <code>web</code>, because web depends on db.</li>
+</ol>
+<p>Every service joins that network, and each one is reachable by its <b>service name</b>: the database is simply <code>db</code>. <code>-d</code> means detached, exactly as with <code>docker run</code>. The command is <code>docker compose</code>, with a space; you may still see the older separate tool written <code>docker-compose</code> in tutorials.</p>
+
+<h4>The classic bug: <code>localhost</code> inside a container</h4>
+<p>The provided file has a bug that catches almost everyone once. Look at the database address the app is given:</p>
+<pre class="snip">DATABASE_URL: postgres://postgres:secret@localhost:5432/shop
+#                      user   :password@host     :port/database</pre>
+<p>A connection URL packs everything into one line: the kind of database, the user and password, the <b>host</b> (which machine), the port, and the database name. The host here is <code>localhost</code>. When you <code>curl localhost:3000</code>, the API answers with an error containing <code>ECONNREFUSED</code>, short for "connection refused": the app knocked on that address and port, and nothing was listening.</p>
+<p>Why? <code>localhost</code> always means "the machine I am running on". For a process inside a container, that machine is <b>its own container</b>. The <code>web</code> container has nothing on port 5432; Postgres lives in a different container, with a different localhost of its own.</p>
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Inside web, localhost loops back to web itself and fails; the name db reaches the database container">
+<rect class="bx-ok" x="10" y="20" width="170" height="130" rx="10"/><text class="t-b" x="95" y="44" text-anchor="middle">web container</text>
+<rect class="bx" x="30" y="60" width="130" height="34" rx="6"/><text class="t-s" x="95" y="82" text-anchor="middle">node app</text>
+<path class="ln-a" d="M95 94v14h-75v-31h2" fill="none"/><polygon class="ah-a" points="22,71 22,83 30,77"/>
+<text class="t-s t-bad" x="95" y="134" text-anchor="middle">localhost: refused</text>
+<rect class="bx-a" x="250" y="20" width="160" height="130" rx="10"/><text class="t-b" x="330" y="44" text-anchor="middle">db container</text>
+<rect class="bx" x="270" y="60" width="120" height="34" rx="6"/><text class="t-s" x="330" y="82" text-anchor="middle">postgres :5432</text>
+<path class="ln-ok" d="M160 77h102"/><polygon class="ah-ok" points="260,71 260,83 268,77"/>
+<text class="t-m t-ok" x="214" y="68" text-anchor="middle">db</text>
+<text class="t-s" x="210" y="184" text-anchor="middle">each container has its own localhost</text>
+</svg><figcaption>Inside the web container, localhost points back at the web container itself, where nothing listens on port 5432, so the connection is refused. Using the service name db sends the connection across the Compose network to the database container.</figcaption></figure>
+<p>The fix is to use the service name as the host: <code>@db:5432</code>. Edit the file, then run <code>docker compose up -d</code> again. Compose compares the file with what is running, sees that only <code>web</code>'s settings changed, and recreates just that container. The next <code>curl localhost:3000</code> connects. (On your own machine, <code>localhost:3000</code> is correct, because that request comes from your machine and reaches web through the published port.)</p>
+
+<h4>Everyday commands: <code>ps</code>, <code>logs</code>, <code>down</code></h4>
+<pre class="snip">docker compose ps          # this project's containers and their status
+docker compose logs web    # one service's logs (-f to follow)
+docker compose down        # stop and remove containers and network</pre>
+<p>These work on the project in the current folder, so you use service names like <code>web</code> rather than full container names. <code>down</code> removes the containers and the network but <b>keeps volumes</b>, so your database survives until next time. <code>docker compose down -v</code> also deletes the volumes, and with them all the data.</p>
+<div class="mistake"><b>Common mistake</b>Trusting <code>depends_on</code> to wait until the database is ready. It only controls start order: db's container is <i>started</i> first, but Postgres may need a few more seconds before it accepts connections. Real projects add a <code>healthcheck</code> to the db service and write <code>condition: service_healthy</code> under depends_on, or make the app retry its connection.</div>
+<div class="mistake"><b>Common mistake</b>Indenting with tabs, or by an uneven number of spaces. YAML then either refuses the file or, worse, silently attaches a setting to the wrong service. If Compose reports a parsing error, look at the indentation of the line it names and the line above.</div>
+<div class="try"><b>Try it in your head</b>You add a third service called <code>cache</code> using the <code>redis:7</code> image, which listens on port 6379. What address should <code>web</code> use for it, and does cache need a <code>ports</code> entry? <code>cache:6379</code>, the service name and its port. No <code>ports</code> entry is needed, because web reaches it over the project network; you would only publish it to connect from your own machine.</div>
+
+<h4>Recap</h4>
+<ul>
+<li><code>compose.yaml</code> describes a whole app: services with their image or build, ports, environment, volumes and dependencies.</li>
+<li><code>docker compose up -d</code> builds, creates a project network and volumes, and starts everything; run it again after edits to apply changes.</li>
+<li>Services reach each other by <b>service name</b>, such as <code>db:5432</code>.</li>
+<li>Inside a container, <code>localhost</code> means that container itself, never another service.</li>
+<li><code>docker compose ps</code>, <code>logs</code> and <code>down</code> manage the stack; <code>down</code> keeps volumes unless you add <code>-v</code>.</li>
+</ul>
+`);
+
+explain('d6',`
+<h4>Why a smaller image matters</h4>
+<p>Your site in <code>~/site</code> is built with <b>Vite</b>, a frontend build tool. To <b>build</b> it you need Node.js, npm and a folder full of packages. But the result of the build is just a handful of plain HTML, CSS and JavaScript files. To <b>serve</b> those files to visitors you only need them and a small web server.</p>
+<p>The current Dockerfile ignores that difference. It starts from <code>node:20</code>, copies everything, installs, builds, and then ships the lot: Node, npm, the source code, every package in <code>node_modules</code>, and the build output. That image weighs around a gigabyte. Shipping it costs you three ways:</p>
+<ul>
+<li><b>Speed:</b> every deploy uploads and downloads far more data than it needs.</li>
+<li><b>Storage:</b> every version you keep takes that space again in the registry and on servers.</li>
+<li><b>Security:</b> every program in the image is something that could have a vulnerability. Tools you do not ship cannot be attacked.</li>
+</ul>
+<p>A <b>multi-stage build</b> keeps the convenience of building inside Docker, but ships only the result.</p>
+
+<h4>What <code>npm run build</code> produces</h4>
+<p><code>package.json</code> defines a script called <code>build</code> that runs <code>vite build</code>. Vite reads your source files, bundles and shrinks them, and writes the finished site into a folder called <code>dist</code> (short for distribution). Everything a browser needs is in <code>dist</code>; nothing else in the project is needed at run time. Remember that folder name: it is the only thing worth keeping.</p>
+
+<h4>Multi-stage builds: build in one place, ship from another</h4>
+<p>A multi-stage Dockerfile simply has more than one <code>FROM</code>. Each <code>FROM</code> starts a new, empty <b>stage</b> on a new base image. You can name a stage with <code>AS</code>, and a later stage can copy files out of an earlier one with <code>COPY --from=name</code>. Only the <b>last</b> stage becomes the image you tag and ship; earlier stages are scaffolding that gets left behind.</p>
+<pre class="snip">FROM node:20-alpine AS build      # stage 1, named "build"
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build                 # creates /app/dist
+
+FROM nginx:alpine                 # stage 2: a fresh, small start
+COPY --from=build /app/dist /usr/share/nginx/html</pre>
+<p>The first stage is the Dockerfile you already know, with the same caching-friendly order from the Dockerfile lesson. The second stage starts again from <code>nginx:alpine</code>, the nginx web server on Alpine Linux, and copies in one thing: the <code>dist</code> folder from the build stage. <code>/usr/share/nginx/html</code> is the folder the nginx image serves files from by default.</p>
+<p>Notice there is no <code>CMD</code> in the final stage. An image inherits settings from its base, and <code>nginx:alpine</code> already has a <code>CMD</code> that starts nginx on port 80.</p>
+<figure class="fig"><svg viewBox="0 0 420 270" role="img" aria-label="The build stage holds Node, packages and source; only the dist folder is copied into the small nginx stage">
+<rect class="bx" x="10" y="10" width="180" height="200" rx="10"/>
+<text class="t-b" x="100" y="34" text-anchor="middle">stage 1: build</text>
+<rect class="bx-bad" x="24" y="48" width="152" height="30" rx="6"/><text class="t-s" x="100" y="68" text-anchor="middle">Node.js and npm</text>
+<rect class="bx-bad" x="24" y="84" width="152" height="30" rx="6"/><text class="t-s" x="100" y="104" text-anchor="middle">node_modules</text>
+<rect class="bx-bad" x="24" y="120" width="152" height="30" rx="6"/><text class="t-s" x="100" y="140" text-anchor="middle">source code</text>
+<rect class="bx-ok" x="24" y="160" width="152" height="34" rx="6"/><text class="t-m" x="100" y="182" text-anchor="middle">/app/dist</text>
+<rect class="bx-a" x="230" y="60" width="180" height="150" rx="10"/>
+<text class="t-b" x="320" y="84" text-anchor="middle">stage 2: ships</text>
+<rect class="bx" x="244" y="100" width="152" height="30" rx="6"/><text class="t-s" x="320" y="120" text-anchor="middle">nginx:alpine</text>
+<rect class="bx-ok" x="244" y="160" width="152" height="34" rx="6"/><text class="t-s" x="320" y="182" text-anchor="middle">site files only</text>
+<path class="ln-ok" d="M176 177h60"/><polygon class="ah-ok" points="234,171 234,183 242,177"/>
+<text class="t-s t-ok" x="209" y="234" text-anchor="middle">COPY --from=build</text>
+<text class="t-s t-bad" x="100" y="258" text-anchor="middle">left behind</text>
+<text class="t-s t-ok" x="320" y="258" text-anchor="middle">the final image</text>
+</svg><figcaption>The build stage contains Node, npm, all the packages and the source code, and produces the dist folder. COPY dash dash from equals build carries only dist into the second stage, which starts from the small nginx image. Everything else stays behind and is not shipped.</figcaption></figure>
+
+<h4>Worked example: fat versus slim</h4>
+<p>The lesson has you build both versions and compare them:</p>
+<pre class="snip">docker build -t site:fat .     # the original Dockerfile
+# rewrite the Dockerfile as two stages, then:
+docker build -t site:slim .
+docker images                  # compare the SIZE column</pre>
+<p>Here the tag after the colon is used as a label for the variant: <code>site:fat</code> and <code>site:slim</code> are two images in the same repository. The slim one is a few tens of megabytes; the fat one is many times larger. Then run the slim one and check it serves the site. nginx listens on port 80 inside, so publish it as usual:</p>
+<pre class="snip">docker run -d -p 8080:80 --name site site:slim
+curl localhost:8080</pre>
+
+<h4>Image names, and what a tag really is</h4>
+<p>To share an image you push it to a <b>registry</b>, and the image's name says exactly where it goes. A full name has up to four parts:</p>
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="The parts of an image name: registry, user, repository and tag">
+<rect class="bx-dark" x="10" y="12" width="400" height="46" rx="6"/>
+<text class="t-term" x="210" y="41" text-anchor="middle" style="font-size:18px">docker.io/you/site:1.0</text>
+<path class="ln" d="M100 60v20M175 60v52M230 60v20M287 60v52"/>
+<g text-anchor="middle">
+<text class="t" x="100" y="98">registry</text>
+<text class="t" x="175" y="130">your user</text>
+<text class="t" x="230" y="98">repository</text>
+<text class="t-b t-a" x="300" y="130">tag</text>
+</g>
+<text class="t-s" x="210" y="154" text-anchor="middle">docker.io is the default, so you can leave it out</text>
+</svg><figcaption>An image name is the registry, your user name, the repository and the tag. docker dot io is Docker Hub and is assumed when you leave it out, so you slash site colon 1 point 0 means the same thing.</figcaption></figure>
+<p>Official images like <code>nginx</code> have no user part because they live in Docker Hub's special <code>library</code> collection. Your own images must start with your Docker Hub user name, because that is the space you are allowed to push into.</p>
+<p><code>docker tag site:slim you/site:1.0</code> does not copy anything. It adds a second name that points at the <b>same</b> image; in <code>docker images</code> both rows show the same <code>IMAGE ID</code>. Think of it as a second label on the same box.</p>
+
+<h4>Logging in and pushing</h4>
+<p>Pushing needs an account and a login. <code>docker login</code> asks for your Docker Hub user name and password (for real accounts, Docker recommends a <b>personal access token</b> instead of your password). Then <code>docker push you/site:1.0</code> uploads the image.</p>
+<figure class="fig"><svg viewBox="0 0 420 130" role="img" aria-label="You push the image to Docker Hub, and a server pulls the same tagged image">
+<rect class="bx-info" x="10" y="30" width="110" height="50" rx="8"/><text class="t-b" x="65" y="60" text-anchor="middle">laptop or CI</text>
+<path class="ln-a" d="M120 55h40"/><polygon class="ah-a" points="158,49 158,61 166,55"/><text class="t-s" x="141" y="45" text-anchor="middle">push</text>
+<rect class="bx-a" x="168" y="30" width="96" height="50" rx="8"/><text class="t-b" x="216" y="60" text-anchor="middle">registry</text>
+<path class="ln-ok" d="M264 55h40"/><polygon class="ah-ok" points="302,49 302,61 310,55"/><text class="t-s" x="285" y="45" text-anchor="middle">pull</text>
+<rect class="bx-ok" x="312" y="30" width="98" height="50" rx="8"/><text class="t-b" x="361" y="60" text-anchor="middle">servers</text>
+<text class="t-m" x="216" y="112" text-anchor="middle">you/site:1.0</text>
+</svg><figcaption>You or your CI pipeline push a tagged image to the registry once. Every server that needs it then pulls exactly the same image by its name and tag.</figcaption></figure>
+<p>Like a pull, a push works layer by layer, and any layer the registry already has (such as the nginx base layers) is skipped. On a server, <code>docker pull you/site:1.0</code> fetches exactly that image. The Deploy track builds on exactly this.</p>
+<div class="mistake"><b>Common mistake</b>Relying on <code>latest</code>. It is not magic and does not mean "newest": it is just the tag Docker uses when you do not give one, and it can point at different images on different days. In production, tag every release with a version, <code>1.0</code>, <code>1.1</code>, and deploy that exact tag. Then you always know what is running, and rolling back means running the previous tag.</div>
+
+<h4>Reading the errors you might hit</h4>
+<ul>
+<li><code>denied: requested access to the resource is denied</code>: you are not logged in, or the name does not start with your own user name.</li>
+<li><code>An image does not exist locally with the tag</code>: you tried to push a name you have not created yet. Run <code>docker tag</code> first.</li>
+<li>A failed <code>COPY --from=build</code> with <code>not found</code>: the build stage wrote its output somewhere else. Some tools use <code>build</code> instead of <code>dist</code>; check what <code>npm run build</code> actually creates.</li>
+</ul>
+<div class="try"><b>Try it in your head</b>You fix a typo, rebuild as <code>site:slim</code>, and want to release it. What do you run? <code>docker tag site:slim you/site:1.1</code> and then <code>docker push you/site:1.1</code>. A new version number, not a reused one, so <code>1.0</code> still means the old release if you need to roll back.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>Building needs heavy tools; serving does not. Shipping the build tools makes images large, slow and riskier.</li>
+<li>A multi-stage build has several <code>FROM</code> lines. <code>AS build</code> names a stage; <code>COPY --from=build</code> takes only the output into the last stage, which is what ships.</li>
+<li>The final stage here is <code>nginx:alpine</code> serving <code>/usr/share/nginx/html</code> on port 80.</li>
+<li>Image names are <code>registry/user/repository:tag</code>; <code>docker tag</code> adds a name to an existing image.</li>
+<li><code>docker login</code>, then <code>docker push you/site:1.0</code>. Tag real versions instead of relying on <code>latest</code>.</li>
+</ul>
+`);

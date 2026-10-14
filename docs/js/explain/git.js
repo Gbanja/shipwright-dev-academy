@@ -1138,3 +1138,214 @@ git cherry-pick hotfix     # copy the commit at the tip of hotfix onto main</pre
 <li><code>git cherry-pick &lt;commit or branch&gt;</code> copies one commit onto your current branch as a new commit.</li>
 </ul>
 `);
+
+explain('g12',`
+<h4>Some files must never be committed</h4>
+<p>Not every file in your project folder belongs in Git. Some are actively dangerous to commit:</p>
+<ul>
+<li><b>Secrets</b>: passwords and API keys, usually kept in a file called <code>.env</code>. An <b>API key</b> is a secret string that lets a program use a paid service in your name. If it reaches a public GitHub repository, automated bots can find it within minutes and run up bills or steal data.</li>
+<li><b>Logs</b>: files like <code>debug.log</code> that programs write while running. They change constantly and mean nothing to anyone else.</li>
+<li><b>Generated files</b>: build output, or the <code>node_modules</code> folder of downloaded libraries, which can hold tens of thousands of files. Anyone can regenerate them, so storing them only bloats the history.</li>
+</ul>
+<p>Git cannot guess which files are which. It shows every untracked file in <code>git status</code>, and <code>git add .</code> would happily stage them all. You need a way to say "pretend these do not exist". That is a <code>.gitignore</code> file.</p>
+<div class="analogy"><b>Think of it like</b>A "do not pack" list taped to the parcel box. Whoever is packing checks the list and leaves those items on the desk, every single time.</div>
+
+<h4>Writing a <code>.gitignore</code></h4>
+<p><code>.gitignore</code> is a plain text file in the top folder of your repository. Each line is a <b>pattern</b> that describes files to ignore:</p>
+<div class="tbl-wrap"><table><tr><th>Line</th><th>Ignores</th></tr>
+<tr><td><code>.env</code></td><td>Any file named exactly <code>.env</code></td></tr>
+<tr><td><code>*.log</code></td><td>Every file ending in <code>.log</code>. The star means "any characters".</td></tr>
+<tr><td><code>node_modules/</code></td><td>A whole folder and everything inside it. The trailing slash means "folders only".</td></tr>
+<tr><td><code>/build</code></td><td>A leading slash matches only at the top of the repository.</td></tr>
+<tr><td><code># secrets</code></td><td>Nothing: lines starting with # are comments.</td></tr>
+<tr><td><code>!keep.log</code></td><td>An exclamation mark makes an exception: do not ignore this one.</td></tr></table></div>
+<p>The sandbox builds the file one line at a time with <code>echo</code>. This is where two shell symbols matter:</p>
+<pre class="snip">echo ".env" &gt; .gitignore      # &gt;  creates or OVERWRITES the file
+echo "*.log" &gt;&gt; .gitignore    # &gt;&gt; APPENDS a line to the end</pre>
+<p>Use a single <code>&gt;</code> for the first line only. If you used it for the second line too, it would wipe out <code>.env</code> and leave just <code>*.log</code>. Check the result with <code>cat .gitignore</code>.</p>
+
+<h4>What <code>git status</code> shows now</h4>
+<p>With the ignore file in place, <code>.env</code> and <code>debug.log</code> are still on your disk, but Git stops mentioning them. The only new thing <code>git status</code> lists is <code>.gitignore</code> itself:</p>
+<pre class="snip">Untracked files:
+  (use "git add &lt;file&gt;..." to include in what will be committed)
+        .gitignore</pre>
+<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="How each file in the folder is treated once .gitignore exists">
+<g text-anchor="middle">
+<text class="t-s" x="70" y="18">in the folder</text><text class="t-s" x="325" y="18">git status says</text>
+<rect class="bx" x="10" y="32" width="120" height="36" rx="6"/><text class="t-m" x="70" y="55">app.js</text>
+<rect class="bx" x="10" y="82" width="120" height="36" rx="6"/><text class="t-m" x="70" y="105">.env</text>
+<rect class="bx" x="10" y="132" width="120" height="36" rx="6"/><text class="t-m" x="70" y="155">debug.log</text>
+<rect class="bx" x="10" y="182" width="120" height="36" rx="6"/><text class="t-m" x="70" y="205">.gitignore</text>
+<rect class="bx-ok" x="240" y="32" width="170" height="36" rx="6"/><text class="t" x="325" y="55">committed, clean</text>
+<rect class="bx-bad" x="240" y="82" width="170" height="36" rx="6"/><text class="t" x="325" y="105">hidden: .env</text>
+<rect class="bx-bad" x="240" y="132" width="170" height="36" rx="6"/><text class="t" x="325" y="155">hidden: *.log</text>
+<rect class="bx-warn" x="240" y="182" width="170" height="36" rx="6"/><text class="t" x="325" y="205">untracked, shown</text>
+</g>
+<line class="ln" x1="132" y1="50" x2="230" y2="50"/><polygon class="ah" points="229,44 229,56 238,50"/>
+<line class="ln" x1="132" y1="100" x2="230" y2="100"/><polygon class="ah" points="229,94 229,106 238,100"/>
+<line class="ln" x1="132" y1="150" x2="230" y2="150"/><polygon class="ah" points="229,144 229,156 238,150"/>
+<line class="ln" x1="132" y1="200" x2="230" y2="200"/><polygon class="ah" points="229,194 229,206 238,200"/>
+</svg><figcaption>Four files sit in the folder. app.js was already committed and has not changed, so it is clean. .env matches the .env pattern and debug.log matches the star dot log pattern, so both are hidden from Git. .gitignore itself is a new file, so it is shown as untracked.</figcaption></figure>
+<p>Commit the <code>.gitignore</code> itself, with <code>git add .</code> and a commit. That way every teammate who clones the project gets the same rules. Now even <code>git add .</code> skips the ignored files.</p>
+
+<h4>The catch: it only affects untracked files</h4>
+<p><code>.gitignore</code> only stops Git from <i>starting</i> to track a file. If a file was already committed before you added the rule, Git keeps tracking it and keeps recording its changes. To stop tracking it while keeping it on your disk:</p>
+<pre class="snip">git rm --cached config.json    # remove from Git's tracking only
+git commit -m "Stop tracking config.json"</pre>
+<p><code>--cached</code> means "remove it from the staging area and future commits, but leave my actual file alone". Without <code>--cached</code>, <code>git rm</code> deletes the file from your disk too.</p>
+<div class="mistake"><b>Common mistake</b>Committing a secret, then adding it to <code>.gitignore</code> and thinking the problem is solved. The secret is still inside every old commit, and anyone who can see the repository can read it. If a key was ever pushed, <b>revoke it first</b> at the service that issued it and create a new one. Cleaning it out of the history comes second, and is a much bigger job.</div>
+
+<h4>Tags: permanent labels for releases</h4>
+<p>When you release a version of your project, you want to find exactly that code again later: "what did version 1.0.0 contain?" A <b>tag</b> is a label stuck on one commit that <b>never moves</b>.</p>
+<p>That is the difference from a branch. A branch label moves forward every time you commit on it. A tag stays on its commit forever, so <code>v1.0.0</code> always means the same code.</p>
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="The tag v1.0.0 stays on its commit while main moves forward">
+<line class="ln" x1="75" y1="80" x2="325" y2="80"/>
+<g text-anchor="middle">
+<circle class="bx-a" cx="60" cy="80" r="15"/><text class="t-s" x="60" y="85">A</text>
+<circle class="bx-a" cx="160" cy="80" r="15"/><text class="t-s" x="160" y="85">B</text>
+<circle class="bx-a" cx="250" cy="80" r="15"/><text class="t-s" x="250" y="85">C</text>
+<circle class="bx-a" cx="340" cy="80" r="15"/><text class="t-s" x="340" y="85">D</text>
+<rect class="bx-warn" x="115" y="112" width="90" height="28" rx="6"/><text class="t-m" x="160" y="131">v1.0.0</text>
+<rect class="bx-ok" x="310" y="24" width="60" height="26" rx="6"/><text class="t-b" x="340" y="42">main</text>
+<text class="t-s" x="160" y="166">tag: stays put</text><text class="t-s" x="340" y="128">branch: moves</text>
+</g>
+<line class="ln" x1="160" y1="112" x2="160" y2="100"/>
+<path class="ln-d" d="M160 40H300"/><polygon class="ah" points="298,34 298,46 307,40"/><line class="ln" x1="340" y1="50" x2="340" y2="65"/>
+</svg><figcaption>You tagged commit B as v1.0.0, then kept working. The main branch label moved on to D with every new commit, but the tag is still on B, so v1.0.0 always points at exactly the released code.</figcaption></figure>
+<pre class="snip">git tag v1.0.0                              # tag the current commit
+git tag                                     # list all tags
+git tag -a v1.1.0 -m "Add contact page"     # annotated tag with a message
+git push origin v1.0.0                      # tags are NOT pushed by default</pre>
+<p>A plain <code>git tag v1.0.0</code> makes a <b>lightweight</b> tag: just a name. With <code>-a</code> and <code>-m</code> you make an <b>annotated</b> tag, which also stores who tagged it, when, and a message. Teams usually prefer annotated tags for real releases. Note the last line: a normal <code>git push</code> does not send tags, so push them by name. On GitHub, tags appear under Releases.</p>
+
+<h4>Version numbers: semantic versioning</h4>
+<p>Release names like <code>v2.4.1</code> follow a widely used convention called <b>semantic versioning</b>, or <b>semver</b>. The three numbers are MAJOR.MINOR.PATCH, and each one tells users how risky an upgrade is.</p>
+<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="Semantic version 2.4.1: major, minor and patch, with examples of each bump">
+<g text-anchor="middle">
+<text class="t-m t-a" x="110" y="56" style="font-size:40px">2</text><text class="t-m" x="160" y="56" style="font-size:40px">.</text>
+<text class="t-m t-ok" x="210" y="56" style="font-size:40px">4</text><text class="t-m" x="260" y="56" style="font-size:40px">.</text>
+<text class="t-m t-info" x="310" y="56" style="font-size:40px">1</text>
+<text class="t-b t-a" x="110" y="86">MAJOR</text><text class="t-b t-ok" x="210" y="86">MINOR</text><text class="t-b t-info" x="310" y="86">PATCH</text>
+<rect class="bx-a" x="10" y="108" width="400" height="30" rx="6"/><text class="t" x="210" y="128">breaking change: 2.4.1 to 3.0.0</text>
+<rect class="bx-ok" x="10" y="146" width="400" height="30" rx="6"/><text class="t" x="210" y="166">new feature: 2.4.1 to 2.5.0</text>
+<rect class="bx-info" x="10" y="184" width="400" height="30" rx="6"/><text class="t" x="210" y="204">bug fix: 2.4.1 to 2.4.2</text>
+</g>
+</svg><figcaption>Version 2.4.1 means major version 2, minor version 4, patch 1. A breaking change bumps the major number and resets the others, giving 3.0.0. A new feature that breaks nothing bumps the minor number, giving 2.5.0. A bug fix bumps only the patch number, giving 2.4.2.</figcaption></figure>
+<ul>
+<li><b>PATCH</b>: bug fixes only. Safe to upgrade.</li>
+<li><b>MINOR</b>: new features that do not break anything that already worked. The patch number resets to 0.</li>
+<li><b>MAJOR</b>: a <b>breaking change</b>, meaning code that used the old version may stop working. Minor and patch reset to 0.</li>
+</ul>
+<p>The little <code>v</code> in front is a common habit for tag names, not part of the version itself.</p>
+<div class="try"><b>Try it in your head</b>Your app is at <code>v1.3.2</code>. You add a dark mode that changes nothing existing. What is the next version? A new feature with no breakage bumps MINOR and resets PATCH: <code>v1.4.0</code>.</div>
+
+<h4>Recap</h4>
+<ul>
+<li><code>.gitignore</code> lists patterns for files Git should ignore: <code>.env</code>, <code>*.log</code>, <code>node_modules/</code>. Commit the file itself.</li>
+<li><code>&gt;</code> overwrites a file and <code>&gt;&gt;</code> appends to it.</li>
+<li><code>.gitignore</code> only affects untracked files; stop tracking a committed file with <code>git rm --cached</code>.</li>
+<li>A leaked secret must be revoked first; removing it from history comes second.</li>
+<li>A tag is a label that never moves: <code>git tag v1.0.0</code>, list with <code>git tag</code>, push with <code>git push origin v1.0.0</code>. Versions follow MAJOR.MINOR.PATCH.</li>
+</ul>
+`);
+
+explain('g13',`
+<h4>The situation</h4>
+<p>This is a drill: no new commands, just everything from the track, in the right order, under time pressure. Here is the scenario. You are halfway through a dashboard feature on <code>feature/dashboard</code>. One commit, "Start charts", is pushed; more work, "filters wip", sits uncommitted in <code>dashboard.js</code>. Then the message arrives: <b>login is broken in production, ship a fix now</b>. And a teammate pushed a commit to <code>main</code> on GitHub this morning that you do not have yet.</p>
+<p>A hotfix like this is a classic live-coding interview task. What is being tested is not speed of typing. It is whether you keep your unfinished work safe, start the fix from the right place, ship it through review, and get back to where you were without losing anything. This walkthrough gives you a strategy you can run calmly every time.</p>
+<div class="analogy"><b>Think of it like</b>A chef in the middle of preparing a dish when an urgent order comes in. A good chef covers the half-made dish and puts it in the fridge, cleans the station, cooks the urgent order with fresh ingredients, sends it out, then takes the first dish back out and carries on.</div>
+
+<h4>The plan in one picture</h4>
+<figure class="fig"><svg viewBox="0 0 420 280" role="img" aria-label="Branch flow: stash, update main, hotfix branch, merge by PR, rebase the feature onto main">
+<line class="ln-d" x1="58" y1="138" x2="122" y2="72"/>
+<line class="ln" x1="65" y1="150" x2="125" y2="150"/><line class="ln" x1="155" y1="150" x2="285" y2="150"/>
+<line class="ln" x1="150" y1="162" x2="210" y2="228"/><line class="ln" x1="230" y1="228" x2="290" y2="162"/>
+<line class="ln-ok" x1="310" y1="138" x2="370" y2="72"/>
+<line class="ln-d" x1="146" y1="60" x2="184" y2="60"/><line class="ln-d" x1="306" y1="60" x2="354" y2="60"/><polygon class="ah" points="352,54 352,66 362,60"/>
+<g text-anchor="middle">
+<circle class="bx-a" cx="50" cy="150" r="15"/><text class="t-s" x="50" y="155">C1</text>
+<circle class="ln-d" cx="130" cy="60" r="15" fill="none"/><text class="t-s" x="130" y="65">C2</text>
+<circle class="bx-ok" cx="140" cy="150" r="15"/><text class="t-s" x="140" y="155">T</text>
+<circle class="bx-a" cx="220" cy="240" r="15"/><text class="t-s" x="220" y="245">H</text>
+<circle class="bx-ok" cx="300" cy="150" r="16"/><text class="t-b" x="300" y="155">M</text>
+<circle class="bx-ok" cx="380" cy="60" r="16"/><text class="t-s" x="380" y="65">C2'</text>
+<text class="t-s" x="124" y="184" text-anchor="end">teammate</text>
+<text class="t-s" x="130" y="30">old charts</text>
+<rect class="bx-warn" x="186" y="44" width="120" height="32" rx="6"/><text class="t-s" x="246" y="65">stash: filters</text>
+<rect class="bx-info" x="250" y="226" width="112" height="28" rx="6"/><text class="t-b" x="306" y="245">hotfix/login</text>
+<rect class="bx-ok" x="330" y="137" width="60" height="26" rx="6"/><text class="t-b" x="360" y="155">main</text>
+<text class="t-s" x="410" y="30" text-anchor="end">feature, rebased</text>
+</g>
+<text class="t-s" x="312" y="184">merged PR</text>
+</svg><figcaption>The whole drill as a commit graph. Your old feature commit C2, dashed, started from C1, and your unfinished filters go onto the stash shelf. Main is updated with your teammate's commit T. The fix H is made on hotfix/login, branched from T, and merged on GitHub as merge commit M. Finally the feature is rebased onto M as C2 prime, and the stashed filters are popped back on top.</figcaption></figure>
+
+<h4>Phase 1: look, then save your work</h4>
+<p>Start with <code>git status</code>. It confirms you are on <code>feature/dashboard</code> and that <code>dashboard.js</code> is modified. Never switch away from uncommitted work without deciding what happens to it.</p>
+<pre class="snip">git status     # where am I, what is unsaved?
+git stash      # shelve "filters wip"; the working tree is now clean</pre>
+<p>Why stash rather than commit? The filters are half-done. A "wip" commit would work too, but stash keeps the feature branch's history clean and is quicker. Either way, the rule is: <b>never carry half-done work onto a hotfix branch</b>, or it ships to production with the fix.</p>
+
+<h4>Phase 2: start from the latest main</h4>
+<pre class="snip">git switch main
+git pull       # brings in your teammate's commit</pre>
+<p>A fix must be built on what is actually in production, not on your stale copy. Your local <code>main</code> has no commits of its own, so this pull is a simple fast-forward onto your teammate's commit. If you skipped it, your hotfix branch would start from old code, and its pull request might conflict or quietly undo your teammate's change.</p>
+
+<h4>Phase 3: make the fix on its own branch</h4>
+<pre class="snip">git switch -c hotfix/login          # new branch from up-to-date main
+# edit login.js so it works, then:
+git commit -am "Fix login crash"</pre>
+<p>The branch name starts with <code>hotfix/</code>, which tells the team at a glance that this is urgent. <code>-am</code> stages the modified, already-tracked <code>login.js</code> and commits it in one step. Keep the fix small: fix the crash, nothing else. Tidying up while you are in there makes the review slower and the change riskier.</p>
+
+<h4>Phase 4: ship it through a pull request</h4>
+<pre class="snip">git push -u origin hotfix/login
+gh pr create --title "Fix login crash"
+gh pr merge 1</pre>
+<p>Even in an emergency, the fix goes through a PR, so it is reviewed, tested by the checks, and recorded. In the sandbox you merge it yourself; on a real team a colleague would approve it first. GitHub's <code>main</code> now contains the fix as merge commit M.</p>
+
+<h4>Phase 5: bring the fix home</h4>
+<pre class="snip">git switch main
+git pull</pre>
+<p>Remember from the pull requests lesson: the merge happened on GitHub, so your local <code>main</code> does not have it until you pull. After this, local <code>main</code> and <code>origin/main</code> point at the same commit. You could also delete the finished branch now with <code>git branch -d hotfix/login</code>.</p>
+
+<h4>Phase 6: get back to your feature</h4>
+<pre class="snip">git switch feature/dashboard
+git rebase main     # replay "Start charts" on top of the fixed main
+git stash pop       # put "filters wip" back</pre>
+<p>Rebasing moves your feature so it starts from the newest <code>main</code>, which now includes the login fix and your teammate's change. Your feature is then tested against the real current code. The order matters: rebase refuses to run with uncommitted changes, so rebase while the tree is still clean, and pop the stash last.</p>
+<p>One honest caveat. "Start charts" had already been pushed, and the golden rule says not to rebase shared commits. If you are the only person working on <code>feature/dashboard</code>, this is fine; your next push will need <code>git push --force-with-lease</code> because the commit has a new id. If others share the branch, use <code>git merge main</code> instead of rebasing. Being able to say this in an interview is worth as much as typing the commands.</p>
+<figure class="fig"><svg viewBox="0 0 420 320" role="img" aria-label="The six phases with their commands">
+<rect class="bx-warn" x="10" y="10" width="100" height="44" rx="8"/><text class="t-b" x="60" y="37" text-anchor="middle">1 Save</text>
+<text class="t-m" x="124" y="37">git status, git stash</text>
+<rect class="bx" x="10" y="62" width="100" height="44" rx="8"/><text class="t-b" x="60" y="89" text-anchor="middle">2 Sync</text>
+<text class="t-m" x="124" y="89">git switch main, pull</text>
+<rect class="bx-a" x="10" y="114" width="100" height="44" rx="8"/><text class="t-b" x="60" y="141" text-anchor="middle">3 Fix</text>
+<text class="t-m" x="124" y="132">switch -c hotfix/login</text><text class="t-m" x="124" y="152">git commit -am</text>
+<rect class="bx-info" x="10" y="166" width="100" height="44" rx="8"/><text class="t-b" x="60" y="193" text-anchor="middle">4 Ship</text>
+<text class="t-m" x="124" y="184">git push -u origin</text><text class="t-m" x="124" y="204">gh pr create, merge</text>
+<rect class="bx" x="10" y="218" width="100" height="44" rx="8"/><text class="t-b" x="60" y="245" text-anchor="middle">5 Sync</text>
+<text class="t-m" x="124" y="245">git switch main, pull</text>
+<rect class="bx-ok" x="10" y="270" width="100" height="44" rx="8"/><text class="t-b" x="60" y="297" text-anchor="middle">6 Resume</text>
+<text class="t-m" x="124" y="288">switch, rebase main</text><text class="t-m" x="124" y="308">git stash pop</text>
+</svg><figcaption>The six phases as a checklist. Save: check status and stash. Sync: switch to main and pull. Fix: create the hotfix branch and commit. Ship: push the branch, open the pull request and merge it. Sync again: switch to main and pull the merge. Resume: switch back to the feature, rebase onto main and pop the stash.</figcaption></figure>
+
+<h4>When something goes wrong mid-drill</h4>
+<ul>
+<li><b>"Your local changes would be overwritten"</b> when switching: you forgot to stash. Run <code>git stash</code>, then switch.</li>
+<li><b>Push rejected</b>: someone pushed to the same branch. <code>git pull</code>, then push. Never force a shared branch.</li>
+<li><b>Conflict during rebase</b>: fix the file, <code>git add</code> it, <code>git rebase --continue</code>. Panicking? <code>git rebase --abort</code> puts the branch back.</li>
+<li><b>Conflict on stash pop</b>: resolve the file as usual; the entry stays on the shelf until you <code>git stash drop</code> it.</li>
+<li><b>Lost track of where you are</b>: <code>git status</code>, and <code>git log --oneline --graph --all</code> to see every branch at once.</li>
+</ul>
+<div class="mistake"><b>Common mistake</b>Creating the hotfix branch straight from <code>feature/dashboard</code>, because that is where you happened to be. The hotfix then contains your unfinished charts, and merging the PR ships half a feature to production. Always switch to <code>main</code> and pull <i>before</i> <code>git switch -c hotfix/...</code>.</div>
+<div class="mistake"><b>Common mistake</b>Popping the stash before rebasing. Rebase then refuses because your working tree is not clean. If it happens, stash again, rebase, and pop.</div>
+<div class="try"><b>Try it in your head</b>You finished Phase 4, the PR is merged, and you jump straight to <code>git switch feature/dashboard</code> and <code>git rebase main</code>. Does your feature now contain the login fix? No. Your local <code>main</code> was never pulled after the merge, so you rebased onto the old main. Phase 5, pulling main, is what brings the fix to your computer.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>Save first: <code>git status</code>, then <code>git stash</code>, so unfinished work never reaches the hotfix.</li>
+<li>Start fixes from an up-to-date main: <code>git switch main</code>, <code>git pull</code>, <code>git switch -c hotfix/name</code>.</li>
+<li>Ship through a PR even in a hurry: push the branch, <code>gh pr create</code>, <code>gh pr merge</code>.</li>
+<li>The merge is on GitHub: switch to main and pull to bring it home.</li>
+<li>Resume: switch back, <code>git rebase main</code> while clean (or merge if the branch is shared), then <code>git stash pop</code>.</li>
+</ul>
+`);

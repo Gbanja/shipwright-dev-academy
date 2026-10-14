@@ -1264,3 +1264,210 @@ const schema = z.object({
 <li>Browser validation is for user experience; always validate again on the server, ideally with the same schema.</li>
 </ul>
 `);
+
+explain('f8',`
+<h4>Why write tests for a UI?</h4>
+<p>Every time you change code, something that used to work might quietly break. You could click through every page after every change to check, but that gets slow and boring, and you will skip it on a busy day. That is exactly the day something breaks.</p>
+<p>An <b>automated test</b> is a small program that checks your code for you. It does what a user would do, like clicking Increment twice, and then checks what appears, like "Count: 2". Run all your tests after each change and in seconds you know whether anything broke. Teams usually run them automatically on every change before it can be merged.</p>
+<p><b>React Testing Library</b> (RTL) is the standard tool for testing React components. Its guiding rule is worth memorising: <i>the more your tests resemble the way your software is used, the more confidence they give you.</i></p>
+
+<h4>The shape of a test</h4>
+<p>A test runner, such as Vitest or Jest in real projects, finds your tests, runs each one and reports which passed. In this sandbox the preview plays that role. Each test is written like this:</p>
+<pre class="snip">test('starts at zero', () =&gt; {
+  render(&lt;Counter /&gt;);                        // arrange
+  const heading = screen.getByRole('heading'); // find
+  expect(heading.textContent).toBe('Count: 0');  // assert
+});</pre>
+<p><code>test</code> takes two arguments: a <b>name</b> that describes the behaviour in plain words, and a <b>function</b> holding the steps. If every step runs without an error, the test passes. If any step throws an error, it fails, and the runner shows you which line and why.</p>
+<p>Almost every UI test follows the same three-step pattern, often called <b>Arrange, Act, Assert</b>:</p>
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="Arrange, Act, Assert: render the component, fire a click, expect the text">
+<g text-anchor="middle">
+<rect class="bx-info" x="10" y="20" width="120" height="66" rx="8"/><text class="t-b" x="70" y="46">1. Arrange</text><text class="t-s" x="70" y="70">render it</text>
+<rect class="bx-warn" x="150" y="20" width="120" height="66" rx="8"/><text class="t-b" x="210" y="46">2. Act</text><text class="t-s" x="210" y="70">click, type</text>
+<rect class="bx-ok" x="290" y="20" width="120" height="66" rx="8"/><text class="t-b" x="350" y="46">3. Assert</text><text class="t-s" x="350" y="70">check screen</text>
+</g>
+<path class="ln" d="M130 53h12M270 53h12"/><polygon class="ah" points="140,47 140,59 150,53"/><polygon class="ah" points="280,47 280,59 290,53"/>
+<rect class="bx-dark" x="10" y="106" width="400" height="74" rx="8"/>
+<text class="t-term" x="22" y="130">render(&lt;Counter /&gt;)</text>
+<text class="t-term" x="22" y="150">fireEvent.click(button)</text>
+<text class="t-term" x="22" y="170">expect(text).toBe('Count: 1')</text>
+</svg><figcaption>The three steps of a UI test. Arrange: render the component. Act: do what a user does, such as clicking a button. Assert: check that the screen now shows what it should.</figcaption></figure>
+
+<h4>render and screen</h4>
+<p><code>render(&lt;Counter /&gt;)</code> draws the component into a pretend page. Tests usually run without a visible browser, in a simulated DOM called jsdom, but the component cannot tell the difference: it gets real DOM elements, real events and real state updates.</p>
+<p><code>screen</code> is an object representing that whole page. You use its <b>queries</b> to find elements, the way a person scanning the screen would.</p>
+
+<h4>Finding things by role</h4>
+<p>Every element has a <b>role</b>: what kind of thing it is to assistive technology such as a screen reader. Many roles come automatically from the HTML tag:</p>
+<div class="tbl-wrap"><table><tr><th>HTML</th><th>Role</th><th>Its accessible name</th></tr>
+<tr><td><code>&lt;button&gt;Increment&lt;/button&gt;</code></td><td><code>button</code></td><td>Increment (its text)</td></tr>
+<tr><td><code>&lt;h2&gt;Count: 0&lt;/h2&gt;</code></td><td><code>heading</code></td><td>Count: 0</td></tr>
+<tr><td><code>&lt;a href="…"&gt;Home&lt;/a&gt;</code></td><td><code>link</code></td><td>Home</td></tr>
+<tr><td><code>&lt;input&gt;</code> inside a label</td><td><code>textbox</code></td><td>the label's text</td></tr></table></div>
+<p>The <b>accessible name</b> is what a screen reader would announce for that element, usually its visible text or its label. <code>screen.getByRole('button', { name: 'Increment' })</code> means "find the button that a screen reader would call Increment".</p>
+<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="The Counter as screen readers see it: a heading and two buttons; getByRole with name Increment matches one button">
+<rect class="bx" x="10" y="10" width="230" height="190" rx="8"/>
+<text class="t-s" x="125" y="32" text-anchor="middle">what assistive tech sees</text>
+<rect class="bx-info" x="26" y="46" width="198" height="40" rx="6"/><text class="t" x="38" y="71">heading: Count: 0</text>
+<rect class="bx-ok" x="26" y="96" width="198" height="40" rx="6"/><text class="t" x="38" y="121">button: Increment</text>
+<rect class="bx" x="26" y="146" width="198" height="40" rx="6"/><text class="t" x="38" y="171">button: Reset</text>
+<rect class="bx-dark" x="262" y="80" width="148" height="74" rx="8"/>
+<text class="t-term" x="274" y="104">getByRole(</text><text class="t-term" x="274" y="124"> 'button',</text><text class="t-term" x="274" y="144"> name: …)</text>
+<path class="ln-ok" d="M262 116h-30"/><polygon class="ah-ok" points="234,110 234,122 224,116"/>
+</svg><figcaption>The Counter as a screen reader sees it: a heading called Count 0 and two buttons called Increment and Reset. A query for the button role alone would match two elements. Adding the name Increment narrows it to exactly one.</figcaption></figure>
+<p>Why prefer roles over CSS classes or ids? Three reasons:</p>
+<ul>
+<li><b>It tests what users experience.</b> Users never see your class names. They see a button labelled Increment.</li>
+<li><b>It survives refactoring.</b> Rename a class or restructure the markup and the test still passes, as long as the user sees the same thing.</li>
+<li><b>It checks accessibility for free.</b> If <code>getByRole</code> cannot find your button, a screen-reader user probably cannot either. An icon button with no text and no label fails the query, which tells you to fix it.</li>
+</ul>
+<p>When roles do not fit, fall back in this order: <code>getByLabelText</code> for form fields, <code>getByText</code> for plain text such as <code>screen.getByText('Count: 0')</code>, and <code>getByTestId</code> only as a last resort.</p>
+
+<h4>Acting and asserting</h4>
+<p><code>fireEvent.click(element)</code> sends a click event to the element, exactly as a real click would, so its <code>onClick</code> runs, state changes and React re-renders. In real projects many teams use the companion library <code>@testing-library/user-event</code>, which simulates whole interactions more realistically (a click includes the mouse moving, pressing and releasing). <code>fireEvent</code> is what this sandbox provides, and it is fine for clicks.</p>
+<p>Then <code>expect(value)</code> wraps the actual value, and a <b>matcher</b> compares it with what you expected:</p>
+<ul>
+<li><code>.toBe('Count: 2')</code> passes only if the value is exactly that.</li>
+<li><code>.toBeTruthy()</code> passes if the value counts as true, for example an element that was found.</li>
+</ul>
+<p>Re-query after acting. Find the heading again, or read its <code>textContent</code> after the clicks, so you see the updated text.</p>
+
+<h4>Each test starts fresh</h4>
+<p>Every test should <code>render</code> its own component. Between tests the library removes what was rendered, so state never leaks from one test into the next. That is why the Reset test must click Increment itself first: it starts from a brand-new Counter at zero, not from wherever the previous test left off. Tests that depend on each other break in confusing ways when run in a different order.</p>
+<p>For the tasks:</p>
+<ol>
+<li>An "increments" test: render, find the Increment button by role and name, click it twice, then expect the heading text to be "Count: 2". Put the word increment in the test name, since the checker looks for it.</li>
+<li>A "resets" test: render, click Increment, click Reset, expect "Count: 0".</li>
+<li>Keep the starting test, so three tests pass.</li>
+</ol>
+<div class="mistake"><b>Common mistake</b><code>screen.getByRole('button')</code> with no name on a component with two buttons. <code>getBy</code> queries demand exactly one match, so this fails with "Found multiple elements with the role button". Add <code>{ name: 'Increment' }</code> to say which one.</div>
+<div class="mistake"><b>Common mistake</b>Testing implementation details: reaching for the <code>count</code> state variable, or a class name. A test like that breaks when you refactor, even though users notice nothing. Test what is on the screen.</div>
+
+<h4>Reading a failing test</h4>
+<ul>
+<li><b>"Unable to find an accessible element with the role button and name Incremnt"</b>: nothing matched. Check the spelling of the name, which must match the visible text. The error also prints the roles it did find, which is a great clue.</li>
+<li><b>"Expected: Count: 2, Received: Count: 1"</b>: the code ran but the screen showed something else. Did you click twice? Did you query the right element?</li>
+<li><b>"render is not defined"</b>: a missing import. Here <code>render</code>, <code>screen</code> and <code>fireEvent</code> are provided; in a real project you import them from <code>@testing-library/react</code>.</li>
+</ul>
+<p>The other query families are worth knowing: <code>queryBy…</code> returns <code>null</code> instead of throwing when nothing matches, which is how you check that something is <i>not</i> there, and <code>findBy…</code> returns a promise that waits for an element to appear, for content that loads later.</p>
+<div class="try"><b>Try it in your head</b>A test renders Counter, clicks Increment three times and then Reset once. What should the heading say? Count: 0. And why would <code>screen.getByText('Count: 3')</code> fail at that point? Because no element shows that text any more, and getBy queries throw when they find nothing.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>A UI test renders a component, acts like a user and asserts on what appears: arrange, act, assert.</li>
+<li>Find elements with <code>screen.getByRole</code> and an accessible name first; fall back to label, text, and test ids last.</li>
+<li><code>fireEvent.click</code> triggers real handlers; <code>expect(…).toBe(…)</code> checks the result.</li>
+<li>Each test renders its own fresh component, so tests never depend on each other.</li>
+<li>Test behaviour users can see, not internal state or class names; a role query that fails often points to an accessibility problem.</li>
+</ul>
+`);
+
+explain('f7',`
+<h4>Polish that does a job</h4>
+<p>Your app works, it is tested, and its data flows cleanly. This lesson is about the finishing touches that make it feel professional: <b>animation</b> and <b>charts</b>. Both are easy to overdo, so keep one question in mind throughout: does this help the user understand something, or is it just decoration?</p>
+<p>Good animation has a purpose:</p>
+<ul>
+<li><b>Guide attention</b>: a new notification sliding in is noticed; one that just appears may be missed.</li>
+<li><b>Show continuity</b>: a panel that slides open from a button shows where it came from and where it will go back to.</li>
+<li><b>Give feedback</b>: a button that responds when pressed tells the user the click registered.</li>
+</ul>
+<p>Good charts have a purpose too: turning a column of numbers into a shape the eye understands in a second. "Visitors doubled between January and April" is hard to see in a table and obvious in a bar chart.</p>
+
+<h4>Declarative animation with Motion</h4>
+<p>You could animate by hand, changing a style a little on every frame with JavaScript timers. That is fiddly, and easy to make jerky. <b>Framer Motion</b> takes the same approach as React itself: you <b>declare</b> the start and the end, and the library works out every frame in between.</p>
+<p>The library has recently been renamed <b>Motion</b>. New projects install the <code>motion</code> package and import from <code>motion/react</code>; this sandbox uses the older <code>framer-motion</code> name, and the code is the same either way.</p>
+<pre class="snip">&lt;motion.h1
+  initial={{ opacity: 0, y: -20 }}     // where it starts
+  animate={{ opacity: 1, y: 0 }}       // where it ends up
+  transition={{ duration: 0.4 }}       // how long: 0.4 seconds
+&gt;
+  Analytics
+&lt;/motion.h1&gt;</pre>
+<p>Piece by piece:</p>
+<ul>
+<li><code>motion.h1</code> is a special version of <code>&lt;h1&gt;</code> that can animate. There is one for every HTML tag: <code>motion.div</code>, <code>motion.button</code> and so on. Swap the tag name, and remember to change the closing tag too.</li>
+<li><code>initial</code> is the state when the element first appears: fully transparent (<code>opacity: 0</code>) and 20 pixels higher than normal (<code>y: -20</code>).</li>
+<li><code>animate</code> is the state to move to: fully visible, at its normal position.</li>
+<li><code>transition</code> controls how: here, over 0.4 seconds.</li>
+</ul>
+<p>Why double curly braces? The outer pair switches JSX into JavaScript, as you learnt in the React lesson. The inner pair is a JavaScript object. So <code>initial={{ opacity: 0 }}</code> passes the object <code>{ opacity: 0 }</code> as the prop.</p>
+<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="Over 0.4 seconds opacity rises from 0 to 1 and the heading slides down from minus 20 to 0 pixels">
+<path class="ln" d="M50 30v100h350"/>
+<path class="ln-a" d="M50 128C100 50 220 40 400 38"/>
+<text class="t-b t-a" x="400" y="62" text-anchor="end">opacity 0 to 1</text>
+<text class="t-s" x="58" y="122">invisible</text>
+<g text-anchor="middle">
+<rect class="bx" x="18" y="146" width="64" height="26" rx="4"/><text class="t-s" x="50" y="164">y: -20</text>
+<rect class="bx-info" x="190" y="146" width="70" height="26" rx="4"/><text class="t-s" x="225" y="164">y: -3</text>
+<rect class="bx-ok" x="368" y="146" width="50" height="26" rx="4"/><text class="t-s" x="393" y="164">y: 0</text>
+</g>
+<path class="ln-d" d="M84 159h104M262 159h104"/>
+<text class="t-s" x="50" y="200" text-anchor="middle">0 s</text><text class="t-s" x="225" y="200" text-anchor="middle">0.2 s</text><text class="t-s" x="400" y="200" text-anchor="end">0.4 s</text>
+</svg><figcaption>What the heading does over 0.4 seconds. Its opacity climbs from invisible to fully visible, quickly at first and gently at the end. At the same time it slides from 20 pixels above its place down to its normal position.</figcaption></figure>
+<p>The motion is not a straight line: by default it starts quickly and slows gently at the end, which is called <b>easing</b>. Real objects do not start and stop instantly, so eased movement feels natural.</p>
+<div class="tip"><b>Tip</b>Animate <code>opacity</code> and position or scale (which Motion applies as a CSS <code>transform</code>). Browsers can animate those very smoothly. Animating <code>width</code>, <code>height</code> or <code>margin</code> forces the browser to recalculate the layout of the page on every frame, which can stutter on slower phones. And keep it short: most interface animations last between about 0.15 and 0.4 seconds. Longer feels sluggish.</div>
+
+<h4>Respecting reduced motion</h4>
+<p>For some people, movement on screen is not just distracting but physically unpleasant. People with vestibular disorders, which affect the inner ear and balance, can get dizzy or nauseous from sliding and zooming effects. Every major operating system has a "reduce motion" setting, and browsers pass it on to websites.</p>
+<p>You can read it in two ways:</p>
+<pre class="snip">@media (prefers-reduced-motion: reduce) {
+  * { animation: none; transition: none; }   /* CSS: switch off */
+}
+
+const reduce = useReducedMotion();   // Motion's hook: true or false</pre>
+<p>With the hook you can, for example, keep the fade but drop the slide: start <code>y</code> at 0 when <code>reduce</code> is true. Respecting this setting is an accessibility requirement, not a nice extra. Fading is usually fine; large movement, zooming and parallax should go.</p>
+
+<h4>Charts from components: Recharts</h4>
+<p><b>Recharts</b> builds charts the React way: from components, fed by an array of data. Your data is an array of objects, one object per bar, which is exactly the shape you have been using all track:</p>
+<pre class="snip">const data = [
+  { month: 'Jan', visitors: 120 },
+  { month: 'Feb', visitors: 210 },
+];</pre>
+<p>Then you compose the chart from parts:</p>
+<pre class="snip">&lt;BarChart width={420} height={220} data={data}&gt;
+  &lt;XAxis dataKey="month" /&gt;     // labels along the bottom
+  &lt;YAxis /&gt;                     // number scale up the side
+  &lt;Tooltip /&gt;                   // box with values on hover
+  &lt;Bar dataKey="visitors" /&gt;    // one bar per object
+&lt;/BarChart&gt;</pre>
+<p>The key word is <code>dataKey</code>. It names which key of each object to use. <code>XAxis dataKey="month"</code> says "label each position with that object's month". <code>Bar dataKey="visitors"</code> says "make each bar as tall as that object's visitors". You never calculate a pixel height: <code>YAxis</code> works out a sensible scale from the largest value, and every bar is sized against it.</p>
+<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="Each data object becomes one bar: month sets the label and visitors sets the height">
+<rect class="bx-dark" x="10" y="20" width="170" height="130" rx="8"/>
+<text class="t-term" x="20" y="46">month: 'Jan'</text><text class="t-term" x="20" y="66">visitors: 120</text>
+<path class="ln-d" d="M20 80h150"/>
+<text class="t-term" x="20" y="106">month: 'Feb'</text><text class="t-term" x="20" y="126">visitors: 210</text>
+<path class="ln" d="M220 30v170h190"/>
+<rect class="bx-a" x="250" y="132" width="50" height="68"/>
+<rect class="bx-a" x="330" y="82" width="50" height="118"/>
+<g text-anchor="middle"><text class="t" x="275" y="220">Jan</text><text class="t" x="355" y="220">Feb</text>
+<text class="t-s" x="275" y="124">120</text><text class="t-s" x="355" y="74">210</text></g>
+<path class="ln-ok" d="M180 60q40 0 70 90"/><polygon class="ah-ok" points="244,146 256,144 252,156"/>
+<text class="t-s t-ok" x="95" y="176" text-anchor="middle">dataKey="visitors"</text>
+<text class="t-s t-ok" x="95" y="196" text-anchor="middle">sets the height</text>
+<text class="t-s" x="95" y="222" text-anchor="middle">dataKey="month": label</text>
+</svg><figcaption>How Recharts reads the data. Each object becomes one bar. The month key, chosen by the XAxis dataKey, becomes the label underneath. The visitors key, chosen by the Bar dataKey, sets the bar's height, so 210 visitors makes a taller bar than 120.</figcaption></figure>
+<p>Recharts draws with <b>SVG</b>, the same vector drawing format as the diagrams in these lessons, so charts stay sharp at any size. In a real app you would usually wrap the chart in Recharts' <code>ResponsiveContainer</code> so it fills its parent's width instead of a fixed 420 pixels.</p>
+
+<h4>Data in, chart out</h4>
+<p>Here is the payoff of everything you learnt about React. The chart is a function of its data, just like any component. Add an object to the array and the chart gains a bar; no drawing code changes. The tasks walk you through exactly that:</p>
+<ol>
+<li>Swap the <code>h1</code> for <code>motion.h1</code> with <code>initial</code> and <code>animate</code> props.</li>
+<li>Render the bar chart. The starter data has only two months and the task wants four, so add March (180 visitors) and April (320) as two more objects.</li>
+<li>Add May with 410 visitors and watch a fifth bar appear.</li>
+</ol>
+<p>Since <code>App</code> must return one outer element, wrap the heading and the chart together in a <code>&lt;main&gt;</code>.</p>
+<p>Pick the chart type by the question it answers. <b>Bar charts</b> compare separate categories, such as visitors per month. <b>Line charts</b> show a trend over continuous time. Pie charts are hard to read beyond three or four slices; a bar chart is nearly always clearer.</p>
+<div class="mistake"><b>Common mistake</b>A <code>dataKey</code> that does not match the data, such as <code>dataKey="visits"</code> when the objects say <code>visitors</code>. Recharts shows no error; it simply draws empty bars or no labels. Copy key names exactly, including capital letters.</div>
+<div class="mistake"><b>Common mistake</b>Forgetting the outer braces in <code>animate={{ … }}</code>, writing <code>animate={ opacity: 1 }</code>. That is not a valid JavaScript expression, so the preview shows a syntax error. Props that take objects always have two pairs of braces.</div>
+<p>Charts need words too. A screen reader cannot "see" a bar chart, so give the important finding in text nearby, such as a short sentence saying visitors more than tripled from January to May.</p>
+<div class="try"><b>Try it in your head</b>Your data has five objects and the largest value is 410. How many bars appear, and which is tallest? Five bars, and May's is tallest because 410 is the largest visitors value. And a user has "reduce motion" switched on: what should happen to the sliding heading? Skip the slide and show it in place, perhaps with a quick fade.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>Animate with a purpose: guide attention, show continuity, give feedback. Keep it short.</li>
+<li>Swap a tag for <code>motion.tag</code> and declare <code>initial</code>, <code>animate</code> and <code>transition</code>; Motion fills in the frames.</li>
+<li>Prefer animating opacity and transforms, and honour <code>prefers-reduced-motion</code>.</li>
+<li>Recharts composes charts from components fed by an array; <code>dataKey</code> picks which key labels or sizes each bar.</li>
+<li>Change the data and React redraws the chart: the chart is a function of its data.</li>
+</ul>
+`);
