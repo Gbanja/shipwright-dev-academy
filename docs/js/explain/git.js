@@ -986,7 +986,7 @@ git stash pop     # bring the newest entry back and remove it from the shelf</pr
 <figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="Revert adds an undo commit; reset moves the branch back and drops a commit">
 <text class="t-m" x="10" y="75">revert</text><text class="t-m" x="10" y="185">reset</text>
 <line class="ln" x1="110" y1="70" x2="390" y2="70"/><line class="ln" x1="110" y1="180" x2="270" y2="180"/>
-<line class="ln-d" x1="270" y1="180" x2="330" y2="180"/>
+<line class="ln-d" x1="265" y1="180" x2="304" y2="180"/>
 <g text-anchor="middle">
 <circle class="bx-a" cx="110" cy="70" r="15"/><text class="t-s" x="110" y="75">v1</text>
 <circle class="bx-a" cx="180" cy="70" r="15"/><text class="t-s" x="180" y="75">v2</text>

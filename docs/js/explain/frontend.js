@@ -1164,3 +1164,103 @@ dispatch(cartSlice.actions.add());</pre>
 <li><code>useQuery({ queryKey, queryFn })</code> gives <code>data</code>, <code>isLoading</code> and <code>error</code>, inside a <code>QueryClientProvider</code>.</li>
 </ul>
 `);
+
+explain('f6',`
+<h4>Why forms deserve their own tools</h4>
+<p>Forms are how users talk to your app: signing up, logging in, checking out, posting a comment. They look simple, a few boxes and a button, but every form has to answer the same awkward questions. What did the user type? Is it valid? Which message goes under which box? When should errors appear? What happens on submit?</p>
+<p>You could answer them by hand with <code>useState</code>: one piece of state per field, an <code>onChange</code> on every input, a pile of <code>if</code> statements for the checks, and more state for the error messages. For two fields that is tolerable. For a twenty-field checkout it becomes hundreds of lines of repetitive, easy-to-break code, and every keystroke re-renders the whole form.</p>
+<p>The modern pairing splits the job in two. <b>React Hook Form</b> manages the form: it collects values, tracks errors and handles submission. <b>Zod</b> describes what valid data looks like and checks it. A small adapter called a <b>resolver</b> connects them.</p>
+
+<h4>Zod: describe the shape once</h4>
+<p>A <b>schema</b> is a description of what valid data looks like. With Zod you build one from small pieces:</p>
+<pre class="snip">import { z } from 'zod';
+
+const schema = z.object({
+  email: z.string().email('Enter a valid email'),
+  password: z.string().min(8, 'Use at least 8 characters'),
+});</pre>
+<p>Read it aloud and it is almost English: "an object, whose email is a string that is a valid email address, and whose password is a string with a minimum length of 8". Each rule can take a message as its last argument, which becomes the error text the user sees.</p>
+<p>Chaining like <code>z.string().email()</code> works because each method returns a new schema with one more rule added. Zod version 4 also offers a shorter <code>z.email()</code>; the chained form used here still works.</p>
+<p>To check data against a schema, call <code>safeParse</code>:</p>
+<pre class="snip">schema.safeParse({ email: 'nope', password: 'short' });
+// { success: false, error: { issues: [
+//     { path: ['email'], message: 'Enter a valid email', ... },
+//     { path: ['password'], message: 'Use at least 8 characters', ... } ] } }</pre>
+<p>It never crashes. It returns an object whose <code>success</code> is <code>true</code> with the clean <code>data</code>, or <code>false</code> with a list of <b>issues</b>. Each issue says which field failed, in <code>path</code>, and why, in <code>message</code>. (There is also <code>parse</code>, which throws an error instead of returning one.)</p>
+
+<h4>React Hook Form: register, handleSubmit, errors</h4>
+<p>The <code>useForm</code> hook gives you a toolkit. You destructure the three parts you need:</p>
+<pre class="snip">const { register, handleSubmit, formState: { errors } } =
+  useForm({ resolver: zodResolver(schema) });</pre>
+<p>That line uses <b>nested destructuring</b>: take <code>formState</code> out of the result, then take <code>errors</code> out of <code>formState</code>.</p>
+<p><b>register</b> connects one input to the form:</p>
+<pre class="snip">&lt;input {...register('email')} /&gt;</pre>
+<p><code>register('email')</code> returns an object of props: the field's <code>name</code>, an <code>onChange</code> and an <code>onBlur</code> handler, and a <code>ref</code>, React's way of holding a direct reference to the real DOM element. The <code>{...}</code> <b>spread</b> syntax copies every one of those props onto the input. You do not write them yourself.</p>
+<p>Because React Hook Form reads values straight from the DOM elements through those refs, typing does not have to update React state on every key. Inputs that keep their own value like this are called <b>uncontrolled</b>. The result is less code and fewer re-renders.</p>
+<p><b>handleSubmit</b> wraps your submit function:</p>
+<pre class="snip">&lt;form onSubmit={handleSubmit(onValid)}&gt;</pre>
+<p>When the form is submitted, <code>handleSubmit</code> first stops the browser's default behaviour, which would reload the whole page. Then it collects all values and validates them. Only if everything passes does it call your <code>onValid</code> function with the clean data. If anything fails, it fills <code>errors</code> instead, and your function never runs.</p>
+<figure class="fig"><svg viewBox="0 0 420 270" role="img" aria-label="Submit flow: values go through handleSubmit and the resolver to Zod; either errors are shown or onValid runs">
+<rect class="bx-info" x="130" y="10" width="160" height="40" rx="8"/><text class="t-b" x="210" y="35" text-anchor="middle">click Sign up</text>
+<path class="ln" d="M210 50v14"/><polygon class="ah" points="204,62 216,62 210,70"/>
+<rect class="bx-a" x="110" y="72" width="200" height="40" rx="8"/><text class="t-m" x="210" y="97" text-anchor="middle">handleSubmit</text>
+<path class="ln" d="M210 112v14"/><polygon class="ah" points="204,124 216,124 210,132"/>
+<rect class="bx-warn" x="90" y="134" width="240" height="40" rx="8"/><text class="t" x="210" y="159" text-anchor="middle">resolver: Zod safeParse</text>
+<path class="ln-a" d="M150 174l-50 36"/><polygon class="ah-a" points="96,202 106,210 94,214"/>
+<path class="ln-ok" d="M270 174l50 36"/><polygon class="ah-ok" points="314,210 326,206 324,216"/>
+<rect class="bx-bad" x="10" y="214" width="180" height="48" rx="8"/><text class="t-b" x="100" y="236" text-anchor="middle">invalid</text><text class="t-s" x="100" y="254" text-anchor="middle">errors filled, shown</text>
+<rect class="bx-ok" x="230" y="214" width="180" height="48" rx="8"/><text class="t-b" x="320" y="236" text-anchor="middle">valid</text><text class="t-s" x="320" y="254" text-anchor="middle">onValid(data) runs</text>
+</svg><figcaption>What happens on submit. handleSubmit stops the page reload and passes the values to the resolver, which runs Zod's safeParse. If anything is invalid, the errors object is filled and messages appear under the fields. If everything is valid, your onValid function runs with the clean data.</figcaption></figure>
+
+<h4>The resolver: the bridge between them</h4>
+<p>React Hook Form and Zod do not know about each other. A <b>resolver</b> is a function React Hook Form calls with the form's values; it must return either the valid values, or an <code>errors</code> object keyed by field name. In a real project you import a ready-made one, <code>zodResolver</code>, from the package <code>@hookform/resolvers/zod</code>. This sandbox does not have that package, so you write its core yourself. It is shorter than you might fear:</p>
+<pre class="snip">const zodResolver = (schema) =&gt; async (values) =&gt; {
+  const result = schema.safeParse(values);
+  if (result.success) return { values: result.data, errors: {} };
+  // otherwise: build errors from result.error.issues
+};</pre>
+<p>Note the double arrow. <code>zodResolver(schema)</code> is a function that <b>returns another function</b>, the resolver itself, which remembers <code>schema</code> through a closure, the idea from the DOM lesson. For the failure case, loop over <code>result.error.issues</code> with <code>for…of</code>. For each issue, the field name is <code>issue.path[0]</code>, the first entry of its path, and you store <code>{ message: issue.message }</code> under that name. Return <code>{ values: {}, errors }</code> at the end.</p>
+
+<h4>Showing errors, accessibly</h4>
+<pre class="snip">{errors.email &amp;&amp; &lt;p role="alert"&gt;{errors.email.message}&lt;/p&gt;}</pre>
+<p>This is a common JSX pattern for "show this only if". The <code>&amp;&amp;</code> operator means "and". If <code>errors.email</code> does not exist, the expression stops there and React renders nothing. If it does exist, the result is the paragraph, so it appears.</p>
+<p>Two small accessibility habits make a big difference:</p>
+<ul>
+<li>Wrap each input in a <code>&lt;label&gt;</code> with visible text. Clicking the label focuses the input, and a screen reader announces "Email, edit text" instead of just "edit text".</li>
+<li>Give error messages <code>role="alert"</code>. A screen reader then reads the message out the moment it appears, so a blind user knows the submit failed and why.</li>
+</ul>
+<p>For the password field, add <code>type="password"</code> so the characters are hidden. The button should have <code>type="submit"</code>; a button inside a form submits it by default, but being explicit avoids surprises.</p>
+<div class="mistake"><b>Common mistake</b>Writing <code>onSubmit={onValid}</code> without <code>handleSubmit</code>. The browser then performs its old-fashioned submit and reloads the page, wiping everything, and no validation runs. Always pass your function <i>through</i> <code>handleSubmit</code>.</div>
+<div class="mistake"><b>Common mistake</b>A field that never validates because its name differs. <code>register('Email')</code> with a schema key <code>email</code> do not match: names are case-sensitive and must be identical in the schema, in <code>register</code> and in <code>errors.email</code>.</div>
+
+<h4>Validate on the server too</h4>
+<p>Everything above runs in the user's browser, and the user controls their browser completely. They can switch JavaScript off, edit your code in the developer tools, or skip your page entirely and send a request straight to your API with a command-line tool. Browser validation is a convenience for honest users: instant feedback, fewer mistakes. It is <b>not security</b>.</p>
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Two paths to the API: through the form with browser validation, and a direct request that skips it; only server validation catches both">
+<rect class="bx-info" x="10" y="20" width="110" height="44" rx="8"/><text class="t-b" x="65" y="47" text-anchor="middle">your form</text>
+<rect class="bx-ok" x="150" y="20" width="110" height="44" rx="8"/><text class="t-s" x="205" y="40" text-anchor="middle">browser</text><text class="t-s" x="205" y="56" text-anchor="middle">validation</text>
+<rect class="bx-bad" x="10" y="130" width="110" height="44" rx="8"/><text class="t-b" x="65" y="157" text-anchor="middle">attacker</text>
+<rect class="bx-a" x="300" y="64" width="110" height="64" rx="8"/><text class="t-b" x="355" y="90" text-anchor="middle">server</text><text class="t-s" x="355" y="110" text-anchor="middle">validates again</text>
+<path class="ln" d="M120 42h22"/><polygon class="ah" points="140,36 140,48 150,42"/>
+<path class="ln-ok" d="M260 42l32 26"/><polygon class="ah-ok" points="286,72 296,64 298,76"/>
+<path class="ln-a" d="M120 152h120l52 -28"/><polygon class="ah-a" points="286,118 296,130 300,118"/>
+<text class="t-s t-a" x="190" y="144" text-anchor="middle">skips the form</text>
+</svg><figcaption>Two ways data reaches your server. Honest users come through your form, where browser validation helps them. An attacker can send a request directly and skip the form. Only validation on the server catches both, so the server must always check again.</figcaption></figure>
+<p>The server must check every request again. A nice benefit of Zod is that the very same schema can run on a Node.js server, so the rules are written once and stay in sync.</p>
+
+<h4>The tasks</h4>
+<ol>
+<li>Write the schema with both messages exactly as the task states.</li>
+<li>Write the resolver, set up <code>useForm</code> with it, register an email input and a password input, and show each field's message under it.</li>
+<li>Keep a <code>welcome</code> value in <code>useState</code> (the starter does not import it, so add <code>import { useState } from 'react';</code>), and in your valid-submit function set it to the submitted email, then show "Welcome, " followed by that email.</li>
+</ol>
+<div class="try"><b>Try it in your head</b>The user types <code>ada@example.com</code> and the password <code>abc</code>, then submits. What appears? The email passes, the password fails the minimum length, so "Use at least 8 characters" appears under the password and the welcome function does not run. What would <code>issue.path[0]</code> be for that failure? The string <code>'password'</code>.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>Zod describes valid data once with a schema; <code>safeParse</code> returns success with data, or a list of issues with paths and messages.</li>
+<li>React Hook Form: <code>register</code> connects inputs, <code>handleSubmit</code> validates and stops the page reload, <code>formState.errors</code> holds messages.</li>
+<li>A resolver bridges the two by turning Zod's issues into an errors object keyed by field name.</li>
+<li>Use labels and <code>role="alert"</code> so everyone can use and understand your form.</li>
+<li>Browser validation is for user experience; always validate again on the server, ideally with the same schema.</li>
+</ul>
+`);

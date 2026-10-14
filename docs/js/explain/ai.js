@@ -294,8 +294,7 @@ explain('ai4',`
 <path class="ln" d="M320 66v30"/><polygon class="ah" points="314,96 326,96 320,104"/>
 <path class="ln" d="M230 132h-32"/><polygon class="ah" points="198,126 198,138 190,132"/>
 <path class="ln-ok" d="M100 160v32"/><polygon class="ah-ok" points="94,192 106,192 100,200"/>
-<path class="ln-d" d="M190 120h10l30-54"/>
-<text class="t-s" x="230" y="200">or asks for</text><text class="t-s" x="230" y="218">another tool</text>
+<text class="t-s" x="206" y="222">Steps 2 to 4 repeat</text><text class="t-s" x="206" y="240">if it needs more tools</text>
 </svg><figcaption>Your code sends the question and the tool descriptions. The model replies asking for get_weather with the city Lagos. Your code runs the function and gets 31 degrees and sunny, then sends that back as a tool result. The model either asks for another tool or writes the final answer: no umbrella needed.</figcaption></figure>
 <p>Notice who does what. The model <b>decides</b> whether a tool is needed and with what input. Your code <b>executes</b> it. The model never runs anything itself; it can only ask.</p>
 

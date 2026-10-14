@@ -384,3 +384,96 @@ aws iam attach-user-policy --user-name deploy-bot \\
 <li>Least privilege keeps the blast radius small. Prefer roles with temporary credentials over access keys.</li>
 </ul>
 `);
+
+explain('c5',`
+<h4>Why your cloud needs its own network</h4>
+<p>So far your servers and databases have floated somewhere inside AWS. In reality, every one of them sits in a network, and the network decides who can even <b>try</b> to connect. IAM, from the last lesson, controls who may call the AWS API. Networking controls a different thing: which <b>network traffic</b>, such as a visitor's browser or an attacker's scanner, can reach your machines at all.</p>
+<p>The goal is the layout every serious web app uses: the website is reachable from the internet on HTTPS, the admin door (SSH) is open only to you, and the database is not reachable from the internet at all.</p>
+<div class="analogy"><b>Think of it like</b>A private campus. The <b>VPC</b> is the wall around the whole site. <b>Subnets</b> are the buildings: a reception building near the public gate, and back-office buildings with no street entrance. <b>Security groups</b> are the guards at each door, holding a list of who may come in.</div>
+
+<h4>IP ranges and CIDR notation</h4>
+<p>A <b>VPC</b> (Virtual Private Cloud) is your own private network inside AWS. When you create one, you choose which IP addresses it owns, written in <b>CIDR notation</b>, like <code>10.0.0.0/16</code>. Addresses starting with <code>10.</code> are reserved for private networks, so they never clash with real internet addresses.</p>
+<p>The number after the slash is the key. An IPv4 address is 32 bits, four numbers of 8 bits each. The slash number says how many bits, counting from the left, are <b>fixed</b>. The remaining bits are free to vary, and each free bit doubles the number of addresses.</p>
+<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="CIDR: /16 fixes two numbers and leaves 65,536 addresses, /24 fixes three and leaves 256, /32 fixes all four and is one address">
+<g text-anchor="middle">
+<text class="t-b" x="70" y="22">range</text><text class="t-b" x="230" y="22">fixed / free</text><text class="t-b" x="370" y="22">addresses</text>
+</g>
+<text class="t-m" x="10" y="62">10.0.0.0/16</text>
+<rect class="bx-a" x="140" y="44" width="44" height="28" rx="3"/><rect class="bx-a" x="188" y="44" width="44" height="28" rx="3"/><rect class="bx-ok" x="236" y="44" width="44" height="28" rx="3"/><rect class="bx-ok" x="284" y="44" width="44" height="28" rx="3"/>
+<text class="t" x="370" y="63" text-anchor="middle">65,536</text>
+<text class="t-m" x="10" y="112">10.0.1.0/24</text>
+<rect class="bx-a" x="140" y="94" width="44" height="28" rx="3"/><rect class="bx-a" x="188" y="94" width="44" height="28" rx="3"/><rect class="bx-a" x="236" y="94" width="44" height="28" rx="3"/><rect class="bx-ok" x="284" y="94" width="44" height="28" rx="3"/>
+<text class="t" x="370" y="113" text-anchor="middle">256</text>
+<text class="t-m" x="10" y="162">x.x.x.x/32</text>
+<rect class="bx-a" x="140" y="144" width="44" height="28" rx="3"/><rect class="bx-a" x="188" y="144" width="44" height="28" rx="3"/><rect class="bx-a" x="236" y="144" width="44" height="28" rx="3"/><rect class="bx-a" x="284" y="144" width="44" height="28" rx="3"/>
+<text class="t" x="370" y="163" text-anchor="middle">1</text>
+<rect class="bx-a" x="140" y="190" width="18" height="18" rx="3"/><text class="t-s" x="164" y="204">fixed 8 bits</text>
+<rect class="bx-ok" x="260" y="190" width="18" height="18" rx="3"/><text class="t-s" x="284" y="204">free 8 bits</text>
+</svg><figcaption>Each block is one of the four numbers in an address, 8 bits each. A /16 fixes the first two numbers and leaves two free, which gives 256 times 256, or 65,536 addresses. A /24 fixes three and leaves 256. A /32 fixes all four, so it means exactly one address.</figcaption></figure>
+<ul>
+<li><code>10.0.0.0/16</code>: the first 16 bits (<code>10.0</code>) are fixed; everything from <code>10.0.0.0</code> to <code>10.0.255.255</code> belongs to it. That is 65,536 addresses, plenty for a whole VPC.</li>
+<li><code>10.0.1.0/24</code>: the first 24 bits (<code>10.0.1</code>) are fixed; it covers <code>10.0.1.0</code> to <code>10.0.1.255</code>, 256 addresses. AWS keeps 5 of each subnet for itself, leaving 251.</li>
+<li><code>198.51.100.7/32</code>: all 32 bits fixed, so it means that one address only.</li>
+<li><code>0.0.0.0/0</code>: zero bits fixed, so it matches <b>every</b> address. In a firewall rule it means "the whole internet".</li>
+</ul>
+
+<h4>Subnets: public and private</h4>
+<p>A <b>subnet</b> is a slice of the VPC's range, and each subnet lives in one availability zone. The VPC <code>10.0.0.0/16</code> can hold subnets like <code>10.0.1.0/24</code> and <code>10.0.2.0/24</code>, since both fit inside it. What makes a subnet "public" or "private" is not its name but its <b>route table</b>, the list of directions for traffic leaving it:</p>
+<ul>
+<li>A <b>public subnet</b> has a route sending internet traffic to an <b>internet gateway</b>, the VPC's door to the internet. Machines there can have public IP addresses. Put load balancers here, the front doors that receive visitors.</li>
+<li>A <b>private subnet</b> has no such route. Nothing on the internet can start a connection to it. Put app servers and databases here. (If they need to download updates, a NAT gateway lets them start outgoing connections only.)</li>
+</ul>
+<figure class="fig"><svg viewBox="0 0 420 300" role="img" aria-label="A VPC with a public subnet holding a load balancer and a private subnet holding the app and database">
+<rect class="bx-info" x="150" y="8" width="120" height="34" rx="6"/><text class="t-b" x="210" y="30" text-anchor="middle">Internet</text>
+<path class="ln-a" d="M210 42v30"/><polygon class="ah-a" points="204,70 216,70 210,78"/><text class="t-s t-a" x="220" y="62">443 only</text>
+<rect class="bx" x="10" y="52" width="400" height="240" rx="10"/>
+<text class="t-m" x="22" y="74">VPC 10.0.0.0/16</text>
+<rect class="bx-ok" x="24" y="84" width="372" height="66" rx="8"/>
+<text class="t-s" x="36" y="102">public subnet 10.0.1.0/24</text>
+<rect class="bx" x="140" y="108" width="140" height="34" rx="6"/><text class="t-s" x="210" y="130" text-anchor="middle">load balancer</text>
+<path class="ln" d="M210 142v24"/><polygon class="ah" points="204,164 216,164 210,172"/>
+<rect class="bx-warn" x="24" y="160" width="372" height="120" rx="8"/>
+<text class="t-s" x="36" y="186">private subnet 10.0.2.0/24</text>
+<rect class="bx" x="140" y="174" width="140" height="34" rx="6"/><text class="t-s" x="210" y="196" text-anchor="middle">app servers</text>
+<path class="ln" d="M210 208v18"/><polygon class="ah" points="204,224 216,224 210,232"/>
+<rect class="bx" x="140" y="234" width="140" height="34" rx="6"/><text class="t-s" x="210" y="256" text-anchor="middle">database :5432</text>
+<text class="t-s" x="300" y="256">no route</text><text class="t-s" x="300" y="272">from internet</text>
+</svg><figcaption>Visitors reach only the public subnet, on port 443, where the load balancer receives them and passes requests to app servers in the private subnet. The app servers talk to the database, which sits in the private subnet with no route from the internet.</figcaption></figure>
+
+<h4>Security groups: a guard on every door</h4>
+<p>Subnets decide where traffic can be routed. A <b>security group</b> is a firewall attached to each individual resource, such as an instance or a database, and lists which incoming traffic is allowed. Key facts:</p>
+<ul>
+<li>Rules only <b>allow</b>. Anything not allowed is blocked. A new security group allows no incoming traffic at all, and allows all outgoing traffic.</li>
+<li>Each inbound rule names a <b>protocol</b> (usually <code>tcp</code>), a <b>port</b> (which service), and a <b>source</b> (who may connect, as a CIDR range or another security group).</li>
+<li>They are <b>stateful</b>: if a request is allowed in, the reply is automatically allowed back out. You never write rules for replies.</li>
+</ul>
+<p>It is the same idea as <code>ufw</code> on your VPS, except it lives outside the machine, so a mistake inside the server cannot switch it off.</p>
+
+<h4>Building it step by step</h4>
+<pre class="snip">aws ec2 create-vpc --cidr-block 10.0.0.0/16
+aws ec2 create-subnet --vpc-id vpc-05a8c1e3f7b9d2468 \\
+    --cidr-block 10.0.1.0/24
+aws ec2 create-security-group --group-name web-sg \\
+    --description "Web servers" --vpc-id vpc-05a8c1e3f7b9d2468</pre>
+<p>Each command prints an ID you need in the next one: the VPC ID goes into the subnet and security group commands, and the group ID (<code>sg-...</code>) goes into the rules. In this sandbox the IDs are predictable; in real life, copy them from the output. A security group <b>must</b> have a description, which is why that option is there.</p>
+<p>Now the two rules:</p>
+<pre class="snip">aws ec2 authorize-security-group-ingress --group-id sg-05a8c1e3f7b9d2468 \\
+    --protocol tcp --port 443 --cidr 0.0.0.0/0          # HTTPS, everyone
+aws ec2 authorize-security-group-ingress --group-id sg-05a8c1e3f7b9d2468 \\
+    --protocol tcp --port 22 --cidr 198.51.100.7/32     # SSH, just you</pre>
+<p>"Ingress" means incoming. Read each rule as a sentence: "allow TCP on port 443 from anywhere", and "allow TCP on port 22 from this single address". Finally you launch an instance with <code>run-instances</code>, adding <code>--subnet-id</code> and <code>--security-group-ids</code> to place it in your subnet behind your guard.</p>
+<div class="mistake"><b>Common mistake</b>Opening port 22 to <code>0.0.0.0/0</code> "just for now". Automated bots scan every public address for SSH within minutes of it appearing, trying common passwords. Restrict SSH to your own IP with <code>/32</code>, or better, use AWS Systems Manager Session Manager, which gives you a shell with no inbound port open at all.</div>
+
+<h4>Where the database goes</h4>
+<p>The database belongs in a private subnet, with its own security group allowing port 5432 (Postgres) only from the <b>app servers' security group</b>, not from an IP range. Using a group as the source means "any machine wearing that badge", so it keeps working as app servers come and go. Now an attacker needs to get past the internet, into the VPC, onto an app server, and only then try the password. Each layer has to fail before data leaks. Security people call this <b>defence in depth</b>.</p>
+<div class="try"><b>Try it in your head</b>Your security group allows <code>tcp 22 from 198.51.100.7/32</code>. You go to a café and your public IP becomes <code>203.0.113.50</code>. Can you SSH in? No: <code>/32</code> means only <code>198.51.100.7</code>. The connection simply times out, because security groups drop disallowed traffic silently. You would add a rule for your new IP, then remove it afterwards.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>A VPC is your private network, defined by a CIDR range such as <code>10.0.0.0/16</code>.</li>
+<li>The slash number is how many bits are fixed: /16 is 65,536 addresses, /24 is 256, /32 is one, /0 is everyone.</li>
+<li>Subnets split the VPC: public ones route to an internet gateway, private ones do not. Databases and apps go private.</li>
+<li>Security groups are stateful, allow-only firewalls on each resource: protocol, port and source.</li>
+<li>443 from <code>0.0.0.0/0</code> for a website; SSH only from your <code>/32</code>, or no SSH at all with Session Manager.</li>
+</ul>
+`);

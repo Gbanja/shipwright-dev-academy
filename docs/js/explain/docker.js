@@ -205,3 +205,103 @@ docker logs -f web          # follow new lines; Ctrl+C to stop</pre>
 <li><code>docker stop</code>, <code>start</code> and <code>rm</code> manage the life cycle; removing a container keeps the image.</li>
 </ul>
 `);
+
+explain('d3',`
+<h4>Why write your own image</h4>
+<p>So far you have run images that other people built, like nginx. To ship <b>your</b> app you need your own image: one that contains Node.js, your app's packages and your code, and knows how to start it. You could set that up by hand inside a container, but nobody could repeat it exactly, and you would forget the steps by next month.</p>
+<p>Instead you write a <b>Dockerfile</b>: a plain text file, saved next to your code, that lists the steps to build the image, in order. Anyone with the file and the code gets exactly the same image, every time. Because it is just text, it also lives in Git with the rest of your project.</p>
+<p>The lesson's folder, <code>~/hello-api</code>, holds a tiny Express app: <code>package.json</code> lists its one dependency, and <code>server.js</code> answers "Hello from Docker" on port 3000.</p>
+
+<h4>The Dockerfile, line by line</h4>
+<pre class="snip">FROM node:20-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+EXPOSE 3000
+CMD ["node", "server.js"]</pre>
+<p>Each line is one <b>instruction</b>: an uppercase keyword, then its arguments. Read it top to bottom, like a recipe.</p>
+<ol>
+<li><code>FROM node:20-alpine</code> picks the <b>base image</b> to start from. You never build from nothing. This one already contains Node.js 20 on <b>Alpine Linux</b>, a tiny Linux distribution designed for containers, which keeps the image small. Every Dockerfile starts with <code>FROM</code>.</li>
+<li><code>WORKDIR /app</code> sets the working folder inside the image, creating it if needed. It is <code>cd</code> for the rest of the Dockerfile: later relative paths, and the final command, all happen in <code>/app</code>.</li>
+<li><code>COPY package*.json ./</code> copies files from your project into the image. The <code>*</code> wildcard matches both <code>package.json</code> and <code>package-lock.json</code> if it exists, and <code>./</code> means "into the working folder", <code>/app</code>.</li>
+<li><code>RUN npm install</code> runs a command <b>while the image is being built</b>, and saves the result into the image. Here it downloads Express into <code>/app/node_modules</code>.</li>
+<li><code>COPY . .</code> copies everything else: from <code>.</code>, your project folder, to <code>.</code>, the working folder in the image.</li>
+<li><code>EXPOSE 3000</code> records that the app listens on port 3000. It is <b>documentation only</b>: it does not publish anything. You still need <code>-p</code> when you run it.</li>
+<li><code>CMD ["node", "server.js"]</code> is the command a container runs <b>when it starts</b>. It becomes the container's main process.</li>
+</ol>
+<p>The square-bracket form of <code>CMD</code> is called the <b>exec form</b>: a list of words in double quotes, separated by commas. Docker runs <code>node</code> directly, with no shell in between, so signals such as the SIGTERM sent by <code>docker stop</code> reach your app. A Dockerfile has only one <code>CMD</code>; if you write two, the last one wins.</p>
+
+<h4>Build time and run time</h4>
+<p>The most important distinction in a Dockerfile is <b>when</b> each line happens. Everything except <code>CMD</code> happens once, at <b>build time</b>, when you create the image. <code>CMD</code> happens every time a container starts, at <b>run time</b>.</p>
+<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="docker build turns a Dockerfile and project files into an image; docker run starts the CMD in a container">
+<rect class="bx-info" x="10" y="20" width="110" height="60" rx="8"/><text class="t-b" x="65" y="45" text-anchor="middle">Dockerfile</text><text class="t-s" x="65" y="66" text-anchor="middle">+ your files</text>
+<path class="ln" d="M120 50h32"/><polygon class="ah" points="150,44 150,56 158,50"/>
+<rect class="bx-a" x="160" y="20" width="100" height="60" rx="8"/><text class="t-b t-a" x="210" y="56" text-anchor="middle">image</text>
+<path class="ln-ok" d="M260 50h32"/><polygon class="ah-ok" points="290,44 290,56 298,50"/>
+<rect class="bx-ok" x="300" y="20" width="110" height="60" rx="8"/><text class="t-b t-ok" x="355" y="56" text-anchor="middle">container</text>
+<text class="t-m" x="139" y="104" text-anchor="middle">build</text><text class="t-m" x="279" y="104" text-anchor="middle">run</text>
+<line class="ln-d" x1="10" y1="122" x2="410" y2="122"/>
+<text class="t-b" x="110" y="150" text-anchor="middle">build time, once</text>
+<text class="t-s" x="110" y="172" text-anchor="middle">FROM, WORKDIR, COPY, RUN</text>
+<text class="t-s" x="110" y="192" text-anchor="middle">npm install happens here</text>
+<text class="t-b" x="320" y="150" text-anchor="middle">run time, every start</text>
+<text class="t-s" x="320" y="172" text-anchor="middle">CMD</text>
+<text class="t-s" x="320" y="192" text-anchor="middle">node server.js runs here</text>
+</svg><figcaption>docker build reads the Dockerfile and your files once, and produces an image with everything already installed. docker run starts a container from that image, and only then runs the CMD, node server dot js. A RUN line happens at build time, a CMD at run time.</figcaption></figure>
+<p>That is why installing packages goes in <code>RUN</code>: you want it done once and baked into the image, not repeated on every start. And it is why the server goes in <code>CMD</code>: a server that started during the build would just block the build forever.</p>
+
+<h4>Building and running: <code>docker build -t hello-api .</code></h4>
+<p>Two parts of the build command matter:</p>
+<ul>
+<li><code>-t hello-api</code> <b>tags</b> the image with a name, so you can run it by name. With no <code>:tag</code>, it becomes <code>hello-api:latest</code>.</li>
+<li>The final <code>.</code> is the <b>build context</b>: the folder whose files Docker may use. <code>COPY</code> can only see files inside it. Here it is the current folder, <code>~/hello-api</code>.</li>
+</ul>
+<p>Docker prints a numbered line for each step and finishes with the image name. Then you run it exactly as you ran nginx, using the app's port on both sides:</p>
+<pre class="snip">docker build -t hello-api .
+docker run -d -p 3000:3000 --name api hello-api
+curl localhost:3000        # Hello from Docker</pre>
+<p>Inside the container, <code>server.js</code> listens on port 3000; <code>-p 3000:3000</code> publishes it as port 3000 on your machine.</p>
+
+<h4>Layers and the build cache</h4>
+<p>Each instruction that changes files, <code>FROM</code>, <code>COPY</code>, <code>RUN</code> and <code>WORKDIR</code>, produces a <b>layer</b>: the set of files that step added or changed. The image is those layers stacked up. <code>EXPOSE</code> and <code>CMD</code> only record settings.</p>
+<p>Docker keeps every layer it builds in a <b>cache</b>. On the next build, for each step it asks: "is this step's input exactly the same as last time?" For a <code>RUN</code>, the input is the command text. For a <code>COPY</code>, it is also the contents of the files being copied. If the input is unchanged, Docker reuses the stored layer and prints <code>CACHED</code>, which takes no time. The rule that makes order matter is this: <b>once one step has to rebuild, every step after it rebuilds too</b>, because each layer sits on top of the one before.</p>
+<figure class="fig"><svg viewBox="0 0 420 260" role="img" aria-label="After editing server.js, the good order reuses the npm install layer; the bad order reinstalls">
+<text class="t-b t-ok" x="105" y="18" text-anchor="middle">good order</text>
+<text class="t-b t-bad" x="315" y="18" text-anchor="middle">bad order</text>
+<g text-anchor="middle">
+<rect class="bx-ok" x="10" y="30" width="190" height="32" rx="6"/><text class="t-s" x="105" y="51">FROM: cached</text>
+<rect class="bx-ok" x="10" y="68" width="190" height="32" rx="6"/><text class="t-s" x="105" y="89">WORKDIR: cached</text>
+<rect class="bx-ok" x="10" y="106" width="190" height="32" rx="6"/><text class="t-s" x="105" y="127">COPY package: cached</text>
+<rect class="bx-ok" x="10" y="144" width="190" height="32" rx="6"/><text class="t-s" x="105" y="165">npm install: cached</text>
+<rect class="bx-warn" x="10" y="182" width="190" height="32" rx="6"/><text class="t-s" x="105" y="203">COPY . . : rebuilt</text>
+<rect class="bx-ok" x="220" y="30" width="190" height="32" rx="6"/><text class="t-s" x="315" y="51">FROM: cached</text>
+<rect class="bx-ok" x="220" y="68" width="190" height="32" rx="6"/><text class="t-s" x="315" y="89">WORKDIR: cached</text>
+<rect class="bx-warn" x="220" y="106" width="190" height="32" rx="6"/><text class="t-s" x="315" y="127">COPY . . : rebuilt</text>
+<rect class="bx-bad" x="220" y="144" width="190" height="32" rx="6"/><text class="t-s" x="315" y="165">npm install: rebuilt</text>
+<text class="t-s t-ok" x="105" y="242">about a second</text>
+<text class="t-s t-bad" x="315" y="242">reinstalls every package</text>
+</g>
+</svg><figcaption>You edited server dot js and rebuilt. In the good order, the package files have not changed, so npm install is reused from the cache and only the final copy reruns. In the bad order, the code is copied before npm install, so the changed file forces npm install to run again from scratch.</figcaption></figure>
+<p>That is the whole reason for copying <code>package*.json</code> on its own first. Your dependencies change rarely; your code changes all the time. Putting the slow, rarely changing step first means everyday edits only rerun the fast final copy. In the lesson's last task you edit the message in <code>server.js</code>, rebuild, and should see <code>CACHED</code> next to the early steps.</p>
+<div class="tip"><b>Tip</b>Add a <code>.dockerignore</code> file listing <code>node_modules</code> (and things like <code>.git</code> and <code>.env</code>). It works like <code>.gitignore</code>: those paths are left out of the build context, so <code>COPY . .</code> cannot overwrite the packages installed inside the image, or leak secrets into it.</div>
+
+<h4>Reading build and run errors</h4>
+<ul>
+<li><code>"docker build" requires exactly 1 argument</code>: you forgot the final dot.</li>
+<li>A <code>COPY</code> step failing with <code>not found</code>: the file is not in the build context. Check the name, the folder you ran the build from, and <code>.dockerignore</code>.</li>
+<li>A <code>RUN</code> step failing: its command returned an error, for example npm could not install a package. The build stops there, and the lines just above the error explain why.</li>
+<li>The container shows <code>Exited (1)</code> straight after <code>docker run</code>: the app crashed on start. <code>docker logs api</code> shows its error, such as a missing file in <code>CMD</code>.</li>
+</ul>
+<div class="mistake"><b>Common mistake</b>Rebuilding and expecting the running container to change. A container is made from the image as it was when the container was created. After a rebuild, remove the old container (<code>docker rm -f api</code>) and run a new one from the new image.</div>
+<div class="try"><b>Try it in your head</b>You add a new package to <code>package.json</code> and rebuild. Which steps are cached? <code>FROM</code> and <code>WORKDIR</code> are. <code>COPY package*.json ./</code> now has different input, so it rebuilds, and so does everything after it: <code>npm install</code> and <code>COPY . .</code>. That is correct behaviour: new dependencies really do need installing.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>A Dockerfile is a recipe: <code>FROM</code> a base, <code>WORKDIR</code>, <code>COPY</code> files in, <code>RUN</code> build steps, <code>EXPOSE</code> to document the port, and <code>CMD</code> to start the app.</li>
+<li><code>RUN</code> happens once at build time; <code>CMD</code> runs every time a container starts.</li>
+<li><code>docker build -t name .</code> builds an image from the current folder, the build context.</li>
+<li>Each step is a cached layer; once a step changes, every later step rebuilds.</li>
+<li>Copy <code>package*.json</code> and install before <code>COPY . .</code>, so code edits do not trigger a reinstall.</li>
+</ul>
+`);

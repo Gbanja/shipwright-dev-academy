@@ -356,7 +356,7 @@ print(name)      # Ada</pre>
 <h4>f-strings: values inside text</h4>
 <pre class="snip" style="margin-bottom:12px">print(f"{name} is {age} years old")   # Ada is 36 years old</pre>
 <p>Put an <code>f</code> before the quotes, and anything in <code>{curly braces}</code> is replaced by its value.</p>
-<div class="tip"><b>Decimals</b>Computers store decimals approximately: <code>19.99 * 3</code> gives <code>59.97000000000001</code>. Use <code>round(value, 2)</code> to show money.</div>`,
+<div class="tip"><b>Decimals</b>Computers store decimals approximately: <code>0.1 + 0.2</code> gives <code>0.30000000000000004</code>. So when you work with money, use <code>round(value, 2)</code> to keep two decimal places.</div>`,
  tasks:[
   {t:'Print the text Hello, world!',sol:PY1_SOL,showSol:false,hint:'print("Hello, world!")',c:ctx=>/Hello, world!/.test(ctx.out||'')},
   {t:'Create a variable name (text) and a variable age (a whole number).',hint:'name = "Ada"\nage = 36',x:'isinstance(name, str) and isinstance(age, int) and not isinstance(age, bool)'},
