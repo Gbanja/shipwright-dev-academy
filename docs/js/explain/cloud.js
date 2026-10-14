@@ -423,21 +423,22 @@ explain('c5',`
 <li>A <b>public subnet</b> has a route sending internet traffic to an <b>internet gateway</b>, the VPC's door to the internet. Machines there can have public IP addresses. Put load balancers here, the front doors that receive visitors.</li>
 <li>A <b>private subnet</b> has no such route. Nothing on the internet can start a connection to it. Put app servers and databases here. (If they need to download updates, a NAT gateway lets them start outgoing connections only.)</li>
 </ul>
-<figure class="fig"><svg viewBox="0 0 420 300" role="img" aria-label="A VPC with a public subnet holding a load balancer and a private subnet holding the app and database">
-<rect class="bx-info" x="150" y="8" width="120" height="34" rx="6"/><text class="t-b" x="210" y="30" text-anchor="middle">Internet</text>
-<path class="ln-a" d="M210 42v30"/><polygon class="ah-a" points="204,70 216,70 210,78"/><text class="t-s t-a" x="220" y="62">443 only</text>
-<rect class="bx" x="10" y="52" width="400" height="240" rx="10"/>
-<text class="t-m" x="22" y="74">VPC 10.0.0.0/16</text>
-<rect class="bx-ok" x="24" y="84" width="372" height="66" rx="8"/>
-<text class="t-s" x="36" y="102">public subnet 10.0.1.0/24</text>
-<rect class="bx" x="140" y="108" width="140" height="34" rx="6"/><text class="t-s" x="210" y="130" text-anchor="middle">load balancer</text>
-<path class="ln" d="M210 142v24"/><polygon class="ah" points="204,164 216,164 210,172"/>
-<rect class="bx-warn" x="24" y="160" width="372" height="120" rx="8"/>
-<text class="t-s" x="36" y="186">private subnet 10.0.2.0/24</text>
-<rect class="bx" x="140" y="174" width="140" height="34" rx="6"/><text class="t-s" x="210" y="196" text-anchor="middle">app servers</text>
-<path class="ln" d="M210 208v18"/><polygon class="ah" points="204,224 216,224 210,232"/>
-<rect class="bx" x="140" y="234" width="140" height="34" rx="6"/><text class="t-s" x="210" y="256" text-anchor="middle">database :5432</text>
-<text class="t-s" x="300" y="256">no route</text><text class="t-s" x="300" y="272">from internet</text>
+<figure class="fig"><svg viewBox="0 0 420 310" role="img" aria-label="A VPC with a public subnet holding a load balancer and a private subnet holding the app and database">
+<rect class="bx" x="10" y="56" width="400" height="246" rx="10"/>
+<text class="t-m" x="22" y="78">VPC 10.0.0.0/16</text>
+<rect class="bx-info" x="251" y="8" width="120" height="32" rx="6"/><text class="t-b" x="311" y="29" text-anchor="middle">Internet</text>
+<text class="t-s t-a" x="240" y="29" text-anchor="end">443 only</text>
+<rect class="bx-ok" x="24" y="94" width="372" height="62" rx="8"/>
+<text class="t-s" x="36" y="116">public subnet</text><text class="t-s" x="36" y="134">10.0.1.0/24</text>
+<rect class="bx" x="226" y="106" width="160" height="36" rx="6"/><text class="t-s" x="306" y="129" text-anchor="middle">load balancer</text>
+<path class="ln-a" d="M311 40v58"/><polygon class="ah-a" points="305,98 317,98 311,106"/>
+<rect class="bx-warn" x="24" y="170" width="372" height="122" rx="8"/>
+<text class="t-s" x="36" y="192">private subnet</text><text class="t-s" x="36" y="210">10.0.2.0/24</text>
+<rect class="bx" x="226" y="186" width="160" height="36" rx="6"/><text class="t-s" x="306" y="209" text-anchor="middle">app servers</text>
+<path class="ln" d="M306 142v36"/><polygon class="ah" points="300,178 312,178 306,186"/>
+<rect class="bx" x="226" y="244" width="160" height="36" rx="6"/><text class="t-s" x="306" y="267" text-anchor="middle">database :5432</text>
+<path class="ln" d="M306 222v14"/><polygon class="ah" points="300,236 312,236 306,244"/>
+<text class="t-s" x="36" y="252">no route</text><text class="t-s" x="36" y="270">from internet</text>
 </svg><figcaption>Visitors reach only the public subnet, on port 443, where the load balancer receives them and passes requests to app servers in the private subnet. The app servers talk to the database, which sits in the private subnet with no route from the internet.</figcaption></figure>
 
 <h4>Security groups: a guard on every door</h4>
