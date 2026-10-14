@@ -4,7 +4,7 @@ const O=()=>OPS.st,H=re=>OPS.Hx(re),F=p=>OPS.file(p)||'';
 const last=()=>O().lastHttp||{};
 const nextProject=(o,name)=>{o.mkdirp('/home/you/'+name+'/app');o.H().cwd='/home/you/'+name;o.write('package.json',JSON.stringify({name,version:'1.0.0',scripts:{dev:'next dev',build:'next build',start:'next start',test:'vitest run'},dependencies:{next:'14.2.15',react:'18.3.1','react-dom':'18.3.1'},devDependencies:{vitest:'2.1.2'}},null,2)+'\n');o.write('app/page.tsx','export default function Home() {\n  return <h1>Hi, I build things for the web.</h1>;\n}\n');o.write('app/layout.tsx','export default function RootLayout({ children }) {\n  return <html><body>{children}</body></html>;\n}\n');o.mkdirp('/home/you/'+name+'/.git')};
 const NGINX_PROXY='server {\n    listen 80;\n    server_name portfolio.dev www.portfolio.dev;\n\n    location / {\n        proxy_pass http://localhost:3000;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n    }\n}\n';
-const CI_YML='name: CI\n\non:\n  push:\n    branches: [main]\n  pull_request:\n\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 20\n      - run: npm ci\n      - run: npm test\n';
+const CI_YML='name: CI\n\non:\n  push:\n    branches: [main]\n  pull_request:\n\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 24\n      - run: npm ci\n      - run: npm test\n';
 defineTrack({id:'deploy',name:'Deployment & CI/CD',weeks:'~2 weeks',
 lessons:[
 {id:'p1',lvl:'The web',title:'How the web works: DNS, HTTP & HTTPS',kind:'ops',
@@ -89,7 +89,7 @@ jobs:
       - uses: actions/checkout@v4      # get your code
       - uses: actions/setup-node@v4    # install Node
         with:
-          node-version: 20
+          node-version: 24
       - run: npm ci                    # clean install from the lockfile
       - run: npm test</pre>
 <ul><li><b>Workflow</b>: one YAML file in <code>.github/workflows/</code></li><li><b>Job</b>: runs on its own runner machine; jobs run in parallel unless one <code>needs</code> another</li><li><b>Step</b>: <code>uses</code> a published action, or <code>run</code>s a shell command</li></ul>

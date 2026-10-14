@@ -369,3 +369,56 @@ body:has(#voiceBar:not([hidden])){padding-bottom:170px}
   .term-out{height:260px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* ---------- Explained step by step (long-form walkthrough with diagrams) ---------- */
+.deep{border:1px solid var(--line);border-radius:10px;margin:0 0 16px;background:var(--surface)}
+.deep>summary{cursor:pointer;list-style:none;padding:11px 14px;font-family:var(--f-display);font-weight:700;font-size:15px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;border-radius:10px}
+.deep>summary::-webkit-details-marker{display:none}
+.deep>summary::before{content:"▸";color:var(--accent);font-size:13px;transition:transform .15s}
+.deep[open]>summary::before{transform:rotate(90deg)}
+.deep>summary:hover{background:var(--surface-2)}
+.deep-sub{font-family:var(--f-body);font-weight:400;font-size:12.5px;color:var(--ink-2)}
+.deep-body{padding:2px 16px 14px;font-size:15px;line-height:1.65}
+.deep-body p{margin:0 0 12px;max-width:68ch}
+.deep-body h4{font-family:var(--f-display);font-size:16px;margin:20px 0 6px}
+.deep-body h4:first-child{margin-top:8px}
+.deep-body ul,.deep-body ol{padding-left:22px;margin:0 0 12px;max-width:66ch}
+.deep-body li{margin-bottom:5px}
+.deep-body code{font-family:var(--f-mono);font-size:.88em;background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.deep-body pre.snip{margin:4px 0 14px}
+.deep-body pre.snip code{background:none;border:0;padding:0;font-size:inherit}
+.deep-body .tbl-wrap{margin:4px 0 14px}
+.analogy,.mistake,.try{padding:10px 12px;border-radius:0 6px 6px 0;font-size:14.5px;margin:12px 0;max-width:68ch}
+.analogy b,.mistake b,.try b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
+.analogy{border-left:3px solid var(--l2);background:var(--surface-2)}.analogy b{color:var(--l2)}
+.mistake{border-left:3px solid var(--bad);background:var(--bad-soft)}.mistake b{color:var(--bad)}
+.try{border-left:3px solid var(--ok);background:var(--ok-soft)}.try b{color:var(--ok)}
+.qref{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-2);font-weight:700;margin:0 0 8px}
+/* Diagrams: inline SVG coloured with theme tokens so they work in light and dark mode. */
+.fig{margin:8px 0 16px;padding:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;max-width:600px}
+.fig svg{display:block;width:100%;height:auto;font-family:var(--f-body)}
+.fig figcaption{font-size:13px;color:var(--ink-2);margin-top:8px;line-height:1.5}
+.fig .bx{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+.fig .bx-a{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+.fig .bx-ok{fill:var(--ok-soft);stroke:var(--ok);stroke-width:1.5}
+.fig .bx-warn{fill:var(--warn-soft);stroke:var(--warn);stroke-width:1.5}
+.fig .bx-bad{fill:var(--bad-soft);stroke:var(--bad);stroke-width:1.5}
+.fig .bx-info{fill:var(--surface);stroke:var(--l4);stroke-width:1.5}
+.fig .bx-dark{fill:var(--term-bg);stroke:var(--term-bg)}
+.fig .t{fill:var(--ink);font-size:15px}
+.fig .t-s{fill:var(--ink-2);font-size:13px}
+.fig .t-b{fill:var(--ink);font-size:15px;font-weight:700}
+.fig .t-m{fill:var(--ink);font-size:15px;font-family:var(--f-mono)}
+.fig .t-term{fill:var(--term-ink);font-size:15px;font-family:var(--f-mono)}
+.fig .t-a{fill:var(--accent)}.fig .t-ok{fill:var(--ok)}.fig .t-bad{fill:var(--bad)}.fig .t-warn{fill:var(--warn)}.fig .t-info{fill:var(--l4)}
+.fig .ln{stroke:var(--ink-2);stroke-width:1.6;fill:none}
+.fig .ln-a{stroke:var(--accent);stroke-width:2;fill:none}
+.fig .ln-ok{stroke:var(--ok);stroke-width:2;fill:none}
+.fig .ln-d{stroke:var(--ink-2);stroke-width:1.4;fill:none;stroke-dasharray:5 4}
+.fig .ah{fill:var(--ink-2)}.fig .ah-a{fill:var(--accent)}.fig .ah-ok{fill:var(--ok)}
+.fig .dot{fill:var(--accent)}.fig .dot-ok{fill:var(--ok)}.fig .dot-m{fill:var(--ink-2)}
+@media (max-width:560px){.deep-body{padding:2px 12px 12px;font-size:14.5px}.fig{padding:8px}}
+.deep .fig svg{cursor:zoom-in}
+.figzoom{position:fixed;inset:0;z-index:200;background:rgba(8,12,16,.72);display:flex;align-items:center;justify-content:center;padding:16px;cursor:zoom-out}
+.figzoom .fig{max-width:min(860px,100%);width:100%;max-height:100%;overflow:auto;margin:0;background:var(--surface)}
+.figzoom .fig svg{cursor:zoom-out}

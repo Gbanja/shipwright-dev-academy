@@ -43,6 +43,18 @@ Object.assign(LEVEL_INFO,{
 
 /* "In plain English": an everyday explanation shown above each lesson's technical content. */
 const PLAIN={
+ fb1:'A web page is a text file with labels around its content. HTML tags such as <h1> and <p> tell the browser what each piece is: a heading, a paragraph, a link or a picture.',
+ fb2:'HTML is the bones of a page and CSS is the clothes. A CSS rule picks some elements, then says how they should look: colour, size and the space around them.',
+ fb3:'JavaScript makes a page do things. Variables are labelled boxes that hold values, functions are reusable recipes, and if statements let the code make decisions.',
+ fb4:'Errors are clues, not failures. Read the message, find the line it points to, change one thing, and try again. Every developer does this all day.',
+ yb1:'Python is a language that reads almost like English. print shows something on screen, and a variable is a name you give to a value so you can use it later.',
+ yb2:'Programs make choices with if, repeat work with loops, and package steps into functions you can call by name, like a recipe you can follow again and again.',
+ hb1:'PHP runs on a web server and builds the page before it reaches the browser. echo writes text into the page, and variables start with a dollar sign.',
+ hb2:'Just like other languages, PHP decides with if, repeats with loops and reuses code with functions. You will use these in every PHP page you write.',
+ sb1:'A database is a set of tables, like spreadsheets that a program can search. SELECT is how you ask a question: which rows, and which columns, do you want back?',
+ sb2:'INSERT adds a new row, UPDATE changes rows that already exist and DELETE removes them. WHERE says which rows, so forgetting it changes every row.',
+ nb1:'TypeScript is JavaScript with labels that say what kind of value goes where. Your editor checks the labels as you type and catches mistakes before the code runs.',
+ ab1:'An algorithm is a step-by-step recipe a computer can follow. Counting how many steps a recipe takes tells you whether it will still be fast when the data gets big.',
  g1:'Git is like the "track changes" feature in a document, but for a whole project folder. Every time you save a snapshot (a commit), Git remembers exactly what every file looked like, so you can always go back.',
  g2:'Think of packing a parcel. You choose what goes in the box (staging with git add), then seal and label it (git commit). Only sealed boxes become part of the history.',
  g3:'Each commit is a page in your project\'s diary, with a date, an author and a note. git diff is like comparing two pages side by side to spot what changed.',

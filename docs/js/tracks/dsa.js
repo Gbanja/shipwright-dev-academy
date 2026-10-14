@@ -395,7 +395,7 @@ while (lo &lt;= hi) {
   arr[mid] &lt; target ? (lo = mid + 1) : (hi = mid - 1);
 }</pre>
 <p><b>Recursion</b> = a function calling itself on a smaller problem, with a <b>base case</b> that stops it. Merge sort: sort the left half, sort the right half, merge them.</p>
-<p>The starter <code>fib</code> recomputes the same values exponentially many times: fib(70) would take years. <b>Memoize</b> it by caching each result in a Map.</p>`,
+<p>The starter <code>fib</code> recomputes the same values exponentially many times: fib(70) would take days. <b>Memoize</b> it by caching each result in a Map.</p>`,
  tasks:[
   {t:'binarySearch finds targets in O(log n): 100,000 lookups in a million items in under 0.3 s.',sol:A5_SOL,showSol:false,hint:'lo = 0, hi = n - 1; while (lo <= hi) { mid = (lo + hi) >> 1; … }',x:'binarySearch([1, 3, 5, 7, 9], 7) === 3 && binarySearch([1, 3, 5], 4) === -1 && binarySearch([], 1) === -1 && '+perf('const __a = Array.from({ length: 1000000 }, (_, i) => i * 2)','(() => { let f = 0; for (let k = 0; k < 100000; k++) if (binarySearch(__a, k * 6) >= 0) f++; return f; })()',300)+'.join() === "100000,true"'},
   {t:'mergeSort returns a new sorted array (no .sort()).',hint:'Split in half, mergeSort each half, then merge the two sorted halves.',x:'(() => { const a = Array.from({ length: 20000 }, () => Math.floor(Math.random() * 1e6)); const copy = a.slice(); const s = mergeSort(a); return JSON.stringify(s) === JSON.stringify(copy.slice().sort((x, y) => x - y)) && JSON.stringify(a) === JSON.stringify(copy); })()',c:ctx=>!/\.sort\(/.test(ctx.code.split('function mergeSort')[1]||'')},

@@ -16,18 +16,20 @@ const clean=t=>SAY.reduce((s,[a,b])=>s.replace(a,b),String(t||'')).trim();
 function speakCode(code){return clean(code.split('\n').map(l=>l.replace(/\/\/.*$|#.*$|--\s.*$/,'').trim()).filter(Boolean).slice(0,12).join('. ')
  .replace(/=>/g,' arrow ').replace(/===/g,' equals ').replace(/!==/g,' not equal ').replace(/==/g,' equals ').replace(/!=/g,' not equal ').replace(/<=/g,' less or equal ').replace(/>=/g,' greater or equal ')
  .replace(/[{}()[\];"'`]/g,' ').replace(/</g,' less than ').replace(/>/g,' greater than ').replace(/=/g,' equals ').replace(/\$/g,' dollar ').replace(/_/g,' '))}
-function textOf(el){const c=el.cloneNode(true);c.querySelectorAll('button,.copy,.hint,textarea,input,select').forEach(x=>x.remove());return clean(c.textContent)}
+function textOf(el){const c=el.cloneNode(true);c.querySelectorAll('button,.copy,.hint,textarea,input,select').forEach(x=>x.remove());c.querySelectorAll('br').forEach(x=>x.replaceWith(', '));return clean(c.textContent)}
 function add(el,text){text=clean(text);if(!text)return;
  /* split long text at sentence boundaries so no single utterance is too long */
- const parts=text.match(/[^.!?]*[.!?]+["')\]]*\s*|[^.!?]+$/g)||[text];let buf='';
+ const parts=text.match(/[\s\S]*?[.!?]+["')\]]*(?:\s+|$)|[\s\S]+$/g)||[text];let buf='';
  for(const p of parts){if((buf+p).length>230&&buf){chunks.push({el,text:buf.trim()});buf=''}buf+=p}if(buf.trim())chunks.push({el,text:buf.trim()})}
 function addBlock(el){const tag=el.tagName;
  if(tag==='UL'||tag==='OL'){[...el.children].forEach(li=>add(li,textOf(li)));return}
  if(el.matches('pre')){add(el,cfg.code?'Code example: '+speakCode(el.textContent):'There is a code example on screen.');return}
  if(el.matches('.tbl-wrap,table')){const rows=[...el.querySelectorAll('tr')];const head=rows[0]?[...rows[0].children].map(c=>clean(c.textContent)):[];
-  rows.slice(1).forEach(r=>{const cells=[...r.children].map(c=>clean(c.textContent));add(r,cells.map((c,k)=>k===0||!head[k]?c:head[k]+': '+c).join('. '))});return}
+  rows.slice(1).forEach(r=>{const cells=[...r.children].map(textOf);add(r,cells.map((c,k)=>k===0||!head[k]?c:head[k]+': '+c).join('. '))});return}
  if(el.matches('.flow')){add(el,[...el.querySelectorAll('span')].map(s=>clean(s.textContent)).join(', then '));return}
- if(el.matches('.tip')){const b=el.querySelector('b');add(el,(b?clean(b.textContent)+'. ':'Tip. ')+clean(el.textContent.slice(b?b.textContent.length:0)));return}
+ if(el.matches('figure')){const c=el.querySelector('figcaption'),g=el.querySelector('svg');add(el,'Diagram. '+clean(c?c.textContent:(g&&g.getAttribute('aria-label'))||''));return}
+ if(el.matches('.qref')){add(el,'Quick reference.');return}
+ if(el.matches('.tip,.mistake,.analogy,.try')){const b=el.querySelector(':scope>b');add(el,(b?clean(b.textContent)+'. ':'Tip. ')+clean(el.textContent.slice(b?b.textContent.length:0)));return}
  if(el.matches('div')&&el.children.length&&[...el.children].some(c=>/^(P|UL|OL|PRE|H4|TABLE|DIV)$/.test(c.tagName))){[...el.children].forEach(addBlock);return}
  add(el,textOf(el))}
 function build(){chunks=[];const sh=$('#sheet');if(!sh)return;
@@ -35,6 +37,7 @@ function build(){chunks=[];const sh=$('#sheet');if(!sh)return;
  const sub=sh.querySelector('.ladder-sub');if(sub)add(sub,textOf(sub));
  const pv=sh.querySelector('.preview-flag');if(pv)add(pv,textOf(pv));
  const plain=sh.querySelector('.plain');if(plain)add(plain,'In plain English. '+clean(plain.textContent.replace(/^In plain English/i,'')));
+ const deep=sh.querySelector('.deep-body');if(deep&&deep.closest('details').open){add(deep,'Explained step by step.');[...deep.children].forEach(addBlock)}
  const con=sh.querySelector('.concept');if(con)[...con.children].forEach(addBlock);
  const steps=sh.querySelectorAll('.pstep');const reqs=sh.querySelectorAll('.reqs li');const tasks=sh.querySelectorAll('#tasks .task');
  if(steps.length){add(steps[0],'The steps.');steps.forEach((s,k)=>{const t=s.querySelector('.ptitle'),w=s.querySelector('.pwhy');add(s,'Step '+(k+1)+'. '+(t?clean(t.textContent):'')+(w?' '+clean(w.textContent):''))})}

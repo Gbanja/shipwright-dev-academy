@@ -178,7 +178,7 @@ function renderSide(){
 function renderSheet(){
  if(L.proj){renderProjSheet();return}
  const l=L,t=ACAD.tracks[l.track];
- $('#sheet').innerHTML=(locked?'<div class="preview-flag">Preview · unlocks after '+esc(prevTrack(t).name)+'</div>':'')+'<div class="eyebrow">'+esc(t.name)+(l.lvl?' · '+esc(l.lvl):'')+' · Lesson '+(l.idx+1)+' of '+t.lessons.length+(l.elective?' · Optional':'')+'</div><h2>'+esc(l.title)+'</h2>'+levelLadderHtml(l)+beforeYouStartHtml(l)+'<div class="concept">'+l.concept+'</div><div class="tasks" id="tasks"></div>';
+ $('#sheet').innerHTML=(locked?'<div class="preview-flag">Preview · unlocks after '+esc(prevTrack(t).name)+'</div>':'')+'<div class="eyebrow">'+esc(t.name)+(l.lvl?' · '+esc(l.lvl):'')+' · Lesson '+(l.idx+1)+' of '+t.lessons.length+(l.elective?' · Optional':'')+'</div><h2>'+esc(l.title)+'</h2>'+levelLadderHtml(l)+beforeYouStartHtml(l)+(typeof deepHtml==='function'?deepHtml(l):'')+'<div class="concept">'+(typeof DEEP!=='undefined'&&DEEP[l.id]?'<div class="qref">Quick reference</div>':'')+l.concept+'</div><div class="tasks" id="tasks"></div>';
  renderTasks();
 }
 function renderTasks(){
