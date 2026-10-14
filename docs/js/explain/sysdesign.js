@@ -345,3 +345,86 @@ else:
 <li>Failed jobs are retried with growing delays, then moved to a dead-letter queue for a human.</li>
 </ul>
 `);
+
+explain('k5',`
+<h4>When the database becomes the bottleneck</h4>
+<p>So far you have scaled the app tier by adding servers, which is easy because app servers are stateless: any copy can do any job. The database is different. It holds the <b>state</b>, the actual data, and there is normally only one of it. Caches take a lot of reads off it, but eventually even a well-cached database runs out of capacity.</p>
+<p>This lesson covers the two classic ways to spread a database over several machines. <b>Replication</b> keeps full copies of the data on several servers, which helps with reading. <b>Sharding</b> splits the data into pieces stored on different servers, which helps with writing too. The lesson's simulator has two phases, one for each.</p>
+
+<h4>Reads and writes are different jobs</h4>
+<p>A <b>read</b> asks for data and changes nothing: show this article, list these comments. A <b>write</b> changes data: insert a new reading, update a balance. The mix of the two decides which tool you need. A news site is <b>read-heavy</b>: in this lesson's first scenario, 97% of requests are reads. A system collecting measurements from sensors is <b>write-heavy</b>: the second scenario is 70% writes.</p>
+<p>In the simulator, one database handles about 3,000 reads per second or 1,000 writes per second. Writes are more expensive because the database must update its indexes and save every change safely to disk.</p>
+
+<h4>Replication: copies that share the reading</h4>
+<p>With <b>replication</b>, one database is the <b>primary</b> (sometimes called the leader). Every write goes to it. The primary then sends each change to one or more <b>read replicas</b>, which apply the same changes and so hold a full copy of the data. Your app sends writes to the primary and spreads reads across the replicas, and often the primary too.</p>
+<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="Writes go to the primary, which copies changes to two replicas; reads are spread across the replicas">
+<rect class="bx-a" x="10" y="84" width="80" height="44" rx="6"/><text class="t-b" x="50" y="111" text-anchor="middle">App</text>
+<rect class="bx-a" x="170" y="20" width="110" height="48" rx="6"/><text class="t-b" x="225" y="49" text-anchor="middle">Primary</text>
+<rect class="bx-info" x="290" y="100" width="104" height="40" rx="6"/><rect class="bx-info" x="290" y="170" width="104" height="40" rx="6"/>
+<text class="t" x="342" y="125" text-anchor="middle">Replica 1</text><text class="t" x="342" y="195" text-anchor="middle">Replica 2</text>
+<path class="ln-a" d="M90 96L162 52"/><polygon class="ah-a" points="157,48 163,58 170,47"/><text class="t-s t-a" x="112" y="60">writes</text>
+<path class="ln-d" d="M280 44H412V190H402"/><path class="ln-d" d="M412 120H402"/>
+<polygon class="ah" points="402,114 402,126 395,120"/><polygon class="ah" points="402,184 402,196 395,190"/>
+<text class="t-s" x="340" y="36" text-anchor="middle">copy</text>
+<path class="ln-ok" d="M90 112L282 120"/><polygon class="ah-ok" points="281,114 281,126 289,120"/>
+<path class="ln-ok" d="M90 122L282 188"/><polygon class="ah-ok" points="279,182 276,194 288,191"/>
+<text class="t-s t-ok" x="150" y="168">reads</text>
+</svg><figcaption>The app sends every write to the primary. The primary copies each change, along the dashed lines, to replica 1 and replica 2. Reads are spread across the replicas, so adding a replica adds read capacity.</figcaption></figure>
+<p>Worked example, phase 1: 2,000 requests per second with 97% reads is 1,940 reads per second. One database can do about 3,000, so it is 65% busy, above the lesson's 50% goal. Add one replica and the reads are shared by two copies with 6,000 reads of capacity: about 32% busy. Goal met.</p>
+<p>Replicas bring a bonus: if the primary dies, a replica already holds the data and can be <b>promoted</b> to become the new primary. Managed databases such as Amazon RDS can do this automatically.</p>
+
+<h4>Replication lag</h4>
+<p>Copying takes time. Usually it is milliseconds, but under heavy load it can be seconds. That delay is called <b>replication lag</b>, and during it a replica returns slightly old data.</p>
+<p>The classic symptom: a user posts a comment, the page reloads, and their own comment is missing, because the write went to the primary but the reload read from a replica that has not caught up. The common fix is called <b>read-your-own-writes</b>: for a short time after a user writes something, send that user's reads to the primary. Data where a few seconds of delay is harmless, such as an article's view count, can always come from replicas.</p>
+
+<h4>Why replicas do not help with writes</h4>
+<p>Now phase 2: an IoT system, meaning the "Internet of Things", lots of small devices sending sensor readings. It also receives 2,000 requests per second, but 70% are writes: 1,400 writes per second against a capacity of 1,000. The database is at 140% and failing.</p>
+<p>Add replicas and nothing improves. Every write still has to go to the one primary. Worse, each replica must also apply every write, so each copy does the full write workload. Replicas multiply <b>read</b> capacity only.</p>
+<div class="mistake"><b>Common mistake</b>Adding replicas to fix a write problem. It is the most natural thing to try and it never works. Before scaling a database, check which kind of load is high: the simulator's notes say "drowning in reads" or "can't keep up with writes". Reads point to caches and replicas; writes point to sharding.</div>
+
+<h4>Sharding: split the data itself</h4>
+<p><b>Sharding</b>, also called partitioning, splits the data across several independent databases, called <b>shards</b>. Each shard holds only part of the data and handles only the reads and writes for that part. Three shards means roughly three times the write capacity, because each write goes to just one of them.</p>
+<p>How does the app know which shard holds a row? It uses a <b>shard key</b>: a column, such as <code>device_id</code>, whose value decides the shard. A common rule is to <b>hash</b> the key, turning it into a number exactly as a hash map does, and take the remainder when dividing by the number of shards:</p>
+<pre class="snip">shard = hash(device_id) % 3      # % means "remainder after dividing"
+# hash("sensor-17")  = 1,000,004  → remainder 2 → shard C
+# hash("sensor-42")  = 7,331      → remainder 2 → shard C
+# hash("sensor-99")  = 52,416     → remainder 0 → shard A</pre>
+<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Sensor readings routed to three shards by hashing the device id">
+<rect class="bx" x="10" y="20" width="110" height="34" rx="6"/><rect class="bx" x="10" y="86" width="110" height="34" rx="6"/><rect class="bx" x="10" y="152" width="110" height="34" rx="6"/>
+<g text-anchor="middle"><text class="t-m" x="65" y="42">sensor-99</text><text class="t-m" x="65" y="108">sensor-5</text><text class="t-m" x="65" y="174">sensor-17</text></g>
+<rect class="bx-a" x="160" y="60" width="90" height="86" rx="8"/><text class="t-b" x="205" y="98" text-anchor="middle">hash</text><text class="t-s" x="205" y="118" text-anchor="middle">% 3</text>
+<path class="ln" d="M120 37L152 72"/><path class="ln" d="M120 103h32"/><path class="ln" d="M120 169L152 134"/>
+<rect class="bx-ok" x="300" y="20" width="110" height="40" rx="6"/><rect class="bx-ok" x="300" y="84" width="110" height="40" rx="6"/><rect class="bx-ok" x="300" y="148" width="110" height="40" rx="6"/>
+<g text-anchor="middle"><text class="t" x="355" y="45">Shard A</text><text class="t" x="355" y="109">Shard B</text><text class="t" x="355" y="173">Shard C</text></g>
+<path class="ln-ok" d="M250 80L292 46"/><polygon class="ah-ok" points="287,42 294,52 298,40"/>
+<path class="ln-ok" d="M250 104h42"/><polygon class="ah-ok" points="290,98 290,110 298,104"/>
+<path class="ln-ok" d="M250 128L292 162"/><polygon class="ah-ok" points="287,166 294,156 298,168"/>
+</svg><figcaption>Every reading carries its device ID. The router hashes the ID and takes the remainder after dividing by 3, which picks shard A, B or C. The same device always lands on the same shard, so all of one device's readings live together.</figcaption></figure>
+<p>Worked example, phase 2: 1,400 writes per second. Two shards give 2,000 writes of capacity, which is 70% busy, still above the lesson's 60% goal. Three shards give 3,000: about 47% busy. Goal met.</p>
+
+<h4>Choosing a good shard key</h4>
+<p>A shard key must do two jobs at once:</p>
+<ul>
+<li><b>Spread the load evenly</b>, so no shard gets far more traffic than the others. An overloaded shard is called a <b>hot shard</b>, and it limits the whole system.</li>
+<li><b>Keep related data together</b>, so common queries need only one shard.</li>
+</ul>
+<div class="tbl-wrap"><table><tr><th>Shard key for sensor readings</th><th>Even load?</th><th>Related data together?</th></tr>
+<tr><td><code>created_at</code> date</td><td>No: every write today hits the same shard</td><td>Yes, for one day</td></tr>
+<tr><td>A random number per row</td><td>Yes</td><td>No: one device's readings are scattered everywhere</td></tr>
+<tr><td><code>device_id</code></td><td>Yes: thousands of devices hash evenly</td><td>Yes: each device's history is on one shard</td></tr></table></div>
+<p>The date key is the trap. It looks tidy, but all of today's writes go to a single shard while the others sit idle, so you have paid for three databases and still have the write capacity of one.</p>
+
+<h4>The price of sharding</h4>
+<p>Sharding works, but it makes everything harder. A query that needs data from every shard, such as "average reading across all devices", must ask all of them and combine the answers. Joins between rows on different shards are no longer done by the database; your code has to do them. Transactions across shards are difficult. And adding a fourth shard to a <code>% 3</code> scheme changes the remainder for most keys, so most of the data must move. That is called <b>resharding</b>, and it is painful (techniques such as consistent hashing reduce how much moves).</p>
+<div class="tip"><b>Tip</b>The usual order when a database struggles: first add indexes and fix slow queries; then add caching; then read replicas; then a bigger database server (vertical scaling); and only then shard. Many very large companies run for years on one primary with replicas.</div>
+<div class="try"><b>Try it in your head</b>A database handles 1,000 writes per second, and you expect 2,500. You add four replicas. Does it help? No: every write still goes to the primary. How many shards would keep each one at or under 50% busy? 2,500 ÷ 500 = 5 shards.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>Replication: one primary takes all writes and copies them to read replicas, which add read capacity.</li>
+<li>Replicas can lag behind, so read your own writes from the primary when freshness matters.</li>
+<li>Replicas do not scale writes: every write still goes to the primary, and to every copy.</li>
+<li>Sharding splits data across databases by a shard key, so reads and writes both scale.</li>
+<li>Pick a key that spreads load evenly and keeps related data together, like <code>device_id</code>; shard only after simpler fixes.</li>
+</ul>
+`);

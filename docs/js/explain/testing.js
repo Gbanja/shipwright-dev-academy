@@ -385,3 +385,93 @@ explain('t4',`
 <li>In CI, use a throwaway database of the same kind as production, for example PostgreSQL in Docker or via Testcontainers.</li>
 </ul>
 `);
+
+explain('t5',`
+<h4>A robot user at the top of the pyramid</h4>
+<p>Unit tests check single functions. Integration tests check your code with a real database. But a user never calls a function. They open a page, type into boxes, click buttons and read what appears. Plenty can go wrong in between: a button wired to the wrong handler, a form field with a renamed id, a page that never redirects after login. Every function can pass its own tests while the actual login screen is broken.</p>
+<p>An <b>end-to-end test</b> (E2E) checks the app the way a user experiences it, from one end (the browser) to the other (the server and database behind it). It is a script that drives a real browser: go to this page, fill in this box, click that button, expect this text on screen. It is the robot user at the narrow top of the testing pyramid.</p>
+<p>The most popular modern tool for this is <b>Playwright</b>. It can drive Chromium (the engine behind Chrome and Edge), Firefox and WebKit (the engine behind Safari). The sandbox in this lesson runs a Playwright-compatible API against the small login app in the preview.</p>
+
+<h4>The shape of a Playwright test</h4>
+<pre class="snip">import { test, expect } from '@playwright/test';
+
+test('shows the sign-in page', async ({ page }) =&gt; {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Sign in' })).toBeVisible();
+});</pre>
+<p>Three things are new compared with unit tests:</p>
+<ul>
+<li><b><code>{ page }</code>.</b> Playwright hands each test a <code>page</code>: one browser tab, freshly opened for this test, with no cookies or leftovers from other tests. The curly braces pick <code>page</code> out of the bundle of helpers Playwright offers, which it calls <b>fixtures</b>.</li>
+<li><b><code>async</code> and <code>await</code>.</b> Everything a browser does takes time: loading, typing, clicking. Each step returns a promise, and <code>await</code> waits for it to finish before the next line runs. Nearly every line of an E2E test starts with <code>await</code>.</li>
+<li><b><code>page.goto('/')</code></b> opens a page. The <code>/</code> is relative to the app's base address, which is set in Playwright's configuration, so the same test can run against your laptop or a staging server.</li>
+</ul>
+
+<h4>Locators: finding things the way a user does</h4>
+<p>Before you can click a button, the test has to find it. A <b>locator</b> is Playwright's description of how to find an element on the page. The recommended locators describe elements the way a person would:</p>
+<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="The login page with locators pointing at the heading, email field and button">
+<rect class="bx" x="10" y="10" width="200" height="220" rx="8"/>
+<rect class="bx-info" x="10" y="10" width="200" height="24" rx="8"/>
+<circle class="dot-m" cx="26" cy="22" r="4"/><circle class="dot-m" cx="40" cy="22" r="4"/><circle class="dot-m" cx="54" cy="22" r="4"/>
+<text class="t-b" x="28" y="66" style="font-size:18px">Sign in</text>
+<text class="t-s" x="28" y="94">Email</text>
+<rect class="bx" x="28" y="100" width="164" height="24" rx="4"/>
+<text class="t-s" x="28" y="146">Password</text>
+<rect class="bx" x="28" y="152" width="164" height="24" rx="4"/>
+<rect class="bx-a" x="28" y="190" width="80" height="28" rx="6"/><text class="t-s" x="68" y="209" text-anchor="middle">Log in</text>
+<path class="ln-a" d="M226 60h-120"/><polygon class="ah-a" points="108,54 108,66 100,60"/>
+<text class="t-m" x="230" y="65">getByRole(</text><text class="t-s" x="230" y="83">'heading', Sign in</text>
+<path class="ln-ok" d="M226 112h-26"/><polygon class="ah-ok" points="202,106 202,118 194,112"/>
+<text class="t-m" x="230" y="117">getByLabel(</text><text class="t-s" x="230" y="135">'Email'</text>
+<path class="ln-a" d="M226 204h-110"/><polygon class="ah-a" points="118,198 118,210 110,204"/>
+<text class="t-m" x="230" y="209">getByRole(</text><text class="t-s" x="230" y="227">'button', Log in</text>
+</svg><figcaption>The login page as a user sees it. getByRole with heading and the name Sign in finds the title. getByLabel with Email finds the input whose label says Email. getByRole with button and the name Log in finds the button by its visible text.</figcaption></figure>
+<div class="tbl-wrap"><table><tr><th>Locator</th><th>Finds</th></tr>
+<tr><td><code>page.getByRole('button', { name: 'Log in' })</code></td><td>A button whose accessible name is "Log in"</td></tr>
+<tr><td><code>page.getByRole('heading', { name: 'Dashboard' })</code></td><td>A heading such as <code>&lt;h1&gt;</code> with that text</td></tr>
+<tr><td><code>page.getByLabel('Email')</code></td><td>The input connected to the label "Email"</td></tr>
+<tr><td><code>page.getByText('Welcome back')</code></td><td>An element containing that text</td></tr></table></div>
+<p>A <b>role</b> is what kind of thing an element is: a button, a heading, a link, a text box, an alert. The <b>accessible name</b> is what it is called, usually its visible text or its label. These are exactly what screen readers announce to blind users, so locating by role has a bonus: if your test can't find the button by role and name, a screen reader user probably can't either.</p>
+<p>Why not use CSS selectors like <code>.btn-primary-2</code> or <code>div &gt; div &gt; button</code>? Because they describe the page's internal structure, which designers change all the time. The button's role and its text "Log in" are what the user relies on, so they change far less.</p>
+
+<h4>Actions and auto-waiting assertions</h4>
+<p>Once you have a locator, you act on it:</p>
+<pre class="snip">await page.getByLabel('Email').fill('ada@example.com');   // type into a box
+await page.getByRole('button', { name: 'Log in' }).click(); // click</pre>
+<p><code>fill</code> clears the box and types the text. <code>click</code> clicks. Before acting, Playwright automatically waits until the element exists, is visible and can be used.</p>
+<p>Then you check the outcome with <code>expect</code>, as before, but with matchers made for pages:</p>
+<pre class="snip">await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+await expect(page.getByRole('alert')).toHaveText('Invalid email or password');</pre>
+<p>These are <b>web-first assertions</b>, and they <b>wait</b>. In this app, logging in takes a moment before the dashboard appears. A plain check made instantly after the click would see the old sign-in page and fail. <code>toBeVisible()</code> instead keeps checking, many times a second, until the heading appears or a time limit runs out (five seconds by default in Playwright). The test continues the instant the condition is true.</p>
+<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="Timeline: a short sleep checks too early, a long sleep wastes time, auto-wait passes as soon as the page is ready">
+<g class="t-s"><text class="t-s" x="10" y="45">app</text><text class="t-s" x="10" y="95">sleep 100 ms</text><text class="t-s" x="10" y="145">auto-wait</text><text class="t-s" x="10" y="195">sleep 3 s</text></g>
+<rect class="bx-warn" x="130" y="28" width="68" height="26"/><rect class="bx-ok" x="198" y="28" width="202" height="26"/>
+<text class="t-s" x="300" y="46" text-anchor="middle">Dashboard shown</text>
+<path class="ln-d" d="M198 22v180"/>
+<path class="ln" d="M130 90h45"/><circle class="dot" cx="175" cy="90" r="7"/><text class="t-s t-bad" x="208" y="95">too early: fails</text>
+<path class="ln" d="M130 140h80"/><circle class="dot-m" cx="148" cy="140" r="4"/><circle class="dot-m" cx="166" cy="140" r="4"/><circle class="dot-m" cx="184" cy="140" r="4"/><circle class="dot-ok" cx="206" cy="140" r="7"/><text class="t-s t-ok" x="222" y="145">passes at once</text>
+<path class="ln" d="M130 190h264"/><polygon class="ah" points="392,184 392,196 402,190"/><text class="t-s" x="300" y="182" text-anchor="middle">still waiting…</text>
+</svg><figcaption>The top bar shows the app: signing in, in amber, then the dashboard, in green. A fixed 100 millisecond sleep checks too early and fails. A 3 second sleep would pass but wastes almost all of that time. An auto-waiting assertion checks repeatedly and passes the moment the dashboard appears.</figcaption></figure>
+<div class="mistake"><b>Common mistake</b>Adding fixed sleeps such as <code>await page.waitForTimeout(5000)</code>. On a fast run you waste five seconds; on a slow day five seconds is still not enough, and the test fails at random. Let auto-waiting assertions wait for the actual condition.</div>
+
+<h4>Keeping E2E tests readable</h4>
+<p>Several tests in this lesson start the same way: open the page, type the email and a password, click Log in. Repeating those four lines everywhere makes tests long and hard to change. Put them in a helper function that takes <code>page</code> and the password as arguments, then call it at the start of each test. A test then reads like a story: log in with a wrong password, expect the alert.</p>
+<p>Each test still gets its own fresh <code>page</code>, so a logged-in state never leaks into the next test. That isolation is why a log-out test must log in first, inside itself.</p>
+<p>Because E2E tests are slow and have the most moving parts, keep them <b>few</b> and aim them at <b>critical journeys</b>: signing up, logging in, checking out, paying. Detailed rules such as "free shipping from 50" belong in fast unit tests.</p>
+
+<h4>Reading the errors you will meet</h4>
+<div class="tbl-wrap"><table><tr><th>Error</th><th>What it usually means</th></tr>
+<tr><td>Timed out waiting for the element to be visible</td><td>It never appeared. A wrong name, a typo in the text, or the action before it failed (for example a wrong password, so no dashboard).</td></tr>
+<tr><td>Strict mode violation: the locator resolved to 2 elements</td><td>Your locator matches more than one element, so Playwright refuses to guess. Add the <code>name</code>, or be more specific.</td></tr>
+<tr><td>A test that passes or fails at random</td><td>Often a missing <code>await</code>, so a step raced ahead of the browser.</td></tr></table></div>
+<div class="mistake"><b>Common mistake</b>Forgetting <code>await</code> before an action or an <code>expect</code>. The line starts but nothing waits for it, so the test may finish before the click has happened, or report a failure in the wrong place. If a line touches the page, it needs <code>await</code>.</div>
+<div class="try"><b>Try it in your head</b>The app's error message appears in an element with <code>role="alert"</code>. Which locator and matcher check it shows the right text after a wrong password? <code>page.getByRole('alert')</code> with <code>toHaveText('Invalid email or password')</code>, behind an <code>await</code>. Because <code>toHaveText</code> waits, it doesn't matter that the message appears a moment after the click.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>E2E tests drive a real browser like a user. Keep them few and focused on critical journeys.</li>
+<li>Each test gets a fresh <code>page</code>; every browser step is <code>await</code>ed, starting with <code>page.goto('/')</code>.</li>
+<li>Find elements with user-facing locators: <code>getByRole</code> with a name, <code>getByLabel</code>, <code>getByText</code>.</li>
+<li>Act with <code>fill</code> and <code>click</code>; check with auto-waiting assertions like <code>toBeVisible()</code> and <code>toHaveText()</code>.</li>
+<li>Never use fixed sleeps; wait for the condition you actually care about.</li>
+</ul>
+`);
