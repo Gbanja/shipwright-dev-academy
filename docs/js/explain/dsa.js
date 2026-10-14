@@ -436,6 +436,126 @@ explain('a3',`
 </ul>
 `);
 
+explain('a4',`
+<h4>When data branches</h4>
+<p>Arrays, stacks, queues and linked lists are all <b>linear</b>: each item has at most one item after it. Plenty of real data is not like that. A folder contains several folders, each containing more. A web page's HTML has elements inside elements. A road network connects each city to several others, sometimes in loops.</p>
+<p>Data that branches like a family tree is called a <b>tree</b>. Data with any connections at all, loops included, is called a <b>graph</b>. This lesson shows how to store both and, more importantly, how to visit every part of them in an organised way. The two strategies, <b>breadth-first search</b> and <b>depth-first search</b>, solve a huge range of problems, from "what is the shortest route out of this maze?" to "can I get from Lagos to Dakar?".</p>
+
+<h4>Tree vocabulary</h4>
+<p>A tree is made of <b>nodes</b>, joined by links called <b>edges</b>. The words come from family trees, turned upside down:</p>
+<ul>
+<li>The <b>root</b> is the single node at the top.</li>
+<li>A node's <b>children</b> are the nodes directly below it; it is their <b>parent</b>.</li>
+<li>A <b>leaf</b> is a node with no children.</li>
+<li>The <b>depth</b> of the tree is how many levels it has, counting the root as level 1.</li>
+</ul>
+<p>In a <b>binary tree</b>, each node has at most two children, called <code>left</code> and <code>right</code>. The lesson provides this class, which is the linked list's <code>ListNode</code> with two pointers instead of one:</p>
+<pre class="snip">class TreeNode {
+  constructor(val, left = null, right = null) {
+    this.val = val;      // the data
+    this.left = left;    // left child, or null
+    this.right = right;  // right child, or null
+  }
+}</pre>
+<p>The provided <code>tree</code> is a <b>binary search tree</b>, or BST. It follows one extra rule at every node: everything in the left branch is smaller than the node, and everything in the right branch is bigger. Look at the root, 8: the left side holds 1, 3, 4, 6 and 7, and the right side holds 10, 13 and 14.</p>
+
+<h4>Recursion fits trees perfectly</h4>
+<p>Here is the key insight: each child of a node is the root of its own, smaller tree, called a <b>subtree</b>. So any question about a tree can be answered by asking the same question about the two subtrees, which is exactly the shape of recursion from the last lesson.</p>
+<p>Take <code>maxDepth</code>. In words: an empty tree has depth 0 (the base case). Otherwise, the depth is 1 for this node, plus the depth of whichever subtree is deeper.</p>
+<pre class="snip">if (!root) return 0;   // null means "no tree here"
+return 1 + Math.max(maxDepth(root.left), maxDepth(root.right));</pre>
+<p>Trace it from the bottom of the lesson's tree. The leaf 4 has two empty children, so its depth is 1 + max(0, 0) = 1. Node 6 has children 4 and 7, both depth 1, so 6 has depth 2. Node 3 has children 1 (depth 1) and 6 (depth 2), so 3 has depth 3. The right side, 10 then 14 then 13, also has depth 3. The root is 1 + max(3, 3) = <b>4</b>, the answer the task expects.</p>
+
+<h4>Two ways to visit every node</h4>
+<p>Visiting every node is called <b>traversing</b> the tree. There are two families of approach:</p>
+<ul>
+<li><b>Breadth-first search (BFS)</b> visits level by level: the root, then all of its children, then all of their children. It spreads out like a ripple.</li>
+<li><b>Depth-first search (DFS)</b> goes as deep as possible down one branch before backing up and trying the next. It is like exploring a maze by always following the left-hand wall.</li>
+</ul>
+<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="The lesson's tree numbered in breadth-first visit order">
+<g class="ln"><path class="ln" d="M210 40L110 100"/><path class="ln" d="M210 40L310 100"/><path class="ln" d="M110 100L60 160"/><path class="ln" d="M110 100L160 160"/><path class="ln" d="M310 100L360 160"/><path class="ln" d="M160 160L130 220"/><path class="ln" d="M160 160L190 220"/><path class="ln" d="M360 160L330 220"/></g>
+<circle class="bx" cx="210" cy="40" r="18"/><circle class="bx" cx="110" cy="100" r="18"/><circle class="bx" cx="310" cy="100" r="18"/><circle class="bx" cx="60" cy="160" r="18"/><circle class="bx" cx="160" cy="160" r="18"/><circle class="bx" cx="360" cy="160" r="18"/><circle class="bx" cx="130" cy="220" r="18"/><circle class="bx" cx="190" cy="220" r="18"/><circle class="bx" cx="330" cy="220" r="18"/>
+<g text-anchor="middle" class="t-m">
+<text class="t-m" x="210" y="45">8</text><text class="t-m" x="110" y="105">3</text><text class="t-m" x="310" y="105">10</text><text class="t-m" x="60" y="165">1</text><text class="t-m" x="160" y="165">6</text><text class="t-m" x="360" y="165">14</text><text class="t-m" x="130" y="225">4</text><text class="t-m" x="190" y="225">7</text><text class="t-m" x="330" y="225">13</text>
+</g>
+<g text-anchor="middle">
+<text class="t-b t-a" x="238" y="30">1</text><text class="t-b t-a" x="82" y="90">2</text><text class="t-b t-a" x="338" y="90">3</text><text class="t-b t-a" x="32" y="150">4</text><text class="t-b t-a" x="188" y="150">5</text><text class="t-b t-a" x="388" y="150">6</text><text class="t-b t-a" x="102" y="210">7</text><text class="t-b t-a" x="218" y="210">8</text><text class="t-b t-a" x="302" y="210">9</text>
+</g>
+<line class="ln-d" x1="10" y1="70" x2="410" y2="70"/><line class="ln-d" x1="10" y1="130" x2="410" y2="130"/><line class="ln-d" x1="10" y1="190" x2="410" y2="190"/>
+</svg><figcaption>Breadth-first order, shown by the orange numbers. BFS visits the root 8 first, then the whole second level, 3 and 10, then the third level, 1, 6 and 14, and finally the bottom level, 4, 7 and 13. The dashed lines separate the levels.</figcaption></figure>
+<p>BFS gets its order from a <b>queue</b>. Put the root in the queue. Then, repeatedly, take the node at the front, visit it, and add its children to the back. Because children always join behind everything already waiting, a whole level is finished before the next one starts.</p>
+<p>DFS gets its order from a <b>stack</b>, and usually that stack is simply the call stack: you write it with recursion. There are three common DFS orders, depending on when you visit the node itself compared with its subtrees. The one this lesson asks for is <b>in-order</b>: visit the left subtree, then the node, then the right subtree.</p>
+<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="The same tree numbered in depth-first in-order visit order">
+<g class="ln"><path class="ln" d="M210 40L110 100"/><path class="ln" d="M210 40L310 100"/><path class="ln" d="M110 100L60 160"/><path class="ln" d="M110 100L160 160"/><path class="ln" d="M310 100L360 160"/><path class="ln" d="M160 160L130 220"/><path class="ln" d="M160 160L190 220"/><path class="ln" d="M360 160L330 220"/></g>
+<circle class="bx" cx="210" cy="40" r="18"/><circle class="bx" cx="110" cy="100" r="18"/><circle class="bx" cx="310" cy="100" r="18"/><circle class="bx" cx="60" cy="160" r="18"/><circle class="bx" cx="160" cy="160" r="18"/><circle class="bx" cx="360" cy="160" r="18"/><circle class="bx" cx="130" cy="220" r="18"/><circle class="bx" cx="190" cy="220" r="18"/><circle class="bx" cx="330" cy="220" r="18"/>
+<g text-anchor="middle" class="t-m">
+<text class="t-m" x="210" y="45">8</text><text class="t-m" x="110" y="105">3</text><text class="t-m" x="310" y="105">10</text><text class="t-m" x="60" y="165">1</text><text class="t-m" x="160" y="165">6</text><text class="t-m" x="360" y="165">14</text><text class="t-m" x="130" y="225">4</text><text class="t-m" x="190" y="225">7</text><text class="t-m" x="330" y="225">13</text>
+</g>
+<g text-anchor="middle">
+<text class="t-b t-ok" x="238" y="30">6</text><text class="t-b t-ok" x="82" y="90">2</text><text class="t-b t-ok" x="338" y="90">7</text><text class="t-b t-ok" x="32" y="150">1</text><text class="t-b t-ok" x="188" y="150">4</text><text class="t-b t-ok" x="388" y="150">9</text><text class="t-b t-ok" x="102" y="210">3</text><text class="t-b t-ok" x="218" y="210">5</text><text class="t-b t-ok" x="302" y="210">8</text>
+</g>
+</svg><figcaption>Depth-first in-order, shown by the green numbers. DFS dives down the left side first and visits 1, then 3, then goes down into 6's branch for 4, 6 and 7, and only then visits the root 8. The right side follows: 10, 13, 14. Read in this order, the values come out sorted.</figcaption></figure>
+<p>That is why in-order matters for a BST. Everything smaller than a node is in its left subtree, and in-order visits the left subtree first, then the node, then the bigger values on the right. So the output is <code>[1, 3, 4, 6, 7, 8, 10, 13, 14]</code>, sorted, without any sorting. In code: if the node is null, return; otherwise recurse left, push the node's value into an output array, then recurse right. Pass the same output array into every call so they all add to one list.</p>
+
+<h4>BFS for the shortest path in a grid</h4>
+<p>A grid is a graph in disguise: each open cell is a node, connected to the open cells above, below, left and right. The lesson's <code>GRID</code> uses 0 for open and 1 for a wall, and positions are written <code>[row, column]</code>, counting from 0.</p>
+<p>Why BFS for shortest paths? Because it explores in rings of distance. Every cell 1 step away is reached before any cell 2 steps away, and so on. So the first time BFS reaches the target, it has found it by the shortest route. DFS gives no such promise: it might wander a long way round first.</p>
+<figure class="fig"><svg viewBox="0 0 420 215" role="img" aria-label="The four by four grid with walls and the BFS distance from the top left corner written in each open cell">
+<g text-anchor="middle" class="t-s"><text class="t-s" x="132" y="14">0</text><text class="t-s" x="176" y="14">1</text><text class="t-s" x="220" y="14">2</text><text class="t-s" x="264" y="14">3</text><text class="t-s" x="96" y="47">0</text><text class="t-s" x="96" y="91">1</text><text class="t-s" x="96" y="135">2</text><text class="t-s" x="96" y="179">3</text></g>
+<rect class="bx-a" x="110" y="20" width="44" height="44"/><rect class="bx" x="154" y="20" width="44" height="44"/><rect class="bx" x="198" y="20" width="44" height="44"/><rect class="bx-dark" x="242" y="20" width="44" height="44"/>
+<rect class="bx-dark" x="110" y="64" width="44" height="44"/><rect class="bx-dark" x="154" y="64" width="44" height="44"/><rect class="bx" x="198" y="64" width="44" height="44"/><rect class="bx-dark" x="242" y="64" width="44" height="44"/>
+<rect class="bx" x="110" y="108" width="44" height="44"/><rect class="bx" x="154" y="108" width="44" height="44"/><rect class="bx" x="198" y="108" width="44" height="44"/><rect class="bx" x="242" y="108" width="44" height="44"/>
+<rect class="bx" x="110" y="152" width="44" height="44"/><rect class="bx-dark" x="154" y="152" width="44" height="44"/><rect class="bx-dark" x="198" y="152" width="44" height="44"/><rect class="bx-ok" x="242" y="152" width="44" height="44"/>
+<g text-anchor="middle">
+<text class="t-b" x="132" y="47">0</text><text class="t-m" x="176" y="47">1</text><text class="t-m" x="220" y="47">2</text>
+<text class="t-m" x="220" y="91">3</text>
+<text class="t-m" x="132" y="135">6</text><text class="t-m" x="176" y="135">5</text><text class="t-m" x="220" y="135">4</text><text class="t-m" x="264" y="135">5</text>
+<text class="t-m" x="132" y="179">7</text><text class="t-b" x="264" y="179">6</text>
+</g>
+<rect class="bx-a" x="310" y="40" width="16" height="16"/><text class="t-s" x="334" y="53">start</text>
+<rect class="bx-ok" x="310" y="70" width="16" height="16"/><text class="t-s" x="334" y="83">target</text>
+<rect class="bx-dark" x="310" y="100" width="16" height="16"/><text class="t-s" x="334" y="113">wall</text>
+</svg><figcaption>The lesson's grid, with walls shown dark. Each open cell holds its distance from the start in the top-left corner, in the order BFS discovers them. The route must squeeze through the single gap at row 1, column 2, and the target in the bottom-right corner is reached in 6 steps.</figcaption></figure>
+<p>The algorithm:</p>
+<ol>
+<li>Put the start in a queue as <code>[row, col, steps]</code> with 0 steps, and add it to a <code>seen</code> set.</li>
+<li>Take the front entry. If it is the target, return its steps.</li>
+<li>Otherwise look at its four neighbours. Keep a neighbour only if it is inside the grid, is open (0), and is not in <code>seen</code>. Mark it seen and add it to the queue with steps + 1.</li>
+<li>If the queue runs empty, the target cannot be reached: return -1.</li>
+</ol>
+<p>A Set cannot compare arrays by their contents, so store each position as a string such as <code>'2,3'</code>. Mark a cell as seen when you <i>add</i> it to the queue, not when you take it out, or the same cell can be queued many times. The lesson's solution uses <code>queue.shift()</code>, which is fine for a 16-cell grid; for big grids, use the head-index queue from the stacks and queues lesson.</p>
+<div class="mistake"><b>Common mistake</b>Checking <code>grid[nr][nc]</code> before checking the bounds. If <code>nr</code> is -1, <code>grid[-1]</code> is <code>undefined</code>, and reading <code>[nc]</code> from it throws <code>TypeError: Cannot read properties of undefined</code>. Test <code>nr &gt;= 0 &amp;&amp; nr &lt; rows</code> and the same for columns first; <code>&amp;&amp;</code> stops at the first false, so the grid is never read out of range.</div>
+
+<h4>DFS on a graph: is there a route?</h4>
+<p>The lesson's <code>ROUTES</code> is stored as an <b>adjacency list</b>: an object where each city's key holds an array of the cities you can travel to directly. The routes are one-way, so this is a <b>directed</b> graph.</p>
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="One way routes between West African cities, and a separate pair of East African cities">
+<rect class="bx-a" x="10" y="30" width="80" height="36" rx="8"/><rect class="bx" x="115" y="30" width="80" height="36" rx="8"/><rect class="bx" x="220" y="30" width="80" height="36" rx="8"/><rect class="bx-ok" x="325" y="30" width="80" height="36" rx="8"/>
+<rect class="bx" x="10" y="100" width="80" height="36" rx="8"/>
+<rect class="bx" x="220" y="150" width="80" height="36" rx="8"/><rect class="bx" x="325" y="150" width="80" height="36" rx="8"/>
+<g text-anchor="middle"><text class="t" x="50" y="53">Lagos</text><text class="t" x="155" y="53">Accra</text><text class="t" x="260" y="53">Abidjan</text><text class="t" x="365" y="53">Dakar</text><text class="t" x="50" y="123">Abuja</text><text class="t" x="260" y="173">Nairobi</text><text class="t" x="365" y="173">Kampala</text></g>
+<path class="ln-a" d="M90 48h17"/><polygon class="ah-a" points="105,42 105,54 113,48"/>
+<path class="ln-a" d="M195 48h17"/><polygon class="ah-a" points="210,42 210,54 218,48"/>
+<path class="ln-a" d="M300 48h17"/><polygon class="ah-a" points="315,42 315,54 323,48"/>
+<path class="ln" d="M50 66v26"/><polygon class="ah" points="44,90 56,90 50,98"/>
+<path class="ln" d="M300 168h17"/><polygon class="ah" points="315,162 315,174 323,168"/>
+</svg><figcaption>The routes as a picture. From Lagos you can fly to Accra or Abuja. The highlighted chain, Lagos to Accra to Abidjan to Dakar, is the route DFS finds. Nairobi and Kampala are connected to each other but to nothing else, so no route from Lagos ever reaches them.</figcaption></figure>
+<p>DFS with recursion, in words: if you are already at the destination, return true. Otherwise mark the current city as visited, and for each neighbour you have not visited yet, ask the same question from there. If any of those calls returns true, so do you. If none do, return false.</p>
+<p>Tracing Lagos to Dakar: Lagos is not Dakar, so try its first neighbour, Accra. Accra tries Abidjan. Abidjan tries Dakar, which is the destination, so true travels all the way back up. From Lagos to Nairobi, DFS tries everything reachable (Accra, Abidjan, Dakar, Abuja), runs out of neighbours, and returns false.</p>
+<p>The <b>visited set</b> matters because real graphs have loops. If A leads to B and B leads back to A, a search without memory goes round forever and crashes with a stack overflow. Pass the same set into every recursive call so they share one memory.</p>
+<div class="mistake"><b>Common mistake</b>Using a city lookup like <code>graph[from]</code> without a fallback. If a city has no entry at all, that is <code>undefined</code>, and looping over it throws an error. Writing <code>graph[from] || []</code> treats a missing city as one with no routes.</div>
+
+<div class="try"><b>Try it in your head</b>Which uses a queue, BFS or DFS? BFS. Using the grid picture, how many steps from the start to row 0, column 2? Two, the answer the second grid test expects. And what does in-order print for a tree with root 5, left child 2 and right child 9? 2, 5, 9.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>A tree is a root with children and no loops; a graph allows any connections. Each subtree is a smaller tree, so recursion fits naturally.</li>
+<li>Depth is 1 + the deeper subtree, with 0 for an empty tree.</li>
+<li>In-order DFS (left, node, right) on a binary search tree gives the values sorted.</li>
+<li>BFS uses a queue and explores level by level, so it finds shortest paths in unweighted grids and graphs.</li>
+<li>DFS uses recursion or a stack and answers "can I get there?". Always keep a visited set.</li>
+</ul>
+`);
+
 explain('a5',`
 <h4>Why sorted data is so powerful</h4>
 <p>Finding a word in a dictionary does not mean reading from "aardvark" onwards. You open it near the middle, see that your word comes later, and ignore the whole first half. A few flips later you are there. That only works because the dictionary is <b>sorted</b>.</p>
@@ -556,125 +676,5 @@ function fib(n) {
 <li>Merge sort splits until pieces have one item, then merges sorted halves: O(n log n).</li>
 <li>Naive recursive Fibonacci repeats work exponentially. Memoising with a Map makes it O(n).</li>
 <li>Memoisation, "remember answers to smaller problems", is the core idea of dynamic programming.</li>
-</ul>
-`);
-
-explain('a4',`
-<h4>When data branches</h4>
-<p>Arrays, stacks, queues and linked lists are all <b>linear</b>: each item has at most one item after it. Plenty of real data is not like that. A folder contains several folders, each containing more. A web page's HTML has elements inside elements. A road network connects each city to several others, sometimes in loops.</p>
-<p>Data that branches like a family tree is called a <b>tree</b>. Data with any connections at all, loops included, is called a <b>graph</b>. This lesson shows how to store both and, more importantly, how to visit every part of them in an organised way. The two strategies, <b>breadth-first search</b> and <b>depth-first search</b>, solve a huge range of problems, from "what is the shortest route out of this maze?" to "can I get from Lagos to Dakar?".</p>
-
-<h4>Tree vocabulary</h4>
-<p>A tree is made of <b>nodes</b>, joined by links called <b>edges</b>. The words come from family trees, turned upside down:</p>
-<ul>
-<li>The <b>root</b> is the single node at the top.</li>
-<li>A node's <b>children</b> are the nodes directly below it; it is their <b>parent</b>.</li>
-<li>A <b>leaf</b> is a node with no children.</li>
-<li>The <b>depth</b> of the tree is how many levels it has, counting the root as level 1.</li>
-</ul>
-<p>In a <b>binary tree</b>, each node has at most two children, called <code>left</code> and <code>right</code>. The lesson provides this class, which is the linked list's <code>ListNode</code> with two pointers instead of one:</p>
-<pre class="snip">class TreeNode {
-  constructor(val, left = null, right = null) {
-    this.val = val;      // the data
-    this.left = left;    // left child, or null
-    this.right = right;  // right child, or null
-  }
-}</pre>
-<p>The provided <code>tree</code> is a <b>binary search tree</b>, or BST. It follows one extra rule at every node: everything in the left branch is smaller than the node, and everything in the right branch is bigger. Look at the root, 8: the left side holds 1, 3, 4, 6 and 7, and the right side holds 10, 13 and 14.</p>
-
-<h4>Recursion fits trees perfectly</h4>
-<p>Here is the key insight: each child of a node is the root of its own, smaller tree, called a <b>subtree</b>. So any question about a tree can be answered by asking the same question about the two subtrees, which is exactly the shape of recursion from the last lesson.</p>
-<p>Take <code>maxDepth</code>. In words: an empty tree has depth 0 (the base case). Otherwise, the depth is 1 for this node, plus the depth of whichever subtree is deeper.</p>
-<pre class="snip">if (!root) return 0;   // null means "no tree here"
-return 1 + Math.max(maxDepth(root.left), maxDepth(root.right));</pre>
-<p>Trace it from the bottom of the lesson's tree. The leaf 4 has two empty children, so its depth is 1 + max(0, 0) = 1. Node 6 has children 4 and 7, both depth 1, so 6 has depth 2. Node 3 has children 1 (depth 1) and 6 (depth 2), so 3 has depth 3. The right side, 10 then 14 then 13, also has depth 3. The root is 1 + max(3, 3) = <b>4</b>, the answer the task expects.</p>
-
-<h4>Two ways to visit every node</h4>
-<p>Visiting every node is called <b>traversing</b> the tree. There are two families of approach:</p>
-<ul>
-<li><b>Breadth-first search (BFS)</b> visits level by level: the root, then all of its children, then all of their children. It spreads out like a ripple.</li>
-<li><b>Depth-first search (DFS)</b> goes as deep as possible down one branch before backing up and trying the next. It is like exploring a maze by always following the left-hand wall.</li>
-</ul>
-<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="The lesson's tree numbered in breadth-first visit order">
-<g class="ln"><path class="ln" d="M210 40L110 100"/><path class="ln" d="M210 40L310 100"/><path class="ln" d="M110 100L60 160"/><path class="ln" d="M110 100L160 160"/><path class="ln" d="M310 100L360 160"/><path class="ln" d="M160 160L130 220"/><path class="ln" d="M160 160L190 220"/><path class="ln" d="M360 160L330 220"/></g>
-<circle class="bx" cx="210" cy="40" r="18"/><circle class="bx" cx="110" cy="100" r="18"/><circle class="bx" cx="310" cy="100" r="18"/><circle class="bx" cx="60" cy="160" r="18"/><circle class="bx" cx="160" cy="160" r="18"/><circle class="bx" cx="360" cy="160" r="18"/><circle class="bx" cx="130" cy="220" r="18"/><circle class="bx" cx="190" cy="220" r="18"/><circle class="bx" cx="330" cy="220" r="18"/>
-<g text-anchor="middle" class="t-m">
-<text class="t-m" x="210" y="45">8</text><text class="t-m" x="110" y="105">3</text><text class="t-m" x="310" y="105">10</text><text class="t-m" x="60" y="165">1</text><text class="t-m" x="160" y="165">6</text><text class="t-m" x="360" y="165">14</text><text class="t-m" x="130" y="225">4</text><text class="t-m" x="190" y="225">7</text><text class="t-m" x="330" y="225">13</text>
-</g>
-<g text-anchor="middle">
-<text class="t-b t-a" x="238" y="30">1</text><text class="t-b t-a" x="82" y="90">2</text><text class="t-b t-a" x="338" y="90">3</text><text class="t-b t-a" x="32" y="150">4</text><text class="t-b t-a" x="188" y="150">5</text><text class="t-b t-a" x="388" y="150">6</text><text class="t-b t-a" x="102" y="210">7</text><text class="t-b t-a" x="218" y="210">8</text><text class="t-b t-a" x="302" y="210">9</text>
-</g>
-<line class="ln-d" x1="10" y1="70" x2="410" y2="70"/><line class="ln-d" x1="10" y1="130" x2="410" y2="130"/><line class="ln-d" x1="10" y1="190" x2="250" y2="190"/>
-</svg><figcaption>Breadth-first order, shown by the orange numbers. BFS visits the root 8 first, then the whole second level, 3 and 10, then the third level, 1, 6 and 14, and finally the bottom level, 4, 7 and 13. The dashed lines separate the levels.</figcaption></figure>
-<p>BFS gets its order from a <b>queue</b>. Put the root in the queue. Then, repeatedly, take the node at the front, visit it, and add its children to the back. Because children always join behind everything already waiting, a whole level is finished before the next one starts.</p>
-<p>DFS gets its order from a <b>stack</b>, and usually that stack is simply the call stack: you write it with recursion. There are three common DFS orders, depending on when you visit the node itself compared with its subtrees. The one this lesson asks for is <b>in-order</b>: visit the left subtree, then the node, then the right subtree.</p>
-<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="The same tree numbered in depth-first in-order visit order">
-<g class="ln"><path class="ln" d="M210 40L110 100"/><path class="ln" d="M210 40L310 100"/><path class="ln" d="M110 100L60 160"/><path class="ln" d="M110 100L160 160"/><path class="ln" d="M310 100L360 160"/><path class="ln" d="M160 160L130 220"/><path class="ln" d="M160 160L190 220"/><path class="ln" d="M360 160L330 220"/></g>
-<circle class="bx" cx="210" cy="40" r="18"/><circle class="bx" cx="110" cy="100" r="18"/><circle class="bx" cx="310" cy="100" r="18"/><circle class="bx" cx="60" cy="160" r="18"/><circle class="bx" cx="160" cy="160" r="18"/><circle class="bx" cx="360" cy="160" r="18"/><circle class="bx" cx="130" cy="220" r="18"/><circle class="bx" cx="190" cy="220" r="18"/><circle class="bx" cx="330" cy="220" r="18"/>
-<g text-anchor="middle" class="t-m">
-<text class="t-m" x="210" y="45">8</text><text class="t-m" x="110" y="105">3</text><text class="t-m" x="310" y="105">10</text><text class="t-m" x="60" y="165">1</text><text class="t-m" x="160" y="165">6</text><text class="t-m" x="360" y="165">14</text><text class="t-m" x="130" y="225">4</text><text class="t-m" x="190" y="225">7</text><text class="t-m" x="330" y="225">13</text>
-</g>
-<g text-anchor="middle">
-<text class="t-b t-ok" x="238" y="30">6</text><text class="t-b t-ok" x="82" y="90">2</text><text class="t-b t-ok" x="338" y="90">7</text><text class="t-b t-ok" x="32" y="150">1</text><text class="t-b t-ok" x="188" y="150">4</text><text class="t-b t-ok" x="388" y="150">9</text><text class="t-b t-ok" x="102" y="210">3</text><text class="t-b t-ok" x="218" y="210">5</text><text class="t-b t-ok" x="302" y="210">8</text>
-</g>
-</svg><figcaption>Depth-first in-order, shown by the green numbers. DFS dives down the left side first and visits 1, then 3, then goes down into 6's branch for 4, 6 and 7, and only then visits the root 8. The right side follows: 10, 13, 14. Read in this order, the values come out sorted.</figcaption></figure>
-<p>That is why in-order matters for a BST. Everything smaller than a node is in its left subtree, and in-order visits the left subtree first, then the node, then the bigger values on the right. So the output is <code>[1, 3, 4, 6, 7, 8, 10, 13, 14]</code>, sorted, without any sorting. In code: if the node is null, return; otherwise recurse left, push the node's value into an output array, then recurse right. Pass the same output array into every call so they all add to one list.</p>
-
-<h4>BFS for the shortest path in a grid</h4>
-<p>A grid is a graph in disguise: each open cell is a node, connected to the open cells above, below, left and right. The lesson's <code>GRID</code> uses 0 for open and 1 for a wall, and positions are written <code>[row, column]</code>, counting from 0.</p>
-<p>Why BFS for shortest paths? Because it explores in rings of distance. Every cell 1 step away is reached before any cell 2 steps away, and so on. So the first time BFS reaches the target, it has found it by the shortest route. DFS gives no such promise: it might wander a long way round first.</p>
-<figure class="fig"><svg viewBox="0 0 420 215" role="img" aria-label="The four by four grid with walls and the BFS distance from the top left corner written in each open cell">
-<g text-anchor="middle" class="t-s"><text class="t-s" x="132" y="14">0</text><text class="t-s" x="176" y="14">1</text><text class="t-s" x="220" y="14">2</text><text class="t-s" x="264" y="14">3</text><text class="t-s" x="96" y="47">0</text><text class="t-s" x="96" y="91">1</text><text class="t-s" x="96" y="135">2</text><text class="t-s" x="96" y="179">3</text></g>
-<rect class="bx-a" x="110" y="20" width="44" height="44"/><rect class="bx" x="154" y="20" width="44" height="44"/><rect class="bx" x="198" y="20" width="44" height="44"/><rect class="bx-dark" x="242" y="20" width="44" height="44"/>
-<rect class="bx-dark" x="110" y="64" width="44" height="44"/><rect class="bx-dark" x="154" y="64" width="44" height="44"/><rect class="bx" x="198" y="64" width="44" height="44"/><rect class="bx-dark" x="242" y="64" width="44" height="44"/>
-<rect class="bx" x="110" y="108" width="44" height="44"/><rect class="bx" x="154" y="108" width="44" height="44"/><rect class="bx" x="198" y="108" width="44" height="44"/><rect class="bx" x="242" y="108" width="44" height="44"/>
-<rect class="bx" x="110" y="152" width="44" height="44"/><rect class="bx-dark" x="154" y="152" width="44" height="44"/><rect class="bx-dark" x="198" y="152" width="44" height="44"/><rect class="bx-ok" x="242" y="152" width="44" height="44"/>
-<g text-anchor="middle">
-<text class="t-b" x="132" y="47">0</text><text class="t-m" x="176" y="47">1</text><text class="t-m" x="220" y="47">2</text>
-<text class="t-m" x="220" y="91">3</text>
-<text class="t-m" x="132" y="135">6</text><text class="t-m" x="176" y="135">5</text><text class="t-m" x="220" y="135">4</text><text class="t-m" x="264" y="135">5</text>
-<text class="t-m" x="132" y="179">7</text><text class="t-b" x="264" y="179">6</text>
-</g>
-<rect class="bx-a" x="310" y="40" width="16" height="16"/><text class="t-s" x="334" y="53">start</text>
-<rect class="bx-ok" x="310" y="70" width="16" height="16"/><text class="t-s" x="334" y="83">target</text>
-<rect class="bx-dark" x="310" y="100" width="16" height="16"/><text class="t-s" x="334" y="113">wall</text>
-</svg><figcaption>The lesson's grid, with walls shown dark. Each open cell holds its distance from the start in the top-left corner, in the order BFS discovers them. The route must squeeze through the single gap at row 1, column 2, and the target in the bottom-right corner is reached in 6 steps.</figcaption></figure>
-<p>The algorithm:</p>
-<ol>
-<li>Put the start in a queue as <code>[row, col, steps]</code> with 0 steps, and add it to a <code>seen</code> set.</li>
-<li>Take the front entry. If it is the target, return its steps.</li>
-<li>Otherwise look at its four neighbours. Keep a neighbour only if it is inside the grid, is open (0), and is not in <code>seen</code>. Mark it seen and add it to the queue with steps + 1.</li>
-<li>If the queue runs empty, the target cannot be reached: return -1.</li>
-</ol>
-<p>A Set cannot compare arrays by their contents, so store each position as a string such as <code>'2,3'</code>. Mark a cell as seen when you <i>add</i> it to the queue, not when you take it out, or the same cell can be queued many times. The lesson's solution uses <code>queue.shift()</code>, which is fine for a 16-cell grid; for big grids, use the head-index queue from the stacks and queues lesson.</p>
-<div class="mistake"><b>Common mistake</b>Checking <code>grid[nr][nc]</code> before checking the bounds. If <code>nr</code> is -1, <code>grid[-1]</code> is <code>undefined</code>, and reading <code>[nc]</code> from it throws <code>TypeError: Cannot read properties of undefined</code>. Test <code>nr &gt;= 0 &amp;&amp; nr &lt; rows</code> and the same for columns first; <code>&amp;&amp;</code> stops at the first false, so the grid is never read out of range.</div>
-
-<h4>DFS on a graph: is there a route?</h4>
-<p>The lesson's <code>ROUTES</code> is stored as an <b>adjacency list</b>: an object where each city's key holds an array of the cities you can travel to directly. The routes are one-way, so this is a <b>directed</b> graph.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="One way routes between West African cities, and a separate pair of East African cities">
-<rect class="bx-a" x="10" y="30" width="80" height="36" rx="8"/><rect class="bx" x="115" y="30" width="80" height="36" rx="8"/><rect class="bx" x="220" y="30" width="80" height="36" rx="8"/><rect class="bx-ok" x="325" y="30" width="80" height="36" rx="8"/>
-<rect class="bx" x="10" y="100" width="80" height="36" rx="8"/>
-<rect class="bx" x="220" y="150" width="80" height="36" rx="8"/><rect class="bx" x="325" y="150" width="80" height="36" rx="8"/>
-<g text-anchor="middle"><text class="t" x="50" y="53">Lagos</text><text class="t" x="155" y="53">Accra</text><text class="t" x="260" y="53">Abidjan</text><text class="t" x="365" y="53">Dakar</text><text class="t" x="50" y="123">Abuja</text><text class="t" x="260" y="173">Nairobi</text><text class="t" x="365" y="173">Kampala</text></g>
-<path class="ln-a" d="M90 48h17"/><polygon class="ah-a" points="105,42 105,54 113,48"/>
-<path class="ln-a" d="M195 48h17"/><polygon class="ah-a" points="210,42 210,54 218,48"/>
-<path class="ln-a" d="M300 48h17"/><polygon class="ah-a" points="315,42 315,54 323,48"/>
-<path class="ln" d="M50 66v26"/><polygon class="ah" points="44,90 56,90 50,98"/>
-<path class="ln" d="M300 168h17"/><polygon class="ah" points="315,162 315,174 323,168"/>
-</svg><figcaption>The routes as a picture. From Lagos you can fly to Accra or Abuja. The highlighted chain, Lagos to Accra to Abidjan to Dakar, is the route DFS finds. Nairobi and Kampala are connected to each other but to nothing else, so no route from Lagos ever reaches them.</figcaption></figure>
-<p>DFS with recursion, in words: if you are already at the destination, return true. Otherwise mark the current city as visited, and for each neighbour you have not visited yet, ask the same question from there. If any of those calls returns true, so do you. If none do, return false.</p>
-<p>Tracing Lagos to Dakar: Lagos is not Dakar, so try its first neighbour, Accra. Accra tries Abidjan. Abidjan tries Dakar, which is the destination, so true travels all the way back up. From Lagos to Nairobi, DFS tries everything reachable (Accra, Abidjan, Dakar, Abuja), runs out of neighbours, and returns false.</p>
-<p>The <b>visited set</b> matters because real graphs have loops. If A leads to B and B leads back to A, a search without memory goes round forever and crashes with a stack overflow. Pass the same set into every recursive call so they share one memory.</p>
-<div class="mistake"><b>Common mistake</b>Using a city lookup like <code>graph[from]</code> without a fallback. If a city has no entry at all, that is <code>undefined</code>, and looping over it throws an error. Writing <code>graph[from] || []</code> treats a missing city as one with no routes.</div>
-
-<div class="try"><b>Try it in your head</b>Which uses a queue, BFS or DFS? BFS. Using the grid picture, how many steps from the start to row 0, column 2? Two, the answer the second grid test expects. And what does in-order print for a tree with root 5, left child 2 and right child 9? 2, 5, 9.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>A tree is a root with children and no loops; a graph allows any connections. Each subtree is a smaller tree, so recursion fits naturally.</li>
-<li>Depth is 1 + the deeper subtree, with 0 for an empty tree.</li>
-<li>In-order DFS (left, node, right) on a binary search tree gives the values sorted.</li>
-<li>BFS uses a queue and explores level by level, so it finds shortest paths in unweighted grids and graphs.</li>
-<li>DFS uses recursion or a stack and answers "can I get there?". Always keep a visited set.</li>
 </ul>
 `);

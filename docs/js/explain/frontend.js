@@ -936,3 +936,106 @@ function TodoList({ items }) {      // child receives it
 <li><code>useEffect</code> runs side effects after rendering, re-running only when its dependencies change.</li>
 </ul>
 `);
+
+explain('f4',`
+<h4>Why style with utility classes?</h4>
+<p>In the CSS lessons you wrote rules in a stylesheet and connected them to HTML with class names like <code>.card</code>. That works well for a small page. On a large app it causes some familiar pains:</p>
+<ul>
+<li><b>Naming everything.</b> Is it <code>.card</code>, <code>.project-card</code> or <code>.card-wrapper-inner</code>? Teams spend real time on this.</li>
+<li><b>Fear of deleting.</b> Nobody knows which old rules are still used somewhere, so the stylesheet only ever grows.</li>
+<li><b>Inconsistency.</b> One developer uses 15 pixels of padding, another 16, another 18, and the design slowly drifts.</li>
+<li><b>Jumping between files</b> to see how one element looks.</li>
+</ul>
+<p><b>Tailwind CSS</b> flips the approach. It provides thousands of tiny ready-made classes, called <b>utility classes</b>, that each do one small thing. You style an element by listing them directly in its markup. No names to invent, nothing to hunt for in another file, and every value comes from a shared scale, so designs stay consistent.</p>
+<pre class="snip">&lt;div className="rounded-lg border p-4 shadow-sm"&gt;Shop&lt;/div&gt;</pre>
+<p>Remember from the React lesson that JSX writes the class attribute as <code>className</code>. Several classes are separated by spaces, exactly as in plain HTML.</p>
+
+<h4>Reading utility classes</h4>
+<p>Each utility is shorthand for one or two CSS declarations you already know. Here is the card above, decoded:</p>
+<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="Four Tailwind classes and the CSS each one produces">
+<g text-anchor="middle">
+<rect class="bx-a" x="10" y="16" width="120" height="34" rx="6"/><text class="t-m" x="70" y="38">rounded-lg</text>
+<rect class="bx-a" x="10" y="66" width="120" height="34" rx="6"/><text class="t-m" x="70" y="88">border</text>
+<rect class="bx-a" x="10" y="116" width="120" height="34" rx="6"/><text class="t-m" x="70" y="138">p-4</text>
+<rect class="bx-a" x="10" y="166" width="120" height="34" rx="6"/><text class="t-m" x="70" y="188">shadow-sm</text>
+</g>
+<path class="ln" d="M130 33h26M130 83h26M130 133h26M130 183h26"/>
+<polygon class="ah" points="154,27 154,39 164,33"/><polygon class="ah" points="154,77 154,89 164,83"/><polygon class="ah" points="154,127 154,139 164,133"/><polygon class="ah" points="154,177 154,189 164,183"/>
+<rect class="bx-dark" x="168" y="10" width="242" height="200" rx="8"/>
+<text class="t-term" x="180" y="38">border-radius: 8px</text>
+<text class="t-term" x="180" y="88">border: 1px solid</text>
+<text class="t-term" x="180" y="138">padding: 1rem</text>
+<text class="t-term" x="180" y="188">box-shadow: small</text>
+</svg><figcaption>Each Tailwind class on the left stands for CSS on the right. rounded-lg rounds the corners by 8 pixels. border adds a one pixel solid border. p-4 adds padding of 1 rem, which is 16 pixels. shadow-sm adds a small soft shadow.</figcaption></figure>
+<p>The names follow patterns, so you learn the patterns, not thousands of classes:</p>
+<div class="tbl-wrap"><table><tr><th>Pattern</th><th>Means</th><th>Examples</th></tr>
+<tr><td><code>p-</code>, <code>px-</code>, <code>py-</code>, <code>pt-</code></td><td>padding: all sides, left and right, top and bottom, top only</td><td><code>p-4</code>, <code>px-4 py-2</code></td></tr>
+<tr><td><code>m-</code>, <code>mb-</code></td><td>margin, the same way</td><td><code>mb-6</code></td></tr>
+<tr><td><code>bg-</code>, <code>text-</code></td><td>background colour, text colour or size</td><td><code>bg-violet-600</code>, <code>text-white</code>, <code>text-sm</code></td></tr>
+<tr><td><code>font-</code></td><td>font weight</td><td><code>font-semibold</code>, <code>font-bold</code></td></tr>
+<tr><td><code>rounded-</code></td><td>corner rounding</td><td><code>rounded-md</code>, <code>rounded-lg</code></td></tr></table></div>
+<p><b>The spacing scale.</b> The number in <code>p-4</code> is not pixels. Each step is a quarter of a <b>rem</b>. A rem is a unit equal to the page's base font size, 16 pixels by default. So one step is 4 pixels, and <code>p-4</code> is 4 times 4, which is 16 pixels. <code>p-2</code> is 8 pixels and <code>gap-4</code> is a 16 pixel gap. Using rem instead of pixels means spacing grows if the user increases their browser's text size.</p>
+<p><b>The colour scale.</b> Colours have a name and a shade from 50 (very light) to 950 (very dark). <code>bg-violet-600</code> is a strong violet background, <code>hover:bg-violet-700</code> a slightly darker one, and <code>bg-gray-50</code> an almost-white grey.</p>
+
+<h4>Layout and responsive prefixes</h4>
+<p>The flexbox and grid ideas from the layout lesson come as utilities too: <code>flex</code> means <code>display: flex</code>, <code>grid</code> means <code>display: grid</code>, <code>grid-cols-3</code> means three equal columns, and <code>gap-4</code> sets the gap.</p>
+<p>Media queries become <b>prefixes</b>. A class with <code>md:</code> in front only applies when the screen is at least the "medium" width, 768 pixels:</p>
+<pre class="snip">&lt;div className="grid grid-cols-1 md:grid-cols-3 gap-4"&gt;</pre>
+<p>Read it as: "a grid with one column; from medium screens upward, three columns". This is <b>mobile-first</b>, the approach suggested in the layout lesson: classes without a prefix are for every screen, starting with phones, and each prefix adds changes for bigger screens. Under the hood, <code>md:</code> becomes a <code>@media (min-width: 48rem)</code> query.</p>
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="Breakpoint ruler: below 768 pixels grid-cols-1 applies; from md at 768 pixels grid-cols-3 takes over">
+<path class="ln" d="M10 70h400"/>
+<g text-anchor="middle">
+<path class="ln" d="M10 62v16M140 62v16M200 62v16M290 62v16M370 62v16"/>
+<text class="t-s" x="10" y="98">0</text><text class="t-b" x="140" y="54">sm</text><text class="t-b t-a" x="200" y="54">md</text><text class="t-b" x="290" y="54">lg</text><text class="t-b" x="370" y="54">xl</text>
+<text class="t-s" x="140" y="98">640</text><text class="t-s" x="200" y="98">768</text><text class="t-s" x="290" y="98">1024</text><text class="t-s" x="370" y="98">1280</text>
+</g>
+<rect class="bx-info" x="10" y="118" width="188" height="36" rx="6"/><text class="t-m" x="104" y="141" text-anchor="middle">grid-cols-1</text>
+<rect class="bx-ok" x="202" y="118" width="208" height="36" rx="6"/><text class="t-m" x="306" y="141" text-anchor="middle">md:grid-cols-3 wins</text>
+<text class="t-s" x="210" y="180" text-anchor="middle">Screen width in pixels. Each prefix means "this wide or wider".</text>
+<text class="t-s" x="10" y="24">phones</text><text class="t-s" x="410" y="24" text-anchor="end">big screens</text>
+</svg><figcaption>Tailwind's default breakpoints on a ruler of screen widths: sm at 640 pixels, md at 768, lg at 1024 and xl at 1280. Below 768 pixels, only grid-cols-1 applies and the cards stack. From 768 pixels up, md grid-cols-3 also applies and wins, giving three columns.</figcaption></figure>
+<p>Other prefixes work the same way for states: <code>hover:</code> applies while the mouse is over the element, <code>focus:</code> while it has keyboard focus, and <code>dark:</code> in dark mode.</p>
+
+<h4>Components keep utility classes tidy</h4>
+<p>The usual first reaction to Tailwind is "my markup is full of class names!". The answer is React components. You write the long list of classes once, inside a component, and use the component everywhere. That is also why shadcn/ui, below, is built this way.</p>
+<p>Real apps need the same component in several looks: a solid main button and a quieter outlined one. The common pattern is a <b>variant prop</b>: a prop that picks one of a few named styles from a lookup object.</p>
+<pre class="snip">const variants = {
+  primary: 'bg-violet-600 text-white',
+  outline: 'border bg-white text-gray-900',
+};
+// inside Button: shared classes + variants[variant]
+&lt;Button variant="outline"&gt;Cancel&lt;/Button&gt;</pre>
+<p>Inside <code>Button</code>, receive <code>variant</code> as a prop with a default of <code>'primary'</code>, look up <code>variants[variant]</code>, and join that string onto the shared classes such as padding and rounding. The square brackets read an object key held in a variable: if <code>variant</code> is <code>'outline'</code>, <code>variants[variant]</code> is the outline string. Remember to keep a space between the shared classes and the variant classes when you join the strings, or two class names merge into one nonsense name.</p>
+<p>The finished pattern often also accepts <code>...props</code>, the <b>rest</b> syntax, which collects any other props such as <code>onClick</code> or <code>type</code>, and passes them on with <code>{...props}</code> to the real <code>&lt;button&gt;</code>. Then your Button works anywhere a normal button would.</p>
+<div class="mistake"><b>Common mistake</b>Building class names from pieces, like <code>'bg-' + colour + '-600'</code>. Tailwind works by scanning your source files for complete class names and generating CSS only for the ones it finds. A name glued together at runtime never appears whole in your code, so its CSS is never generated and the style silently does nothing. Always write full class names, for example in a lookup object as above.</div>
+
+<h4>shadcn/ui: components you own</h4>
+<p>Buttons are easy. Accessible dialogs, dropdown menus, date pickers and tabs are hard: they must trap keyboard focus, close on Escape, announce themselves to screen readers, and work on touch screens. Getting all of that right yourself takes weeks.</p>
+<p>Most component libraries are packages you install, and their code lives hidden in your dependencies. When their look or behaviour does not quite fit, you fight them with overrides. <b>shadcn/ui</b> works differently: it is a collection of components whose <b>source code you copy into your project</b>, usually with a command such as <code>npx shadcn@latest add button</code>. After that, the file is yours. You read it, edit it, restyle it, and nothing is hidden.</p>
+<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Layers: your app uses your copied component files, styled with Tailwind, built on Radix UI behaviour">
+<rect class="bx-a" x="40" y="10" width="340" height="40" rx="8"/><text class="t-b" x="210" y="35" text-anchor="middle">your app's pages</text>
+<rect class="bx-ok" x="40" y="62" width="340" height="52" rx="8"/><text class="t-b" x="210" y="84" text-anchor="middle">components/ui/button.tsx</text><text class="t-s" x="210" y="104" text-anchor="middle">copied in by shadcn: yours to edit</text>
+<rect class="bx-info" x="40" y="126" width="164" height="52" rx="8"/><text class="t-b" x="122" y="148" text-anchor="middle">Tailwind</text><text class="t-s" x="122" y="168" text-anchor="middle">the look</text>
+<rect class="bx-warn" x="216" y="126" width="164" height="52" rx="8"/><text class="t-b" x="298" y="148" text-anchor="middle">Radix UI</text><text class="t-s" x="298" y="168" text-anchor="middle">the behaviour</text>
+<text class="t-s" x="210" y="200" text-anchor="middle">Only the bottom layer stays a package you install.</text>
+</svg><figcaption>How shadcn/ui fits together. Your pages use component files that live in your own project. Each component gets its look from Tailwind classes and its accessible behaviour, such as keyboard handling and focus, from Radix UI primitives, which stay an installed package.</figcaption></figure>
+<p>Under the hood, many shadcn components wrap <b>Radix UI</b> primitives, unstyled components that handle the hard accessibility behaviour, and style them with Tailwind. Buttons use the variant pattern you just learnt, written with a small helper library called class-variance-authority. Today's Button task is a hand-made version of exactly that idea.</p>
+
+<h4>Working through the tasks</h4>
+<ol>
+<li>Give each card div the classes for rounded corners, a border and <code>p-4</code>. The checker looks for an element with <code>p-4</code> whose padding really is 16 pixels.</li>
+<li>Give the cards' wrapper <code>grid grid-cols-1 md:grid-cols-3</code> and a gap. The checker tests it at 900 and at 420 pixels wide.</li>
+<li>Add a <code>variant</code> prop to Button with two looks, and render one of each, so their background colours differ.</li>
+</ol>
+<p>If the preview shows no styling at all, Tailwind itself has not loaded: it comes from the internet in this sandbox, so check your connection and press Run again. Note that the cards are plain divs at first; turning them into a small <code>Card</code> component, as the solution does, is optional but good practice.</p>
+<div class="try"><b>Try it in your head</b>How many pixels of padding does <code>px-6 py-2</code> give? Each step is 4 pixels, so 24 pixels left and right and 8 pixels top and bottom. And on a screen 700 pixels wide, how many columns does <code>grid-cols-1 md:grid-cols-3</code> show? One, because 700 is below the md breakpoint of 768.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>Tailwind styles elements with small utility classes in <code>className</code>, each standing for one bit of CSS.</li>
+<li>Spacing steps are 4 pixels each, so <code>p-4</code> is 16 pixels; colours run from shade 50 to 950.</li>
+<li>Prefixes such as <code>md:</code> and <code>hover:</code> apply a class only from that screen width up, or in that state.</li>
+<li>Write full class names; wrap repeated class lists in components, with variant props for different looks.</li>
+<li>shadcn/ui copies accessible components into your codebase, built on Radix UI and Tailwind, so you own and can change them.</li>
+</ul>
+`);

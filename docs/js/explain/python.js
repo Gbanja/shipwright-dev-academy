@@ -825,8 +825,8 @@ def test_many_cases(price, percent, expected):
     assert apply_discount(price, percent) == expected</pre>
 <p>The first argument is a string naming the parameters, separated by commas. The second is a list of tuples, one tuple per case, with values in the same order. pytest unpacks each tuple into the function's parameters:</p>
 <figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="One parametrized test function becomes three separate test runs">
-<rect class="bx-a" x="10" y="74" width="150" height="60" rx="8"/><text class="t-m" x="85" y="100" text-anchor="middle">test_many_</text><text class="t-m" x="85" y="120" text-anchor="middle">cases</text>
-<path class="ln" d="M160 104h30v-70h20"/><polygon class="ah" points="208,28 208,40 216,34"/>
+<rect class="bx-a" x="6" y="84" width="166" height="40" rx="8"/><text class="t-m" x="89" y="109" text-anchor="middle">test_many_cases</text>
+<path class="ln" d="M172 104h18v-70h20"/><polygon class="ah" points="208,28 208,40 216,34"/>
 <path class="ln" d="M190 104h20"/><polygon class="ah" points="208,98 208,110 216,104"/>
 <path class="ln" d="M190 104v70h20"/><polygon class="ah" points="208,168 208,180 216,174"/>
 <rect class="bx-ok" x="218" y="14" width="192" height="40" rx="6"/><text class="t-m" x="314" y="39" text-anchor="middle">[200-50-100]</text>
@@ -855,9 +855,9 @@ def test_cart_total(cart):          # pytest sees the name "cart"
 <rect class="bx-info" x="10" y="20" width="160" height="56" rx="8"/><text class="t-s" x="90" y="42" text-anchor="middle">fixture</text><text class="t-m" x="90" y="64" text-anchor="middle">cart()</text>
 <rect class="bx-a" x="250" y="20" width="160" height="56" rx="8"/><text class="t-s" x="330" y="42" text-anchor="middle">test asks for</text><text class="t-m" x="330" y="64" text-anchor="middle">cart</text>
 <path class="ln-a" d="M250 48h-72"/><polygon class="ah-a" points="180,42 180,54 172,48"/><text class="t-s t-a" x="210" y="40" text-anchor="middle">same name</text>
-<path class="ln-ok" d="M90 76v40h232"/><polygon class="ah-ok" points="322,110 322,122 330,116"/>
-<text class="t-s t-ok" x="200" y="108" text-anchor="middle">returns a fresh list</text>
-<rect class="bx-ok" x="250" y="96" width="160" height="40" rx="8"/><text class="t-m" x="338" y="121" text-anchor="middle">test runs</text>
+<path class="ln-ok" d="M90 76v40h152"/><polygon class="ah-ok" points="242,110 242,122 250,116"/>
+<text class="t-s t-ok" x="160" y="138" text-anchor="middle">returns a fresh list</text>
+<rect class="bx-ok" x="250" y="96" width="160" height="40" rx="8"/><text class="t-m" x="330" y="121" text-anchor="middle">test runs</text>
 <text class="t-s" x="210" y="166" text-anchor="middle">A new cart is built for every test that asks.</text>
 </svg><figcaption>Before running test_cart_total, pytest notices its parameter is called cart, finds the fixture with that name, calls it, and passes the returned list into the test. Each test gets its own fresh copy.</figcaption></figure>
 <p>This is called <b>dependency injection</b>: the test declares what it needs, and pytest provides it. By default the fixture runs again for every test, so one test changing the cart can never affect another.</p>
