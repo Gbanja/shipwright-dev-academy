@@ -428,3 +428,107 @@ explain('k5',`
 <li>Pick a key that spreads load evenly and keeps related data together, like <code>device_id</code>; shard only after simpler fixes.</li>
 </ul>
 `);
+
+explain('k6',`
+<h4>What a design interview is really testing</h4>
+<p>"Design a service like bit.ly" is one of the most common system design interview questions. You will not write code. Instead, for about 45 minutes, you talk through how you would build it, drawing boxes and arrows as you go. There is no single right answer. The interviewer is watching <b>how you think</b>: do you ask before assuming, do you back your choices with numbers, and can you explain the trade-offs?</p>
+<p>This lesson walks through the whole design using everything from the track: APIs, stateless servers, load balancers, caches and replicas. Then you build the architecture in the simulator.</p>
+
+<h4>A structure to follow</h4>
+<p>A clear structure keeps you calm and shows the interviewer you are organised. Six steps:</p>
+<ol>
+<li><b>Clarify</b> the requirements and the scale.</li>
+<li><b>Estimate</b> the load and storage with quick rough maths.</li>
+<li><b>Sketch the API</b>: the requests the system answers.</li>
+<li><b>Design the data model</b>: what you store.</li>
+<li><b>Draw the high-level architecture.</b></li>
+<li><b>Deep dive</b> into the hard parts and the trade-offs.</li>
+</ol>
+<p>Say each step out loud as you start it, so the interviewer can follow along and steer you.</p>
+
+<h4>Step 1: clarify</h4>
+<p>A URL shortener takes a long link and returns a short one, like <code>sho.rt/4c92</code>. Anyone who opens the short link is <b>redirected</b> to the long one. Before designing, ask questions such as:</p>
+<ul>
+<li>Can users choose their own custom codes? Do links expire?</li>
+<li>Do we need click analytics, meaning counting who clicked and when?</li>
+<li>How many new links per month, and how many clicks?</li>
+</ul>
+<p>Say the interviewer answers: about 100 million new links a month, analytics wanted, and clicks outnumber new links about 100 to 1. Already you know the most important fact: this system is extremely <b>read-heavy</b>. Almost all traffic is redirects.</p>
+
+<h4>Step 2: estimate with napkin maths</h4>
+<p><b>Napkin maths</b> means rough calculations with rounded numbers, the kind you could do on a napkin. The goal is the right order of magnitude, not precision. One handy fact: a month has about 2.5 million seconds (30 days × 86,400 seconds).</p>
+<pre class="snip">new links:  100,000,000 ÷ 2,500,000 s  ≈ 40 per second
+redirects:  40 × 100                   ≈ 4,000 per second
+storage:    100,000,000 × 500 bytes    = 50,000,000,000 bytes
+                                       ≈ 50 GB per month</pre>
+<p>Read that last line slowly. 500 bytes is a generous guess for one row (the code, the long URL, a date and an owner). 10⁸ rows × 500 bytes is 5 × 10¹⁰ bytes, which is 50 GB. A single database server holds that comfortably; even several years of links fits on one large server. So storage is not the problem. Handling thousands of redirects a second, quickly, is. The 4,000 figure is an average, and real traffic has peaks above it, which is why you plan with headroom.</p>
+
+<h4>Steps 3 and 4: API and data model</h4>
+<p>Two requests do almost all the work:</p>
+<pre class="snip">POST /links   body: {"url": "https://example.com/very/long"}
+              → 201 Created  {"code": "4c92"}
+
+GET  /4c92    → 302 Found
+              Location: https://example.com/very/long</pre>
+<p>The second one is the redirect. The <code>Location</code> header tells the browser where to go next, and it follows automatically. The data model is one table, with the short code as its <b>primary key</b> (the unique identifier, indexed for instant lookups):</p>
+<pre class="snip">links(code PRIMARY KEY, url, created_at, owner_id)</pre>
+
+<h4>Step 5: the architecture</h4>
+<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="Users, load balancer, stateless app servers, a cache and a database with a replica">
+<rect class="bx-info" x="8" y="88" width="68" height="44" rx="6"/><text class="t-b" x="42" y="115" text-anchor="middle">Users</text>
+<rect class="bx-a" x="96" y="80" width="70" height="60" rx="6"/><text class="t-b" x="131" y="106" text-anchor="middle">Load</text><text class="t-s" x="131" y="124" text-anchor="middle">balancer</text>
+<rect class="bx" x="194" y="64" width="80" height="44" rx="6"/><rect class="bx" x="190" y="76" width="80" height="44" rx="6"/><rect class="bx" x="186" y="88" width="80" height="44" rx="6"/>
+<text class="t-b" x="226" y="108" text-anchor="middle">App</text><text class="t-s" x="226" y="125" text-anchor="middle">stateless</text>
+<rect class="bx-ok" x="300" y="14" width="112" height="44" rx="6"/><text class="t-b" x="356" y="34" text-anchor="middle">Cache</text><text class="t-s" x="356" y="50" text-anchor="middle">code → url</text>
+<rect class="bx-info" x="300" y="100" width="112" height="40" rx="6"/><text class="t-b" x="356" y="125" text-anchor="middle">Database</text>
+<rect class="bx" x="300" y="168" width="112" height="36" rx="6"/><text class="t" x="356" y="191" text-anchor="middle">Replica</text>
+<path class="ln" d="M76 110h12"/><polygon class="ah" points="86,104 86,116 94,110"/>
+<path class="ln" d="M166 110h12"/><polygon class="ah" points="176,104 176,116 184,110"/>
+<path class="ln-ok" d="M270 80L294 52"/><polygon class="ah-ok" points="289,49 297,57 300,45"/><text class="t-s t-ok" x="250" y="40" text-anchor="middle">1 look up</text>
+<path class="ln" d="M266 118h26"/><polygon class="ah" points="290,112 290,124 298,118"/><text class="t-s" x="250" y="160" text-anchor="middle">2 on a miss</text>
+<path class="ln-d" d="M356 140v20"/><polygon class="ah" points="350,158 362,158 356,166"/>
+</svg><figcaption>Users reach a load balancer, which spreads requests over several stateless app servers. For a redirect, an app server first looks the code up in the cache. Only on a miss does it ask the database, which is copied to a replica for safety and extra read capacity.</figcaption></figure>
+<p>Walk the redirect path out loud: the request reaches the load balancer, which picks an app server. The app looks up the code in the cache. On a hit, it replies with the redirect at once. On a miss, it reads the database, stores the answer in the cache, then replies. Creating a link goes the other way: the app generates a code, writes the row to the database, and returns the code.</p>
+<p>Why does the cache matter so much here? Links never change once created, so cached entries never go stale, and popular links are clicked over and over. In the lesson's scenario, 95% of lookups hit the cache, so out of about 3,000 reads per second only around 150 reach the database.</p>
+
+<h4>Step 6, deep dive: generating short codes</h4>
+<p>Each code must be short and unique. The clean approach is to give every link a unique, increasing number (the database can generate one, as an auto-incrementing ID) and write that number in <b>base62</b>.</p>
+<p>You know base 10: ten digits, 0 to 9. Base62 uses 62 "digits": <code>0-9</code>, then <code>a-z</code> for 10 to 35, then <code>A-Z</code> for 36 to 61. Converting works like converting to any base: divide by 62 repeatedly and keep the remainders. Take the ID 1,000,000:</p>
+<div class="tbl-wrap"><table><tr><th>Divide</th><th>Result</th><th>Remainder</th><th>Character</th></tr>
+<tr><td>1,000,000 ÷ 62</td><td>16,129</td><td>2</td><td>2</td></tr>
+<tr><td>16,129 ÷ 62</td><td>260</td><td>9</td><td>9</td></tr>
+<tr><td>260 ÷ 62</td><td>4</td><td>12</td><td>c</td></tr>
+<tr><td>4 ÷ 62</td><td>0</td><td>4</td><td>4</td></tr></table></div>
+<p>Read the characters from the bottom up: <code>4c92</code>. A million links need only four characters. Seven characters give 62⁷, about 3.5 trillion codes, which is enough for this service practically forever.</p>
+<p>The alternative is a random 7-character code, checking the database to make sure it is not already taken. Random codes cannot be guessed in sequence, which some products prefer, at the cost of that extra check.</p>
+<div class="mistake"><b>Common mistake</b>Using the first few characters of a hash of the URL, such as MD5, as the code. Three characters give only 62³, about 238,000 combinations, so with millions of links, different URLs collide constantly and one link silently overwrites another. Hashes are only safe as codes if you keep them long and still check for collisions.</div>
+
+<h4>Deep dive: 301 or 302?</h4>
+<p>Both status codes redirect, but they tell the browser different things. <b>301 Moved Permanently</b> says "this will always point there". Browsers remember it and, next time, go straight to the long URL without asking you. <b>302 Found</b> says "for now, go there", so the browser asks you every time.</p>
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="With 302 every click passes through the shortener; with 301 later clicks skip it">
+<text class="t-b" x="10" y="22">302: every click</text>
+<rect class="bx-info" x="10" y="34" width="90" height="36" rx="6"/><rect class="bx-a" x="165" y="34" width="90" height="36" rx="6"/><rect class="bx-ok" x="320" y="34" width="90" height="36" rx="6"/>
+<g text-anchor="middle"><text class="t" x="55" y="57">Browser</text><text class="t" x="210" y="57">sho.rt</text><text class="t" x="365" y="57">Target</text></g>
+<path class="ln-a" d="M100 52h57"/><polygon class="ah-a" points="155,46 155,58 163,52"/><path class="ln-ok" d="M255 52h57"/><polygon class="ah-ok" points="310,46 310,58 318,52"/>
+<text class="t-s t-ok" x="210" y="90" text-anchor="middle">you count every click</text>
+<line class="ln-d" x1="10" y1="104" x2="410" y2="104"/>
+<text class="t-b" x="10" y="128">301: later clicks</text>
+<rect class="bx-info" x="10" y="150" width="90" height="36" rx="6"/><rect class="bx" x="165" y="150" width="90" height="36" rx="6"/><rect class="bx-ok" x="320" y="150" width="90" height="36" rx="6"/>
+<g text-anchor="middle"><text class="t" x="55" y="173">Browser</text><text class="t-s" x="210" y="173">never asked</text><text class="t" x="365" y="173">Target</text></g>
+<path class="ln-ok" d="M100 160Q210 120 312 160"/><polygon class="ah-ok" points="306,152 310,164 318,162"/>
+</svg><figcaption>Top: with a 302 redirect, every click goes from the browser to the shortener and then on to the target, so every click can be counted. Bottom: after a 301, the browser remembers the target and goes straight there on later clicks. The shortener never sees them, so analytics miss them.</figcaption></figure>
+<p>Since this design needs click analytics, choose <b>302</b>. The trade-off, said out loud: 301 would cut your traffic, because browsers stop asking, but you would lose visibility of repeat clicks. Naming a trade-off like this is exactly what interviewers listen for.</p>
+
+<h4>Building it in the simulator</h4>
+<p>The scenario: 3,000 redirects per second, 99% reads, and a goal of no errors, p95 under 100 ms, and at most $700 a month. Use the formula from the scaling lesson: 3,000 ÷ 400 ÷ 0.75 = 10 app servers behind a load balancer, plus a cache. Then check the results: the 100 ms goal is strict, so if p95 is still too high, add a server or two and watch the cost stay under budget. With a 95% hit rate, the database load barely moves, which answers the last question in the tasks: the cache is the single biggest win.</p>
+<div class="try"><b>Try it in your head</b>What is the ID 125 in base62? 125 ÷ 62 is 2 remainder 1, and 2 ÷ 62 is 0 remainder 2. Reading bottom up: <code>21</code>. And if storage were 1 billion links at 500 bytes each? 10⁹ × 500 = 5 × 10¹¹ bytes, about 500 GB.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>Follow the steps out loud: clarify, estimate, API, data model, architecture, deep dive.</li>
+<li>Napkin maths sets priorities: about 40 writes and 4,000 reads a second, and 50 GB a month, so reads are the challenge.</li>
+<li>Read-heavy plus links that never change means caching the code-to-URL lookup is the biggest win.</li>
+<li>Generate codes by base62-encoding a unique ID; 7 characters give about 3.5 trillion codes.</li>
+<li>Use 302 when you need analytics, 301 when you don't, and always say the trade-off out loud.</li>
+</ul>
+`);

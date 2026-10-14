@@ -236,7 +236,7 @@ explain('t3',`
 <pre class="snip">const greet = vi.fn().mockReturnValue('hi');
 greet('Ada');          // returns 'hi'
 greet.mock.calls;      // [['Ada']]: one call, with one argument</pre>
-<p>Database and email calls are <b>asynchronous</b>: they take time, so instead of an answer they return a <b>promise</b>, an object that delivers the answer later. Code waits for it with <code>await</code>. <code>signUp</code> does exactly that: <code>await db.createUser(...)</code>. So the fakes must return promises too, and <code>.mockResolvedValue(x)</code> does that: it makes the mock return a promise that delivers <code>x</code>.</p>
+<p>Database and email calls are <b>asynchronous</b>: they take time, so instead of an answer they return a <b>promise</b>, an object that delivers the answer later. Code waits for it with <code>await</code>. <code>signUp</code> does exactly that when it calls <code>db.createUser</code>. So the fakes must return promises too, and <code>.mockResolvedValue(x)</code> does that: it makes the mock return a promise that delivers <code>x</code>.</p>
 <pre class="snip">const db = { createUser: vi.fn().mockResolvedValue({ id: 1, email: 'ada@example.com' }) };
 const mailer = { send: vi.fn().mockResolvedValue(true) };</pre>
 <p>Each fake is a plain object shaped like the real thing: <code>db</code> has a <code>createUser</code> method, <code>mailer</code> has a <code>send</code> method. <code>signUp</code> cannot tell the difference.</p>
@@ -265,8 +265,8 @@ expect(db.createUser).toHaveBeenCalledTimes(1);</pre>
 <h4>Testing async errors with <code>rejects</code></h4>
 <p>An <code>async</code> function never throws in the normal way. It returns a promise that <b>rejects</b> with the error. So instead of the <code>() =&gt;</code> wrapper from the last lesson, you hand the promise itself to expect and use <code>.rejects</code>:</p>
 <pre class="snip">await expect(signUp('nope', { db, mailer })).rejects.toThrow('Invalid email');</pre>
-<p>Note the <code>await</code> at the front, and that the test function itself must be marked <code>async</code>: <code>it('...', async () =&gt; { ... })</code>.</p>
-<div class="mistake"><b>Common mistake</b>Forgetting that <code>await</code>. Without it the test finishes before the promise is checked, so the assertion runs too late, or not at all, and the test can pass even when the code is wrong. Every <code>expect(...).rejects</code> or <code>.resolves</code> needs <code>await</code> in front.</div>
+<p>Note the <code>await</code> at the front, and that the test function itself must be marked <code>async</code>, by writing <code>async</code> just before its <code>() =&gt;</code>.</p>
+<div class="mistake"><b>Common mistake</b>Forgetting that <code>await</code>. Without it the test finishes before the promise is checked, so the assertion runs too late, or not at all, and the test can pass even when the code is wrong. Every assertion using <code>.rejects</code> or <code>.resolves</code> needs <code>await</code> in front.</div>
 
 <h4>A fake <code>fetch</code> for <code>getWeather</code></h4>
 <p><code>getWeather(city, fetchFn)</code> also takes its dependency as an argument. The real <code>fetch</code> returns a response object with an <code>ok</code> flag and a <code>json()</code> method that delivers the data. So the fake returns an object of that shape:</p>
@@ -473,5 +473,84 @@ await expect(page.getByRole('alert')).toHaveText('Invalid email or password');</
 <li>Find elements with user-facing locators: <code>getByRole</code> with a name, <code>getByLabel</code>, <code>getByText</code>.</li>
 <li>Act with <code>fill</code> and <code>click</code>; check with auto-waiting assertions like <code>toBeVisible()</code> and <code>toHaveText()</code>.</li>
 <li>Never use fixed sleeps; wait for the condition you actually care about.</li>
+</ul>
+`);
+
+explain('t6',`
+<h4>Writing the exam before the lesson</h4>
+<p>So far you have written code first and tests afterwards. That works, but it has two weaknesses. It is tempting to skip the tests when you are busy, so some behaviour never gets one. And a test written after the code tends to check what the code <i>does</i>, rather than what it <i>should</i> do, so it can quietly bless a bug.</p>
+<p><b>Test-driven development</b>, or <b>TDD</b>, flips the order. Before writing any code for a behaviour, you write a test that describes it. The test fails, because the code doesn't exist yet. Then you write just enough code to make it pass. Then you tidy up. Then you repeat, one small behaviour at a time.</p>
+<p>The payoff is that you decide what "done" means <b>before</b> you start, in a form the computer can check. Every behaviour ends up with a test, because no behaviour is written without one. And the growing set of tests gives you the confidence to clean up and change code later.</p>
+
+<h4>The cycle: red, green, refactor</h4>
+<figure class="fig"><svg viewBox="0 0 420 215" role="img" aria-label="TDD cycle: red, then green, then refactor, then back to red">
+<rect class="bx-bad" x="140" y="14" width="140" height="52" rx="10"/><text class="t-b t-bad" x="210" y="36" text-anchor="middle">1 Red</text><text class="t-s" x="210" y="56" text-anchor="middle">a failing test</text>
+<rect class="bx-ok" x="265" y="146" width="140" height="52" rx="10"/><text class="t-b t-ok" x="335" y="168" text-anchor="middle">2 Green</text><text class="t-s" x="335" y="188" text-anchor="middle">simplest code</text>
+<rect class="bx-info" x="15" y="146" width="140" height="52" rx="10"/><text class="t-b t-info" x="85" y="168" text-anchor="middle">3 Refactor</text><text class="t-s" x="85" y="188" text-anchor="middle">tidy, stay green</text>
+<path class="ln" d="M266 66L318 136"/><polygon class="ah" points="311,136 323,132 322,145"/>
+<path class="ln" d="M265 172h-102"/><polygon class="ah" points="165,166 165,178 157,172"/>
+<path class="ln" d="M100 146L152 76"/><polygon class="ah" points="145,77 157,81 155,68"/>
+<text class="t-s" x="210" y="112" text-anchor="middle">repeat for each</text><text class="t-s" x="210" y="128" text-anchor="middle">small behaviour</text>
+</svg><figcaption>The TDD loop. Red: write one small test and watch it fail. Green: write the simplest code that makes it pass. Refactor: improve the code while every test stays green. Then start again with the next behaviour.</figcaption></figure>
+<ol>
+<li><b>Red.</b> Write one small test for the next behaviour. Run it and <b>watch it fail</b>. That proves the test can fail, and that the behaviour really is missing.</li>
+<li><b>Green.</b> Write the <b>simplest</b> code that makes the test pass. Not the clever version, not the general version. Just enough.</li>
+<li><b>Refactor.</b> Now that the tests protect you, improve the code: clearer names, less repetition, a better structure. Run the tests after each change. They must stay green.</li>
+</ol>
+<p>The steps are small on purpose. If a test goes red, the bug can only be in the few lines you just wrote.</p>
+
+<h4>The task: <code>slugify</code></h4>
+<p>A <b>slug</b> is the readable part of a web address, like the <code>hello-world</code> in <code>/blog/hello-world</code>. <code>slugify(title)</code> should turn a post title into one: lower case, words joined by dashes, no punctuation. The starter function just returns an empty string, <code>''</code>.</p>
+
+<h4>Round one: red, then green</h4>
+<p>Start by writing tests for the basic behaviour, such as <code>'Hello World'</code> becoming <code>'hello-world'</code>, and a single word like <code>'Docker'</code> becoming <code>'docker'</code>. Run them. Both fail:</p>
+<pre class="snip">✖ lowercases and joins words with dashes
+  expected '' to be 'hello-world'</pre>
+<p>That is a <b>good</b> failure: it fails for the right reason, because the function returns nothing useful yet. If a brand-new test passes immediately, be suspicious: either the behaviour already exists, or the test is not checking what you think.</p>
+<p>Now the simplest code that passes. Three built-in string tools do it:</p>
+<pre class="snip">'Hello World'.toLowerCase()     // 'hello world'
+'hello world'.split(' ')        // ['hello', 'world']: cut at each space
+['hello', 'world'].join('-')    // 'hello-world': glue with dashes</pre>
+<p>Chain them inside <code>slugify</code>, run the tests, and both go green. Notice what you did <i>not</i> do: you did not worry about punctuation or double spaces. No test asks for that yet, so in TDD you don't build it yet.</p>
+
+<h4>Round two: a new requirement means a new failing test</h4>
+<p>Real titles are messier. A new requirement arrives: strip punctuation, ignore extra spaces, and collapse repeated dashes. In TDD you do <b>not</b> start by changing the code. You start by writing tests for the new behaviour, such as <code>'  Hello,   World!  '</code> becoming <code>'hello-world'</code>, and <code>'Git -- the basics'</code> becoming <code>'git-the-basics'</code>.</p>
+<p>Run them. The two old tests still pass, and the two new ones fail. Look at what the current code actually produces, because it shows exactly what is missing:</p>
+<pre class="snip">slugify('  Hello,   World!  ')  // '--hello,---world!--'
+slugify('Git -- the basics')    // 'git----the-basics'</pre>
+<p>Every space became a dash, including the spaces at the ends and the runs of spaces, and the comma and exclamation mark survived. That is the to-do list for the next green step.</p>
+
+<h4>Round two, green: the tools you need</h4>
+<p>Three more tools close the gap:</p>
+<ul>
+<li><code>.trim()</code> removes spaces from both ends of a string.</li>
+<li><code>.replace(pattern, replacement)</code> swaps parts of a string. With a <b>regular expression</b> as the pattern, it can match whole kinds of characters at once.</li>
+<li>A regular expression is written between slashes. <code>[...]</code> means "any one of these characters", and <code>[^...]</code> means "any character <i>except</i> these". <code>\\s</code> means any whitespace, <code>+</code> means "one or more in a row", and the <code>g</code> flag at the end means "every match, not just the first".</li>
+</ul>
+<p>So <code>/[^a-z0-9\\s-]/g</code> matches every character that is not a lowercase letter, a digit, whitespace or a dash: in other words, punctuation. Replace those with <code>''</code> to delete them. And <code>/[\\s-]+/g</code> matches each run of spaces and dashes, so replacing those with a single <code>'-'</code> collapses them.</p>
+<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="A messy title passing through lowercase, trim, drop punctuation and collapse steps">
+<g class="t-s"><text class="t-s" x="10" y="35">input</text><text class="t-s" x="10" y="77">lowercase</text><text class="t-s" x="10" y="119">trim</text><text class="t-s" x="10" y="161">no punctuation</text><text class="t-s" x="10" y="203">collapse to -</text></g>
+<rect class="bx" x="130" y="12" width="280" height="34" rx="6"/><text class="t-m" x="142" y="35">··Hello,···World!··</text>
+<rect class="bx" x="130" y="54" width="280" height="34" rx="6"/><text class="t-m" x="142" y="77">··hello,···world!··</text>
+<rect class="bx" x="130" y="96" width="280" height="34" rx="6"/><text class="t-m" x="142" y="119">hello,···world!</text>
+<rect class="bx-a" x="130" y="138" width="280" height="34" rx="6"/><text class="t-m" x="142" y="161">hello···world</text>
+<rect class="bx-ok" x="130" y="180" width="280" height="34" rx="6"/><text class="t-m t-ok" x="142" y="203">hello-world</text>
+</svg><figcaption>The messy title at each stage, with every space drawn as a small dot. Lowercasing changes the letters. Trimming removes the spaces at both ends. Dropping punctuation removes the comma and the exclamation mark. Finally each run of spaces or dashes becomes one dash, giving hello-world.</figcaption></figure>
+<p>Order matters. Trim before collapsing, or the end spaces become end dashes. For awkward inputs like <code>'- Hi -'</code>, one more replace that removes a dash at the very start or end of the string makes the result clean.</p>
+
+<h4>Refactor: tidy while green</h4>
+<p>Once all four tests pass, look at the code with fresh eyes. Is each step obvious? A long chain of <code>.replace</code> calls reads well if each line is on its own and has a short comment saying what it does. Could a name be clearer? Is anything left over from the first, simpler version?</p>
+<p><b>Refactoring</b> means changing the structure of code without changing its behaviour. Because the four tests describe the behaviour exactly, you can change anything you like and know within a second whether you broke something. Run the tests after every small change. If one goes red, undo the last change. That safety is the whole reason the refactor step comes <i>after</i> green.</p>
+<div class="mistake"><b>Common mistake</b>Taking giant steps: writing ten tests and a hundred lines, then facing six failures at once. Keep each loop small, one behaviour per test, and the cause of every failure is obvious.</div>
+<div class="mistake"><b>Common mistake</b>Skipping the refactor step because "it works". Code written in many quick green steps gets messy fast. A minute of tidying each loop, with the tests as a safety net, keeps it healthy.</div>
+<div class="try"><b>Try it in your head</b>After round one, the code is <code>title.toLowerCase().split(' ').join('-')</code>. What does it return for <code>'Docker  Compose'</code>, with two spaces? Splitting on single spaces gives <code>['docker', '', 'compose']</code>, so the result is <code>'docker--compose'</code>, with a double dash. In TDD, noticing that means writing a failing test for it first, and only then fixing the code.</div>
+
+<h4>Recap</h4>
+<ul>
+<li>TDD is a loop: red (a failing test), green (the simplest code that passes), refactor (tidy up while staying green).</li>
+<li>Always watch a new test fail first, and make sure it fails for the right reason.</li>
+<li>Write only the code the current tests ask for; a new requirement starts with a new failing test.</li>
+<li>Refactor in small steps, running the tests after each one.</li>
+<li>The result: a clear definition of done, a test for every behaviour, and the confidence to change code later.</li>
 </ul>
 `);
