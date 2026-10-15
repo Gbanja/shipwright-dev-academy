@@ -1,749 +1,577 @@
-/* git: "Explained step by step" walkthroughs. */
+/* git: visual "Understand it" walkthroughs (concept cards, anatomy, rules, step-through animations). */
+{
+/* Small drawing helpers for commit graphs, the three areas and laptop/GitHub pictures.
+   They live inside this block so nothing leaks into the other track files. */
+const cm=(x,y,l,c)=>`<circle class="${c||'bx-a'}" cx="${x}" cy="${y}" r="18"/><text class="t-b" x="${x}" y="${y+6}" text-anchor="middle" style="font-size:16px">${l}</text>`;
+const cs=(x,y,l,c)=>`<circle class="${c||'bx-a'}" cx="${x}" cy="${y}" r="14"/><text class="t-b" x="${x}" y="${y+5}" text-anchor="middle" style="font-size:14px">${l}</text>`;
+const ed=(x1,y1,x2,y2,c)=>`<path class="${c||'ln'}" style="stroke-width:3" d="M${x1} ${y1}${y1===y2?'H'+x2:'C'+((x1+x2)/2)+' '+y1+' '+((x1+x2)/2)+' '+y2+' '+x2+' '+y2}"/>`;
+/* branch sticky note above (up) or below a commit at (x,cy); head adds the HEAD "you are here" pill */
+const br=(n,x,cy,up,head,c)=>{const w=n.length*9+18,y=up?cy-62:cy+36;let s=`<path class="ln-d" d="M${x} ${up?cy-36:cy+18}V${up?cy-18:cy+36}"/><rect class="${c||'bx-warn'}" x="${x-w/2}" y="${y}" width="${w}" height="26" rx="4"/><text class="t-m" x="${x}" y="${y+18}" text-anchor="middle">${n}</text>`;if(head){const hy=up?cy-98:cy+74;s+=`<path class="ln-a" d="M${x} ${up?cy-74:cy+62}V${up?cy-62:cy+74}"/><rect class="bx-a" x="${x-30}" y="${hy}" width="60" height="24" rx="12"/><text class="t-b t-a" x="${x}" y="${hy+17}" text-anchor="middle" style="font-size:14px">HEAD</text>`}return s};
+/* terminal strip across the top: lines are strings or [text, extra class] */
+const tm=(L,h)=>`<rect class="bx-dark" x="4" y="4" width="412" height="${h||L.length*24+14}" rx="8"/>`+L.map((l,k)=>{l=Array.isArray(l)?l:[l];return `<text class="t-term${l[1]?' '+l[1]:''}" x="16" y="${27+k*24}" style="font-size:14px">${l[0]}</text>`}).join('');
+/* the three areas: o.w working files, o.s staged files, o.h commits; files are [name, box class]; o.hl highlights a panel (steppers only); o.a lights arrow 1 (add) or 2 (commit) */
+const fl=(x,k,f)=>{f=Array.isArray(f)?f:[f];return `<rect class="${f[1]||'bx'}" x="${x+8}" y="${72+k*30}" width="116" height="25" rx="5"/><text class="t-m" x="${x+66}" y="${89+k*30}" text-anchor="middle" style="font-size:14px">${f[0]}</text>`};
+const ar=o=>{const X=[4,144,284],N=['Working folder','Staging box','History'],I=[['folder','ic-info'],['box','ic-warn'],['book','ic-a']];let s='';
+ X.forEach((x,i)=>{s+=`<rect class="${o.hl===i?'bx-hl':'bx'}" x="${x}" y="4" width="132" height="160" rx="10"/>${V.ic(I[i][0],x+50,8,32,I[i][1])}<text class="t-b" x="${x+66}" y="58" text-anchor="middle">${N[i]}</text>`});
+ (o.w||[]).forEach((f,k)=>s+=fl(X[0],k,f));(o.s||[]).forEach((f,k)=>s+=fl(X[1],k,f));
+ const h=o.h||[];h.forEach((c,k)=>{if(k)s+=ed(302+(k-1)*36,100,302+k*36,100)});h.forEach((c,k)=>{c=Array.isArray(c)?c:[c];s+=cs(302+k*36,100,c[0],c[1])});
+ if(o.hn)s+=`<text class="t" x="350" y="146" text-anchor="middle" style="font-size:14px">${o.hn}</text>`;
+ if(o.a!==undefined){const a1=o.a===1,a2=o.a===2;
+  s+=`<path class="${a1?'ln-a':'ln-d'}" d="M70 180H196"/><polygon class="${a1?'ah-a':'ah'}" points="196,174 196,186 206,180"/><text class="t-m${a1?' t-a':''}" x="136" y="204" text-anchor="middle" style="font-size:14px">git add</text>`;
+  s+=`<path class="${a2?'ln-a':'ln-d'}" d="M214 180H336"/><polygon class="${a2?'ah-a':'ah'}" points="336,174 336,186 346,180"/><text class="t-m${a2?' t-a':''}" x="280" y="204" text-anchor="middle" style="font-size:14px">git commit</text>`}
+ return s+(o.x||'')};
+/* laptop (left) and GitHub (right). o.l / o.r: commits [label, class, column, dy, parents?]; o.lt / o.rt: tags [name, commit index, up?]; o.dir 'push' | 'pull' | 'fetch' */
+const side=(x0,C,T)=>{let s='';const P=C.map((c,k)=>[x0+30+c[2]*40,108+(c[3]||0)]);
+ C.forEach((c,k)=>{const ps=c[4]||(k?[k-1]:[]);ps.forEach(p=>s+=ed(P[p][0],P[p][1],P[k][0],P[k][1]))});
+ C.forEach((c,k)=>s+=cs(P[k][0],P[k][1],c[0],c[1]));
+ (T||[]).forEach(t=>{const [x,y]=P[t[1]],w=t[0].length*8.4+14,ty=t[2]?y-48:y+24;s+=`<path class="ln-d" d="M${x} ${t[2]?y-24:y+14}V${t[2]?y-14:y+24}"/><rect class="${t[3]||'bx-warn'}" x="${x-w/2}" y="${ty}" width="${w}" height="24" rx="4"/><text class="t-m" x="${x}" y="${ty+17}" text-anchor="middle" style="font-size:14px">${t[0]}</text>`});return s};
+const lg=o=>{let s=`<rect class="bx" x="4" y="4" width="200" height="160" rx="10"/>${V.ic('laptop',12,8,30,'ic-info')}<text class="t-b" x="48" y="30">Your laptop</text>
+<rect class="${o.rc||'bx'}" x="216" y="4" width="200" height="160" rx="10"/>${V.ic('cloud',224,8,30,'ic-a')}<text class="t-b" x="260" y="30">GitHub (origin)</text>`;
+ s+=side(4,o.l||[],o.lt)+side(216,o.r||[],o.rt);
+ if(o.dir==='push')s+=`<path class="ln-a" d="M120 182H290"/><polygon class="ah-a" points="290,176 290,188 300,182"/><text class="t-m t-a" x="210" y="206" text-anchor="middle" style="font-size:14px">${o.cmd||'git push'}</text>`;
+ if(o.dir==='pull'||o.dir==='fetch')s+=`<path class="ln-ok" d="M300 182H130"/><polygon class="ah-ok" points="130,176 130,188 120,182"/><text class="t-m t-ok" x="210" y="206" text-anchor="middle" style="font-size:14px">${o.cmd||'git '+o.dir}</text>`;
+ if(o.bad)s+=`<text class="t-b t-bad" x="210" y="206" text-anchor="middle" style="font-size:14px">${o.bad}</text>`;
+ return s+(o.x||'')};
 
 explain('g1',`
-<h4>The problem Git solves</h4>
-<p>Imagine you are building a website. On Monday it works. On Tuesday you change a few files and suddenly the page is broken. What did you change? Which file? What did it look like on Monday? Without help, you are left guessing.</p>
-<p>Most people's first answer is to copy the folder before every big change: <code>site-v1</code>, <code>site-v2</code>, <code>site-final</code>, <code>site-final-REALLY</code>. That works for a week. Then you have twenty folders, no idea what is different between them, and no way to combine your work with a friend's.</p>
-<p><b>Version control</b> is software that solves this properly. It keeps a complete, labelled history of your project inside the project itself. You can see exactly what changed, when, who changed it and why, and you can go back to any earlier version in seconds. <b>Git</b> is the version control system almost every software team uses today.</p>
-<figure class="fig"><svg viewBox="0 0 420 270" role="img" aria-label="Copied folders compared with one folder holding a history of commits">
-<text class="t-b" x="20" y="24">Without Git</text>
-<rect class="bx" x="20" y="36" width="120" height="40" rx="6"/><text class="t-m" x="80" y="61" text-anchor="middle">site-v1</text>
-<rect class="bx" x="150" y="36" width="120" height="40" rx="6"/><text class="t-m" x="210" y="61" text-anchor="middle">site-v2</text>
-<rect class="bx-bad" x="280" y="36" width="120" height="40" rx="6"/><text class="t-m" x="340" y="61" text-anchor="middle">site-final</text>
-<text class="t-s" x="210" y="100" text-anchor="middle">Which one is right? What changed?</text>
-<text class="t-b" x="20" y="132">With Git</text>
-<rect class="bx" x="20" y="144" width="380" height="110" rx="8"/>
-<text class="t-m" x="36" y="168">project/</text>
-<line class="ln-a" x1="70" y1="196" x2="350" y2="196"/>
-<circle class="dot" cx="80" cy="196" r="10"/><circle class="dot" cx="210" cy="196" r="10"/><circle class="dot" cx="340" cy="196" r="10"/>
-<g text-anchor="middle"><text class="t-s" x="80" y="224">Add page</text><text class="t-s" x="210" y="224">Add styles</text><text class="t-s" x="340" y="224">Fix heading</text>
-<text class="t-s" x="80" y="242">Monday</text><text class="t-s" x="210" y="242">Tuesday</text><text class="t-s" x="340" y="242">Wednesday</text></g>
-</svg><figcaption>Top: the copy-the-folder approach, where you end up with many folders and no idea how they differ. Bottom: with Git there is one folder, and inside it a timeline of saved snapshots, each with a message saying what it did.</figcaption></figure>
-<div class="analogy"><b>Think of it like</b>The save points in a video game. Before a hard level you save. If things go badly, you load the save and try again. Git lets you make as many save points as you like, give each one a name, and jump back to any of them.</div>
+<p>Every professional developer uses Git, every working day. It is the safety net that lets you try anything, break things and still get back to the version that worked.</p>
 
-<h4>Commits: the snapshots</h4>
-<p>Each save point in Git is called a <b>commit</b>. A commit is a snapshot of every tracked file in your project at one moment, plus a little information about it:</p>
-<ul>
-<li>a <b>message</b> you write, saying what the change does, such as "Add contact page";</li>
-<li>the <b>author</b>: your name and email address;</li>
-<li>the <b>date and time</b>;</li>
-<li>a unique <b>id</b>, a long string of letters and numbers that Git calculates for you.</li>
-</ul>
-<p>A snapshot is not a copy of the whole folder every time. Git is clever: if a file did not change, the new commit simply points at the version it already stored. That is why Git stays fast and small even with thousands of commits.</p>
+${V.card(1,'Version control','save points for your project',`
+<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Top: a mess of copied folders called site, site-v2, site-final and site-FINAL-2. Bottom: one folder with a timeline of three save points">
+<text class="t-b t-bad" x="10" y="22">Without Git</text>
+${V.ic('folder',10,30,40,'ic-bad')}<text class="t-m" x="30" y="88" text-anchor="middle" style="font-size:14px">site</text>
+${V.ic('folder',96,30,40,'ic-bad')}<text class="t-m" x="116" y="88" text-anchor="middle" style="font-size:14px">site-v2</text>
+${V.ic('folder',196,30,40,'ic-bad')}<text class="t-m" x="216" y="88" text-anchor="middle" style="font-size:14px">site-final</text>
+${V.ic('folder',320,30,40,'ic-bad')}<text class="t-m" x="340" y="88" text-anchor="middle" style="font-size:14px">site-FINAL-2</text>
+<text class="t-b t-ok" x="10" y="124">With Git</text>
+${V.ic('folder',10,134,48,'ic-ok')}<text class="t-m" x="34" y="200" text-anchor="middle" style="font-size:14px">site</text>
+${ed(110,160,370,160,'ln-ok')}
+${cm(110,160,'1','bx-ok')}${cm(240,160,'2','bx-ok')}${cm(370,160,'3','bx-ok')}
+<text class="t" x="110" y="200" text-anchor="middle" style="font-size:14px">Add page</text><text class="t" x="240" y="200" text-anchor="middle" style="font-size:14px">Add colours</text><text class="t" x="370" y="200" text-anchor="middle" style="font-size:14px">Fix title</text>
+</svg><figcaption>Top: saving by copying folders. Soon nobody knows which one is right. Bottom: Git keeps one folder and a timeline of save points inside it, each with a note saying what changed.</figcaption></figure>
+${V.like(`<p>Save points in a video game. Before a hard level you save. If it goes badly, you load the save and try again. Git gives you unlimited save points, each with a name, and you can jump back to any of them.</p>`)}
+${V.why(`<p>In 2005 the Linux kernel team lost the free use of the tool they kept their code in. Linus Torvalds, who started Linux, wrote a replacement in about two weeks and called it <b>Git</b>. It had to be fast, work offline and survive thousands of people editing at once. Today almost every software team on Earth uses it.</p>`)}
+${V.anat([[1,'git'],' ',[2,'--version']],[
+ '<b>The program.</b> Every Git command starts with <code>git</code>.',
+ '<b>An option.</b> Options start with dashes. This one asks Git to print its version number, which proves it is installed.'])}
+${V.hook(`Git is the save button that never forgets: every save point has a name, a date and a reason.`)}
+`)}
 
-<h4>Repository: the project Git is watching</h4>
-<p>A <b>repository</b>, or <b>repo</b> for short, is a project folder that Git is tracking. It looks like an ordinary folder, but it contains one extra, hidden folder called <code>.git</code>. The dot at the start of the name is what makes it hidden on Linux and macOS; normal <code>ls</code> skips names starting with a dot, and <code>ls -a</code> shows them.</p>
-<p>Everything Git knows lives inside <code>.git</code>: every commit, every message, every old version of every file. Your own files sit next to it, exactly where you put them. If you deleted the <code>.git</code> folder, your current files would survive but the whole history would be gone, so leave it alone.</p>
-<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="A folder before and after git init">
-<g text-anchor="middle"><text class="t-b" x="85" y="24">Before</text><text class="t-b" x="332" y="24">After</text></g>
-<rect class="bx" x="10" y="40" width="150" height="120" rx="8"/>
-<text class="t-m" x="85" y="66" text-anchor="middle">project/</text>
-<text class="t-s" x="85" y="104" text-anchor="middle">your files</text>
-<line class="ln-a" x1="166" y1="104" x2="240" y2="104"/><polygon class="ah-a" points="238,98 238,110 248,104"/>
-<text class="t-m t-a" x="207" y="92" text-anchor="middle">git init</text>
-<rect class="bx" x="255" y="40" width="155" height="120" rx="8"/>
-<text class="t-m" x="332" y="66" text-anchor="middle">project/</text>
-<text class="t-s" x="332" y="88" text-anchor="middle">your files</text>
-<rect class="bx-a" x="268" y="100" width="129" height="48" rx="6"/>
-<text class="t-m" x="332" y="121" text-anchor="middle">.git/</text>
-<text class="t-s" x="332" y="139" text-anchor="middle">the history</text>
-</svg><figcaption>Running git init does not touch your files. It adds one hidden folder called .git, and that folder is where Git keeps the entire history of the project.</figcaption></figure>
+${V.card(2,'Git and GitHub','the camera and the shared album',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="Git runs on your laptop, offline. GitHub is a website in the cloud. Push sends commits up, pull brings them down">
+<rect class="bx-info" x="6" y="10" width="160" height="150" rx="10"/>${V.ic('laptop',50,22,72,'ic-info')}
+<text class="t-b" x="86" y="118" text-anchor="middle" style="font-size:17px">Git</text><text class="t" x="86" y="142" text-anchor="middle" style="font-size:14px">on your computer</text>
+<rect class="bx-a" x="254" y="10" width="160" height="150" rx="10"/>${V.ic('cloud',298,22,72,'ic-a')}
+<text class="t-b" x="334" y="118" text-anchor="middle" style="font-size:17px">GitHub</text><text class="t" x="334" y="142" text-anchor="middle" style="font-size:14px">a website</text>
+<path class="ln-a" d="M172 62H240"/><polygon class="ah-a" points="238,56 238,68 248,62"/><text class="t-m t-a" x="210" y="50" text-anchor="middle" style="font-size:14px">push</text>
+<path class="ln-ok" d="M248 104H180"/><polygon class="ah-ok" points="182,98 182,110 172,104"/><text class="t-m t-ok" x="210" y="128" text-anchor="middle" style="font-size:14px">pull</text>
+</svg><figcaption>Git is a program on your own computer and works with no internet. GitHub is a website that keeps a copy of your project online so other people can reach it.</figcaption></figure>
+${V.like(`<p>Git is your camera: it takes the snapshots, and it works anywhere, even offline. GitHub is a shared online photo album where you upload them so friends can see and add their own.</p>`)}
+${V.why(`<p>Git on its own lives on one machine. GitHub launched in 2008 so teams could share repositories, review each other's changes in <b>pull requests</b> and run automatic checks with <b>GitHub Actions</b>. GitLab and Bitbucket are similar websites.</p>`)}
+${V.rules(V.rh('Rules: do not mix them up'),
+ V.ok('git commit','A Git command. Runs on your computer'),V.no('"I committed to GitHub"','Commits are made locally. You push them to GitHub later'),
+ V.ok('Git works offline','You can commit on a plane'),V.ok('GitHub needs the internet','It is a website'))}
+${V.hook(`Git takes the photos. GitHub is the album you share.`)}
+`)}
 
-<h4>Git and GitHub are different things</h4>
-<p>Beginners mix these up constantly, so let's be precise.</p>
-<ul>
-<li><b>Git</b> is a program that runs on your own computer. It works completely offline. It records commits in the <code>.git</code> folder.</li>
-<li><b>GitHub</b> is a website, owned by Microsoft, that stores copies of Git repositories online. Teams use it to share code, review each other's work in <b>pull requests</b> and run automatic jobs with <b>GitHub Actions</b>. GitLab and Bitbucket are similar websites.</li>
-</ul>
-<p>You will use Git all the time and GitHub when you want to share. Sending your commits up to GitHub is called <b>pushing</b>, and fetching other people's commits down is called <b>pulling</b>. Both come in later lessons.</p>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Git on your computer, GitHub online, connected by push and pull">
-<rect class="bx" x="10" y="20" width="170" height="150" rx="8"/><text class="t-b" x="95" y="46" text-anchor="middle">Your computer</text>
-<rect class="bx-a" x="25" y="62" width="140" height="40" rx="6"/><text class="t-m" x="95" y="87" text-anchor="middle">project/</text>
-<rect class="bx-ok" x="25" y="114" width="140" height="40" rx="6"/><text class="t" x="95" y="139" text-anchor="middle">Git history</text>
-<rect class="bx-info" x="240" y="20" width="170" height="150" rx="8"/><text class="t-b" x="325" y="46" text-anchor="middle">GitHub</text>
-<rect class="bx-ok" x="255" y="62" width="140" height="40" rx="6"/><text class="t" x="325" y="87" text-anchor="middle">copy of repo</text>
-<rect class="bx" x="255" y="114" width="140" height="40" rx="6"/><text class="t" x="325" y="139" text-anchor="middle">PRs, reviews</text>
-<line class="ln-a" x1="182" y1="92" x2="230" y2="92"/><polygon class="ah-a" points="228,86 228,98 238,92"/><text class="t-s" x="210" y="82" text-anchor="middle">push</text>
-<line class="ln-ok" x1="190" y1="136" x2="238" y2="136"/><polygon class="ah-ok" points="192,130 192,142 182,136"/><text class="t-s" x="210" y="126" text-anchor="middle">pull</text>
-<text class="t-s" x="210" y="196" text-anchor="middle">Git works offline. GitHub is for sharing.</text>
-</svg><figcaption>Git lives on your computer and keeps the history. GitHub is a website that holds a copy of the repository so other people can reach it. Push sends your commits up; pull brings other people's commits down.</figcaption></figure>
+${V.card(3,'Your name on every commit','git config, once per computer',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A commit card stamped with the author Ada Lovelace and her email address">
+<rect class="bx" x="20" y="12" width="380" height="146" rx="10"/>${V.ic('person',36,30,56,'ic-p')}
+<text class="t-s" x="110" y="42" style="font-size:14px">Author</text><text class="t-b" x="180" y="42" style="font-size:16px">Ada Lovelace</text>
+<text class="t-s" x="110" y="72" style="font-size:14px">Email</text><text class="t-m" x="180" y="72">ada@example.com</text>
+<text class="t-s" x="110" y="102" style="font-size:14px">Date</text><text class="t" x="180" y="102">Mon 12 Oct, 10:14</text>
+<text class="t-s" x="110" y="132" style="font-size:14px">Message</text><text class="t" x="180" y="132">Add homepage heading</text>
+</svg><figcaption>Every commit carries a stamp saying who made it. Git fills in the name and email from your settings, so you set them once.</figcaption></figure>
+${V.like(`<p>Signing your name on a piece of homework before you hand it in. Git signs every commit for you, so the team always knows who did what.</p>`)}
+${V.anat([[1,'git config'],' ',[2,'--global'],' ',[3,'user.name'],' ',[4,'"Ada Lovelace"']],[
+ '<b>Command.</b> Read or change Git settings.',
+ '<b>Scope.</b> <code>--global</code> means "for every project on this computer". Without it, the setting is for the current repository only.',
+ '<b>Setting name.</b> <code>user.name</code> for your name, <code>user.email</code> for your email.',
+ '<b>Value.</b> In quotes, because a name with a space would otherwise be read as two separate words.'])}
+${V.rules(V.rh('Rules'),
+ V.ok('"Ada Lovelace"','Quote anything with a space in it'),V.no('user.name Ada Lovelace','Without quotes the space splits the name and Git does not store it as you meant'),
+ V.rh('Conventions'),
+ V.ok('Same email as GitHub','GitHub uses it to link commits to your profile'),V.ok('git config --list','Shows every setting, so you can check your work'))}
+${V.build(`<ol><li>Check Git is installed: <code>git --version</code>.</li><li>Set your name with <code>git config --global user.name</code> and your name in quotes.</li><li>Set your email the same way with <code>user.email</code>.</li></ol>`)}
+${V.hook(`Name and email, set once, signed on every commit.`)}
+`)}
 
-<h4>How a Git command is built</h4>
-<p>You talk to Git by typing commands in a terminal. Every Git command has the same shape: the word <code>git</code>, then a <b>subcommand</b> saying what you want, then sometimes extra <b>options</b> (which start with dashes) and <b>values</b>.</p>
-<pre class="snip">git --version                          # option only: which Git is installed?
-git init                               # subcommand: start a repository here
-git config --global user.name "Ada"    # subcommand, option, setting name, value</pre>
-<p>Running <code>git --version</code> first is a good habit. It proves Git is installed and prints something like <code>git version 2.47.0</code>. If you see "command not found" on a real computer, Git is not installed yet.</p>
+${V.card(4,'Make a repository','git init and git status',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A folder called portfolio before git init, and after, when it contains a hidden .git folder holding the history">
+<rect class="bx" x="6" y="10" width="150" height="150" rx="10"/>${V.ic('folder',47,24,68,'ic-info')}<text class="t-m" x="81" y="118" text-anchor="middle">portfolio/</text><text class="t" x="81" y="144" text-anchor="middle" style="font-size:14px">just a folder</text>
+<path class="ln-a" d="M164 85H236"/><polygon class="ah-a" points="236,79 236,91 246,85"/><text class="t-m t-a" x="205" y="72" text-anchor="middle" style="font-size:14px">git init</text>
+<rect class="bx-ok" x="254" y="10" width="160" height="150" rx="10"/>${V.ic('folder',300,20,68,'ic-ok')}<text class="t-m" x="334" y="108" text-anchor="middle">portfolio/</text>
+<rect class="bx-a" x="276" y="118" width="116" height="30" rx="6"/><text class="t-m" x="334" y="139" text-anchor="middle">.git/</text>
+</svg><figcaption>git init does not touch your files. It adds one hidden folder, .git, and that folder is where Git keeps the whole history.</figcaption></figure>
+${V.like(`<p>Putting a diary inside a box of toys. The toys stay as they were, but from now on the diary records every change. The <code>.git</code> folder is that diary.</p>`)}
+${V.anat([[1,'git'],' ',[2,'init']],[
+ '<b>The program.</b>',
+ '<b>Initialise.</b> Turns the folder you are standing in into a <b>repository</b> (repo): a folder Git is tracking.'])}
+<p><b>Watch a repository being born.</b></p>
+${V.steps([
+ ['Check Git is installed. It prints a version number. Yours may be different, and that is fine.',`<svg viewBox="0 0 420 200" role="img" aria-label="git --version prints git version 2.51.0">
+${tm(['$ git --version',['git version 2.51.0','t-ok']],110)}
+${V.ic('folder',20,128,54,'ic-info')}<text class="t-m" x="90" y="164">portfolio/</text>
+<text class="t" x="206" y="164" style="font-size:14px">not a repository yet</text>
+</svg>`],
+ ['Stamp your name and email. Git saves them in a settings file in your home folder, not in the project.',`<svg viewBox="0 0 420 200" role="img" aria-label="git config sets user.name and user.email">
+${tm(['$ git config --global user.name "Ada"','$ git config --global user.email "ada@..."'],110)}
+${V.ic('folder',20,128,54,'ic-info')}<text class="t-m" x="90" y="164">portfolio/</text>
+<rect class="bx-hl" x="300" y="126" width="114" height="64" rx="8"/>${V.ic('person',306,136,40,'ic-p')}<text class="t-b" x="348" y="154">Ada</text><text class="t-m" x="348" y="178" style="font-size:14px">ada@...</text>
+</svg>`],
+ ['<b>git init</b> creates the hidden <b>.git</b> folder. The folder is now a repository, still with no commits.',`<svg viewBox="0 0 420 200" role="img" aria-label="git init creates .git inside portfolio">
+${tm(['$ git init',['Initialized empty Git repository','t-ok']],110)}
+${V.ic('folder',20,128,54,'ic-ok')}<text class="t-m" x="90" y="164">portfolio/</text>
+<rect class="bx-hl" x="200" y="144" width="86" height="30" rx="6"/><text class="t-m" x="243" y="165" text-anchor="middle">.git/</text>
+<rect class="bx-info" x="300" y="126" width="114" height="64" rx="8"/>${V.ic('person',306,136,40,'ic-p')}<text class="t-b" x="348" y="154">Ada</text><text class="t-m" x="348" y="178" style="font-size:14px">ada@...</text>
+</svg>`],
+ ['<b>git status</b> answers "where am I?" You are on the branch <b>main</b>, with no commits yet and nothing to save.',`<svg viewBox="0 0 420 200" role="img" aria-label="git status: On branch main, No commits yet">
+${tm(['$ git status',['On branch main','t-ok'],['No commits yet','t-ok'],'nothing to commit'],110)}
+${V.ic('folder',20,128,54,'ic-ok')}<text class="t-m" x="90" y="164">portfolio/</text>
+<rect class="bx-a" x="200" y="144" width="86" height="30" rx="6"/><text class="t-m" x="243" y="165" text-anchor="middle">.git/</text>
+<rect class="bx-info" x="300" y="126" width="114" height="64" rx="8"/>${V.ic('person',306,136,40,'ic-p')}<text class="t-b" x="348" y="154">Ada</text><text class="t-m" x="348" y="178" style="font-size:14px">ada@...</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.no('git init in your home folder','Then Git tracks everything you own. Go into the project folder first'),
+ V.no('Deleting .git','Your files survive but the whole history is gone'),
+ V.no('A repo inside a repo','Run git init once, at the top of the project'),
+ V.rh('Conventions'),
+ V.ok('git status','Run it constantly. It also suggests what to type next'),
+ V.ok('main','The usual name of the first branch. Set it with git config --global init.defaultBranch main'))}
+${V.hook(`<code>init</code> once to start the diary, <code>status</code> often to read where you are.`)}
+`)}
 
-<h4>Telling Git who you are: <code>git config</code></h4>
-<p>Every commit records an author. Git does not know your name, so you must tell it once on each computer. The settings are called your <b>config</b> (short for configuration).</p>
-<pre class="snip">git config --global user.name "Ada Lovelace"
-git config --global user.email "ada@example.com"</pre>
-<p>Step by step:</p>
-<ol>
-<li><code>config</code> is the subcommand for reading and changing settings.</li>
-<li><code>--global</code> means "for every repository on this computer", not just the current one. Git saves it in a file in your home folder called <code>.gitconfig</code>.</li>
-<li><code>user.name</code> and <code>user.email</code> are the names of the two settings.</li>
-<li>The last part is the value. Put a name with a space inside quotes, otherwise Git sees two separate words.</li>
-</ol>
-<p>From now on, every commit you make is stamped with that name and email. On GitHub, the email is how your commits get linked to your profile, so use the same address as your GitHub account.</p>
-<div class="mistake"><b>Common mistake</b>Leaving out the quotes: <code>git config --global user.name Ada Lovelace</code>. Git reads only <code>Ada</code> as the value and complains about the extra word, or saves the wrong thing. Quote any value that contains a space.</div>
-
-<h4>Starting a repository: <code>git init</code></h4>
-<p><code>init</code> is short for initialise. Run it inside the folder you want Git to track, and it creates the hidden <code>.git</code> folder:</p>
-<pre class="snip">$ git init
-Initialized empty Git repository in /home/you/project/.git/</pre>
-<p>"Empty" means no commits yet, not that your files were deleted. You only run <code>git init</code> once per project. Running it again is harmless; Git just says "Reinitialized existing Git repository".</p>
-<p>A fresh repository starts on a <b>branch</b>, which for now you can think of as the name of your main timeline. In this sandbox it is called <code>main</code>. On your own computer, older setups may call it <code>master</code>; running <code>git config --global init.defaultBranch main</code> once makes new repositories use <code>main</code>.</p>
-
-<h4>Your best friend: <code>git status</code></h4>
-<p><code>git status</code> answers the question "where do things stand right now?" It never changes anything, so you can run it as often as you like. Right after <code>git init</code> it says:</p>
-<pre class="snip">$ git status
-On branch main          # which timeline you are on
-
-No commits yet          # the history is empty so far
-
-nothing to commit (create/copy files and use "git add" to track)</pre>
-<p>Notice the last line. Git is telling you what to do next. It does this a lot, and reading its suggestions is one of the fastest ways to learn. Professionals run <code>git status</code> constantly, before and after almost every other command.</p>
-<p>If you run a Git command outside a repository, you will see <code>fatal: not a git repository</code>. "Fatal" sounds dramatic, but it only means "I stopped". Here it means there is no <code>.git</code> folder in this folder or any folder above it, so either run <code>git init</code> or move into your project folder.</p>
-<div class="tip"><b>Tip</b>When you are lost, confused or nervous, type <code>git status</code>. It is always safe, and it usually tells you what to type next.</div>
-<div class="try"><b>Try it in your head</b>You set your name with <code>--global</code> on your laptop, then start a second project on the same laptop. Do you need to set your name again? No: <code>--global</code> applies to every repository on that computer. On a new computer, though, you would set it once more.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Git is a version control system: it records snapshots called commits, each with a message, author, date and id.</li>
-<li>A repository is a folder Git tracks; the history lives in its hidden <code>.git</code> folder.</li>
-<li>Git runs on your computer and works offline. GitHub is a website that hosts copies of repositories for sharing.</li>
-<li><code>git config --global user.name</code> and <code>user.email</code> set the author stamped on every commit, once per computer.</li>
-<li><code>git init</code> turns a folder into a repository, and <code>git status</code> tells you where you stand and what to do next.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Can you make a commit with no internet? <i>Yes. Git runs on your computer; only GitHub needs the internet.</i> 2. Why does <code>"Ada Lovelace"</code> need quotes? <i>Without them the space splits it into two words.</i> 3. What appears in a folder after <code>git init</code>? <i>A hidden .git folder holding the history.</i></div>
 `);
 
 explain('g2',`
-<h4>Why Git does not save everything automatically</h4>
-<p>A word processor saves whatever is on the screen. Git is more deliberate. It asks you to <b>choose</b> what goes into each snapshot, then to <b>describe</b> it. That sounds like extra work, but it is the reason Git histories are useful.</p>
-<p>Picture a real afternoon. You fixed a typo on the homepage, and you also started a half-finished contact page. You want to save the typo fix now, with a clear message, but not the broken contact page. Git makes that possible because saving happens in two steps: first you pick, then you commit.</p>
-<div class="analogy"><b>Think of it like</b>Packing a parcel. Your desk is covered in things (your files). You put the items you want to send into a box (staging). When the box holds exactly the right things, you seal it and write a label (committing). Only sealed, labelled boxes go on the shelf of history.</div>
+<p>This lesson holds the single most important picture in Git: three areas, and two commands that move your work between them. Get this picture into your head and every later Git command makes sense.</p>
 
-<h4>The three areas</h4>
-<p>This is the most important picture in the whole Git track. Every change you make lives in one of three places.</p>
-<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="Working directory, staging area and repository, connected by git add and git commit">
-<g text-anchor="middle">
-<text class="t-m t-a" x="137" y="50">git add</text><text class="t-m t-a" x="282" y="50">git commit</text>
-<rect class="bx" x="10" y="70" width="110" height="90" rx="8"/><text class="t-b" x="65" y="105">Working</text><text class="t-b" x="65" y="125">directory</text>
-<rect class="bx-warn" x="155" y="70" width="110" height="90" rx="8"/><text class="t-b" x="210" y="105">Staging</text><text class="t-b" x="210" y="125">area</text>
-<rect class="bx-ok" x="300" y="70" width="110" height="90" rx="8"/><text class="t-b" x="355" y="105">Repository</text><text class="t-b" x="355" y="125">(history)</text>
-<text class="t-s" x="65" y="182">your edits</text><text class="t-s" x="210" y="182">next commit</text><text class="t-s" x="355" y="182">saved forever</text>
-<text class="t-m" x="65" y="212">ls, cat</text><text class="t-m" x="210" y="212">git status</text><text class="t-m" x="355" y="212">git log</text>
-</g>
-<line class="ln-a" x1="121" y1="115" x2="146" y2="115"/><polygon class="ah-a" points="145,109 145,121 154,115"/>
-<line class="ln-a" x1="266" y1="115" x2="291" y2="115"/><polygon class="ah-a" points="290,109 290,121 299,115"/>
-<line class="ln-a" x1="137" y1="58" x2="137" y2="108"/><line class="ln-a" x1="282" y1="58" x2="282" y2="108"/>
-</svg><figcaption>Changes start in the working directory, where you edit files. git add copies them into the staging area, the box for the next commit. git commit seals the staging area into a permanent snapshot in the repository. The bottom row shows the command you use to look at each area.</figcaption></figure>
-<ul>
-<li>The <b>working directory</b> is simply the files in your project folder, the ones you open and edit. Git watches them but does not save them on its own.</li>
-<li>The <b>staging area</b> (also called the <b>index</b>) is a holding area for the next commit. Whatever is staged will go into the next snapshot, and nothing else.</li>
-<li>The <b>repository</b> is the permanent history of commits, stored in <code>.git</code>.</li>
-</ul>
-<p>The sandbox's <b>Files</b> panel shows this live: each file is marked <i>untracked</i>, <i>staged</i> or <i>committed</i> as it moves along.</p>
+${V.card(1,'The three areas','desk, parcel box, shelf',`
+<figure class="fig"><svg viewBox="0 0 420 212" role="img" aria-label="Three areas: working folder with index.html, staging box, and history with commits. git add moves work to the staging box, git commit moves it to history">
+${ar({w:[['index.html','bx-info'],['about.html','bx-info']],s:[['index.html','bx-warn']],h:['A','B'],hn:'saved for good',a:0})}
+</svg><figcaption>Your edits start in the working folder. git add puts a copy in the staging box, the box for the next commit. git commit seals the box and adds it to the history.</figcaption></figure>
+${V.like(`<p>Sending a parcel. Your <b>desk</b> is covered in stuff (the working folder). You put the items you want to send into a <b>box</b> (staging). When the box holds exactly the right things, you tape it shut and write a label (commit). Sealed boxes go on the <b>shelf</b> of history and are never opened again.</p>`)}
+${V.why(`<p>A word processor saves whatever is on screen. Git asks you to choose. That lets you save the typo fix you finished while leaving your half-built contact page out of it. Each commit then does one clear thing.</p>`)}
+${V.rules(V.rh('The names Git uses'),
+ V.ok('working tree','Your files as they are right now'),V.ok('staging area (index)','"Changes to be committed" in git status'),
+ V.ok('repository','The history of commits, stored in .git'),V.ok('untracked','A new file Git sees but has never saved'))}
+${V.hook(`Desk, box, shelf: <code>add</code> packs the box, <code>commit</code> seals it.`)}
+`)}
 
-<h4>Step 1: create a file</h4>
-<p>The first task creates <code>index.html</code> using the terminal:</p>
-<pre class="snip">echo "&lt;h1&gt;Hello world&lt;/h1&gt;" &gt; index.html</pre>
-<p><code>echo</code> prints the text in quotes. The <code>&gt;</code> symbol takes that output and writes it into a file instead of the screen, creating the file if needed. So this one line makes a file called <code>index.html</code> that contains a web page heading.</p>
-<p>Now run <code>git status</code>. Git notices the new file but has never saved it, so it calls it <b>untracked</b>:</p>
-<pre class="snip">On branch main
+${V.card(2,'Your first commit','watch a file travel',`
+${V.steps([
+ ['You create <b>index.html</b>. It sits in your working folder only. git status calls it <b>untracked</b>: Git sees it but is not looking after it.',`<svg viewBox="0 0 420 212" role="img" aria-label="index.html in the working folder, untracked">
+${ar({hl:0,w:[['index.html','bx-bad']],hn:'empty',a:0})}</svg>`],
+ ['<b>git add index.html</b> puts a copy of the file, as it is right now, into the staging box. Silence on screen means it worked.',`<svg viewBox="0 0 420 212" role="img" aria-label="git add copies index.html into the staging box">
+${ar({hl:1,w:[['index.html','bx-info']],s:[['index.html','bx-warn']],hn:'empty',a:1})}</svg>`],
+ ['<b>git commit -m "Add homepage heading"</b> seals the box into snapshot <b>A</b>, stamped with your name, the time and your message.',`<svg viewBox="0 0 420 212" role="img" aria-label="git commit creates commit A in history">
+${ar({hl:2,w:[['index.html','bx-info']],h:[['A','bx-ok']],hn:'A: Add heading',a:2})}</svg>`],
+ ['All three areas now agree. git status says <b>working tree clean</b>: nothing new to save. A calm, safe place to be.',`<svg viewBox="0 0 420 212" role="img" aria-label="Clean: the file and commit A match">
+${ar({w:[['index.html','bx-ok']],h:['A'],hn:'A: Add heading'})}
+<text class="t-b t-ok" x="210" y="204" text-anchor="middle">working tree clean</text></svg>`]])}
+${V.anat([[1,'git commit'],' ',[2,'-m'],' ',[3,'"Add homepage heading"']],[
+ '<b>Command.</b> Seal everything in the staging box into one new commit.',
+ '<b>Message flag.</b> <code>-m</code> means "the message follows". Leave it out and Git opens a text editor instead.',
+ '<b>The message.</b> In quotes. Says what this commit does.'])}
+${V.rules(V.rh('Rules'),
+ V.no('git commit (nothing staged)','"nothing added to commit": run git add first'),V.no('git add indx.html','A typo gives "pathspec did not match". Check with ls'),
+ V.rh('Conventions: messages'),
+ V.ok('Add homepage heading','Imperative, like an order: "this commit will... add homepage heading"'),V.no('added stuff','Past tense and vague. Useless in six months'),
+ V.ok('Short first line','About 50 characters, capital letter, no full stop'),V.no('fixed it','Fixed what? Say what changed'))}
+`)}
 
-No commits yet
+${V.card(3,'Why the box matters','commit only part of your work',`
+${V.steps([
+ ['You changed two files: a finished fix in <b>index.html</b> and a half-built <b>contact.html</b>.',`<svg viewBox="0 0 420 212" role="img" aria-label="Two changed files in the working folder">
+${ar({hl:0,w:[['index.html','bx-info'],['contact.html','bx-bad']],h:['A'],hn:'1 commit',a:0})}</svg>`],
+ ['Stage only the finished one: <b>git add index.html</b>. contact.html stays on the desk.',`<svg viewBox="0 0 420 212" role="img" aria-label="Only index.html is staged">
+${ar({hl:1,w:[['index.html','bx-info'],['contact.html','bx-bad']],s:[['index.html','bx-warn']],h:['A'],hn:'1 commit',a:1})}</svg>`],
+ ['Commit. Snapshot <b>B</b> holds the fix and nothing else. The unfinished page waits for its own commit later.',`<svg viewBox="0 0 420 212" role="img" aria-label="Commit B contains only the index.html fix">
+${ar({hl:2,w:[['index.html','bx-ok'],['contact.html','bx-bad']],h:['A',['B','bx-ok']],hn:'B: Fix typo',a:2})}</svg>`]])}
+${V.like(`<p>Packing for a trip in two suitcases. You only close the first one when everything for it is inside, even if the second is still half empty on the bed.</p>`)}
+${V.build(`<ol><li>Create <code>index.html</code> with a heading, using <code>echo</code> and <code>&gt;</code>.</li><li>Run <code>git status</code> and find it under "Untracked files".</li><li>Stage it with <code>git add</code> and the file name.</li><li>Commit with <code>-m</code> and an imperative message.</li><li>Read your history with <code>git log</code>. On a real computer, press <code>q</code> to leave the log.</li></ol>`)}
+${V.hook(`Pick it, pack it, label it: <code>add</code>, <code>commit -m</code>, then <code>log</code> to admire it.`)}
+`)}
 
-Untracked files:
-  (use "git add &lt;file&gt;..." to include in what will be committed)
-        index.html</pre>
-<p>"Untracked" means "a file Git sees but is not looking after yet". If you deleted it now, Git could not bring it back.</p>
-
-<h4>Step 2: stage it with <code>git add</code></h4>
-<p><code>git add index.html</code> copies the current content of the file into the staging area. It prints nothing when it works, which is normal for many commands: silence means success. Run <code>git status</code> again and the file has moved to a new heading:</p>
-<pre class="snip">Changes to be committed:
-  (use "git rm --cached &lt;file&gt;..." to unstage)
-        new file:   index.html</pre>
-<p>"Changes to be committed" is Git's name for the staging area. You can add several files one by one, or name several at once: <code>git add index.html style.css</code>.</p>
-<p>One subtle point: <code>git add</code> stages the file <i>as it is at that moment</i>. If you edit the file again afterwards, the new edit is not staged until you run <code>git add</code> again.</p>
-
-<h4>Step 3: save it with <code>git commit</code></h4>
-<p>Now seal the box:</p>
-<pre class="snip">$ git commit -m "Add homepage heading"
-[main (root-commit) a3f9c21] Add homepage heading
- 1 file changed, 1 insertion(+)
- create mode 100644 index.html</pre>
-<p>Reading that output line by line:</p>
-<ol>
-<li><code>-m</code> stands for message. The text in quotes is your description.</li>
-<li><code>main</code> is the branch the commit went onto. <code>root-commit</code> means it is the very first commit, with nothing before it.</li>
-<li><code>a3f9c21</code> is the start of the new commit's id. Yours will be different.</li>
-<li>"1 file changed, 1 insertion" summarises what the snapshot added: one file, one new line.</li>
-</ol>
-<p>After committing, the staging area matches the commit, and <code>git status</code> says <code>nothing to commit, working tree clean</code>. "Clean" means your files are exactly the same as the last commit. That is a safe, calm place to be.</p>
-<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="Where index.html is after each command">
-<g text-anchor="middle"><text class="t-s" x="270" y="24">work</text><text class="t-s" x="330" y="24">stage</text><text class="t-s" x="390" y="24">repo</text></g>
-<line class="ln-d" x1="10" y1="36" x2="410" y2="36"/>
-<text class="t-m" x="10" y="70">echo ... &gt; index</text><text class="t-s t-bad" x="10" y="90">untracked</text>
-<circle class="dot" cx="270" cy="72" r="10"/><circle class="bx" cx="330" cy="72" r="10"/><circle class="bx" cx="390" cy="72" r="10"/>
-<line class="ln-d" x1="10" y1="106" x2="410" y2="106"/>
-<text class="t-m" x="10" y="140">git add index</text><text class="t-s t-warn" x="10" y="160">staged</text>
-<circle class="dot" cx="270" cy="142" r="10"/><circle class="dot" cx="330" cy="142" r="10"/><circle class="bx" cx="390" cy="142" r="10"/>
-<line class="ln-d" x1="10" y1="176" x2="410" y2="176"/>
-<text class="t-m" x="10" y="210">git commit -m</text><text class="t-s t-ok" x="10" y="230">committed, clean</text>
-<circle class="dot-ok" cx="270" cy="212" r="10"/><circle class="dot-ok" cx="330" cy="212" r="10"/><circle class="dot-ok" cx="390" cy="212" r="10"/>
-</svg><figcaption>Following index.html through the lesson. After echo it exists only in your working directory and Git calls it untracked. After git add it is also in the staging area. After git commit it is in all three places and identical everywhere, so the working tree is clean.</figcaption></figure>
-
-<h4>Step 4: look at the history with <code>git log</code></h4>
-<p><code>git log</code> lists commits, newest first:</p>
-<pre class="snip">commit a3f9c21e8b0d4f... (HEAD -&gt; main)
-Author: Ada Lovelace &lt;ada@example.com&gt;
-Date:   Mon Oct 12 10:14:03 2026 +0100
-
-    Add homepage heading</pre>
-<p>You can see the full id, the name and email you set with <code>git config</code>, the time, and your message. <code>HEAD -&gt; main</code> means "you are here, on the main branch". You will meet HEAD properly in the next lessons. On a real computer, a long log opens in a scrolling viewer; press <code>q</code> to get back to the prompt.</p>
-
-<h4>Writing good commit messages</h4>
-<p>Your history is only as useful as its messages. Months from now, you or a teammate will scan the log to find when something changed. "stuff" and "fixed it" tell them nothing.</p>
-<p>The convention is the <b>imperative mood</b>: write the message as a command, as if finishing the sentence "If applied, this commit will...".</p>
-<div class="tbl-wrap"><table><tr><th>Weak</th><th>Strong</th></tr>
-<tr><td>added stuff</td><td>Add homepage heading</td></tr>
-<tr><td>fixed bug</td><td>Fix crash when email is empty</td></tr>
-<tr><td>changes</td><td>Update footer copyright year</td></tr></table></div>
-<p>Keep the first line short (around 50 characters), start with a capital letter and leave off the full stop.</p>
-
-<h4>Errors you might meet</h4>
-<ul>
-<li><b><code>nothing added to commit but untracked files present</code></b>: you ran <code>git commit</code> without staging anything. Run <code>git add</code> first.</li>
-<li><b><code>pathspec 'indx.html' did not match any files</code></b>: a typo in the file name. "Pathspec" is Git's word for "the file path you gave me". Check with <code>ls</code>.</li>
-<li><b>An editor opens, or the commit aborts</b>: you left out <code>-m</code>. On a real computer Git opens a text editor for the message. In this sandbox there is no editor, so always use <code>-m "message"</code>.</li>
-</ul>
-<div class="mistake"><b>Common mistake</b>Thinking <code>git add</code> saves your work. It only puts it in the box. Nothing is in the history until you <code>git commit</code>, and nothing reaches GitHub until you push, which comes later.</div>
-<div class="try"><b>Try it in your head</b>You create <code>about.html</code> and <code>draft.html</code>, then run <code>git add about.html</code> and <code>git commit -m "Add about page"</code>. What does <code>git status</code> show now? <code>draft.html</code> is still listed under "Untracked files", because it was never staged. Only <code>about.html</code> went into the commit.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Git has three areas: the working directory (your files), the staging area (the next commit) and the repository (history).</li>
-<li>A new file starts as untracked. <code>git add file</code> stages it; <code>git commit -m "message"</code> saves the staged snapshot.</li>
-<li><code>git status</code> shows which area each change is in; "working tree clean" means everything is committed.</li>
-<li><code>git log</code> shows commits newest first, with id, author, date and message.</li>
-<li>Write messages in the imperative: "Add homepage heading", not "added stuff".</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. You edit a file after running <code>git add</code>. Is the new edit staged? <i>No. git add copies the file as it was at that moment; add it again.</i> 2. Which area is "Changes to be committed"? <i>The staging area.</i> 3. Better message: "updated files" or "Add contact form"? <i>"Add contact form".</i></div>
 `);
 
 explain('g3',`
-<h4>Why history is more than a list of saves</h4>
-<p>You made your first commit. Real projects have hundreds or thousands. To use that history you need to answer questions like "what exactly did I change since lunch?" and "which commit added this line?". This lesson gives you the tools: how commits link together, and how to see the difference between versions.</p>
+<p>One commit is a save point. Many commits make a <b>history</b>: a story of how your project grew, which you can read, search and rewind. This lesson shows how that chain is built and how to see exactly what changed.</p>
 
-<h4>What a commit really contains</h4>
-<p>Every commit stores four things you already know: a snapshot of the files, an author, a date and a message. It stores one more thing that turns separate saves into a history: a pointer to its <b>parent</b>.</p>
-<p>The parent is simply the commit that came just before it. Your first commit has no parent. The second commit points back to the first, the third points back to the second, and so on. Following the parents from the newest commit backwards gives you the entire story of the project.</p>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Three commits, each pointing back to its parent, with main and HEAD on the newest">
-<rect class="bx-dark" x="200" y="16" width="70" height="28" rx="6"/><text class="t-term" x="235" y="35" text-anchor="middle">HEAD</text>
-<line class="ln" x1="270" y1="30" x2="312" y2="30"/><polygon class="ah" points="310,24 310,36 318,30"/>
-<rect class="bx-ok" x="320" y="16" width="70" height="28" rx="6"/><text class="t-b" x="355" y="35" text-anchor="middle">main</text>
-<line class="ln" x1="355" y1="44" x2="355" y2="72"/><polygon class="ah" points="349,70 361,70 355,78"/>
-<g text-anchor="middle">
-<rect class="bx" x="10" y="80" width="110" height="60" rx="8"/><text class="t-m" x="65" y="105">a3f9c21</text><text class="t-s" x="65" y="126">Add heading</text>
-<rect class="bx" x="155" y="80" width="110" height="60" rx="8"/><text class="t-m" x="210" y="105">b7e2d40</text><text class="t-s" x="210" y="126">New heading</text>
-<rect class="bx-a" x="300" y="80" width="110" height="60" rx="8"/><text class="t-m" x="355" y="105">c91f0a8</text><text class="t-s" x="355" y="126">Add styles</text>
-<text class="t-s" x="65" y="162">oldest</text><text class="t-s" x="355" y="162">newest</text>
-<text class="t-s" x="210" y="194">Each arrow points back to the parent.</text>
-</g>
-<line class="ln-a" x1="155" y1="110" x2="130" y2="110"/><polygon class="ah-a" points="132,104 132,116 122,110"/>
-<line class="ln-a" x1="300" y1="110" x2="275" y2="110"/><polygon class="ah-a" points="277,104 277,116 267,110"/>
-</svg><figcaption>Three commits in a chain. Each commit points back to the one before it, its parent. The label main sits on the newest commit, and HEAD points at main, which is Git's way of saying "you are here".</figcaption></figure>
+${V.card(1,'The commit chain','every snapshot points to the one before',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Three commits in a chain. Each has an id and a message, and points back to its parent">
+${ed(70,70,310,70)}
+${cm(70,70,'A')}${cm(190,70,'B')}${cm(310,70,'C','bx-ok')}
+<polygon class="ah" points="98,64 98,76 88,70"/><polygon class="ah" points="218,64 218,76 208,70"/>
+<text class="t" x="130" y="58" text-anchor="middle" style="font-size:14px">parent</text><text class="t" x="250" y="58" text-anchor="middle" style="font-size:14px">parent</text>
+<text class="t-m" x="70" y="122" text-anchor="middle" style="font-size:14px">a3f9c21</text><text class="t-m" x="190" y="122" text-anchor="middle" style="font-size:14px">7d01e4b</text><text class="t-m" x="310" y="122" text-anchor="middle" style="font-size:14px">e41b7d2</text>
+<text class="t" x="70" y="146" text-anchor="middle" style="font-size:14px">Add heading</text><text class="t" x="190" y="146" text-anchor="middle" style="font-size:14px">New heading</text><text class="t" x="310" y="146" text-anchor="middle" style="font-size:14px">Add styles</text>
+<text class="t-b" x="210" y="186" text-anchor="middle">oldest  ←  time  →  newest</text>
+</svg><figcaption>Each commit has an id, a message, an author and a pointer to its parent, the commit before it. Following the parents backwards walks you through the whole history.</figcaption></figure>
+${V.like(`<p>A train of carriages. Each new carriage is coupled to the one in front. Start at the last carriage and you can walk forward through every one back to the engine, the very first commit.</p>`)}
+${V.why(`<p>Git names each commit with a <b>hash</b>: a 40-character fingerprint calculated from everything inside it, including its parent. Change one letter anywhere and the fingerprint changes. That makes history tamper-proof. You usually see just the first 7 characters, like <code>a3f9c21</code>, which is enough to point at one commit.</p>`)}
+<p><b>Watch the chain grow.</b> Notice the <b>main</b> label and <b>HEAD</b> (you are here) move forward with each commit.</p>
+${V.steps([
+ ['Your first commit, <b>A</b>. It has no parent. The <b>main</b> label sits on it, and <b>HEAD</b> says "you are here".',`<svg viewBox="0 0 420 200" role="img" aria-label="Commit A with main and HEAD">
+${cm(70,124,'A','bx-ok')}${br('main',70,124,true,true)}
+<text class="t" x="70" y="172" text-anchor="middle" style="font-size:14px">Add heading</text>
+</svg>`],
+ ['You edit index.html, add and commit. New commit <b>B</b> points back to A as its parent. The labels jump forward to B.',`<svg viewBox="0 0 420 200" role="img" aria-label="Commit B added after A; main and HEAD move to B">
+${ed(70,124,190,124)}${cm(70,124,'A')}${cm(190,124,'B','bx-ok')}${br('main',190,124,true,true)}
+<text class="t" x="70" y="172" text-anchor="middle" style="font-size:14px">Add heading</text><text class="t" x="190" y="172" text-anchor="middle" style="font-size:14px">New heading</text>
+</svg>`],
+ ['You add style.css and commit. <b>C</b> points to B. Three save points in a row: you can return to any of them.',`<svg viewBox="0 0 420 200" role="img" aria-label="Commit C added after B; main and HEAD on C">
+${ed(70,124,310,124)}${cm(70,124,'A')}${cm(190,124,'B')}${cm(310,124,'C','bx-ok')}${br('main',310,124,true,true)}
+<text class="t" x="70" y="172" text-anchor="middle" style="font-size:14px">Add heading</text><text class="t" x="190" y="172" text-anchor="middle" style="font-size:14px">New heading</text><text class="t" x="310" y="172" text-anchor="middle" style="font-size:14px">Add styles</text>
+</svg>`],
+ ['<b>git log --oneline</b> prints the chain newest first, one commit per line: short id, labels, message.',`<svg viewBox="0 0 420 200" role="img" aria-label="git log --oneline output with three lines">
+${tm(['$ git log --oneline',['e41b7d2 (HEAD -&gt; main) Add styles','t-ok'],'7d01e4b New heading','a3f9c21 Add heading'],112)}
+${ed(70,164,310,164)}${cm(70,164,'A')}${cm(190,164,'B')}${cm(310,164,'C','bx-ok')}
+</svg>`]])}
+${V.anat([[1,'e41b7d2'],' ',[2,'(HEAD -&gt; main)'],' ',[3,'Add styles']],[
+ '<b>Short id.</b> The first 7 characters of the commit\'s hash.',
+ '<b>Labels.</b> You are here (HEAD), on the branch main.',
+ '<b>Message.</b> What this commit did.'])}
+${V.hook(`Every commit holds hands with its parent. Follow the hands back and you reach the start.`)}
+`)}
 
-<h4>Commit ids: fingerprints</h4>
-<p>Each commit has an <b>id</b>, also called a <b>hash</b>. It is a 40-character string of numbers and the letters a to f, such as <code>c91f0a8d3e...</code>. Git calculates it from everything in the commit: the files, the message, the author, the time and the parent's id. Change any of those and you get a completely different id. That makes the id a fingerprint: two commits with the same id are guaranteed to be identical.</p>
-<p>Forty characters is a lot to type, so Git usually shows only the first seven, like <code>c91f0a8</code>. You can use that short form in commands too, as long as no other commit starts the same way.</p>
-<div class="analogy"><b>Think of it like</b>A diary where every page is numbered with a unique code, and every page says "continued from page such-and-such". You can open the diary at any page and follow it back to the beginning.</div>
+${V.card(2,'See what changed','git diff and git diff --staged',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="git diff output: a red line removed, a green line added">
+${tm(['$ git diff','diff --git a/index.html b/index.html','@@ -1 +1 @@',['-&lt;h1&gt;Hello world&lt;/h1&gt;','t-bad'],['+&lt;h1&gt;Hi, I build websites&lt;/h1&gt;','t-ok']],136)}
+<text class="t" x="16" y="162" style="font-size:14px">minus = line taken out, plus = line put in</text>
+</svg><figcaption>A diff ("difference") lists the lines that changed. Lines starting with minus were removed, lines starting with plus were added. Changing a line shows up as one of each.</figcaption></figure>
+${V.like(`<p>Spot-the-difference in a puzzle book. Git puts the old picture next to the new one and circles every change for you.</p>`)}
+<p><b>Which diff shows what?</b> Each one compares two of the three areas.</p>
+${V.steps([
+ ['You change index.html. The change is on your desk only. <b>git diff</b> (desk vs box) shows it. <b>git diff --staged</b> (box vs history) shows nothing.',`<svg viewBox="0 0 420 212" role="img" aria-label="Edited file in working folder; git diff shows it">
+${ar({hl:0,w:[['index.html','bx-warn']],h:['A'],hn:'last: A'})}
+<text class="t-m" x="10" y="188" style="font-size:14px">git diff</text><text class="t-b t-ok" x="176" y="188" style="font-size:14px">shows 1 change</text>
+<text class="t-m" x="10" y="208" style="font-size:14px">git diff --staged</text><text class="t t-dim" x="176" y="208" style="font-size:14px">nothing</text>
+</svg>`],
+ ['<b>git add index.html</b> moves the change into the box. Now <b>git diff</b> is empty and <b>git diff --staged</b> shows what the next commit will contain.',`<svg viewBox="0 0 420 212" role="img" aria-label="Change staged; git diff --staged shows it">
+${ar({hl:1,w:[['index.html','bx-info']],s:[['index.html','bx-warn']],h:['A'],hn:'last: A'})}
+<text class="t-m" x="10" y="188" style="font-size:14px">git diff</text><text class="t t-dim" x="176" y="188" style="font-size:14px">nothing</text>
+<text class="t-m" x="10" y="208" style="font-size:14px">git diff --staged</text><text class="t-b t-ok" x="176" y="208" style="font-size:14px">shows 1 change</text>
+</svg>`],
+ ['<b>git commit</b> seals it as <b>B</b>. All three areas match, so both diffs are empty.',`<svg viewBox="0 0 420 212" role="img" aria-label="Committed as B; both diffs empty">
+${ar({hl:2,w:[['index.html','bx-ok']],h:['A',['B','bx-ok']],hn:'last: B'})}
+<text class="t-m" x="10" y="188" style="font-size:14px">git diff</text><text class="t t-dim" x="176" y="188" style="font-size:14px">nothing</text>
+<text class="t-m" x="10" y="208" style="font-size:14px">git diff --staged</text><text class="t t-dim" x="176" y="208" style="font-size:14px">nothing</text>
+</svg>`]])}
+${V.anat([[1,'git diff'],' ',[2,'--staged']],[
+ '<b>Show differences.</b> On its own: changes you have <i>not</i> staged yet.',
+ '<b>Option.</b> Show what <i>is</i> staged, ready for the next commit. <code>--cached</code> means exactly the same.'])}
+${V.hook(`Plain <code>diff</code> peeks at the desk. <code>diff --staged</code> peeks in the box.`)}
+`)}
 
-<h4>Changing a file that is already tracked</h4>
-<p>The sandbox starts with one commit containing <code>index.html</code>. The first task overwrites it:</p>
-<pre class="snip">echo "&lt;h1&gt;Hi, I build websites&lt;/h1&gt;" &gt; index.html</pre>
-<p>Because Git already knows this file, <code>git status</code> no longer calls it untracked. It calls it <b>modified</b>, under the heading "Changes not staged for commit". That heading means: the file differs from the last commit, and you have not run <code>git add</code> on the change yet.</p>
+${V.card(3,'Small commits, often','one commit, one job',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="One giant commit called stuff compared with three small commits that each do one thing">
+<text class="t-b t-bad" x="10" y="24">One giant commit</text>
+<circle class="bx-bad" cx="60" cy="68" r="30"/><text class="t-b" x="60" y="74" text-anchor="middle">?</text>
+<text class="t-m" x="110" y="74">"stuff"</text>
+<text class="t-b t-ok" x="10" y="122">Small commits</text>
+${ed(40,154,320,154,'ln-ok')}${cs(40,154,'1','bx-ok')}${cs(180,154,'2','bx-ok')}${cs(320,154,'3','bx-ok')}
+<text class="t" x="62" y="159" style="font-size:14px">Fix title</text><text class="t" x="202" y="159" style="font-size:14px">Add logo</text><text class="t" x="342" y="159" style="font-size:14px">Add CSS</text>
+</svg><figcaption>If "stuff" breaks the site, you must undo everything in it. With small commits you can find and undo just the one that went wrong.</figcaption></figure>
+${V.like(`<p>Writing a story in chapters instead of one endless paragraph. Each chapter has a title, so you can find and rewrite one part without touching the rest.</p>`)}
+${V.anat([[1,'git add'],' ',[2,'.']],[
+ '<b>Stage.</b>',
+ '<b>The dot</b> means "this folder and everything inside it": every changed and new file at once.'])}
+${V.rules(V.rh('Rules'),
+ V.no('git add . without looking','It grabs everything, including files you did not mean to save. Run git status first'),
+ V.ok('git status, then git add .','Check the list, then stage it all'),
+ V.rh('Conventions'),
+ V.ok('One idea per commit','"Add base styles" is one job. "Styles, footer and a bug fix" is three'),
+ V.ok('Commit when something works','A working step is a safe point to come back to'))}
+${V.build(`<ol><li>Change <code>index.html</code> by overwriting it with a new heading.</li><li>Run <code>git diff</code> and find the minus and plus lines.</li><li>Stage it and commit with a clear message.</li><li>Create <code>style.css</code>, then add and commit it on its own.</li><li>Run <code>git log --oneline</code> and read your three-commit chain.</li></ol>`)}
+${V.hook(`Small and often: one commit, one job, one clear message.`)}
+`)}
 
-<h4>Seeing changes with <code>git diff</code></h4>
-<p><code>git status</code> tells you <i>which</i> files changed. <code>git diff</code> shows you <i>what</i> changed inside them, line by line:</p>
-<pre class="snip">diff --git a/index.html b/index.html
---- a/index.html
-+++ b/index.html
-@@ -1 +1 @@
--&lt;h1&gt;Hello world&lt;/h1&gt;
-+&lt;h1&gt;Hi, I build websites&lt;/h1&gt;</pre>
-<p>How to read it:</p>
-<ul>
-<li><code>a/</code> is the old version and <code>b/</code> is the new version of the same file.</li>
-<li>The line starting with <code>@@</code> says where in the file the change is. <code>-1 +1</code> means line 1 in the old version and line 1 in the new.</li>
-<li>A line starting with <code>-</code> (usually shown in red) was removed.</li>
-<li>A line starting with <code>+</code> (usually green) was added.</li>
-</ul>
-<p>Git has no idea of "edited a line". A changed line always appears as the old line removed and the new line added.</p>
-
-<h4><code>git diff</code> versus <code>git diff --staged</code></h4>
-<p>Here is the part that confuses people. Plain <code>git diff</code> does not compare your files with the last commit. It compares your working directory with the <b>staging area</b>. So the moment you <code>git add</code> a change, it disappears from <code>git diff</code>. It has not vanished; it has moved into the box.</p>
-<p>To see what is in the box, the changes that <i>will</i> go into your next commit, use <code>git diff --staged</code>.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="git diff compares working directory and staging; git diff --staged compares staging and the last commit">
-<g text-anchor="middle">
-<text class="t-m t-a" x="137" y="40">git diff</text>
-<rect class="bx" x="10" y="80" width="110" height="50" rx="8"/><text class="t-b" x="65" y="110">Working</text>
-<rect class="bx-warn" x="155" y="80" width="110" height="50" rx="8"/><text class="t-b" x="210" y="110">Staging</text>
-<rect class="bx-ok" x="300" y="80" width="110" height="50" rx="8"/><text class="t-b" x="355" y="110">Last commit</text>
-<text class="t-m t-ok" x="282" y="186">git diff --staged</text>
-</g>
-<path class="ln-a" d="M65 78v-24h145v24"/><path class="ln-ok" d="M210 132v24h145v-24"/>
-</svg><figcaption>The top bracket shows that plain git diff compares your working files with the staging area: edits you have not added yet. The bottom bracket shows that git diff --staged compares the staging area with the last commit: what your next commit will contain.</figcaption></figure>
-<p>A good routine before every commit: <code>git status</code> to see which files, <code>git diff</code> to check unstaged edits, <code>git add</code>, then <code>git diff --staged</code> for a last look at exactly what you are about to save.</p>
-
-<h4>Committing again, and two shortcuts</h4>
-<p>The third task stages and commits in one line:</p>
-<pre class="snip">git add index.html &amp;&amp; git commit -m "Update homepage heading"</pre>
-<p><code>&amp;&amp;</code> is a shell feature, not a Git one. It means "run the second command only if the first succeeded". It saves typing, but two separate lines work exactly the same.</p>
-<p>When you have changed several files, <code>git add .</code> stages every change in the current folder and everything below it. The dot means "this folder". It is handy, but look at <code>git status</code> first so you do not stage something by accident, such as a file full of passwords.</p>
-
-<h4>Compact history with <code>git log --oneline</code></h4>
-<p>Full <code>git log</code> output takes five lines per commit. With <code>--oneline</code>, each commit fits on one line: short id, then message.</p>
-<pre class="snip">$ git log --oneline
-c91f0a8 (HEAD -&gt; main) Add base styles
-b7e2d40 Update homepage heading
-a3f9c21 Add homepage heading</pre>
-<p>Newest is at the top, just like the diagram read from right to left. If your messages are good, this short list tells the story of the project at a glance.</p>
-
-<h4>Small commits, one purpose each</h4>
-<p>Should you commit after every line, or once a day? Neither. Aim for <b>one commit per idea</b>: "Update homepage heading" is one idea; "Add base styles" is another. Small, focused commits pay off later:</p>
-<ul>
-<li>When a bug appears, you can find the exact small commit that caused it.</li>
-<li>You can undo one change without undoing three unrelated ones.</li>
-<li>Reviewers can understand each change quickly.</li>
-</ul>
-<div class="mistake"><b>Common mistake</b>Running <code>git diff</code>, seeing nothing, and deciding there are no changes. If you already ran <code>git add</code>, the changes are staged and only <code>git diff --staged</code> shows them. When in doubt, <code>git status</code> tells you which area they are in.</div>
-<div class="try"><b>Try it in your head</b>You edit <code>style.css</code>, run <code>git add style.css</code>, then edit it again. What does each diff show? <code>git diff</code> shows only the second edit (working versus staged). <code>git diff --staged</code> shows only the first edit (staged versus last commit). Run <code>git add</code> again to stage both.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Each commit has an id (a hash fingerprint), an author, a message and a pointer to its parent; parents chain into the history.</li>
-<li><code>git diff</code> shows unstaged edits: working directory versus staging area.</li>
-<li><code>git diff --staged</code> shows what the next commit will contain: staging area versus last commit.</li>
-<li><code>git add .</code> stages every change in the folder, so check <code>git status</code> first.</li>
-<li><code>git log --oneline</code> gives one line per commit, newest first. Commit small and often, one idea per commit.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. You changed a file but have not staged it. Which command shows the change? <i>git diff.</i> 2. Which commit has no parent? <i>The very first one.</i> 3. You change one letter in an old commit. What happens to its id? <i>It changes, because the id is a fingerprint of the content.</i></div>
 `);
 
 explain('g4',`
-<h4>Why Git makes mistakes cheap</h4>
-<p>Everyone breaks things. You overwrite a file by accident, stage the wrong thing, spell a commit message badly, or commit too early. Without version control, each of those can cost hours. With Git, each one has a precise undo, and choosing the right one is just a matter of asking: <b>where does the mistake live?</b></p>
-<p>Remember the three areas from the last lessons: the working directory (your files), the staging area (the box for the next commit) and the repository (the history of commits). Every undo command moves things backwards between those areas. Once you see that, the commands stop being a list to memorise.</p>
-<div class="analogy"><b>Think of it like</b>A word processor with several different undo buttons: one throws away today's typing, one takes a page back out of the envelope before posting, and one lets you rewrite the label on a parcel you have just sealed.</div>
+<p>Everyone breaks things. The difference between a beginner and a professional is that the professional knows exactly how to undo it. Git has a different undo for each kind of mistake, and this lesson gives you the map.</p>
 
-<h4>HEAD: "where you are now"</h4>
-<p>Several undo commands mention <code>HEAD</code>, so let's define it. <b>HEAD</b> is Git's name for the commit you are currently on. Usually that is the newest commit on your branch. When you make a new commit, HEAD moves forward to it.</p>
-<p>You can count backwards from HEAD with a tilde, the wavy <code>~</code> symbol:</p>
-<ul>
-<li><code>HEAD</code> is the current commit.</li>
-<li><code>HEAD~1</code> is one commit before it: its parent.</li>
-<li><code>HEAD~2</code> is two commits back, and so on.</li>
-</ul>
-<p>In this lesson's sandbox the history is <code>Add homepage</code> then <code>Add styles</code>. So <code>HEAD</code> is "Add styles" and <code>HEAD~1</code> is "Add homepage".</p>
+${V.card(1,'Undo an edit','git restore: rewind a file',`
+${V.steps([
+ ['Everything is clean. index.html on your desk matches the last commit <b>B</b>.',`<svg viewBox="0 0 420 212" role="img" aria-label="Clean working folder matching commit B">
+${ar({w:[['index.html','bx-ok']],h:['A','B'],hn:'B: Add styles'})}
+</svg>`],
+ ['Oops. You run <b>echo "oops" &gt; index.html</b> and wipe out the page. The change is on your desk only.',`<svg viewBox="0 0 420 212" role="img" aria-label="index.html broken in working folder">
+${ar({hl:0,w:[['oops!','bx-bad']],h:['A','B'],hn:'B: Add styles'})}
+</svg>`],
+ ['<b>git restore index.html</b> copies the file back from the last commit. Your broken edit is thrown away and the page is back.',`<svg viewBox="0 0 420 212" role="img" aria-label="git restore copies index.html back from history">
+${ar({hl:0,w:[['index.html','bx-ok']],h:['A','B'],hn:'B: Add styles'})}
+<path class="ln-ok" d="M346 182H82"/><polygon class="ah-ok" points="82,176 82,188 72,182"/><text class="t-m t-ok" x="210" y="206" text-anchor="middle" style="font-size:14px">git restore index.html</text>
+</svg>`]])}
+${V.like(`<p>A teacher's answer sheet. You scribbled all over your copy, so you photocopy a fresh one from the original. Your scribbles are gone for good.</p>`)}
+${V.anat([[1,'git restore'],' ',[2,'index.html']],[
+ '<b>Restore.</b> Put a file back the way it was in the last commit (or the box, if you staged it).',
+ '<b>Which file.</b> Name it exactly.'])}
+${V.rules(V.no('Restoring work you wanted','Unsaved edits that are thrown away cannot be got back'),V.ok('git diff first','Look at what you are about to lose'))}
+`)}
 
-<h4>Undo 1: throw away edits with <code>git restore</code></h4>
-<p>The first task breaks <code>index.html</code> on purpose: <code>echo "oops" &gt; index.html</code> replaces the whole page with the word "oops". You have not staged it. To get the good version back:</p>
-<pre class="snip">git restore index.html</pre>
-<p>This copies the file from the staging area over your working copy. Since you had not staged anything, the staging area still holds the committed version, so you get back exactly what was in the last commit.</p>
-<p>Be aware: this is one of the few Git commands that <b>destroys work</b>. The "oops" edit is gone for good, because it was never saved in any commit. That is exactly what you want here, but always check <code>git diff</code> first if you are not sure what you are throwing away.</p>
+${V.card(2,'Unstage a file','git restore --staged: take it out of the box',`
+${V.steps([
+ ['You create <b>notes.txt</b>, a private to-do list. It is on your desk.',`<svg viewBox="0 0 420 212" role="img" aria-label="notes.txt in working folder">
+${ar({hl:0,w:[['notes.txt','bx-info']],h:['A','B'],a:0})}
+</svg>`],
+ ['You stage it by accident with <b>git add notes.txt</b>. Now it would go into the next commit.',`<svg viewBox="0 0 420 212" role="img" aria-label="notes.txt staged by mistake">
+${ar({hl:1,w:[['notes.txt','bx-info']],s:[['notes.txt','bx-bad']],h:['A','B'],a:1})}
+</svg>`],
+ ['<b>git restore --staged notes.txt</b> takes it out of the box. The file itself is safe on your desk. Nothing is deleted.',`<svg viewBox="0 0 420 212" role="img" aria-label="notes.txt unstaged, still in working folder">
+${ar({hl:0,w:[['notes.txt','bx-ok']],h:['A','B']})}
+<path class="ln-ok" d="M206 182H82"/><polygon class="ah-ok" points="82,176 82,188 72,182"/><text class="t-m t-ok" x="140" y="206" text-anchor="middle" style="font-size:14px">git restore --staged</text>
+</svg>`]])}
+${V.like(`<p>Taking a jumper back out of the parcel before you tape it. The jumper goes back on your bed, not in the bin.</p>`)}
+${V.hook(`<code>restore</code> rewinds the desk. <code>restore --staged</code> empties the box. Neither touches history.`)}
+`)}
 
-<h4>Undo 2: unstage with <code>git restore --staged</code></h4>
-<p>The next task creates <code>notes.txt</code> and stages it by mistake. You want it out of the box, but you do not want to lose the file.</p>
-<pre class="snip">git restore --staged notes.txt</pre>
-<p><code>--staged</code> changes the target: instead of fixing your working file, it resets the <b>staging area</b> entry back to how it is in the last commit. For a brand-new file, that simply means "not staged". Your <code>notes.txt</code> stays on disk, untouched, and shows up as untracked again. You will see this command suggested by <code>git status</code> itself: <i>use "git restore --staged &lt;file&gt;..." to unstage</i>.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="git restore copies staged into working; git restore --staged copies last commit into staging">
-<g text-anchor="middle">
-<rect class="bx" x="10" y="30" width="110" height="60" rx="8"/><text class="t-b" x="65" y="65">Working</text>
-<rect class="bx-warn" x="155" y="30" width="110" height="60" rx="8"/><text class="t-b" x="210" y="65">Staging</text>
-<rect class="bx-ok" x="300" y="30" width="110" height="60" rx="8"/><text class="t-b" x="355" y="65">Last commit</text>
-<text class="t-m t-a" x="130" y="140">git restore file</text>
-<text class="t-m t-ok" x="290" y="186">git restore --staged</text>
-</g>
-<path class="ln-a" d="M195 92V116H70V102"/><polygon class="ah-a" points="64,102 76,102 70,93"/>
-<path class="ln-ok" d="M355 92V160H225V102"/><polygon class="ah-ok" points="219,102 231,102 225,93"/>
-</svg><figcaption>The two restore commands copy backwards. git restore file copies the staged version over your working file, throwing away unstaged edits. git restore --staged file copies the last commit's version into the staging area, which unstages the file but leaves your working copy alone.</figcaption></figure>
+${V.card(3,'Undo a commit','amend, reset --soft and reset --hard',`
+<figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="HEAD is the commit you are on. HEAD~1 is one before, HEAD~2 two before">
+${ed(70,90,350,90)}${cm(70,90,'A')}${cm(210,90,'B')}${cm(350,90,'C','bx-ok')}
+<text class="t-m t-a" x="350" y="40" text-anchor="middle" style="font-size:16px">HEAD</text><text class="t-m" x="210" y="40" text-anchor="middle" style="font-size:16px">HEAD~1</text><text class="t-m" x="70" y="40" text-anchor="middle" style="font-size:16px">HEAD~2</text>
+<text class="t" x="210" y="140" text-anchor="middle" style="font-size:14px">~1 means "one step back along the parents"</text>
+</svg><figcaption>HEAD is the commit you are on now. Add a tilde and a number to count back: HEAD~1 is its parent, HEAD~2 its grandparent.</figcaption></figure>
+${V.like(`<p>HEAD is the red "You are here" dot on a shopping-centre map. <code>HEAD~1</code> means "one shop back the way I came".</p>`)}
+${V.why(`<p>Sometimes the mistake is not in a file but in a whole commit: a bad message, a forgotten file, or a commit you wish you had not made yet. Git lets you move the branch label back, as long as nobody else has seen those commits.</p>`)}
+${V.steps([
+ ['Two commits. <b>B</b> has a typo in its message. HEAD (you are here) is on B, so <b>HEAD~1</b> is A.',`<svg viewBox="0 0 420 210" role="img" aria-label="A then B; main and HEAD on B">
+${ed(70,130,190,130)}${cm(70,130,'A')}${cm(190,130,'B')}${br('main',190,130,true,true)}
+<text class="t" x="70" y="176" text-anchor="middle" style="font-size:14px">homepage</text><text class="t" x="190" y="176" text-anchor="middle" style="font-size:14px">Add stles</text>
+<rect class="bx" x="290" y="96" width="124" height="96" rx="10"/>${V.ic('box',334,102,30,'ic-warn')}<text class="t-b" x="352" y="150" text-anchor="middle" style="font-size:14px">Staging box</text><text class="t t-dim" x="352" y="176" text-anchor="middle" style="font-size:14px">empty</text>
+</svg>`],
+ ['<b>git commit --amend -m "Add base styles"</b> replaces B with a fixed copy, <b>B2</b>. It has a new id. The old B is dropped.',`<svg viewBox="0 0 420 210" role="img" aria-label="Amend replaces B with B2">
+${ed(70,130,190,130)}${cm(70,130,'A')}${cm(190,130,'B2','bx-ok')}${br('main',190,130,true,true)}
+<text class="t" x="70" y="176" text-anchor="middle" style="font-size:14px">homepage</text><text class="t" x="190" y="176" text-anchor="middle" style="font-size:14px">Add base styles</text>
+<circle class="bx t-dim" cx="250" cy="60" r="14"/><text class="t-b t-dim" x="250" y="65" text-anchor="middle" style="font-size:14px">B</text><path class="ln-x" d="M238 72 262 48"/>
+<rect class="bx" x="290" y="96" width="124" height="96" rx="10"/>${V.ic('box',334,102,30,'ic-warn')}<text class="t-b" x="352" y="150" text-anchor="middle" style="font-size:14px">Staging box</text><text class="t t-dim" x="352" y="176" text-anchor="middle" style="font-size:14px">empty</text>
+</svg>`],
+ ['<b>git reset --soft HEAD~1</b> moves main and HEAD back to A. The commit is undone, but its changes wait in the staging box, ready to commit again.',`<svg viewBox="0 0 420 210" role="img" aria-label="reset --soft: main back on A, changes in staging box">
+${ed(70,130,172,130,'ln-d')}${cm(70,130,'A')}<circle class="bx t-dim" cx="190" cy="130" r="18"/><text class="t-b t-dim" x="190" y="136" text-anchor="middle" style="font-size:16px">B2</text>${br('main',70,130,true,true)}
+<text class="t" x="70" y="176" text-anchor="middle" style="font-size:14px">homepage</text>
+<rect class="bx-hl" x="290" y="96" width="124" height="96" rx="10"/>${V.ic('box',334,102,30,'ic-warn')}<text class="t-b" x="352" y="150" text-anchor="middle" style="font-size:14px">Staging box</text><text class="t-m t-ok" x="352" y="176" text-anchor="middle" style="font-size:14px">style.css</text>
+</svg>`],
+ ['The other choice, <b>git reset --hard HEAD~1</b>, also moves back to A but throws the changes away completely. Box and desk are wiped. Use it with care.',`<svg viewBox="0 0 420 210" role="img" aria-label="reset --hard: main back on A, changes gone">
+${ed(70,130,172,130,'ln-d')}${cm(70,130,'A')}<circle class="bx t-dim" cx="190" cy="130" r="18"/><text class="t-b t-dim" x="190" y="136" text-anchor="middle" style="font-size:16px">B2</text>${br('main',70,130,true,true)}
+<text class="t" x="70" y="176" text-anchor="middle" style="font-size:14px">homepage</text>
+<rect class="bx-bad" x="290" y="96" width="124" height="96" rx="10"/>${V.ic('box',334,102,30,'ic-warn')}<text class="t-b" x="352" y="150" text-anchor="middle" style="font-size:14px">Staging box</text>${V.ic('cross',338,156,28,'ic-bad')}
+</svg>`]])}
+${V.anat([[1,'git reset'],' ',[2,'--soft'],' ',[3,'HEAD~1']],[
+ '<b>Reset.</b> Move the current branch label to another commit.',
+ '<b>Mode.</b> <code>--soft</code> keeps the changes staged. <code>--hard</code> deletes them. With no mode (called mixed) they go back to your desk, unstaged.',
+ '<b>Where to.</b> One commit before where you are now.'])}
+${V.rules(V.rh('Pick the right undo'),
+ V.ok('git restore file','Throw away unstaged edits to a file'),V.ok('git restore --staged file','Unstage, keep the edits'),
+ V.ok('git commit --amend -m "..."','Fix the last commit\'s message (or add a forgotten file)'),V.ok('git reset --soft HEAD~1','Undo the last commit, keep its changes staged'),
+ V.rh('Rules'),
+ V.no('Amend or reset after pushing','Both make new history. Teammates who have the old commits get in a mess'),
+ V.no('git reset --hard on work you want','Uncommitted changes it deletes are gone'),
+ V.ok('git revert for pushed commits','A safe undo for shared history. Coming in a later lesson'))}
+${V.build(`<ol><li>Break <code>index.html</code> on purpose with <code>echo</code>, then bring it back with <code>git restore</code>.</li><li>Make <code>notes.txt</code>, stage it, then unstage it with <code>--staged</code>.</li><li>Fix the last commit's message with <code>--amend</code>.</li><li>Undo the last commit but keep its changes with a soft reset to <code>HEAD~1</code>.</li></ol>`)}
+${V.hook(`Soft keeps the stuff, hard throws it out. And never rewrite what you have already pushed.`)}
+`)}
 
-<h4>Undo 3: fix the last commit with <code>--amend</code></h4>
-<p>You committed, then noticed the message is wrong, or you forgot to include a file. <code>git commit --amend</code> replaces the last commit with a corrected one:</p>
-<pre class="snip">git commit --amend -m "Add base styles"</pre>
-<p>Whatever is currently staged goes in, together with what the old commit had, and the new message replaces the old one. If you forgot a file, <code>git add</code> it first, then amend.</p>
-<p>Here is the important detail: Git never edits a commit. The id is a fingerprint of the commit's contents, so a different message means a <b>different commit with a new id</b>. Amend builds a brand-new commit and moves the branch to it. The old one is dropped from the branch.</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="Amend replaces the last commit with a new one that has a new id">
-<g text-anchor="middle">
-<rect class="bx" x="10" y="100" width="120" height="56" rx="8"/><text class="t-m" x="70" y="124">5e0b1a2</text><text class="t-s" x="70" y="144">Add homepage</text>
-<rect class="ln-d" x="175" y="20" width="130" height="56" rx="8" fill="none"/><text class="t-m t-bad" x="240" y="44">c91f0a8</text><text class="t-s" x="240" y="64">Add styles</text>
-<rect class="bx-a" x="175" y="150" width="130" height="56" rx="8"/><text class="t-m" x="240" y="174">e4d2b17</text><text class="t-s" x="240" y="194">Add base styles</text>
-<rect class="bx-ok" x="335" y="164" width="70" height="28" rx="6"/><text class="t-b" x="370" y="183">main</text>
-<text class="t-s" x="370" y="44">old, dropped</text>
-</g>
-<path class="ln-d" d="M175 48H100V98"/>
-<path class="ln-a" d="M175 178H100V160"/><polygon class="ah-a" points="94,164 106,164 100,157"/>
-<line class="ln" x1="335" y1="178" x2="313" y2="178"/><polygon class="ah" points="315,172 315,184 306,178"/>
-</svg><figcaption>Amending does not edit the old commit. Git makes a new commit with a new id and the corrected message, on the same parent, and moves main to it. The old commit, shown dashed, is no longer part of the branch.</figcaption></figure>
-
-<h4>Undo 4: take back whole commits with <code>git reset</code></h4>
-<p><code>git reset</code> moves your branch backwards to an earlier commit. Commits after that point are no longer on the branch. The option you give decides what happens to the <b>changes</b> those commits contained:</p>
-<ul>
-<li><code>git reset --soft HEAD~1</code>: move back one commit, and keep its changes <b>staged</b>. It is as if you had run <code>git add</code> but not yet <code>git commit</code>. Perfect for "I committed too early, let me add one more thing and commit again".</li>
-<li><code>git reset HEAD~1</code> with no option (called <b>mixed</b>): move back, and keep the changes in your files but <b>unstaged</b>.</li>
-<li><code>git reset --hard HEAD~1</code>: move back and <b>delete</b> the changes from the staging area and your files. Your folder looks exactly like the earlier commit.</li>
-</ul>
-<figure class="fig"><svg viewBox="0 0 420 270" role="img" aria-label="reset --soft and --hard both move main back one commit; soft keeps the changes staged, hard deletes them">
-<g text-anchor="middle">
-<text class="t-m" x="40" y="66">before</text><text class="t-m" x="40" y="151">--soft</text><text class="t-m" x="40" y="236">--hard</text>
-<rect class="bx-ok" x="185" y="18" width="50" height="26" rx="6"/><text class="t-b" x="210" y="36">main</text>
-<rect class="bx-ok" x="105" y="103" width="50" height="26" rx="6"/><text class="t-b" x="130" y="121">main</text>
-<rect class="bx-ok" x="105" y="188" width="50" height="26" rx="6"/><text class="t-b" x="130" y="206">main</text>
-<circle class="bx-a" cx="130" cy="62" r="15"/><text class="t-b" x="130" y="67">A</text>
-<circle class="bx-a" cx="210" cy="62" r="15"/><text class="t-b" x="210" y="67">B</text>
-<circle class="bx-a" cx="130" cy="147" r="15"/><text class="t-b" x="130" y="152">A</text>
-<circle class="ln-d" cx="210" cy="147" r="15" fill="none"/><text class="t-s" x="210" y="152">B</text>
-<circle class="bx-a" cx="130" cy="232" r="15"/><text class="t-b" x="130" y="237">A</text>
-<circle class="ln-d" cx="210" cy="232" r="15" fill="none"/><text class="t-s" x="210" y="237">B</text>
-<text class="t-s" x="335" y="66">B is newest</text>
-<text class="t-s t-warn" x="335" y="142">B's changes</text><text class="t-s t-warn" x="335" y="160">kept, staged</text>
-<text class="t-s t-bad" x="335" y="227">B's changes</text><text class="t-s t-bad" x="335" y="245">deleted</text>
-</g>
-<line class="ln" x1="194" y1="62" x2="152" y2="62"/><polygon class="ah" points="154,56 154,68 146,62"/>
-<line class="ln" x1="210" y1="44" x2="210" y2="46"/>
-<line class="ln-d" x1="10" y1="90" x2="410" y2="90"/><line class="ln-d" x1="10" y1="175" x2="410" y2="175"/>
-</svg><figcaption>Commit A is "Add homepage" and B is "Add styles". Both resets move main back from B to A, so B leaves the branch. With --soft, B's changes wait in the staging area, ready to commit again. With --hard, they are wiped from your files too.</figcaption></figure>
-<div class="mistake"><b>Common mistake</b>Reaching for <code>git reset --hard</code> when you meant <code>--soft</code>. Hard reset throws away uncommitted work with no "are you sure?" prompt. Use <code>--soft</code> or plain <code>git reset</code> unless you truly want the changes gone. (A later lesson shows how <code>git reflog</code> can rescue lost commits, but uncommitted edits cannot be rescued.)</div>
-
-<h4>The golden rule: only rewrite what you have not shared</h4>
-<p>Amend and reset both <b>rewrite history</b>: commits vanish from the branch and new ones with new ids appear. On your own computer that is fine. But once you have pushed commits to GitHub, teammates may have copies of them. If you rewrite those commits, your history and theirs no longer match, and sorting that out is painful.</p>
-<p>So: amend and reset freely <i>before</i> you push. For commits other people already have, use <code>git revert</code>, which you will meet in an advanced lesson. It undoes a commit by adding a new one, without rewriting anything.</p>
-
-<h4>Choosing the right undo</h4>
-<div class="tbl-wrap"><table><tr><th>Where is the mistake?</th><th>Command</th><th>Your edits</th></tr>
-<tr><td>Unstaged edits to a file</td><td><code>git restore file</code></td><td>Discarded</td></tr>
-<tr><td>Staged something by accident</td><td><code>git restore --staged file</code></td><td>Kept in the file</td></tr>
-<tr><td>Last commit's message or content</td><td><code>git commit --amend</code></td><td>Kept, new commit</td></tr>
-<tr><td>Last commit was too early</td><td><code>git reset --soft HEAD~1</code></td><td>Kept, staged</td></tr>
-<tr><td>Last commit should not exist</td><td><code>git reset --hard HEAD~1</code></td><td>Discarded</td></tr></table></div>
-<div class="try"><b>Try it in your head</b>You commit "Add styles", then realise you forgot to include <code>style.css</code>. Which is simpler: reset or amend? Amend: run <code>git add style.css</code>, then <code>git commit --amend -m "Add styles"</code>. The fixed commit replaces the old one in a single step.</div>
-
-<h4>Recap</h4>
-<ul>
-<li><code>HEAD</code> is the commit you are on; <code>HEAD~1</code> is its parent.</li>
-<li><code>git restore file</code> discards unstaged edits; <code>git restore --staged file</code> unstages but keeps the edits.</li>
-<li><code>git commit --amend</code> replaces the last commit with a new one (new id), including anything newly staged.</li>
-<li><code>git reset --soft HEAD~1</code> undoes a commit and keeps its changes staged; <code>--hard</code> deletes them.</li>
-<li>Only amend or reset commits you have not pushed. Shared commits are undone with <code>git revert</code>.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. You staged a file by mistake. Which command? <i>git restore --staged file.</i> 2. After <code>git reset --soft HEAD~1</code>, where are the changes? <i>In the staging box.</i> 3. Does <code>--amend</code> keep the same commit id? <i>No. It makes a new commit with a new id.</i></div>
 `);
 
 explain('g5',`
-<h4>Why branches exist</h4>
-<p>So far your history has been one straight line. That is fine while you work alone on one thing. Real work is messier. You start building a navigation bar, and halfway through someone reports a bug on the live site. Your files are now half-finished. How do you fix the bug without shipping a broken navbar?</p>
-<p><b>Branches</b> solve this. A branch is a separate line of work. You build the navbar on its own branch while <code>main</code>, the branch that holds the working version of the project, stays exactly as it was. When the feature is ready, you bring it back into <code>main</code> (that is merging, the next lesson).</p>
-<div class="analogy"><b>Think of it like</b>Drafting in a separate notebook. Your final notebook stays neat. You try ideas in the draft notebook, and only copy them across once they work. If the draft goes badly, you throw it away and the final notebook never knew.</div>
+<p>Branches let you try a new idea without touching the version that works. Every team in the world builds features this way, so this is where Git starts to feel like a superpower.</p>
 
-<h4>A branch is just a label</h4>
-<p>Here is the idea that makes branches click. A branch is <b>not</b> a copy of your files. It is a small, movable <b>label that points at one commit</b>. Inside <code>.git</code>, a branch is literally a tiny file containing a commit id. That is why creating a branch is instant, even in a huge project.</p>
-<p>When you make a commit while on a branch, Git does two things: it creates the commit with the current commit as its parent, and it moves that branch's label forward onto the new commit. Other branch labels do not move.</p>
+${V.card(1,'A branch is a sticky note','a label stuck on a commit',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Commits A and B on main; commit C on a side branch called feature/navbar. Each branch is a sticky note on its newest commit">
+${ed(60,110,190,110)}${ed(60,110,300,150)}
+${cm(60,110,'A')}${cm(190,110,'B')}${cm(300,150,'C','bx-ok')}
+${br('main',190,110,true,true)}
+<path class="ln-d" d="M300 132V112"/><rect class="bx-warn" x="228" y="86" width="144" height="26" rx="4"/><text class="t-m" x="300" y="104" text-anchor="middle">feature/navbar</text>
+<text class="t" x="60" y="152" text-anchor="middle" style="font-size:14px">shared start</text>
+<text class="t" x="300" y="194" text-anchor="middle" style="font-size:14px">only on the feature branch</text>
+</svg><figcaption>Commits are the dots. A branch is just a sticky note with a name, stuck on the newest commit of that line of work. HEAD is a pin saying which note you are using now.</figcaption></figure>
+${V.like(`<p>A bookmark in a notebook. <b>main</b> marks the page of the finished story. You start a new bookmark, <b>feature/navbar</b>, and write a few draft pages. Each time you write a page, your current bookmark moves forward with you. The finished story's bookmark does not move at all.</p>`)}
+${V.why(`<p>Old version control tools copied the whole project to make a branch, which was slow, so people avoided it. In Git a branch is a tiny file holding one commit id. Making one is instant, so you can make a branch for every idea.</p>`)}
+${V.anat([[1,'git switch'],' ',[2,'-c'],' ',[3,'feature/navbar']],[
+ '<b>Switch.</b> Move to a branch: HEAD and your files change to match it.',
+ '<b>Create.</b> <code>-c</code> makes the branch first, on the commit you are on now.',
+ '<b>Name.</b> A kind (<code>feature/</code>) and a short description.'])}
+<p><b>Watch the notes and HEAD move.</b> The folder on the right shows the files on your disk.</p>
+${V.steps([
+ ['One commit, <b>A</b>. The <b>main</b> note is on it, and HEAD says you are using main. Your folder holds index.html.',`<svg viewBox="0 0 420 210" role="img" aria-label="Commit A with main and HEAD; folder has index.html">
+${cm(90,104,'A')}${br('main',90,104,false,true)}
+<rect class="bx" x="316" y="30" width="100" height="150" rx="10"/>${V.ic('folder',348,36,34,'ic-info')}<text class="t-b" x="366" y="90" text-anchor="middle" style="font-size:14px">your disk</text>
+<text class="t-m" x="366" y="120" text-anchor="middle" style="font-size:14px">index.html</text>
+</svg>`],
+ ['<b>git switch -c feature/navbar</b> sticks a new note on the same commit and moves HEAD to it. No files change yet.',`<svg viewBox="0 0 420 210" role="img" aria-label="New note feature/navbar on A; HEAD moves to it">
+${cm(90,104,'A')}${br('main',90,104,false)}${br('feature/navbar',90,104,true,true,'bx-hl')}
+<rect class="bx" x="316" y="30" width="100" height="150" rx="10"/>${V.ic('folder',348,36,34,'ic-info')}<text class="t-b" x="366" y="90" text-anchor="middle" style="font-size:14px">your disk</text>
+<text class="t-m" x="366" y="120" text-anchor="middle" style="font-size:14px">index.html</text>
+</svg>`],
+ ['You add nav.html and commit. New commit <b>B</b> appears and the note you are using, feature/navbar, moves forward. main stays on A.',`<svg viewBox="0 0 420 210" role="img" aria-label="Commit B on feature/navbar; main still on A">
+${ed(90,104,230,104)}${cm(90,104,'A')}${cm(230,104,'B','bx-ok')}${br('main',90,104,false)}${br('feature/navbar',230,104,true,true)}
+<rect class="bx" x="316" y="30" width="100" height="150" rx="10"/>${V.ic('folder',348,36,34,'ic-info')}<text class="t-b" x="366" y="90" text-anchor="middle" style="font-size:14px">your disk</text>
+<text class="t-m" x="366" y="120" text-anchor="middle" style="font-size:14px">index.html</text><text class="t-m t-ok" x="366" y="146" text-anchor="middle" style="font-size:14px">nav.html</text>
+</svg>`],
+ ['<b>git switch main</b> moves HEAD back to main, and Git rewrites your folder to match commit A. nav.html vanishes from disk. It is safe inside commit B.',`<svg viewBox="0 0 420 210" role="img" aria-label="HEAD back on main; nav.html gone from disk">
+${ed(90,104,230,104)}${cm(90,104,'A')}${cm(230,104,'B')}${br('main',90,104,false,true,'bx-hl')}${br('feature/navbar',230,104,true)}
+<rect class="bx" x="316" y="30" width="100" height="150" rx="10"/>${V.ic('folder',348,36,34,'ic-info')}<text class="t-b" x="366" y="90" text-anchor="middle" style="font-size:14px">your disk</text>
+<text class="t-m" x="366" y="120" text-anchor="middle" style="font-size:14px">index.html</text><text class="t-m t-dim" x="366" y="146" text-anchor="middle" style="font-size:14px">nav.html</text><path class="ln-x" d="M326 141H406"/>
+</svg>`]])}
+${V.hook(`A branch is a sticky note. HEAD is the pin that says which note you are holding. Commit, and the note you hold moves.`)}
+`)}
 
-<h4>HEAD: which branch you are on</h4>
-<p>In the last lesson HEAD meant "the commit you are on". More precisely, HEAD usually points at a <b>branch</b>, and the branch points at a commit. So HEAD answers "which branch am I on?", and through the branch, "which commit?". When you commit, the branch that HEAD points at is the one that moves. Switching branches means moving HEAD to a different label.</p>
-<figure class="fig"><svg viewBox="0 0 420 330" role="img" aria-label="Three steps: create a branch, commit on it, switch back to main">
-<g text-anchor="middle">
-<text class="t-s" x="55" y="50">1. create</text><text class="t-s" x="55" y="68">and switch</text>
-<text class="t-s" x="55" y="160">2. commit</text><text class="t-s" x="55" y="178">on feature</text>
-<text class="t-s" x="55" y="270">3. switch</text><text class="t-s" x="55" y="288">to main</text>
-</g>
-<rect class="bx-info" x="120" y="8" width="140" height="28" rx="6"/><text class="t-b" x="190" y="27" text-anchor="middle">feature/navbar</text>
-<rect class="bx-dark" x="300" y="8" width="64" height="28" rx="6"/><text class="t-term" x="332" y="27" text-anchor="middle">HEAD</text>
-<line class="ln" x1="300" y1="22" x2="270" y2="22"/><polygon class="ah" points="272,16 272,28 263,22"/>
-<line class="ln" x1="190" y1="36" x2="190" y2="40"/>
-<circle class="bx-a" cx="190" cy="56" r="16"/><text class="t-s" x="190" y="61" text-anchor="middle">C1</text>
-<rect class="bx-ok" x="160" y="76" width="60" height="26" rx="6"/><text class="t-b" x="190" y="94" text-anchor="middle">main</text>
-<line class="ln-d" x1="10" y1="110" x2="410" y2="110"/>
-<rect class="bx-dark" x="160" y="120" width="64" height="28" rx="6"/><text class="t-term" x="192" y="139" text-anchor="middle">HEAD</text>
-<line class="ln" x1="224" y1="134" x2="242" y2="134"/><polygon class="ah" points="240,128 240,140 249,134"/>
-<rect class="bx-info" x="250" y="120" width="140" height="28" rx="6"/><text class="t-b" x="320" y="139" text-anchor="middle">feature/navbar</text>
-<circle class="bx-a" cx="190" cy="166" r="16"/><text class="t-s" x="190" y="171" text-anchor="middle">C1</text>
-<circle class="bx-a" cx="320" cy="166" r="16"/><text class="t-s" x="320" y="171" text-anchor="middle">C2</text>
-<line class="ln" x1="304" y1="166" x2="215" y2="166"/><polygon class="ah" points="217,160 217,172 208,166"/>
-<rect class="bx-ok" x="160" y="186" width="60" height="26" rx="6"/><text class="t-b" x="190" y="204" text-anchor="middle">main</text>
-<line class="ln-d" x1="10" y1="220" x2="410" y2="220"/>
-<rect class="bx-info" x="250" y="230" width="140" height="28" rx="6"/><text class="t-b" x="320" y="249" text-anchor="middle">feature/navbar</text>
-<circle class="bx-a" cx="190" cy="276" r="16"/><text class="t-s" x="190" y="281" text-anchor="middle">C1</text>
-<circle class="bx-a" cx="320" cy="276" r="16"/><text class="t-s" x="320" y="281" text-anchor="middle">C2</text>
-<line class="ln" x1="304" y1="276" x2="215" y2="276"/><polygon class="ah" points="217,270 217,282 208,276"/>
-<rect class="bx-ok" x="160" y="296" width="60" height="26" rx="6"/><text class="t-b" x="190" y="314" text-anchor="middle">main</text>
-<rect class="bx-dark" x="250" y="296" width="64" height="28" rx="6"/><text class="t-term" x="282" y="315" text-anchor="middle">HEAD</text>
-<line class="ln" x1="250" y1="309" x2="230" y2="309"/><polygon class="ah" points="232,303 232,315 223,309"/>
-</svg><figcaption>Step 1: git switch -c feature/navbar creates a new label on the same commit as main and moves HEAD to it. Step 2: a commit on the feature branch creates C2, and only the feature label moves forward; main stays on C1. Step 3: git switch main moves HEAD back to main, so your files go back to how they were at C1.</figcaption></figure>
+${V.card(2,'Listing and switching','git branch, git switch',`
+<figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="git branch lists branches with a star next to the current one">
+${tm(['$ git branch',['* feature/navbar','t-ok'],'  main'],86)}
+<path class="ln-a" d="M150 52H200"/><polygon class="ah-a" points="150,46 150,58 140,52"/><text class="t-b t-a" x="208" y="57" style="font-size:14px">the star: you are here</text>
+<text class="t" x="16" y="124" style="font-size:14px">The terminal prompt in the sandbox also shows the branch.</text>
+</svg><figcaption>git branch with nothing after it lists your branches. The star marks the one HEAD is on.</figcaption></figure>
+${V.like(`<p>TV channels. Switching branch is changing channel: the whole screen (your folder) changes to show that channel's programme. The other channels are still broadcasting. You just are not watching them.</p>`)}
+${V.rules(V.rh('Rules'),
+ V.no('git switch -c my navbar','No spaces in branch names'),V.ok('git switch -c feature/navbar','Slashes and hyphens are fine'),
+ V.no('git switch feature/nav','Switching to a branch that does not exist fails. Use -c to create it'),
+ V.ok('git checkout -b name','The older way to create and switch. You will see it in tutorials; it does the same job'),
+ V.rh('Conventions: name by purpose'),
+ V.ok('feature/navbar','New work'),V.ok('fix/login-crash','A bug fix'),V.ok('chore/update-deps','Housekeeping'),V.no('test2, my-branch','Says nothing about the work'))}
+${V.build(`<ol><li>List your branches with <code>git branch</code>.</li><li>Create and move to <code>feature/navbar</code> with <code>git switch -c</code>.</li><li>Create <code>nav.html</code>, add it and commit.</li><li>Switch back to main and run <code>ls</code>. nav.html is gone from the folder, but not from Git.</li></ol>`)}
+${V.hook(`<code>switch -c</code> makes a new note and moves to it. Plain <code>switch</code> just moves.`)}
+`)}
 
-<h4>Listing branches: <code>git branch</code></h4>
-<pre class="snip">$ git branch
-* main</pre>
-<p>Right now there is one branch. The star marks the one you are on, the one HEAD points at.</p>
-
-<h4>Creating and switching: <code>git switch</code></h4>
-<pre class="snip">git switch -c feature/navbar   # create a branch AND move onto it
-git switch main                # move onto an existing branch</pre>
-<p><code>switch</code> moves HEAD to a branch. The <code>-c</code> option means "create it first". The new branch starts on the commit you are currently on, so at first <code>main</code> and <code>feature/navbar</code> point at the same commit, as in step 1 of the diagram.</p>
-<p>You will also see an older command everywhere, in tutorials and on colleagues' screens: <code>git checkout -b feature/navbar</code> does the same as <code>git switch -c</code>, and <code>git checkout main</code> the same as <code>git switch main</code>. <code>checkout</code> does many unrelated jobs, which confused people, so Git added the clearer <code>switch</code> in 2019. Both work.</p>
-<p>There is also <code>git branch name</code>, which creates a branch <i>without</i> switching to it. Beginners often run it, keep committing, and are surprised the commits went onto <code>main</code>. Run <code>git branch</code> afterwards and check where the star is.</p>
-
-<h4>Your files change when you switch</h4>
-<p>On <code>feature/navbar</code>, the lesson adds <code>nav.html</code> and commits it. Then you switch back to <code>main</code> and run <code>ls</code>. <code>nav.html</code> has disappeared from your folder.</p>
-<p>Nothing is lost. When you switch, Git rewrites your working directory to match the commit the new branch points at. The commit on <code>main</code> never contained <code>nav.html</code>, so the file is removed from disk. Switch back to <code>feature/navbar</code> and it reappears, because it is safely stored in commit C2.</p>
-<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="The folder contents on main and on feature/navbar">
-<g text-anchor="middle">
-<text class="t-m" x="105" y="26">on main</text><text class="t-m" x="315" y="26">on feature/navbar</text>
-<rect class="bx-ok" x="10" y="40" width="190" height="130" rx="8"/>
-<rect class="bx-info" x="220" y="40" width="190" height="130" rx="8"/>
-<text class="t-m" x="105" y="80">index.html</text>
-<text class="t-s" x="105" y="122">no nav.html here</text>
-<text class="t-m" x="315" y="80">index.html</text>
-<rect class="bx-a" x="250" y="100" width="130" height="34" rx="6"/><text class="t-m" x="315" y="122">nav.html</text>
-</g>
-</svg><figcaption>The same project folder on two branches. On main it holds only index.html. On feature/navbar it also holds nav.html, because that branch's newest commit includes it. Switching branches swaps the folder's contents to match.</figcaption></figure>
-
-<h4>When Git refuses to switch</h4>
-<p>If you have uncommitted changes to a file that differs between the two branches, switching would overwrite your work, so Git stops:</p>
-<pre class="snip">error: Your local changes to the following files would be overwritten by checkout:
-        index.html
-Please commit your changes or stash them before you switch branches.</pre>
-<p>This is Git protecting you. Commit your changes on the current branch first (or shelve them with <code>git stash</code>, coming in an advanced lesson), then switch.</p>
-<div class="mistake"><b>Common mistake</b>Forgetting which branch you are on and committing feature work straight onto <code>main</code>. Make it a habit to check the first line of <code>git status</code>, "On branch ...", or the star in <code>git branch</code>, before you commit.</div>
-
-<h4>Naming branches</h4>
-<p>Branch names are free text, but teams use a prefix that says what kind of work it is, then a slash, then a short description in lowercase with hyphens:</p>
-<ul>
-<li><code>feature/navbar</code>: new functionality.</li>
-<li><code>fix/login-crash</code>: a bug fix.</li>
-<li><code>chore/update-deps</code>: maintenance, like updating libraries.</li>
-</ul>
-<p>Names cannot contain spaces. A good name lets a teammate understand the branch without opening it.</p>
-<div class="try"><b>Try it in your head</b>You are on <code>main</code> at commit C1. You run <code>git branch experiment</code> (no switch), then commit C2. Which label moves to C2? <code>main</code> does, because HEAD still points at <code>main</code>. <code>experiment</code> stays on C1.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>A branch is a movable label pointing at a commit; creating one is instant and copies nothing.</li>
-<li>HEAD points at the branch you are on. Committing moves only that branch forward.</li>
-<li><code>git branch</code> lists branches with a star on the current one; <code>git switch -c name</code> creates and switches; <code>git switch name</code> switches.</li>
-<li><code>git checkout -b name</code> is the older equivalent of <code>git switch -c name</code>.</li>
-<li>Switching rewrites your folder to match the branch, so commit your work before you switch.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. You are on feature/navbar and commit. Which note moves? <i>feature/navbar. main stays put.</i> 2. Does making a branch copy your files? <i>No. It just adds a label pointing at a commit.</i> 3. Why does nav.html vanish when you switch to main? <i>Git rewrites the folder to match main's commit, which never had nav.html.</i></div>
 `);
 
 explain('g6',`
-<h4>Why merging exists</h4>
-<p>Branches let you work on a feature without disturbing <code>main</code>. But a feature sitting on its own branch is not much use to anyone. At some point the finished work has to come back into <code>main</code>, so it becomes part of the real project. That step is called <b>merging</b>.</p>
-<p>Git does most of the work for you. It looks at what changed on each branch and combines the changes. The only thing you must get right is the direction.</p>
+<p>Branches let you work apart. Merging brings the work back together. Every finished feature ends with a merge, so learn the two shapes it can take.</p>
 
-<h4>The direction: stand where the work should land</h4>
-<p><code>git merge other-branch</code> means "bring <i>other-branch</i> into the branch I am on now". So you always switch to the branch that should <b>receive</b> the work first, then name the branch that <b>gives</b> it:</p>
-<pre class="snip">git switch main              # stand on the receiving branch
-git merge feature/navbar     # pull the feature's commits into it</pre>
-<p>The branch you name is not changed or deleted. Only the branch you are on moves.</p>
-<div class="analogy"><b>Think of it like</b>Copying the good ideas from your draft notebook into the final one. You open the <i>final</i> notebook, and copy <i>from</i> the draft. The draft itself stays as it was.</div>
+${V.card(1,'Fast-forward','main just catches up',`
+${V.like(`<p>Catching up on a TV series. Your friend is three episodes ahead and you have not watched anything different. You simply skip forward to where they are. Nothing new is made.</p>`)}
+${V.steps([
+ ['You are on <b>main</b> at A. feature/navbar is one commit ahead, at B, and main has not moved since the branch started.',`<svg viewBox="0 0 420 200" role="img" aria-label="main on A, feature/navbar on B ahead in a straight line">
+${ed(80,110,240,110)}${cm(80,110,'A')}${cm(240,110,'B')}${br('main',80,110,true,true)}${br('feature/navbar',240,110,false)}
+</svg>`],
+ ['<b>git merge feature/navbar</b>. Git sees that B already contains everything in A, so there is nothing to combine.',`<svg viewBox="0 0 420 200" role="img" aria-label="Git checks that B contains A">
+${ed(80,110,240,110,'ln-a')}${cm(80,110,'A')}${cm(240,110,'B','bx-ok')}${br('main',80,110,true,true)}${br('feature/navbar',240,110,false)}
+<text class="t-b t-a" x="160" y="96" text-anchor="middle" style="font-size:14px">straight line?</text>
+</svg>`],
+ ['So it just slides the main note forward onto B. This is a <b>fast-forward</b>: no new commit is made.',`<svg viewBox="0 0 420 200" role="img" aria-label="main slides forward to B">
+${ed(80,110,240,110)}${cm(80,110,'A')}${cm(240,110,'B','bx-ok')}${br('main',240,110,true,true,'bx-hl')}${br('feature/navbar',240,110,false)}
+<text class="t-b t-ok" x="340" y="116" text-anchor="middle">Fast-forward</text>
+</svg>`]])}
+${V.anat([[1,'git merge'],' ',[2,'feature/navbar']],[
+ '<b>Merge.</b> Bring another branch\'s commits into the branch you are on now.',
+ '<b>The giver.</b> The branch whose work you want. You stand on the receiver.'])}
+${V.hook(`Fast-forward: nothing to mix, so the note just slides.`)}
+`)}
 
-<h4>The starting picture</h4>
-<p>This sandbox has two finished features waiting. Both branches started from the same commit, "Add homepage". One adds a navbar, the other a footer. Run <code>git log --oneline --all</code> or look at the graph panel and you should see this shape:</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="main on the first commit, with feature/navbar and feature/footer each one commit ahead">
-<line class="ln" x1="104" y1="104" x2="236" y2="56"/><line class="ln" x1="104" y1="116" x2="236" y2="164"/>
-<circle class="bx-a" cx="90" cy="110" r="16"/><text class="t-s" x="90" y="115" text-anchor="middle">C1</text>
-<circle class="bx-a" cx="250" cy="50" r="16"/><text class="t-s" x="250" y="55" text-anchor="middle">C2</text>
-<circle class="bx-a" cx="250" cy="170" r="16"/><text class="t-s" x="250" y="175" text-anchor="middle">C3</text>
-<rect class="bx-info" x="276" y="36" width="134" height="28" rx="6"/><text class="t-b" x="343" y="55" text-anchor="middle">feature/navbar</text>
-<rect class="bx-info" x="276" y="156" width="134" height="28" rx="6"/><text class="t-b" x="343" y="175" text-anchor="middle">feature/footer</text>
-<rect class="bx-ok" x="60" y="136" width="60" height="26" rx="6"/><text class="t-b" x="90" y="154" text-anchor="middle">main</text>
-<rect class="bx-dark" x="58" y="182" width="64" height="28" rx="6"/><text class="t-term" x="90" y="201" text-anchor="middle">HEAD</text>
-<line class="ln" x1="90" y1="182" x2="90" y2="170"/><polygon class="ah" points="84,172 96,172 90,164"/>
-<text class="t-s" x="343" y="82" text-anchor="middle">Add navbar</text><text class="t-s" x="343" y="202" text-anchor="middle">Add footer</text>
-</svg><figcaption>The starting point. C1, "Add homepage", is where main is, and you are on main. Two branches split off from C1: feature/navbar with one new commit, C2, and feature/footer with one new commit, C3.</figcaption></figure>
+${V.card(2,'Three-way merge','two lines of work become one',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="Two streams joining into one river, like two branches joining in a merge commit">
+${ed(40,60,250,110,'ln-ok')}${ed(40,160,250,110,'ln-ok')}${ed(250,110,400,110,'ln-ok')}
+${V.ic('person',8,30,36,'ic-info')}${V.ic('person',8,130,36,'ic-p')}
+<text class="t" x="120" y="54" style="font-size:14px">navbar work</text><text class="t" x="120" y="176" style="font-size:14px">footer work</text>
+${cm(250,110,'M','bx-ok')}<text class="t-b" x="330" y="96">merge commit</text><text class="t" x="330" y="140" style="font-size:14px">two parents</text>
+</svg><figcaption>When both branches have new commits, Git makes a new merge commit that joins them. It is the only kind of commit with two parents.</figcaption></figure>
+${V.like(`<p>Two streams meeting to form a river. Both bring water. The point where they join is a new place on the map, the merge commit.</p>`)}
+${V.why(`<p>Git finds the last commit both branches share, called the <b>merge base</b>. It compares each side with it and combines both sets of changes. Three snapshots are involved (base, yours, theirs), which is where the name comes from.</p>`)}
+${V.steps([
+ ['main is at B (it already has the navbar). feature/footer split off earlier, from A, and has its own commit C.',`<svg viewBox="0 0 420 210" role="img" aria-label="main on B, feature/footer on C, both from A">
+${ed(60,110,190,110)}${ed(60,110,190,170)}${cm(60,110,'A')}${cm(190,110,'B')}${cm(190,170,'C')}${br('main',190,110,true,true)}
+<path class="ln-d" d="M208 170H222"/><rect class="bx-warn" x="222" y="157" width="144" height="26" rx="4"/><text class="t-m" x="294" y="175" text-anchor="middle">feature/footer</text>
+</svg>`],
+ ['<b>git merge feature/footer</b>. Git finds the merge base, <b>A</b>, the last commit both lines share, and combines both sets of changes.',`<svg viewBox="0 0 420 210" role="img" aria-label="Git finds merge base A">
+${ed(60,110,190,110,'ln-a')}${ed(60,110,190,170,'ln-a')}${cm(60,110,'A','bx-hl')}${cm(190,110,'B')}${cm(190,170,'C')}${br('main',190,110,true,true)}
+<path class="ln-d" d="M208 170H222"/><rect class="bx-warn" x="222" y="157" width="144" height="26" rx="4"/><text class="t-m" x="294" y="175" text-anchor="middle">feature/footer</text>
+<text class="t-b t-a" x="60" y="158" text-anchor="middle" style="font-size:14px">base</text>
+</svg>`],
+ ['It makes a new <b>merge commit, M</b>, with two parents: B and C. main moves onto M. Your folder now has the navbar and the footer.',`<svg viewBox="0 0 420 210" role="img" aria-label="Merge commit M with parents B and C">
+${ed(60,110,190,110)}${ed(60,110,190,170)}${ed(190,110,330,110,'ln-ok')}${ed(190,170,330,110,'ln-ok')}${cm(60,110,'A')}${cm(190,110,'B')}${cm(190,170,'C')}${cm(330,110,'M','bx-ok')}${br('main',330,110,true,true,'bx-hl')}
+<path class="ln-d" d="M208 170H222"/><rect class="bx-warn" x="222" y="157" width="144" height="26" rx="4"/><text class="t-m" x="294" y="175" text-anchor="middle">feature/footer</text>
+</svg>`],
+ ['Tidy up: <b>git branch -d feature/footer</b> peels off the note. The commits stay in history, safely reachable from main.',`<svg viewBox="0 0 420 210" role="img" aria-label="feature/footer note removed; commits remain">
+${ed(60,110,190,110)}${ed(60,110,190,170)}${ed(190,110,330,110)}${ed(190,170,330,110)}${cm(60,110,'A')}${cm(190,110,'B')}${cm(190,170,'C')}${cm(330,110,'M')}${br('main',330,110,true,true)}
+<rect class="bx t-dim" x="222" y="157" width="144" height="26" rx="4"/><text class="t-m t-dim" x="294" y="175" text-anchor="middle">feature/footer</text><path class="ln-x" d="M222 183 366 157"/>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('git switch main, then merge','Stand on the branch that receives the work'),V.no('git merge main (on the feature)','Pulls main into your feature instead. Not what you meant'),
+ V.ok('git branch -d name','Deletes a merged branch note. Refuses if the work is not merged yet, which protects you'),
+ V.no('git branch -D name','Capital D forces it. Only when you really want to throw that work away'),
+ V.rh('Conventions'),
+ V.ok('Delete merged branches','Keeps git branch short and clear'),V.ok('git log --oneline --graph','Draws the shape of the merge in the terminal'))}
+${V.build(`<ol><li>Check you are on main with <code>git branch</code>.</li><li>Merge <code>feature/navbar</code> and look for "Fast-forward".</li><li>Merge <code>feature/footer</code>. This one makes a merge commit.</li><li>Delete <code>feature/navbar</code> with <code>-d</code>, then read <code>git log --oneline</code>.</li></ol>`)}
+${V.hook(`Straight line: slide the note. Fork in the road: tie the knot with a two-parent merge commit.`)}
+`)}
 
-<h4>Merge type 1: fast-forward</h4>
-<p>Look at <code>main</code> and <code>feature/navbar</code>. Since the navbar branch started, <code>main</code> has not moved. Every commit on <code>main</code> is already inside the navbar branch's history. So there is nothing to combine: Git can simply slide the <code>main</code> label forward to C2.</p>
-<p>That is a <b>fast-forward</b> merge. No new commit is made. Git tells you so:</p>
-<pre class="snip">$ git merge feature/navbar
-Updating 5e0b1a2..b7e2d40
-Fast-forward
- nav.html | 1 +
- 1 file changed, 1 insertion(+)</pre>
-<p><code>Updating A..B</code> means the branch moved from commit A to commit B. <code>nav.html</code> now appears in your folder, because your working directory updates to match the new commit.</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="After the fast-forward, main has slid forward onto C2">
-<line class="ln" x1="104" y1="104" x2="236" y2="56"/><line class="ln" x1="104" y1="116" x2="236" y2="164"/>
-<circle class="bx-a" cx="90" cy="110" r="16"/><text class="t-s" x="90" y="115" text-anchor="middle">C1</text>
-<circle class="bx-ok" cx="250" cy="50" r="16"/><text class="t-s" x="250" y="55" text-anchor="middle">C2</text>
-<circle class="bx-a" cx="250" cy="170" r="16"/><text class="t-s" x="250" y="175" text-anchor="middle">C3</text>
-<rect class="bx-info" x="276" y="36" width="134" height="28" rx="6"/><text class="t-b" x="343" y="55" text-anchor="middle">feature/navbar</text>
-<rect class="bx-info" x="276" y="156" width="134" height="28" rx="6"/><text class="t-b" x="343" y="175" text-anchor="middle">feature/footer</text>
-<rect class="bx-ok" x="220" y="2" width="60" height="26" rx="6"/><text class="t-b" x="250" y="20" text-anchor="middle">main</text>
-<rect class="bx-dark" x="304" y="1" width="64" height="28" rx="6"/><text class="t-term" x="336" y="20" text-anchor="middle">HEAD</text>
-<line class="ln" x1="304" y1="15" x2="290" y2="15"/><polygon class="ah" points="292,9 292,21 283,15"/>
-<path class="ln-d" d="M90 136V150"/><text class="t-s" x="90" y="168" text-anchor="middle">main was here</text>
-<path class="ln-ok" d="M96 92Q120 18 208 15"/><polygon class="ah-ok" points="208,9 208,21 218,15"/>
-</svg><figcaption>After git merge feature/navbar. Because main had no new commits of its own, Git just slid the main label forward from C1 to C2, the same commit feature/navbar points at. No new commit was created.</figcaption></figure>
-
-<h4>Merge type 2: three-way merge</h4>
-<p>Now merge the footer: <code>git merge feature/footer</code>. This time the situation is different. <code>main</code> has moved on to C2, which the footer branch does not have. And the footer branch has C3, which <code>main</code> does not have. The two histories have <b>diverged</b>: each side has work the other lacks. Sliding a label cannot fix that.</p>
-<p>So Git does a <b>three-way merge</b>. "Three-way" refers to the three commits it compares:</p>
-<ol>
-<li>the <b>common ancestor</b>, the last commit both branches share (C1);</li>
-<li>the tip of your branch (C2, with the navbar);</li>
-<li>the tip of the incoming branch (C3, with the footer).</li>
-</ol>
-<p>Git works out what each side changed compared with the ancestor, and applies both sets of changes. The navbar side added <code>nav.html</code>; the footer side added <code>footer.html</code>. Those do not overlap, so Git combines them happily. It then records the result as a new <b>merge commit</b>. A merge commit is special: it has <b>two parents</b>, one from each branch.</p>
-<pre class="snip">$ git merge feature/footer
-Merge made by the 'ort' strategy.
- footer.html | 1 +
- 1 file changed, 1 insertion(+)</pre>
-<p>"ort" is simply the name of Git's standard merging method. On a real computer, Git first opens a text editor with a ready-made message, <code>Merge branch 'feature/footer'</code>. Saving and closing accepts it; adding <code>--no-edit</code> to the command skips the editor.</p>
-<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="A merge commit M with two parents, C2 and C3">
-<line class="ln" x1="74" y1="104" x2="166" y2="56"/><line class="ln" x1="74" y1="116" x2="166" y2="164"/>
-<line class="ln-ok" x1="194" y1="56" x2="296" y2="104"/><line class="ln-ok" x1="194" y1="164" x2="296" y2="116"/>
-<circle class="bx-a" cx="60" cy="110" r="16"/><text class="t-s" x="60" y="115" text-anchor="middle">C1</text>
-<circle class="bx-a" cx="180" cy="50" r="16"/><text class="t-s" x="180" y="55" text-anchor="middle">C2</text>
-<circle class="bx-a" cx="180" cy="170" r="16"/><text class="t-s" x="180" y="175" text-anchor="middle">C3</text>
-<circle class="bx-ok" cx="310" cy="110" r="18"/><text class="t-b" x="310" y="115" text-anchor="middle">M</text>
-<text class="t-s" x="180" y="22" text-anchor="middle">feature/navbar</text><text class="t-s" x="180" y="210" text-anchor="middle">feature/footer</text>
-<text class="t-s" x="60" y="150" text-anchor="middle">ancestor</text>
-<text class="t-s" x="310" y="152" text-anchor="middle">two parents</text>
-<rect class="bx-ok" x="345" y="97" width="60" height="26" rx="6"/><text class="t-b" x="375" y="115" text-anchor="middle">main</text>
-</svg><figcaption>After git merge feature/footer. Git compared both tips, C2 and C3, with their common ancestor C1, combined the changes and made a new merge commit, M. M has two parents, C2 and C3, and main now points at it, so main contains the homepage, navbar and footer.</figcaption></figure>
-
-<h4>What if both sides changed the same lines?</h4>
-<p>Here the two branches touched different files, so the merge was automatic. Git is also happy when both sides changed the same file in different places. Only when both sides changed the <i>same lines</i> differently does Git stop and ask you to decide. That is a <b>merge conflict</b>, and it gets its own lesson next.</p>
-
-<h4>Cleaning up: <code>git branch -d</code></h4>
-<p>Once a branch is merged, its label has done its job. The commits are safely part of <code>main</code>'s history, so delete the label to keep your branch list tidy:</p>
-<pre class="snip">$ git branch -d feature/navbar
-Deleted branch feature/navbar (was b7e2d40).</pre>
-<p>Deleting a branch deletes only the label, never the commits that are already in <code>main</code>. Git also protects you. If the branch holds commits that are not merged anywhere, <code>-d</code> refuses:</p>
-<pre class="snip">error: The branch 'experiment' is not fully merged.</pre>
-<p>That message means "deleting this label would make some commits unreachable". If you are sure you want to throw that work away, the capital <code>-D</code> forces it. You also cannot delete the branch you are standing on; switch away first.</p>
-<div class="mistake"><b>Common mistake</b>Merging in the wrong direction. Standing on <code>feature/navbar</code> and running <code>git merge main</code> pulls main's work into the feature, not the other way round. Check "On branch ..." in <code>git status</code> before you merge.</div>
-
-<h4>Reading the result</h4>
-<p><code>git log --oneline</code> now shows the merge commit at the top, followed by the commits from both branches. Adding <code>--graph</code> draws the shape with lines in the terminal, which is a great way to check what happened.</p>
-<div class="try"><b>Try it in your head</b>You create <code>feature/a</code> from main, commit twice on it, and nobody touches main. Then you merge it into main. Fast-forward or merge commit? Fast-forward: main has no new commits, so Git just slides the label forward. No new commit is made.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Switch to the branch that receives the work, then <code>git merge other-branch</code>.</li>
-<li>Fast-forward: the receiving branch has not moved, so Git slides its label forward. No new commit.</li>
-<li>Three-way merge: both branches have new commits, so Git combines them with the common ancestor and makes a merge commit with two parents.</li>
-<li>Only the same lines changed differently on both sides cause a conflict.</li>
-<li><code>git branch -d name</code> deletes a merged branch label; Git refuses if the work is not merged.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. main has not moved since you branched. What kind of merge? <i>A fast-forward, with no new commit.</i> 2. How many parents does a merge commit have? <i>Two.</i> 3. Does <code>git branch -d</code> delete commits? <i>No, only the label.</i></div>
 `);
 
 explain('g7',`
-<h4>Why conflicts happen</h4>
-<p>In the last lesson Git merged two branches by itself because they changed different things. Now imagine two people edit the <b>same sentence</b> in different ways. One writes "Portfolio | Home", the other writes "Jane Doe | Developer". Which one is right? Git has no idea. It is a tool, not an editor, and it will never guess with your code.</p>
-<p>So Git stops halfway through the merge, marks the clash clearly in the file, and asks you to decide. That pause is a <b>merge conflict</b>. It is not an error and nothing is broken. It is Git saying: "I need a human for this part."</p>
-<div class="analogy"><b>Think of it like</b>Two people editing the same paragraph of a shared document while offline. When they reconnect, the program cannot pick a winner, so it shows both versions side by side and asks one of them to write the final paragraph.</div>
+<p>Sooner or later Git will stop a merge and say <b>CONFLICT</b>. It sounds scary, but it is routine: Git is simply asking you to make one decision it cannot make for you.</p>
 
-<h4>This lesson's setup</h4>
-<p>The sandbox has a page title in <code>index.html</code>, originally <code>&lt;title&gt;My Site&lt;/title&gt;</code>. Then the history split:</p>
-<ul>
-<li>On <code>feature/title</code>, someone changed it to <code>Jane Doe | Developer</code>.</li>
-<li>On <code>main</code>, someone changed the same line to <code>Portfolio | Home</code>.</li>
-</ul>
-<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="Both branches changed the same line of the original, so the merge cannot decide">
-<g text-anchor="middle">
-<rect class="bx" x="10" y="92" width="120" height="56" rx="8"/><text class="t-b" x="70" y="114">original</text><text class="t-s" x="70" y="134">My Site</text>
-<rect class="bx-ok" x="160" y="20" width="180" height="56" rx="8"/><text class="t-b" x="250" y="42">main</text><text class="t-s" x="250" y="62">Portfolio | Home</text>
-<rect class="bx-info" x="160" y="164" width="180" height="56" rx="8"/><text class="t-b" x="250" y="186">feature/title</text><text class="t-s" x="250" y="206">Jane Doe | Developer</text>
-<rect class="bx-bad" x="360" y="92" width="50" height="56" rx="8"/><text class="t-b t-bad" x="385" y="127" style="font-size:24px">?</text>
-</g>
-<line class="ln" x1="130" y1="110" x2="160" y2="56"/><line class="ln" x1="130" y1="130" x2="160" y2="184"/>
-<line class="ln-d" x1="340" y1="56" x2="370" y2="92"/><line class="ln-d" x1="340" y1="184" x2="370" y2="148"/>
-</svg><figcaption>The original title said "My Site". Main changed that line to "Portfolio | Home" and feature/title changed the same line to "Jane Doe | Developer". When you merge, Git cannot know which to keep, so it stops and asks you.</figcaption></figure>
-<p>Git compares each side with the original, just like any three-way merge. If only one side had changed the line, Git would take that change. Because <b>both</b> sides changed it, differently, it is a conflict.</p>
+${V.card(1,'Why conflicts happen','same line, two different edits',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="Two people change the same title line differently; Git cannot choose">
+${V.ic('person',8,20,44,'ic-info')}<rect class="bx-info" x="58" y="22" width="232" height="40" rx="8"/><text class="t-m" x="174" y="48" text-anchor="middle" style="font-size:14px">Portfolio | Home</text>
+${V.ic('person',8,124,44,'ic-p')}<rect class="bx-info" x="58" y="126" width="232" height="40" rx="8"/><text class="t-m" x="174" y="152" text-anchor="middle" style="font-size:14px">Jane Doe | Developer</text>
+${ed(292,42,344,94,'ln-a')}${ed(292,146,344,94,'ln-a')}
+${V.ic('warn',344,68,52,'ic-warn')}<text class="t-b t-warn" x="370" y="146" text-anchor="middle" style="font-size:14px">which?</text>
+</svg><figcaption>main changed the title to one thing, the feature branch changed the same line to something else. Git will not guess which is right.</figcaption></figure>
+${V.like(`<p>Two friends editing the same sentence in a shared essay at the same time. Changes to different paragraphs are easy to combine. But when both rewrote the same sentence, someone has to read both and decide.</p>`)}
+${V.why(`<p>Git merges different lines, and different files, automatically. It only stops when the same lines changed in different ways on both sides. Guessing could silently lose someone's work, so Git asks a human.</p>`)}
+${V.steps([
+ ['Both branches started from the same title, then each changed that one line. main says "Portfolio | Home"; feature/title says "Jane Doe | Developer".',`<svg viewBox="0 0 420 210" role="img" aria-label="main and feature/title both changed the title line">
+${ed(60,120,190,80)}${ed(60,120,190,160)}${cm(60,120,'A')}${cm(190,80,'B')}${cm(190,160,'C')}
+<rect class="bx-warn" x="214" y="67" width="54" height="26" rx="4"/><text class="t-m" x="241" y="85" text-anchor="middle">main</text>
+<rect class="bx-warn" x="214" y="147" width="126" height="26" rx="4"/><text class="t-m" x="277" y="165" text-anchor="middle">feature/title</text>
+<text class="t" x="214" y="56" style="font-size:14px">"Portfolio | Home"</text><text class="t" x="214" y="196" style="font-size:14px">"Jane Doe | Developer"</text>
+</svg>`],
+ ['On main you run <b>git merge feature/title</b>. Git combines what it can, hits the clashing line and pauses the merge halfway.',`<svg viewBox="0 0 420 210" role="img" aria-label="Merge stops with CONFLICT">
+${tm(['$ git merge feature/title',['CONFLICT (content): Merge conflict','t-bad'],['in index.html','t-bad'],'Automatic merge failed; fix conflicts...'],110)}
+${V.ic('warn',180,130,60,'ic-warn')}<text class="t-b t-warn" x="250" y="168">merge paused</text>
+</svg>`],
+ ['Git writes <b>both</b> versions into the file, fenced by markers. Your job: choose the final text and delete the markers.',`<svg viewBox="0 0 420 210" role="img" aria-label="index.html contains conflict markers around both versions">
+${tm(['$ cat index.html',['&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD','t-warn'],'&lt;title&gt;Portfolio | Home&lt;/title&gt;',['=======','t-warn'],'&lt;title&gt;Jane Doe | Developer&lt;/title&gt;',['&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/title','t-warn']],160)}
+<text class="t" x="16" y="196" style="font-size:14px">top half: yours (HEAD)   bottom half: theirs</text>
+</svg>`]])}
+${V.hook(`Different lines merge themselves. Same line, two answers: Git hands you the pen.`)}
+`)}
 
-<h4>Step 1: start the merge and read the message</h4>
-<pre class="snip">$ git merge feature/title
-Auto-merging index.html
-CONFLICT (content): Merge conflict in index.html
-Automatic merge failed; fix conflicts and then commit the result.</pre>
-<p>Read it slowly. Git tried ("Auto-merging"), found a clash in the content of <code>index.html</code>, and is now waiting for you. You are <b>in the middle of a merge</b>: the merge commit has not been made yet. <code>git status</code> confirms it:</p>
-<pre class="snip">You have unmerged paths.
-  (fix conflicts and run "git commit")
-  (use "git merge --abort" to abort the merge)
+${V.card(2,'Reading the markers','three fences around two versions',`
+${V.anat([[1,'&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD'],'\n',[2,'&lt;title&gt;Portfolio | Home&lt;/title&gt;'],'\n',[3,'======='],'\n',[4,'&lt;title&gt;Jane Doe | Developer&lt;/title&gt;'],'\n',[5,'&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/title']],[
+ '<b>Start fence.</b> What follows is the version on HEAD: the branch you are on.',
+ '<b>Your version.</b>',
+ '<b>Middle fence.</b> Separates the two sides.',
+ '<b>Their version.</b> From the branch you are merging in.',
+ '<b>End fence.</b> Names the incoming branch.'])}
+${V.like(`<p>A teacher's note in the margin: "You wrote this... but your partner wrote that. Pick one, or write a better sentence, then rub out my note."</p>`)}
+<p><b>Resolve it.</b> Watch the file go from conflicted to committed.</p>
+${V.steps([
+ ['After the clash, index.html is <b>conflicted</b>. git status lists it under "Unmerged paths" as "both modified".',`<svg viewBox="0 0 420 212" role="img" aria-label="index.html conflicted in working folder">
+${ar({hl:0,w:[['index.html','bx-bad']],h:['B','C'],hn:'merge paused',a:0})}
+</svg>`],
+ ['You edit the file to the final version, for example <b>Jane Doe | Portfolio</b>, and delete all three marker lines.',`<svg viewBox="0 0 420 212" role="img" aria-label="index.html fixed, markers removed">
+${ar({hl:0,w:[['index.html','bx-ok']],h:['B','C'],hn:'merge paused',a:0})}
+</svg>`],
+ ['<b>git add index.html</b> tells Git "this conflict is resolved". The fixed file goes into the box.',`<svg viewBox="0 0 420 212" role="img" aria-label="Resolved file staged">
+${ar({hl:1,w:[['index.html','bx-ok']],s:[['index.html','bx-warn']],h:['B','C'],hn:'merge paused',a:1})}
+</svg>`],
+ ['<b>git commit</b> finishes the merge. Git already wrote a message ("Merge branch \'feature/title\'"), so <code>-m</code> is optional. Merge commit <b>M</b> is born.',`<svg viewBox="0 0 420 212" role="img" aria-label="Merge commit M created">
+${ar({hl:2,w:[['index.html','bx-ok']],h:['B','C',['M','bx-ok']],hn:'merge done',a:2})}
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.no('Leaving a marker behind','A stray &lt;&lt;&lt;&lt;&lt;&lt;&lt; breaks the page. Search the file for them'),
+ V.ok('git add, then git commit','add marks it resolved; commit finishes the merge'),
+ V.ok('git merge --abort','Changed your mind? Go back to exactly before the merge'),
+ V.ok('git status','Lists every conflicted file under "Unmerged paths"'),
+ V.rh('Conventions'),
+ V.ok('Keep both ideas if sensible','"Jane Doe | Portfolio" uses a bit of each side'),
+ V.ok('Merge main into your branch often','Small, frequent merges mean small conflicts'))}
+${V.build(`<ol><li>On main, merge <code>feature/title</code> and read the CONFLICT message.</li><li>Look inside with <code>cat index.html</code> and find the three fences.</li><li>Overwrite the file with one clean title line, no markers.</li><li>Stage the file, then commit to finish the merge.</li></ol>`)}
+${V.hook(`See the fences, pick the words, delete the fences, then <code>add</code> and <code>commit</code>.`)}
+`)}
 
-Unmerged paths:
-        both modified:   index.html</pre>
-<p>"Unmerged paths" is the list of files you need to fix. "Both modified" means both branches changed it. In a big merge, files Git could combine on its own are already staged, and only the conflicted ones are listed here.</p>
-
-<h4>Step 2: read the conflict markers</h4>
-<p>Open the file, with <code>cat index.html</code> in the sandbox. Git has written <b>both</b> versions into it, fenced off with markers:</p>
-<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="Conflict markers: your version above the equals line, the incoming version below">
-<rect class="bx-dark" x="6" y="12" width="340" height="150" rx="8"/>
-<text class="t-term" x="16" y="40">&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</text>
-<text class="t-term" x="16" y="66">&lt;title&gt;Portfolio | Home&lt;/title&gt;</text>
-<text class="t-term" x="16" y="92">=======</text>
-<text class="t-term" x="16" y="118">&lt;title&gt;Jane Doe | Developer&lt;/title&gt;</text>
-<text class="t-term" x="16" y="144">&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/title</text>
-<path class="ln-ok" d="M352 26h6v46h-6"/><path class="ln-a" d="M352 104h6v46h-6"/>
-<g text-anchor="middle"><text class="t-s t-ok" x="388" y="46">yours</text><text class="t-s" x="388" y="64">main</text>
-<text class="t-s t-a" x="388" y="124">theirs</text><text class="t-s" x="388" y="142">feature</text></g>
-</svg><figcaption>Everything between the seven less-than signs and the row of equals signs is your current branch's version, labelled HEAD, which is main here. Everything between the equals signs and the seven greater-than signs is the incoming version from feature/title.</figcaption></figure>
-<ul>
-<li><code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> starts the conflict. HEAD is where you are standing, so the lines below it are <b>your</b> branch's version (main).</li>
-<li><code>=======</code> is the dividing line.</li>
-<li><code>&gt;&gt;&gt;&gt;&gt;&gt;&gt; feature/title</code> ends the conflict. The lines above it are the <b>incoming</b> branch's version.</li>
-</ul>
-<p>Any lines outside the markers were merged without trouble. A file can contain several separate conflict blocks; fix each one.</p>
-
-<h4>Step 3: write the final version</h4>
-<p>Now you make the decision. You have three choices for each block: keep yours, keep theirs, or write something new that combines both. Whatever you choose, the file must end up as normal, working content with <b>every marker line removed</b>.</p>
-<p>In a code editor you would delete the lines you do not want. Editors like VS Code even show buttons: "Accept Current", "Accept Incoming", "Accept Both". In the sandbox, the simplest way is to overwrite the whole file with the final content, using the <code>echo ... &gt; file</code> technique you already know. For example, you might combine both ideas into <code>Jane Doe | Portfolio</code>.</p>
-
-<h4>Step 4: mark it resolved and finish</h4>
-<p>Fixing the text is not enough; you have to tell Git you are done with that file. That is what <code>git add</code> means during a merge: "this file is resolved".</p>
-<pre class="snip">git add index.html   # mark as resolved
-git status           # "All conflicts fixed but you are still merging."
-git commit           # creates the merge commit</pre>
-<p>During a merge you can leave out <code>-m</code>. Git already knows the merge commit's message, <code>Merge branch 'feature/title'</code>; on a real computer it opens an editor so you can accept it. Adding <code>-m "..."</code> works too. Once you commit, the merge commit is created with two parents, exactly like the three-way merges in the last lesson.</p>
-<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="Resolution steps: merge, edit, add, commit, with abort as an exit">
-<g text-anchor="middle">
-<rect class="bx-bad" x="40" y="10" width="250" height="38" rx="8"/><text class="t-m" x="165" y="35">git merge → CONFLICT</text>
-<rect class="bx" x="40" y="70" width="250" height="38" rx="8"/><text class="t" x="165" y="95">Edit file, remove markers</text>
-<rect class="bx-warn" x="40" y="130" width="250" height="38" rx="8"/><text class="t-m" x="165" y="155">git add index.html</text>
-<rect class="bx-ok" x="40" y="190" width="250" height="38" rx="8"/><text class="t-m" x="165" y="215">git commit</text>
-<rect class="bx-info" x="318" y="44" width="96" height="58" rx="8"/><text class="t-s" x="366" y="68">git merge</text><text class="t-s" x="366" y="88">--abort</text>
-</g>
-<line class="ln" x1="165" y1="48" x2="165" y2="62"/><polygon class="ah" points="159,61 171,61 165,69"/>
-<line class="ln" x1="165" y1="108" x2="165" y2="122"/><polygon class="ah" points="159,121 171,121 165,129"/>
-<line class="ln" x1="165" y1="168" x2="165" y2="182"/><polygon class="ah" points="159,181 171,181 165,189"/>
-<line class="ln-d" x1="290" y1="40" x2="318" y2="62"/>
-</svg><figcaption>The four steps of resolving a conflict, top to bottom: the merge stops with a conflict, you edit the file and remove every marker, git add marks the file resolved, and git commit creates the merge commit. At any point before committing, git merge --abort, on the right, cancels the whole merge.</figcaption></figure>
-
-<h4>The escape hatch: <code>git merge --abort</code></h4>
-<p>Feeling lost in the middle of a conflict? <code>git merge --abort</code> cancels the merge and puts everything back exactly as it was before you typed <code>git merge</code>. Nothing is lost. You can think, talk to your teammate, and try again later.</p>
-
-<h4>Errors you might meet</h4>
-<ul>
-<li><b><code>Committing is not possible because you have unmerged files</code></b>: you ran <code>git commit</code> before <code>git add</code>. Stage the fixed file first.</li>
-<li><b>A warning that the file still contains conflict markers</b>: you staged it without removing every <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>, <code>=======</code> or <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> line. Edit it again.</li>
-</ul>
-<div class="mistake"><b>Common mistake</b>Leaving a marker line in the file and committing. Real Git does not always stop you, and the markers end up in your website or break your code. Before <code>git add</code>, read the whole file once more and search for <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>.</div>
-<div class="tip"><b>Tip</b>Conflicts are routine on any team, not emergencies. Small, frequent merges keep them small. A branch that lives for weeks without merging collects big, painful conflicts.</div>
-<div class="try"><b>Try it in your head</b>On main, line 3 of <code>about.html</code> changes. On a feature branch, line 10 of the same file changes. Will merging conflict? No: different lines, so Git combines both edits automatically. Conflicts need the same lines changed differently on both sides.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>A conflict happens when both branches change the same lines differently; Git pauses the merge and asks you.</li>
-<li>Between <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> and <code>=======</code> is your branch's version; between <code>=======</code> and <code>&gt;&gt;&gt;&gt;&gt;&gt;&gt;</code> is the incoming one.</li>
-<li>Edit the file to the final content and remove every marker line.</li>
-<li><code>git add</code> marks the file resolved; <code>git commit</code> finishes the merge (no <code>-m</code> needed).</li>
-<li><code>git merge --abort</code> cancels and returns to how things were before.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Two branches change different files. Conflict? <i>No. Git merges them automatically.</i> 2. Which side is between <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> and <code>=======</code>? <i>Yours: the branch you are on.</i> 3. How do you back out of a merge halfway? <i>git merge --abort.</i></div>
 `);
 
+}
 explain('g8',`
 <h4>Why you need a remote</h4>
 <p>Everything so far has lived in the <code>.git</code> folder on your own computer. That has two problems. If your laptop dies, the whole history dies with it. And nobody else can see or add to your work. Teams need one shared place where everyone's commits meet.</p>
@@ -840,7 +668,6 @@ git push    # now your main contains everything GitHub has</pre>
 <li>"Updates were rejected" means the remote has commits you lack: pull, then push. Do not force.</li>
 </ul>
 `);
-
 explain('g9',`
 <h4>Why teams do not push straight to main</h4>
 <p>In the last lesson you pushed commits directly onto <code>main</code> on GitHub. On a real team that is risky. <code>main</code> is usually the version that gets deployed to real users. One unreviewed typo can take a website down. So most teams protect <code>main</code> and agree on a routine: nobody changes it directly. Every change goes through a <b>pull request</b> first.</p>
@@ -931,7 +758,6 @@ git pull</pre>
 <li>Delete merged branches with <code>git branch -d</code>, after pulling.</li>
 </ul>
 `);
-
 explain('g10',`
 <h4>Three tools for three awkward moments</h4>
 <p>By now you can commit, branch, merge and share. This lesson covers three situations that come up every week on a real team:</p>
@@ -1031,7 +857,6 @@ git stash pop     # bring the newest entry back and remove it from the shelf</pr
 <li><code>git reflog</code> can find commits that a reset removed from a branch.</li>
 </ul>
 `);
-
 explain('g11',`
 <h4>Two more ways to move commits around</h4>
 <p>Merging is not the only way to combine work. This lesson adds two tools professionals use every day:</p>
@@ -1138,7 +963,6 @@ git cherry-pick hotfix     # copy the commit at the tip of hotfix onto main</pre
 <li><code>git cherry-pick &lt;commit or branch&gt;</code> copies one commit onto your current branch as a new commit.</li>
 </ul>
 `);
-
 explain('g12',`
 <h4>Some files must never be committed</h4>
 <p>Not every file in your project folder belongs in Git. Some are actively dangerous to commit:</p>
@@ -1248,7 +1072,6 @@ git push origin v1.0.0                      # tags are NOT pushed by default</pr
 <li>A tag is a label that never moves: <code>git tag v1.0.0</code>, list with <code>git tag</code>, push with <code>git push origin v1.0.0</code>. Versions follow MAJOR.MINOR.PATCH.</li>
 </ul>
 `);
-
 explain('g13',`
 <h4>The situation</h4>
 <p>This is a drill: no new commands, just everything from the track, in the right order, under time pressure. Here is the scenario. You are halfway through a dashboard feature on <code>feature/dashboard</code>. One commit, "Start charts", is pushed; more work, "filters wip", sits uncommitted in <code>dashboard.js</code>. Then the message arrives: <b>login is broken in production, ship a fix now</b>. And a teammate pushed a commit to <code>main</code> on GitHub this morning that you do not have yet.</p>

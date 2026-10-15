@@ -1,558 +1,673 @@
-/* php: "Explained step by step" walkthroughs. */
+/* php: "Understand it" visual walkthroughs. */
 
 explain('hb1',`
-<h4>Why PHP exists: pages that change for each visitor</h4>
-<p>A plain web page is a file that never changes. Everyone who opens it sees exactly the same words. That is fine for a poster, but useless for a shop, a forum or your inbox, where the page must show <i>your</i> basket, <i>your</i> messages and today's prices.</p>
-<p>The fix is to have a program build the page at the moment someone asks for it. That program runs on a <b>server</b>: a computer, usually in a data centre, whose job is to answer requests from other computers. <b>PHP</b> is a programming language made for exactly this job. It powers WordPress, which runs a large share of all websites, as well as Wikipedia's software and apps built with the Laravel framework.</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="A browser sends a request to a server, PHP runs and builds HTML, which is sent back">
-<rect class="bx" x="10" y="46" width="100" height="156" rx="10"/>
-<text class="t-b" x="60" y="118" text-anchor="middle">Browser</text>
-<text class="t-s" x="60" y="138" text-anchor="middle">your device</text>
-<rect class="bx-info" x="215" y="8" width="195" height="204" rx="10"/>
-<text class="t-b" x="312" y="32" text-anchor="middle">Server</text>
-<rect class="bx-a" x="230" y="46" width="165" height="40" rx="6"/>
-<text class="t" x="312" y="71" text-anchor="middle">Web server</text>
-<path class="ln" d="M312 86v10"/><polygon class="ah" points="306,96 318,96 312,104"/>
-<rect class="bx-ok" x="230" y="104" width="165" height="40" rx="6"/>
-<text class="t" x="312" y="129" text-anchor="middle">2. PHP runs code</text>
-<path class="ln" d="M312 144v10"/><polygon class="ah" points="306,154 318,154 312,162"/>
-<rect class="bx" x="230" y="162" width="165" height="40" rx="6"/>
-<text class="t" x="312" y="187" text-anchor="middle">HTML is built</text>
-<path class="ln-a" d="M110 66H222"/><polygon class="ah-a" points="222,60 222,72 230,66"/>
-<text class="t-s" x="165" y="56" text-anchor="middle">1. request</text>
-<path class="ln-ok" d="M230 182H118"/><polygon class="ah-ok" points="120,176 120,188 112,182"/>
-<text class="t-s" x="165" y="172" text-anchor="middle">3. HTML back</text>
-</svg><figcaption>Step 1: your browser asks the server for a page. Step 2: the web server hands the PHP file to PHP, which runs the code. Step 3: the finished HTML is sent back. The browser never sees the PHP code, only its result.</figcaption></figure>
-<p>That last point is important. PHP runs <b>before</b> the page leaves the server. Your browser only receives the output, so visitors cannot read your PHP code. In this lesson's editor there is no browser in the middle: you press Run and the output appears below, which is the same thing a browser would have received.</p>
-<div class="analogy"><b>Think of it like</b>A restaurant kitchen. You (the browser) order a dish. The cook (PHP) follows a recipe (your code) in the kitchen, where you cannot see. Only the finished plate (the HTML) comes out to your table.</div>
+<p>When you open a shop and it says "Hi, Sam, you have 3 items in your basket", a program built that page just for you, a split second earlier. PHP is one of the most common languages doing that job, and it runs WordPress and Laravel sites all over the web.</p>
 
-<h4>The rules of a PHP file</h4>
-<p>A PHP file is a plain text file whose name ends in <code>.php</code>. Three small rules cover almost everything at the start:</p>
-<ol>
-<li><b>The opening tag.</b> PHP code starts after <code>&lt;?php</code>. Anything before that tag is treated as ordinary text, not code.</li>
-<li><b>Statements end with a semicolon.</b> A <b>statement</b> is one instruction, like "print this" or "remember that". PHP needs a <code>;</code> at the end of each one, the way a sentence needs a full stop.</li>
-<li><b>Comments are for humans.</b> Anything after <code>//</code> on a line is a <b>comment</b>: a note PHP ignores completely.</li>
-</ol>
-<pre class="snip">&lt;?php
-// This is a comment. PHP skips it.
-echo "Hello, world!\\n";   // prints Hello, world! then a new line</pre>
-<p><code>echo</code> is PHP's word for "print this". The text in double quotes is called a <b>string</b>, which just means a piece of text. The <code>\\n</code> at the end is a special code meaning "new line". Without it, the next thing you print would carry on straight after, on the same line.</p>
+${V.card(1,'The server builds the page','a fresh page for every visitor',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="A browser sends a request to a server. PHP runs hello.php on the server and only plain HTML comes back.">
+${V.ic('laptop',12,40,76,'ic-info')}
+<text class="t-b" x="50" y="140" text-anchor="middle">Browser</text>
+<path class="ln-a" d="M98 62H272"/><polygon class="ah-a" points="270,55 270,69 282,62"/>
+<text class="t-m t-a" x="186" y="50" text-anchor="middle" style="font-size:14px">GET /hello.php</text>
+<path class="ln-ok" d="M284 122H110"/><polygon class="ah-ok" points="112,115 112,129 100,122"/>
+${V.ic('file',112,132,40,'ic-ok')}
+<text class="t-s" x="160" y="160">plain HTML</text>
+<rect class="bx-a" x="290" y="10" width="120" height="166" rx="10"/>
+${V.ic('server',320,20,60,'ic-a')}
+<text class="t-m" x="350" y="106" text-anchor="middle" style="font-size:14px">hello.php</text>
+${V.ic('gear',332,114,36,'ic-a')}
+<text class="t-b" x="350" y="168" text-anchor="middle">PHP runs</text>
+</svg><figcaption>Your browser asks for a page. The server sees the .php ending, lets PHP run the code, and sends back only the result: ordinary HTML. The PHP code itself never leaves the server.</figcaption></figure>
+${V.like(`<p>A restaurant kitchen. You order (the <b>request</b>), the cook follows a recipe out of sight (PHP running your code), and only the finished plate comes to your table (the HTML). You never see the recipe.</p>`)}
+${V.why(`<p>Early web pages were fixed files: everyone saw the same words. In 1994 Rasmus Lerdorf wrote some small tools to count visitors to his online CV and called them "Personal Home Page Tools". People loved being able to change a page for each visitor, and the tools grew into PHP, now short for "PHP: Hypertext Preprocessor".</p>`)}
+${V.anat([[1,'&lt;?php'],'\n',[2,'echo'],' ',[3,'"Hello, world!\\n"'],[4,';']],[
+ '<b>Opening tag.</b> Everything after it is PHP code. Anything before it is sent out as plain text.',
+ '<b>echo.</b> PHP\'s word for "print this". Whatever follows goes into the page.',
+ '<b>A string.</b> A piece of text, inside quotes. <code>\\n</code> is a code meaning "start a new line".',
+ '<b>Semicolon.</b> Ends the statement (one instruction), like a full stop ends a sentence.'])}
+<p><b>Watch one visit happen.</b> Press Next to follow a single request through the server.</p>
+${V.steps([
+ ['You press Enter. Your browser sends a <b>request</b> to the server: "please give me /hello.php".',`<svg viewBox="0 0 420 210" role="img" aria-label="The browser sends a request to the server">
+${V.ic('laptop',10,8,56,'ic-info')}${V.ic('server',354,8,56,'ic-a')}
+<path class="ln-a" d="M74 40H336"/><polygon class="ah-a" points="334,33 334,47 346,40"/>
+<text class="t-m t-a" x="210" y="30" text-anchor="middle" style="font-size:14px">GET /hello.php</text>
+<rect class="bx-dark" x="10" y="80" width="262" height="96" rx="8"/>
+<text class="t-term t-dim" x="30" y="108" style="font-size:14px">&lt;?php</text>
+<text class="t-term t-dim" x="30" y="134" style="font-size:14px">$name = "Ada";</text>
+<text class="t-term t-dim" x="30" y="160" style="font-size:14px">echo "&lt;h1&gt;Hi, $name&lt;/h1&gt;";</text>
+<text class="t-s" x="286" y="98">Memory</text><rect class="ln-d" x="284" y="106" width="126" height="70" rx="6"/>
+<text class="t-s" x="10" y="200">Output:</text>
+</svg>`],
+ ['The server sees <b>.php</b> and hands the file to PHP. Line 2 runs: PHP makes a box called <b>$name</b> and puts <b>"Ada"</b> in it.',`<svg viewBox="0 0 420 210" role="img" aria-label="PHP runs line 2 and stores Ada in name">
+${V.ic('laptop',10,8,56,'ic-info')}${V.ic('server',354,8,56,'ic-a')}
+${V.ic('gear',306,16,40,'ic-a')}<text class="t-s" x="292" y="40" text-anchor="end">PHP is running</text>
+<rect class="bx-dark" x="10" y="80" width="262" height="96" rx="8"/>
+<text class="t-term t-dim" x="30" y="108" style="font-size:14px">&lt;?php</text>
+<text class="t-a" x="14" y="134" style="font-size:14px">&#9654;</text><text class="t-term" x="30" y="134" style="font-size:14px">$name = "Ada";</text>
+<text class="t-term t-dim" x="30" y="160" style="font-size:14px">echo "&lt;h1&gt;Hi, $name&lt;/h1&gt;";</text>
+<text class="t-s" x="286" y="98">Memory</text><rect class="bx-ok" x="284" y="106" width="126" height="70" rx="6"/>
+<text class="t-m" x="347" y="134" text-anchor="middle">$name</text><text class="t-m" x="347" y="162" text-anchor="middle" style="font-size:17px">"Ada"</text>
+<text class="t-s" x="10" y="200">Output:</text>
+</svg>`],
+ ['Line 3: <b>echo</b> writes text into the output. Inside double quotes, PHP swaps <b>$name</b> for its value, so the output is <b>&amp;lt;h1&amp;gt;Hi, Ada&amp;lt;/h1&amp;gt;</b>.',`<svg viewBox="0 0 420 210" role="img" aria-label="echo writes h1 Hi, Ada into the output">
+${V.ic('laptop',10,8,56,'ic-info')}${V.ic('server',354,8,56,'ic-a')}
+${V.ic('gear',306,16,40,'ic-a')}<text class="t-s" x="292" y="40" text-anchor="end">PHP is running</text>
+<rect class="bx-dark" x="10" y="80" width="262" height="96" rx="8"/>
+<text class="t-term t-dim" x="30" y="108" style="font-size:14px">&lt;?php</text>
+<text class="t-term t-dim" x="30" y="134" style="font-size:14px">$name = "Ada";</text>
+<text class="t-a" x="14" y="160" style="font-size:14px">&#9654;</text><text class="t-term" x="30" y="160" style="font-size:14px">echo "&lt;h1&gt;Hi, $name&lt;/h1&gt;";</text>
+<text class="t-s" x="286" y="98">Memory</text><rect class="bx-ok" x="284" y="106" width="126" height="70" rx="6"/>
+<text class="t-m" x="347" y="134" text-anchor="middle">$name</text><text class="t-m" x="347" y="162" text-anchor="middle" style="font-size:17px">"Ada"</text>
+<text class="t-s" x="10" y="200">Output:</text><text class="t-m t-ok" x="70" y="200" style="font-size:15px">&lt;h1&gt;Hi, Ada&lt;/h1&gt;</text>
+</svg>`],
+ ['The code is finished. The server sends <b>only the output</b> back across the internet. The memory box is thrown away: the next visitor gets a brand-new run.',`<svg viewBox="0 0 420 210" role="img" aria-label="The HTML output travels back to the browser">
+${V.ic('laptop',10,8,56,'ic-info')}${V.ic('server',354,8,56,'ic-a')}
+<path class="ln-ok" d="M346 40H84"/><polygon class="ah-ok" points="86,33 86,47 74,40"/>
+${V.ic('file',190,46,30,'ic-ok')}<text class="t-s" x="226" y="68">HTML only</text>
+<rect class="bx-dark" x="10" y="80" width="262" height="96" rx="8"/>
+<text class="t-term t-dim" x="30" y="108" style="font-size:14px">&lt;?php</text>
+<text class="t-term t-dim" x="30" y="134" style="font-size:14px">$name = "Ada";</text>
+<text class="t-term t-dim" x="30" y="160" style="font-size:14px">echo "&lt;h1&gt;Hi, $name&lt;/h1&gt;";</text>
+<text class="t-s" x="286" y="98">Memory</text><rect class="ln-d" x="284" y="106" width="126" height="70" rx="6"/>
+<text class="t-s" x="347" y="146" text-anchor="middle">emptied</text>
+<text class="t-s" x="10" y="200">Output:</text><text class="t-m t-ok" x="70" y="200" style="font-size:15px">&lt;h1&gt;Hi, Ada&lt;/h1&gt;</text>
+</svg>`],
+ ['Your browser draws the heading. If you choose "View source" you will find <b>no PHP at all</b>, only the HTML it produced.',`<svg viewBox="0 0 420 210" role="img" aria-label="The browser shows the heading Hi, Ada">
+${V.ic('laptop',10,8,56,'ic-info')}${V.ic('server',354,8,56,'ic-a')}
+<rect class="bx-info" x="10" y="80" width="400" height="96" rx="8"/>
+<rect class="bx" x="10" y="80" width="400" height="22" rx="8"/>
+<circle class="dot" cx="26" cy="91" r="4"/><circle class="dot" cx="40" cy="91" r="4"/><circle class="dot" cx="54" cy="91" r="4"/>
+<text class="t-s" x="76" y="96">yoursite.com/hello.php</text>
+<text class="t-b" x="30" y="150" style="font-size:30px">Hi, Ada</text>
+<text class="t-s" x="10" y="200">Output:</text><text class="t-m t-ok" x="70" y="200" style="font-size:15px">&lt;h1&gt;Hi, Ada&lt;/h1&gt;</text>
+</svg>`]])}
+${V.rules(V.rh('Rules: break one and PHP stops with an error'),
+ V.ok('&lt;?php','Code only runs after the opening tag'),V.no('echo "Hi"','Missing semicolon: "syntax error, unexpected ..."'),
+ V.ok('hello.php','The file name must end in .php'),V.no('echo "Hi;','A quote opened must be closed'),
+ V.rh('Conventions: what professionals do'),
+ V.ok('// a note','Comments explain why; PHP ignores them'),V.ok('no closing ?&gt;','In a file that is only PHP, leave the closing tag off'))}
+${V.hook(`The browser asks, PHP cooks, HTML comes out. The recipe never leaves the kitchen.`)}
+`)}
 
-<h4>Variables: named boxes for values</h4>
-<p>Programs need to remember things: a name, an age, a price. A <b>variable</b> is a named box that holds one value. In PHP, every variable name starts with a dollar sign, which makes variables easy to spot.</p>
-<pre class="snip">$name = "Ada";   // a string: text, always in quotes
-$age = 36;       // an integer: a whole number, no quotes
-echo $name;      // prints Ada</pre>
-<p>The <code>=</code> sign does not mean "equals" as in maths. It means <b>"store"</b>: work out the value on the right, then put it into the box named on the left. Read <code>$age = 36;</code> aloud as "age becomes 36".</p>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Three variables as labelled boxes holding values">
-<rect class="bx-a" x="10" y="14" width="120" height="44" rx="6"/><text class="t-m" x="70" y="42" text-anchor="middle">$name</text>
-<path class="ln" d="M130 36h44"/><polygon class="ah" points="174,30 174,42 182,36"/>
-<rect class="bx" x="184" y="14" width="110" height="44" rx="6"/><text class="t-m" x="239" y="42" text-anchor="middle">"Ada"</text>
-<text class="t-s" x="306" y="41">string</text>
-<rect class="bx-a" x="10" y="74" width="120" height="44" rx="6"/><text class="t-m" x="70" y="102" text-anchor="middle">$age</text>
-<path class="ln" d="M130 96h44"/><polygon class="ah" points="174,90 174,102 182,96"/>
-<rect class="bx" x="184" y="74" width="110" height="44" rx="6"/><text class="t-m" x="239" y="102" text-anchor="middle">36</text>
-<text class="t-s" x="306" y="101">integer</text>
-<rect class="bx-a" x="10" y="134" width="120" height="44" rx="6"/><text class="t-m" x="70" y="162" text-anchor="middle">$total</text>
-<path class="ln" d="M130 156h44"/><polygon class="ah" points="174,150 174,162 182,156"/>
-<rect class="bx" x="184" y="134" width="110" height="44" rx="6"/><text class="t-m" x="239" y="162" text-anchor="middle">30</text>
-<text class="t-s" x="306" y="161">integer</text>
-<text class="t-s" x="210" y="202" text-anchor="middle">Each name points at the value stored in it</text>
-</svg><figcaption>Each variable is a label (on the left) attached to a value (in the middle). Text values are strings and sit in quotes. Whole numbers are integers and have no quotes.</figcaption></figure>
-<p>A few naming rules: after the <code>$</code>, a name starts with a letter or an underscore, then letters, digits and underscores. Names are <b>case-sensitive</b>, so <code>$name</code> and <code>$Name</code> are two different boxes. Pick names that say what is inside: <code>$price</code> beats <code>$p</code>.</p>
-<p>You can store a new value in a box at any time. The old value is simply replaced.</p>
+${V.card(2,'Variables wear a $','name badges for your data',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="Three boxes on a shelf, each with a dollar name tag: $name holds Ada, $age holds 36, $price holds 9.99">
+<path class="bx-a" d="M24 14H118L130 30 118 46H24Z"/><text class="t-m" x="74" y="37" text-anchor="middle" style="font-size:17px">$name</text>
+<path class="bx-a" d="M160 14H248L260 30 248 46H160Z"/><text class="t-m" x="206" y="37" text-anchor="middle" style="font-size:17px">$age</text>
+<path class="bx-a" d="M290 14H392L404 30 392 46H290Z"/><text class="t-m" x="342" y="37" text-anchor="middle" style="font-size:17px">$price</text>
+<path class="ln-d" d="M74 46V70M206 46V70M342 46V70"/>
+<rect class="bx-ok" x="20" y="70" width="112" height="76" rx="6"/><text class="t-m" x="76" y="116" text-anchor="middle" style="font-size:20px">"Ada"</text>
+<rect class="bx-ok" x="152" y="70" width="112" height="76" rx="6"/><text class="t-m" x="208" y="116" text-anchor="middle" style="font-size:20px">36</text>
+<rect class="bx-ok" x="286" y="70" width="112" height="76" rx="6"/><text class="t-m" x="342" y="116" text-anchor="middle" style="font-size:20px">9.99</text>
+<path class="ln" style="stroke-width:4" d="M8 148H412"/>
+<text class="t-s" x="76" y="174" text-anchor="middle">text (string)</text>
+<text class="t-s" x="208" y="174" text-anchor="middle">whole number</text>
+<text class="t-s" x="342" y="174" text-anchor="middle">decimal</text>
+</svg><figcaption>A variable is a labelled box. In PHP every label starts with a dollar sign. You do not say what type of thing goes in: PHP works it out from the value.</figcaption></figure>
+${V.like(`<p>A name badge at a party. The <b>$</b> is the badge that says "I am a variable". The word after it is the name, and the value is the person wearing it.</p>`)}
+${V.why(`<p>PHP grew out of tools written in Perl and shell scripts, which marked variables with <code>$</code>. Keeping the badge lets PHP spot a variable instantly, even in the middle of text. That is exactly what makes <code>"Hi, $name"</code> work.</p>`)}
+${V.anat([[1,'$'],[2,'name'],' ',[3,'='],' ',[4,'"Ada"'],[5,';']],[
+ '<b>Dollar sign.</b> Every variable starts with it, every time you use it, not just the first time.',
+ '<b>Name.</b> Starts with a letter or underscore, then letters, digits or underscores.',
+ '<b>Assignment.</b> <code>=</code> means "put into". Read it right to left: put "Ada" into $name.',
+ '<b>Value.</b> Text in quotes, a number like <code>36</code> or <code>9.99</code>, <code>true</code> or <code>false</code>.',
+ '<b>Semicolon.</b> Ends the statement.'])}
+${V.rules(V.rh('Rules: break one and it will not run'),
+ V.no('name = "Ada";','Forgot the $: PHP thinks name is a constant'),V.ok('$name = "Ada";','Badge on, every time'),
+ V.no('$1st','A name cannot start with a digit'),V.ok('$first1','Digits are fine later on'),
+ V.no('$first name','No spaces'),V.no('$user-age','A hyphen means minus'),
+ V.ok('$Name vs $name','Capitals matter: two different boxes'),
+ V.rh('Conventions'),
+ V.ok('$firstName','camelCase: most modern PHP code, including Laravel'),V.ok('$first_name','snake_case: common in older code like WordPress. Pick one per project'),
+ V.no('$x, $data2','Vague names: say what the box holds'))}
+${V.build(`<ol><li>Open the editor. The <code>&lt;?php</code> tag is already there.</li><li>Make two boxes: <code>$name</code> holding the text Ada and <code>$age</code> holding the number 36. Text needs quotes, numbers do not.</li><li>Print one of them with <code>echo $name;</code> and press Run.</li><li>Do some maths: <code>$total = $price * $qty;</code>. The star means multiply.</li></ol>`)}
+${V.hook(`No dollar, no variable. <code>$</code> on the badge, <code>=</code> puts it in, <code>;</code> closes the deal.`)}
+`)}
 
-<h4>Doing maths</h4>
-<p>PHP understands the usual arithmetic signs: <code>+</code> add, <code>-</code> subtract, <code>*</code> multiply (a star, not an x) and <code>/</code> divide. You can calculate with variables too, which is where they become really useful:</p>
-<pre class="snip">$price = 10;
-$qty = 3;
-$total = $price * $qty;   // PHP works out 10 * 3, then stores 30</pre>
-<p>Notice the order of events. PHP looks up <code>$price</code> (10) and <code>$qty</code> (3), multiplies them, and only then stores the answer in <code>$total</code>. If you later change <code>$price</code>, <code>$total</code> does not update by itself. It holds the answer from the moment it was calculated.</p>
+${V.card(3,'Joining text','dots, double quotes and single quotes',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="Three pieces, Hi comma, dollar name and an exclamation mark, are glued by dots into Hi, Ada!">
+<rect class="bx-info" x="10" y="16" width="96" height="46" rx="8"/><text class="t-m" x="58" y="46" text-anchor="middle" style="font-size:17px">"Hi, "</text>
+<circle class="bx-a" cx="126" cy="39" r="12"/><text class="t-b" x="126" y="45" text-anchor="middle" style="font-size:20px">.</text>
+<rect class="bx-ok" x="146" y="16" width="96" height="46" rx="8"/><text class="t-m" x="194" y="46" text-anchor="middle" style="font-size:17px">$name</text>
+<circle class="bx-a" cx="262" cy="39" r="12"/><text class="t-b" x="262" y="45" text-anchor="middle" style="font-size:20px">.</text>
+<rect class="bx-info" x="282" y="16" width="70" height="46" rx="8"/><text class="t-m" x="317" y="46" text-anchor="middle" style="font-size:17px">"!"</text>
+<path class="ln-a" d="M210 70V98"/><polygon class="ah-a" points="203,96 217,96 210,108"/>
+<rect class="bx-ok" x="110" y="112" width="200" height="48" rx="8"/><text class="t-m" x="210" y="143" text-anchor="middle" style="font-size:20px">Hi, Ada!</text>
+</svg><figcaption>The dot is PHP's glue. It sticks pieces of text together into one longer string, in order, left to right.</figcaption></figure>
+${V.like(`<p>A <b>double-quoted</b> string is a form with blanks: PHP fills in every <code>$name</code> it finds. A <b>single-quoted</b> string is a photocopy: what you wrote is exactly what you get, dollar sign and all.</p>`)}
+${V.anat([[1,'"'],[2,'Hi, '],[3,'$name'],[2,'!'],[4,'\\n'],[1,'"']],[
+ '<b>Double quotes.</b> Switch on "fill in the blanks" mode.',
+ '<b>Plain text.</b> Printed exactly as written.',
+ '<b>A variable.</b> Replaced by its value. This is called <b>interpolation</b>.',
+ '<b>Escape code.</b> <code>\\n</code> means new line. It only works inside double quotes.'])}
+${V.steps([
+ ['PHP reads <b>echo "Hi, " . $name . "!";</b> and sees three pieces joined by two dots.',`<svg viewBox="0 0 420 150" role="img" aria-label="Three separate pieces">
+<text class="t-m" x="10" y="28" style="font-size:15px">echo "Hi, " . $name . "!";</text>
+<rect class="bx-info" x="10" y="52" width="110" height="44" rx="6"/><text class="t-m" x="65" y="80" text-anchor="middle" style="font-size:17px">"Hi, "</text>
+<rect class="bx" x="150" y="52" width="110" height="44" rx="6"/><text class="t-m" x="205" y="80" text-anchor="middle" style="font-size:17px">$name</text>
+<rect class="bx-info" x="290" y="52" width="110" height="44" rx="6"/><text class="t-m" x="345" y="80" text-anchor="middle" style="font-size:17px">"!"</text>
+</svg>`],
+ ['It looks up <b>$name</b> in memory and finds <b>Ada</b>.',`<svg viewBox="0 0 420 150" role="img" aria-label="name is replaced by Ada">
+<text class="t-m" x="10" y="28" style="font-size:15px">echo "Hi, " . $name . "!";</text>
+<rect class="bx-info" x="10" y="52" width="110" height="44" rx="6"/><text class="t-m" x="65" y="80" text-anchor="middle" style="font-size:17px">"Hi, "</text>
+<rect class="bx-hl" x="150" y="52" width="110" height="44" rx="6"/><text class="t-m" x="205" y="80" text-anchor="middle" style="font-size:17px">"Ada"</text>
+<rect class="bx-info" x="290" y="52" width="110" height="44" rx="6"/><text class="t-m" x="345" y="80" text-anchor="middle" style="font-size:17px">"!"</text>
+<text class="t-s" x="205" y="122" text-anchor="middle">$name holds "Ada"</text>
+</svg>`],
+ ['The dots glue the pieces into one string, <b>"Hi, Ada!"</b>.',`<svg viewBox="0 0 420 150" role="img" aria-label="Glued into Hi, Ada!">
+<text class="t-m" x="10" y="28" style="font-size:15px">echo "Hi, " . $name . "!";</text>
+<rect class="bx-ok" x="10" y="52" width="390" height="44" rx="6"/><text class="t-m" x="205" y="80" text-anchor="middle" style="font-size:19px">"Hi, Ada!"</text>
+</svg>`],
+ ['<b>echo</b> prints it. Swap the dots for double quotes, <b>echo "Hi, $name!";</b>, and you get the same result in one piece.',`<svg viewBox="0 0 420 150" role="img" aria-label="Output Hi, Ada!">
+<text class="t-m" x="10" y="28" style="font-size:15px">echo "Hi, " . $name . "!";</text>
+<rect class="bx-dark" x="10" y="52" width="390" height="44" rx="6"/><text class="t-term" x="26" y="80" style="font-size:17px">Hi, Ada!</text>
+<text class="t-m" x="10" y="130" style="font-size:15px">echo "Hi, $name!";  <tspan class="t-ok">same output</tspan></text>
+</svg>`]])}
+<p><b>Built-in helpers.</b> PHP comes with thousands of ready-made functions. Two for text: <code>strlen("Ada")</code> counts characters and gives 3, and <code>strtoupper("ada")</code> gives <code>ADA</code>. You can glue their results with dots too.</p>
+${V.rules(V.rh('Rules'),
+ V.no('echo \'Hi, $name\';','Single quotes print $name literally'),V.ok('echo "Hi, $name";','Double quotes fill it in: Hi, Ada'),
+ V.no('"Hi, " + $name','+ is only for numbers: TypeError'),V.ok('"Hi, " . $name','The dot joins text'),
+ V.no('\'Bye\\n\'','In single quotes \\n is just a backslash and an n'),
+ V.rh('Conventions'),
+ V.ok('\'plain text\'','Single quotes when there is nothing to fill in'),V.ok('"{$user} wins"','Curly braces make the variable\'s edges clear'))}
+${V.hook(`Double quotes fill the blanks, single quotes take a photo. Dots glue, plus adds.`)}
+`)}
 
-<h4>Joining text with the dot</h4>
-<p>You will constantly want to build a sentence out of pieces: some fixed words plus the values in your variables. Joining strings together is called <b>concatenation</b>, and PHP uses a full stop, the <b>dot operator</b>, to do it.</p>
-<pre class="snip">echo $name . " is " . $age . " years old.\\n";
-// prints: Ada is 36 years old.</pre>
-<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="Four pieces joined by dots into one sentence">
-<rect class="bx-info" x="6" y="20" width="66" height="40" rx="6"/><text class="t-m" x="39" y="46" text-anchor="middle">$name</text>
-<text class="t-b t-a" x="82" y="48" text-anchor="middle" style="font-size:22px">.</text>
-<rect class="bx-info" x="92" y="20" width="78" height="40" rx="6"/><text class="t-m" x="131" y="46" text-anchor="middle">" is "</text>
-<text class="t-b t-a" x="180" y="48" text-anchor="middle" style="font-size:22px">.</text>
-<rect class="bx-info" x="190" y="20" width="58" height="40" rx="6"/><text class="t-m" x="219" y="46" text-anchor="middle">$age</text>
-<text class="t-b t-a" x="258" y="48" text-anchor="middle" style="font-size:22px">.</text>
-<rect class="bx-info" x="268" y="20" width="146" height="40" rx="6"/><text class="t-m" x="341" y="46" text-anchor="middle">" years old."</text>
-<path class="ln" d="M39 60L210 104M131 60L210 104M219 60L210 104M341 60L210 104"/>
-<polygon class="ah" points="204,104 216,104 210,112"/>
-<rect class="bx-ok" x="90" y="112" width="240" height="44" rx="6"/><text class="t-m" x="210" y="139" text-anchor="middle">Ada is 36 years old.</text>
-<text class="t-s" x="210" y="180" text-anchor="middle">The number 36 is turned into the text "36"</text>
-</svg><figcaption>Each dot glues the piece on its left to the piece on its right. The spaces live inside the quoted pieces, and the number 36 is converted to text automatically.</figcaption></figure>
-<p>Two details catch people out. First, the spaces: <code>" is "</code> has a space at each end. Write <code>"is"</code> and <code>"years old."</code> without them and you get <code>Adais36years old.</code>, because the dot adds nothing between the pieces. Second, <code>$age</code> holds a number, but the dot needs text, so PHP quietly turns 36 into the string "36" for you.</p>
-
-<h4>Double quotes fill in variables, single quotes do not</h4>
-<p>There is a shorter way to build the same sentence. Inside <b>double quotes</b>, PHP looks for variable names and swaps in their values. This is called <b>interpolation</b>. Inside <b>single quotes</b>, PHP takes every character literally and swaps in nothing.</p>
-<div class="tbl-wrap"><table><tr><th>You write</th><th>PHP prints</th></tr>
-<tr><td><code>echo "Hi, $name!";</code></td><td>Hi, Ada!</td></tr>
-<tr><td><code>echo 'Hi, $name!';</code></td><td>Hi, $name!</td></tr>
-<tr><td><code>echo "Total: $total\\n";</code></td><td>Total: 30, then a new line</td></tr>
-<tr><td><code>echo 'Total\\n';</code></td><td>Total\\n, with the backslash and n shown as typed</td></tr></table></div>
-<p>The last row shows that <code>\\n</code> only means "new line" inside double quotes too. Single quotes are still useful: they are a clear signal that a string is plain fixed text with nothing to fill in.</p>
-<div class="mistake"><b>Common mistake</b>Writing <code>echo 'Total: $total';</code> and wondering why the screen shows the dollar sign and the word total. Single quotes never fill in variables. Switch to double quotes, or join with the dot: <code>'Total: ' . $total</code>.</div>
-
-<h4>Built-in functions: ready-made tools</h4>
-<p>A <b>function</b> is a named piece of code that does one job. PHP ships with thousands of them, called built-in functions. You <b>call</b> a function by writing its name followed by brackets, and you put the value it should work on inside the brackets. That value is called an <b>argument</b>. The function hands back an answer, called its <b>return value</b>.</p>
-<pre class="snip">echo strlen("Ada");        // 3: the number of characters
-echo strtoupper("ada");    // ADA: the same text in capitals
-echo strtoupper($name);    // works on variables too: ADA</pre>
-<p>The names are short for "string length" and "string to upper case". Because a function call produces a value, you can use it anywhere a value fits, including in the middle of a dot chain. Let's build "ADA has 3 letters" step by step:</p>
-<ol>
-<li><code>strtoupper($name)</code> gives <code>"ADA"</code>.</li>
-<li><code>" has "</code> is fixed text, with a space at each end.</li>
-<li><code>strlen($name)</code> gives <code>3</code>, which the dot turns into "3".</li>
-<li><code>" letters\\n"</code> finishes the sentence and the line.</li>
-</ol>
-<p>Glue those four pieces with three dots and echo the result. Note that function calls are not run inside double quotes: <code>"strlen($name)"</code> prints <code>strlen(Ada)</code>, because only the variable is filled in. For function results you need the dot.</p>
-<div class="tip"><b>Tip</b><code>strlen()</code> actually counts <b>bytes</b>, the units computers store text in. For plain English letters one letter is one byte, but an accented letter like é takes two. When you work with names from around the world, use <code>mb_strlen()</code>, which counts real characters.</div>
-
-<h4>Reading the errors you will hit</h4>
-<p>Errors are PHP telling you exactly where it got confused. The two you will meet first:</p>
-<ul>
-<li><b>Parse error: syntax error, unexpected ...</b> means PHP could not even read your code. The usual cause is a missing semicolon or a missing closing quote. PHP only notices the problem when it reaches the <i>next</i> thing, so look at the end of the line <b>before</b> the one it mentions.</li>
-<li><b>Warning: Undefined variable $nme</b> means you used a name that was never given a value. Nine times out of ten it is a typo. Compare the spelling, including capital letters, with the line where you stored it.</li>
-</ul>
-<div class="mistake"><b>Common mistake</b>Forgetting the <code>$</code>. Writing <code>name = "Ada";</code> is a syntax error, because without the dollar sign PHP does not know you mean a variable.</div>
-<div class="try"><b>Try it in your head</b>Given <code>$city = "Leeds";</code>, what do these print? First, <code>echo "I live in $city";</code>. Second, <code>echo 'I live in ' . $city;</code>. Third, <code>echo strlen($city);</code>. Answers: the first two both print I live in Leeds (one by interpolation, one by the dot), and the third prints 5.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>PHP runs on the server and sends only its output, usually HTML, to the browser.</li>
-<li>Code starts after <code>&lt;?php</code>, every statement ends with <code>;</code>, and <code>echo</code> prints.</li>
-<li>Variables start with <code>$</code>, and <code>=</code> means "store the right side in the left".</li>
-<li>The dot joins strings; double quotes fill in variables and <code>\\n</code>, single quotes take everything literally.</li>
-<li>Functions like <code>strlen()</code> and <code>strtoupper()</code> take an argument in brackets and return a value you can echo or join.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. What does <code>echo 'Cost: $price';</code> print? <i>Cost: $price, exactly as written.</i> 2. Where does PHP code run: on the server or in the browser? <i>On the server. The browser only gets the output.</i> 3. What is <code>strlen("Hello")</code>? <i>5.</i></div>
 `);
 
 explain('hb2',`
-<h4>Why programs need to decide, repeat and reuse</h4>
-<p>So far your code has run like a shopping list: line one, then line two, then line three, every time, no matter what. Real programs need three more abilities:</p>
-<ul>
-<li><b>Decide</b>: do one thing or another depending on the situation. A score of 95 should get an A, a score of 40 should not.</li>
-<li><b>Repeat</b>: do the same job many times without copying the code. Print every item in a list, however long it is.</li>
-<li><b>Reuse</b>: give a useful piece of code a name, then run it whenever you need it.</li>
-</ul>
-<p>Almost every language has these three tools, with only small changes of spelling. Learn them properly once and they carry over to JavaScript, Python and the rest.</p>
+<p>Every app you use is doing three things over and over: making <b>decisions</b> (is the password right?), <b>repeating</b> (show every message) and <b>reusing</b> named steps (work out the price). Learn these three in PHP and you can read the logic of almost any program.</p>
 
-<h4>Questions with yes or no answers</h4>
-<p>Before PHP can decide anything, it needs a question it can answer with yes or no. In code, yes and no are the values <code>true</code> and <code>false</code>, called <b>booleans</b>. You get them by comparing two values:</p>
-<div class="tbl-wrap"><table><tr><th>Operator</th><th>Question it asks</th><th>Example</th></tr>
-<tr><td><code>&gt;</code> and <code>&lt;</code></td><td>Greater than? Less than?</td><td><code>30 &gt; 25</code> is true</td></tr>
-<tr><td><code>&gt;=</code> and <code>&lt;=</code></td><td>Greater than or equal? Less than or equal?</td><td><code>90 &gt;= 90</code> is true</td></tr>
-<tr><td><code>===</code></td><td>Exactly equal, same value and same type?</td><td><code>5 === 5</code> is true</td></tr>
-<tr><td><code>!==</code></td><td>Not exactly equal?</td><td><code>5 !== 6</code> is true</td></tr></table></div>
-<p>PHP also has a looser <code>==</code> that converts types before comparing, so <code>"5" == 5</code> is true. Modern PHP code prefers the strict <code>===</code>, because it has no surprises. And remember from the last lesson: a single <code>=</code> is not a question at all. It stores a value.</p>
+${V.card(1,'Decisions','if, elseif, else: a signpost',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="A signpost with three signs: over 25 degrees T-shirt, over 15 degrees jumper, otherwise coat">
+<rect class="bx-dark" x="200" y="20" width="14" height="170" rx="3"/>
+<path class="bx-ok" d="M214 24H372L398 46 372 68H214Z"/><text class="t-b" x="226" y="52" style="font-size:16px">over 25: T-shirt</text>
+<path class="bx-info" d="M200 80H48L22 102 48 124H200Z"/><text class="t-b" x="190" y="108" text-anchor="end" style="font-size:16px">over 15: jumper</text>
+<path class="bx-warn" d="M214 136H340L366 158 340 180H214Z"/><text class="t-b" x="226" y="164" style="font-size:16px">else: coat</text>
+${V.ic('person',94,136,52,'ic-a')}
+</svg><figcaption>PHP reads the signs from the top. It follows the first one whose question is true and ignores the rest. If none match, it takes the else sign.</figcaption></figure>
+${V.like(`<p>Getting dressed in the morning. You check the weather once and ask, in order: is it hot? Is it mild? Otherwise, wear a coat. You only put on <b>one</b> outfit.</p>`)}
+${V.why(`<p>A program that does the same thing every time is a poster. Real software must react: show an error if the password is wrong, give free delivery over £50. Every language since the 1950s has had some form of <code>if</code>, because without it a computer cannot choose.</p>`)}
+${V.anat([[1,'if'],' ',[2,'($temp &gt; 25)'],' ',[3,'{ echo "T-shirt"; }'],'\n',[4,'elseif'],' ($temp &gt; 15) { ... }\n',[5,'else'],' { echo "Coat"; }'],[
+ '<b>if</b> asks the first question.',
+ '<b>Condition</b>, always in round brackets. It must end up <code>true</code> or <code>false</code>.',
+ '<b>Block.</b> The curly braces hold the code for this branch.',
+ '<b>elseif</b> (one word) asks another question, only if the earlier ones were false.',
+ '<b>else</b> catches everything left over. It has no condition.'])}
+${V.steps([
+ ['<b>$temp</b> is 18. PHP asks the first question: is 18 greater than 25? <b>No</b>, so it skips that block.',`<svg viewBox="0 0 420 196" role="img" aria-label="18 greater than 25 is false">
+<text class="t-m" x="10" y="22" style="font-size:16px">$temp = 18;</text>
+<rect class="bx-hl" x="10" y="38" width="204" height="44" rx="6"/><text class="t-m" x="20" y="66" style="font-size:14px">if ($temp &gt; 25)</text>
+<rect class="bx" x="10" y="92" width="204" height="44" rx="6"/><text class="t-m" x="20" y="120" style="font-size:14px">elseif ($temp &gt; 15)</text>
+<rect class="bx" x="10" y="146" width="204" height="44" rx="6"/><text class="t-m" x="20" y="174" style="font-size:14px">else</text>
+<text class="t-b t-bad" x="226" y="58">false</text>${V.ic('cross',226,62,22,'ic-bad')}
+<rect class="bx" x="290" y="38" width="120" height="44" rx="6"/><text class="t" x="350" y="66" text-anchor="middle">T-shirt</text>
+<rect class="bx" x="290" y="92" width="120" height="44" rx="6"/><text class="t" x="350" y="120" text-anchor="middle">Jumper</text>
+<rect class="bx" x="290" y="146" width="120" height="44" rx="6"/><text class="t" x="350" y="174" text-anchor="middle">Coat</text>
+</svg>`],
+ ['Next question: is 18 greater than 15? <b>Yes</b>. PHP runs this block and prints <b>Jumper</b>.',`<svg viewBox="0 0 420 196" role="img" aria-label="18 greater than 15 is true, prints Jumper">
+<text class="t-m" x="10" y="22" style="font-size:16px">$temp = 18;</text>
+<rect class="bx" x="10" y="38" width="204" height="44" rx="6"/><text class="t-m t-dim" x="20" y="66" style="font-size:14px">if ($temp &gt; 25)</text>
+<rect class="bx-hl" x="10" y="92" width="204" height="44" rx="6"/><text class="t-m" x="20" y="120" style="font-size:14px">elseif ($temp &gt; 15)</text>
+<rect class="bx" x="10" y="146" width="204" height="44" rx="6"/><text class="t-m" x="20" y="174" style="font-size:14px">else</text>
+<text class="t-b t-ok" x="226" y="104">true</text><path class="ln-ok" d="M226 114H276"/><polygon class="ah-ok" points="274,107 274,121 286,114"/>
+<rect class="bx" x="290" y="38" width="120" height="44" rx="6"/><text class="t t-dim" x="350" y="66" text-anchor="middle">T-shirt</text>
+<rect class="bx-ok" x="290" y="92" width="120" height="44" rx="6"/><text class="t-b" x="350" y="120" text-anchor="middle">Jumper</text>
+<rect class="bx" x="290" y="146" width="120" height="44" rx="6"/><text class="t" x="350" y="174" text-anchor="middle">Coat</text>
+</svg>`],
+ ['A branch has run, so PHP <b>skips everything else</b> in the chain, including else. One outfit, never two.',`<svg viewBox="0 0 420 196" role="img" aria-label="else is skipped">
+<text class="t-m" x="10" y="22" style="font-size:16px">$temp = 18;</text>
+<rect class="bx" x="10" y="38" width="204" height="44" rx="6"/><text class="t-m t-dim" x="20" y="66" style="font-size:14px">if ($temp &gt; 25)</text>
+<rect class="bx" x="10" y="92" width="204" height="44" rx="6"/><text class="t-m" x="20" y="120" style="font-size:14px">elseif ($temp &gt; 15)</text>
+<rect class="bx" x="10" y="146" width="204" height="44" rx="6"/><text class="t-m t-dim" x="20" y="174" style="font-size:14px">else</text>
+<text class="t-s" x="226" y="174">skipped</text>
+<rect class="bx" x="290" y="38" width="120" height="44" rx="6"/><text class="t t-dim" x="350" y="66" text-anchor="middle">T-shirt</text>
+<rect class="bx-ok" x="290" y="92" width="120" height="44" rx="6"/><text class="t-b" x="350" y="120" text-anchor="middle">Jumper</text>
+<rect class="bx" x="290" y="146" width="120" height="44" rx="6"/><text class="t t-dim" x="350" y="174" text-anchor="middle">Coat</text>
+</svg>`]])}
+${V.rules(V.rh('Rules: compare, do not store'),
+ V.no('if ($age = 18)','One = PUTS 18 into $age, and the test is always true'),V.ok('if ($age === 18)','Three = compares value and type'),
+ V.no('"5" == 5','Two = bends the types: this is true. Surprises follow'),V.ok('$score &gt;= 90','At least 90: the 90 itself counts'),
+ V.no('if $temp &gt; 25 {','The condition needs round brackets'),
+ V.rh('Conventions'),
+ V.ok('elseif','One word is the PHP style (else if also works)'),V.ok('{ } always','Use braces even for one line; adding a second line is then safe'),
+ V.ok('highest first','Check 90 before 80, or 95 would get a B'))}
+${V.hook(`Top to bottom, first true wins, the rest are skipped. <code>=</code> stores, <code>===</code> compares.`)}
+`)}
 
-<h4>Decisions with if, elseif and else</h4>
-<p>An <code>if</code> statement runs a block of code only when its question is true. The question goes in round brackets, and the code that belongs to it goes inside curly braces <code>{ }</code>, which mark where the block starts and stops.</p>
-<pre class="snip">if ($temp &gt; 25) {
-    echo "T-shirt\\n";
-} elseif ($temp &gt; 15) {     // only asked if the first was false
-    echo "Jumper\\n";
-} else {                    // none of the above was true
-    echo "Coat\\n";
-}</pre>
-<p>PHP asks the questions <b>from top to bottom</b> and stops at the first one that is true. It runs that block, skips all the others, and carries on after the final brace. <code>else</code> has no question: it catches everything that fell through. At most one branch ever runs.</p>
-<p>This lesson's first task is a grading function: 90 or more is an A, 80 or more a B, 70 or more a C, anything else an F. Here is how PHP walks through it for a score of 85:</p>
-<figure class="fig"><svg viewBox="0 0 420 290" role="img" aria-label="Grading decision flow, with the path for a score of 85 highlighted">
-<rect class="bx" x="30" y="10" width="250" height="44" rx="6"/><text class="t-m" x="155" y="38" text-anchor="middle">$score &gt;= 90</text>
-<path class="ln" d="M280 32H318"/><polygon class="ah" points="318,26 318,38 326,32"/><text class="t-s" x="302" y="22" text-anchor="middle">yes</text>
-<rect class="bx" x="326" y="10" width="84" height="44" rx="6"/><text class="t-m" x="368" y="38" text-anchor="middle">'A'</text>
-<path class="ln-a" d="M155 54v12"/><polygon class="ah-a" points="149,66 161,66 155,74"/><text class="t-s t-a" x="165" y="68">no</text>
-<rect class="bx-ok" x="30" y="74" width="250" height="44" rx="6"/><text class="t-m" x="155" y="102" text-anchor="middle">$score &gt;= 80</text>
-<path class="ln-ok" d="M280 96H318"/><polygon class="ah-ok" points="318,90 318,102 326,96"/><text class="t-s t-ok" x="302" y="86" text-anchor="middle">yes</text>
-<rect class="bx-ok" x="326" y="74" width="84" height="44" rx="6"/><text class="t-m" x="368" y="102" text-anchor="middle">'B'</text>
-<path class="ln-d" d="M155 118v12"/><polygon class="ah" points="149,130 161,130 155,138"/><text class="t-s" x="165" y="132">no</text>
-<rect class="bx" x="30" y="138" width="250" height="44" rx="6"/><text class="t-m" x="155" y="166" text-anchor="middle">$score &gt;= 70</text>
-<path class="ln" d="M280 160H318"/><polygon class="ah" points="318,154 318,166 326,160"/><text class="t-s" x="302" y="150" text-anchor="middle">yes</text>
-<rect class="bx" x="326" y="138" width="84" height="44" rx="6"/><text class="t-m" x="368" y="166" text-anchor="middle">'C'</text>
-<path class="ln-d" d="M155 182v12"/><polygon class="ah" points="149,194 161,194 155,202"/><text class="t-s" x="165" y="196">no</text>
-<rect class="bx" x="30" y="202" width="250" height="44" rx="6"/><text class="t" x="155" y="230" text-anchor="middle">else: none matched</text>
-<path class="ln" d="M280 224H318"/><polygon class="ah" points="318,218 318,230 326,224"/>
-<rect class="bx" x="326" y="202" width="84" height="44" rx="6"/><text class="t-m" x="368" y="230" text-anchor="middle">'F'</text>
-<text class="t-s" x="210" y="276" text-anchor="middle">For 85: the first test fails, the second passes</text>
-</svg><figcaption>PHP asks each question in order and takes the first "yes". For a score of 85, "is it at least 90?" is no, "is it at least 80?" is yes, so the answer is B and the remaining questions are never asked.</figcaption></figure>
-<p>Because PHP stops at the first true question, the <b>order</b> matters. Checking "at least 70" first would give 95 a C, because 95 is also at least 70. Always test the strictest condition first.</p>
-<div class="mistake"><b>Common mistake</b>Writing <code>if ($score = 90)</code> with a single equals sign. That does not compare: it stores 90 in <code>$score</code>, and the whole thing counts as true, so the branch always runs. Use <code>&gt;=</code>, <code>===</code> or another comparison.</div>
+${V.card(2,'Loops','for counts, foreach walks the list',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="A conveyor belt carries bread, milk and eggs past a robot that prints a line for each one">
+<rect class="bx" x="10" y="86" width="400" height="22" rx="11"/>
+<circle class="dot" cx="30" cy="97" r="5"/><circle class="dot" cx="390" cy="97" r="5"/>
+<rect class="bx-info" x="34" y="32" width="96" height="52" rx="6"/><text class="t-m" x="82" y="64" text-anchor="middle" style="font-size:17px">bread</text>
+<rect class="bx-info" x="140" y="32" width="96" height="52" rx="6"/><text class="t-m" x="188" y="64" text-anchor="middle" style="font-size:17px">milk</text>
+<rect class="bx-hl" x="246" y="32" width="96" height="52" rx="6"/><text class="t-m" x="294" y="64" text-anchor="middle" style="font-size:17px">eggs</text>
+${V.ic('robot',350,20,56,'ic-a')}
+<text class="t-m" x="34" y="138" style="font-size:16px">foreach ($items as $item)</text>
+<text class="t-s" x="34" y="164">one turn per item, in order, then stop</text>
+</svg><figcaption>foreach is a conveyor belt. Each turn, the next item lands in $item and the loop body runs once with it. When the belt is empty, the loop ends by itself.</figcaption></figure>
+${V.like(`<p><b>foreach</b> is a conveyor belt at a till: every item goes past the scanner exactly once. <b>for</b> is laps of a running track: start at lap 1, keep going while you are under the target, add one lap each time round.</p>`)}
+${V.why(`<p>Computers are brilliant at doing the same job thousands of times without getting bored. Writing <code>echo</code> once per item would be endless, and would break the moment the list changed size. A loop writes the job once and repeats it.</p>`)}
+${V.anat([[1,'for'],' (',[2,'$i = 1'],'; ',[3,'$i &lt;= $n'],'; ',[4,'$i++'],') { ... }'],[
+ '<b>for</b> starts a counting loop.',
+ '<b>Start.</b> Runs once, before the first lap: the counter $i begins at 1.',
+ '<b>Keep going while.</b> Checked before every lap. False means stop.',
+ '<b>After each lap.</b> <code>$i++</code> means "add 1 to $i".'])}
+${V.steps([
+ ['<b>sumTo(3)</b> starts. The running total begins at 0 and the counter <b>$i</b> starts at 1.',`<svg viewBox="0 0 420 170" role="img" aria-label="total 0, i 1">
+<rect class="bx-dark" x="6" y="8" width="262" height="124" rx="8"/>
+<text class="t-a" x="10" y="38" style="font-size:14px">&#9654;</text><text class="t-term" x="26" y="38" style="font-size:14px">$total = 0;</text>
+<text class="t-term t-dim" x="26" y="66" style="font-size:14px">for ($i=1; $i&lt;=3; $i++) {</text>
+<text class="t-term t-dim" x="50" y="94" style="font-size:14px">$total += $i;</text>
+<text class="t-term t-dim" x="26" y="122" style="font-size:14px">}</text>
+<text class="t-m" x="282" y="34">$i</text><rect class="bx-info" x="330" y="12" width="80" height="34" rx="6"/><text class="t-m" x="370" y="36" text-anchor="middle" style="font-size:18px">1</text>
+<text class="t-m" x="282" y="84">$total</text><rect class="bx-ok" x="342" y="62" width="68" height="34" rx="6"/><text class="t-m" x="376" y="86" text-anchor="middle" style="font-size:18px">0</text>
+</svg>`],
+ ['Lap 1: is 1 &amp;lt;= 3? Yes. <b>$total += $i</b> adds 1, so total is <b>1</b>. Then $i++ makes $i 2.',`<svg viewBox="0 0 420 170" role="img" aria-label="lap 1, total 1">
+<rect class="bx-dark" x="6" y="8" width="262" height="124" rx="8"/>
+<text class="t-term t-dim" x="26" y="38" style="font-size:14px">$total = 0;</text>
+<text class="t-term t-dim" x="26" y="66" style="font-size:14px">for ($i=1; $i&lt;=3; $i++) {</text>
+<text class="t-a" x="10" y="94" style="font-size:14px">&#9654;</text><text class="t-term" x="50" y="94" style="font-size:14px">$total += $i;</text>
+<text class="t-term t-dim" x="26" y="122" style="font-size:14px">}</text>
+<text class="t-m" x="282" y="34">$i</text><rect class="bx-info" x="330" y="12" width="80" height="34" rx="6"/><text class="t-m" x="370" y="36" text-anchor="middle" style="font-size:18px">1</text>
+<text class="t-m" x="282" y="84">$total</text><rect class="bx-ok" x="342" y="62" width="68" height="34" rx="6"/><text class="t-m" x="376" y="86" text-anchor="middle" style="font-size:18px">1</text>
+<text class="t-s" x="10" y="160">1 &lt;= 3 is true. total = 0 + 1 = 1</text>
+</svg>`],
+ ['Lap 2: is 2 &amp;lt;= 3? Yes. Total becomes 1 + 2 = <b>3</b>, and $i becomes 3.',`<svg viewBox="0 0 420 170" role="img" aria-label="lap 2, total 3">
+<rect class="bx-dark" x="6" y="8" width="262" height="124" rx="8"/>
+<text class="t-term t-dim" x="26" y="38" style="font-size:14px">$total = 0;</text>
+<text class="t-term t-dim" x="26" y="66" style="font-size:14px">for ($i=1; $i&lt;=3; $i++) {</text>
+<text class="t-a" x="10" y="94" style="font-size:14px">&#9654;</text><text class="t-term" x="50" y="94" style="font-size:14px">$total += $i;</text>
+<text class="t-term t-dim" x="26" y="122" style="font-size:14px">}</text>
+<text class="t-m" x="282" y="34">$i</text><rect class="bx-info" x="330" y="12" width="80" height="34" rx="6"/><text class="t-m" x="370" y="36" text-anchor="middle" style="font-size:18px">2</text>
+<text class="t-m" x="282" y="84">$total</text><rect class="bx-ok" x="342" y="62" width="68" height="34" rx="6"/><text class="t-m" x="376" y="86" text-anchor="middle" style="font-size:18px">3</text>
+<text class="t-s" x="10" y="160">2 &lt;= 3 is true. total = 1 + 2 = 3</text>
+</svg>`],
+ ['Lap 3: is 3 &amp;lt;= 3? Yes, because &amp;lt;= includes 3 itself. Total becomes 3 + 3 = <b>6</b>, and $i becomes 4.',`<svg viewBox="0 0 420 170" role="img" aria-label="lap 3, total 6">
+<rect class="bx-dark" x="6" y="8" width="262" height="124" rx="8"/>
+<text class="t-term t-dim" x="26" y="38" style="font-size:14px">$total = 0;</text>
+<text class="t-term t-dim" x="26" y="66" style="font-size:14px">for ($i=1; $i&lt;=3; $i++) {</text>
+<text class="t-a" x="10" y="94" style="font-size:14px">&#9654;</text><text class="t-term" x="50" y="94" style="font-size:14px">$total += $i;</text>
+<text class="t-term t-dim" x="26" y="122" style="font-size:14px">}</text>
+<text class="t-m" x="282" y="34">$i</text><rect class="bx-info" x="330" y="12" width="80" height="34" rx="6"/><text class="t-m" x="370" y="36" text-anchor="middle" style="font-size:18px">3</text>
+<text class="t-m" x="282" y="84">$total</text><rect class="bx-ok" x="342" y="62" width="68" height="34" rx="6"/><text class="t-m" x="376" y="86" text-anchor="middle" style="font-size:18px">6</text>
+<text class="t-s" x="10" y="160">3 &lt;= 3 is true. total = 3 + 3 = 6</text>
+</svg>`],
+ ['Check again: is 4 &amp;lt;= 3? <b>No</b>. The loop stops and the function returns <b>6</b> (1 + 2 + 3).',`<svg viewBox="0 0 420 170" role="img" aria-label="4 is not less or equal 3, loop ends, total 6">
+<rect class="bx-dark" x="6" y="8" width="262" height="124" rx="8"/>
+<text class="t-term t-dim" x="26" y="38" style="font-size:14px">$total = 0;</text>
+<text class="t-a" x="10" y="66" style="font-size:14px">&#9654;</text><text class="t-term" x="26" y="66" style="font-size:14px">for ($i=1; $i&lt;=3; $i++) {</text>
+<text class="t-term t-dim" x="50" y="94" style="font-size:14px">$total += $i;</text>
+<text class="t-term t-dim" x="26" y="122" style="font-size:14px">}</text>
+<text class="t-m" x="282" y="34">$i</text><rect class="bx-bad" x="330" y="12" width="80" height="34" rx="6"/><text class="t-m" x="370" y="36" text-anchor="middle" style="font-size:18px">4</text>
+<text class="t-m" x="282" y="84">$total</text><rect class="bx-ok" x="342" y="62" width="68" height="34" rx="6"/><text class="t-m" x="376" y="86" text-anchor="middle" style="font-size:18px">6</text>
+<text class="t-b t-bad" x="10" y="160">4 &lt;= 3 is false: stop. Answer: 6</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('foreach ($items as $item)','The list first, then the name for one item'),V.no('foreach ($item as $items)','Backwards: PHP tries to loop over a single string'),
+ V.no('for ($i=1; $i&lt;=3; )','No $i++: the counter never moves and the loop never ends'),V.no('$i &lt; 3','Off by one: stops before 3 is added'),
+ V.ok('count($items)','How many items the array holds'),
+ V.rh('Conventions'),
+ V.ok('$items / $item','Plural for the list, singular for one item'),V.ok('$i','A short counter name is fine for a simple for loop'))}
+${V.hook(`foreach walks the belt; for runs laps. Start, check, do, add one, check again.`)}
+`)}
 
-<h4>Arrays: one variable, many values</h4>
-<p>To repeat something for every item, you first need a way to hold several items. An <b>array</b> is a list of values stored in one variable. You write it with square brackets and commas:</p>
-<pre class="snip">$items = ['bread', 'milk', 'eggs'];
-echo $items[0];         // bread: positions start at 0
-echo count($items);     // 3: how many items</pre>
-<p>Each item has a position number called an <b>index</b>, and PHP counts from 0, so <code>'bread'</code> is at index 0 and <code>'eggs'</code> at index 2. The built-in function <code>count()</code> tells you how many items there are. You will learn much more about arrays in the next lesson.</p>
+${V.card(3,'Functions','a named machine with labelled slots',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="85, an int, goes into the grade machine and B, a string, comes out">
+<circle class="bx-info" cx="48" cy="70" r="32"/><text class="t-m" x="48" y="78" text-anchor="middle" style="font-size:24px">85</text>
+<text class="t-s" x="48" y="126" text-anchor="middle">int in</text>
+<path class="ln-a" d="M84 70H136"/><polygon class="ah-a" points="134,63 134,77 146,70"/>
+<rect class="bx-a" x="148" y="14" width="124" height="112" rx="10"/>${V.ic('machine',182,22,56,'ic-a')}
+<text class="t-m" x="210" y="112" text-anchor="middle" style="font-size:17px">grade()</text>
+<path class="ln-ok" d="M276 70H328"/><polygon class="ah-ok" points="326,63 326,77 338,70"/>
+<circle class="bx-ok" cx="372" cy="70" r="32"/><text class="t-m" x="372" y="78" text-anchor="middle" style="font-size:24px">"B"</text>
+<text class="t-s" x="372" y="126" text-anchor="middle">string out</text>
+<text class="t-s" x="210" y="156" text-anchor="middle">The labels on the slots say what may go in and come out</text>
+</svg><figcaption>A function is a machine with a name. The types are labels on its slots: this one only accepts a whole number and always hands back text.</figcaption></figure>
+${V.like(`<p>A vending machine. The coin slot only takes coins (the <b>parameter type</b>), the tray only gives out snacks (the <b>return type</b>), and you can use it as many times as you like.</p>`)}
+${V.why(`<p>Without functions you would copy the same grading code everywhere, and fixing a bug would mean fixing every copy. Types for numbers and text arrived in PHP 7 (2015) because people kept passing the wrong kind of value by accident. Now PHP checks for you.</p>`)}
+${V.anat([[1,'function'],' ',[2,'grade'],'(',[3,'int $score'],')',[4,': string'],' {\n    ',[5,'return'],' \'B\';\n}'],[
+ '<b>function</b>: "I am defining a machine". Nothing runs yet.',
+ '<b>Name.</b> A verb or a clear noun: <code>grade</code>, <code>sumTo</code>, <code>area</code>.',
+ '<b>Typed parameter.</b> A box that gets filled each call. Types: <code>int</code>, <code>float</code>, <code>string</code>, <code>bool</code>, <code>array</code>.',
+ '<b>Return type.</b> What kind of value comes out.',
+ '<b>return</b> hands the answer back and stops the function straight away.'])}
+${V.rules(V.rh('Rules'),
+ V.ok('return \'A\';','The caller gets the value'),V.no('echo \'A\';','Printing is not returning: the caller gets nothing back'),
+ V.ok('grade(85)','Brackets make it run'),V.no('grade(\'high\')','Wrong type: PHP throws a TypeError'),
+ V.rh('Conventions'),
+ V.ok('sumTo, getTotal','camelCase verbs for function names'),V.ok('one job each','Small functions are easier to test and reuse'))}
+${V.build(`<ol><li>Write the first line: <code>function grade(int $score): string {</code></li><li>Inside, use an if / elseif / else ladder, highest grade first, with a <code>return</code> in each branch.</li><li>For <code>sumTo</code>, start <code>$total</code> at 0, add each <code>$i</code> in a for loop, then return the total.</li><li>Print the shopping list with <code>foreach</code> and <code>"- $item\\n"</code>.</li><li>Finish with <code>count($items)</code> glued to <code>" items"</code>.</li></ol>`)}
+${V.hook(`Define once, call often. Types on the slots, <code>return</code> out of the tray.`)}
+`)}
 
-<h4>foreach: once for every item</h4>
-<p>A <b>loop</b> is code that runs again and again. The friendliest loop is <code>foreach</code>, which means "for each item in this array, do this":</p>
-<pre class="snip">foreach ($items as $item) {
-    echo "- $item\\n";
-}
-// - bread
-// - milk
-// - eggs</pre>
-<p>Read the first line as "go through <code>$items</code>, and each time round, call the current one <code>$item</code>". The loop runs the block three times. On the first round <code>$item</code> holds <code>'bread'</code>, on the second <code>'milk'</code>, on the third <code>'eggs'</code>, and then the loop ends because there is nothing left. You never manage a position number yourself, which is why <code>foreach</code> is the right choice whenever you want every item.</p>
-<p>The name after <code>as</code> is your choice. A common habit is the plural for the array and the singular for one item: <code>$items</code> and <code>$item</code>, <code>$users</code> and <code>$user</code>.</p>
-
-<h4>for: counting loops</h4>
-<p>Sometimes you are not walking through a list but counting: "do this for 1, 2, 3, up to n". That is the job of the <code>for</code> loop. Its brackets hold three parts separated by semicolons:</p>
-<pre class="snip">for ($i = 1; $i &lt;= 3; $i++) {
-    echo $i;            // prints 123
-}</pre>
-<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="The for loop cycle: start, check, body, step, back to check">
-<text class="t-s" x="75" y="52" text-anchor="middle">1. start</text>
-<rect class="bx-info" x="20" y="60" width="110" height="40" rx="6"/><text class="t-m" x="75" y="85" text-anchor="middle">$i = 1</text>
-<path class="ln" d="M130 80H152"/><polygon class="ah" points="152,74 152,86 160,80"/>
-<rect class="bx-a" x="160" y="60" width="140" height="40" rx="6"/><text class="t-m" x="230" y="85" text-anchor="middle">$i &lt;= 3</text>
-<text class="t-s" x="195" y="52" text-anchor="middle">2. check</text>
-<path class="ln" d="M230 60V30H312"/><polygon class="ah" points="312,24 312,36 320,30"/><text class="t-s" x="238" y="50">false</text>
-<rect class="bx" x="320" y="10" width="90" height="40" rx="6"/><text class="t" x="365" y="35" text-anchor="middle">loop ends</text>
-<path class="ln-ok" d="M230 100V122"/><polygon class="ah-ok" points="224,122 236,122 230,130"/><text class="t-s t-ok" x="238" y="118">true</text>
-<rect class="bx" x="160" y="130" width="140" height="40" rx="6"/><text class="t" x="230" y="155" text-anchor="middle">run the body</text>
-<path class="ln" d="M300 150H312"/><polygon class="ah" points="312,144 312,156 320,150"/>
-<rect class="bx-ok" x="320" y="130" width="90" height="40" rx="6"/><text class="t-m" x="365" y="155" text-anchor="middle">$i++</text>
-<text class="t-s" x="365" y="190" text-anchor="middle">3. step</text>
-<path class="ln" d="M365 130V80H308"/><polygon class="ah" points="308,74 308,86 300,80"/>
-<text class="t-s" x="210" y="222" text-anchor="middle">Start runs once. Check runs before every round.</text>
-<text class="t-s" x="210" y="242" text-anchor="middle">Step runs after every round.</text>
-</svg><figcaption>The three parts of a for loop. The start sets the counter once. The check is asked before every round: true runs the body, false ends the loop. The step runs after every round, then the check is asked again.</figcaption></figure>
-<p><code>$i++</code> is short for "add 1 to <code>$i</code>". Another shortcut you will want is <code>$total += $i</code>, which means "add <code>$i</code> to whatever <code>$total</code> already holds". It is the same as <code>$total = $total + $i</code>.</p>
-<p>Put those together and you can add up 1 + 2 + 3 + 4. Start a running total at 0 before the loop, then add the counter on each round. Here is the trace for n = 4:</p>
-<div class="tbl-wrap"><table><tr><th>Round</th><th><code>$i</code></th><th>Check <code>$i &lt;= 4</code></th><th><code>$total</code> after the body</th></tr>
-<tr><td>1</td><td>1</td><td>true</td><td>0 + 1 = 1</td></tr>
-<tr><td>2</td><td>2</td><td>true</td><td>1 + 2 = 3</td></tr>
-<tr><td>3</td><td>3</td><td>true</td><td>3 + 3 = 6</td></tr>
-<tr><td>4</td><td>4</td><td>true</td><td>6 + 4 = 10</td></tr>
-<tr><td>-</td><td>5</td><td>false: loop ends</td><td>10</td></tr></table></div>
-<p>What if n is 0? The very first check, 1 &lt;= 0, is false, so the body never runs and the total stays 0. That is exactly right, and the task tests it.</p>
-
-<h4>Functions: name a job, then reuse it</h4>
-<p>In the last lesson you called built-in functions like <code>strlen()</code>. Now you write your own. A function definition has four parts: the word <code>function</code>, a name, the <b>parameters</b> in brackets, and a body in braces.</p>
-<pre class="snip">function area(int $width, int $height): int {
-    return $width * $height;
-}
-echo area(3, 4);   // 12</pre>
-<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="Function as a machine: two parameters in, one return value out">
-<text class="t-s" x="70" y="14" text-anchor="middle">parameters</text>
-<rect class="bx-info" x="10" y="20" width="120" height="40" rx="6"/><text class="t-m" x="70" y="45" text-anchor="middle">$width = 3</text>
-<rect class="bx-info" x="10" y="80" width="120" height="40" rx="6"/><text class="t-m" x="70" y="105" text-anchor="middle">$height = 4</text>
-<path class="ln" d="M130 40H142"/><polygon class="ah" points="142,34 142,46 150,40"/>
-<path class="ln" d="M130 100H142"/><polygon class="ah" points="142,94 142,106 150,100"/>
-<rect class="bx-a" x="150" y="20" width="170" height="100" rx="8"/>
-<text class="t-b" x="235" y="52" text-anchor="middle">area()</text>
-<text class="t-m" x="235" y="88" text-anchor="middle">$width * $height</text>
-<path class="ln-ok" d="M320 70H342"/><polygon class="ah-ok" points="342,64 342,76 350,70"/>
-<text class="t-s" x="380" y="42" text-anchor="middle">returns</text>
-<rect class="bx-ok" x="350" y="50" width="60" height="40" rx="6"/><text class="t-m" x="380" y="75" text-anchor="middle">12</text>
-<text class="t-s" x="210" y="155" text-anchor="middle">Values go in through the parameters, one answer comes out</text>
-</svg><figcaption>A function is like a machine. The values you pass in, 3 and 4, land in the parameters width and height. The body multiplies them, and return sends the answer, 12, back to the place that called the function.</figcaption></figure>
-<p>Step by step, when PHP reaches <code>area(3, 4)</code>:</p>
-<ol>
-<li>It jumps into the function and puts 3 into <code>$width</code> and 4 into <code>$height</code>, in that order.</li>
-<li>It runs the body: 3 times 4 is 12.</li>
-<li><code>return</code> sends 12 back and <b>ends the function immediately</b>. Any lines after a <code>return</code> that runs are skipped.</li>
-<li>Back where it was called, <code>area(3, 4)</code> is replaced by 12, so <code>echo</code> prints 12.</li>
-</ol>
-<p>The words <code>int</code> before each parameter and <code>: int</code> after the brackets are <b>type declarations</b>. They say "this must be a whole number going in, and a whole number comes out". The common types are <code>int</code> (whole number), <code>float</code> (number with a decimal point), <code>string</code> (text), <code>bool</code> (true or false) and <code>array</code>. If code passes something that cannot be used as that type, PHP stops with a <code>TypeError</code> instead of carrying on with nonsense.</p>
-<p>A function cannot see variables from outside it. Inside <code>sumTo()</code>, the <code>$items</code> array from the top of the file does not exist. Everything a function needs should arrive through its parameters, which keeps it predictable.</p>
-<div class="mistake"><b>Common mistake</b>Using <code>echo</code> inside a function when the task wants a <code>return</code>. Echo prints to the screen, but the caller gets nothing back. The grading checks here call your function and look at what it <b>returns</b>, so every path through <code>grade()</code> must end in a <code>return</code>.</div>
-
-<h4>Reading the errors you will hit</h4>
-<ul>
-<li><b>syntax error, unexpected end of file</b>: a <code>{</code> was never closed with a <code>}</code>. Count your braces, and indent the code inside each block so the pairs line up.</li>
-<li><b>Return value must be of type string, none returned</b>: some path through your function reached the end without a <code>return</code>. Check every branch, including the <code>else</code>.</li>
-<li><b>Call to undefined function sumto()</b> or similar: the name is misspelt, or the function was never defined.</li>
-<li>The page hangs: a loop whose check never becomes false, such as forgetting <code>$i++</code>. This is called an <b>infinite loop</b>.</li>
-</ul>
-<div class="try"><b>Try it in your head</b>What does <code>grade(70)</code> return, and what does <code>sumTo(3)</code> return? For 70: not at least 90, not at least 80, but at least 70 is true, so <code>'C'</code>. For sumTo(3): 0 + 1 = 1, then 1 + 2 = 3, then 3 + 3 = 6, so 6.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Comparisons like <code>&gt;=</code> and <code>===</code> give <code>true</code> or <code>false</code>. A single <code>=</code> stores, it never compares.</li>
-<li><code>if</code>, <code>elseif</code> and <code>else</code> are checked top to bottom, and only the first true branch runs, so put the strictest test first.</li>
-<li><code>foreach ($items as $item)</code> visits every item; <code>count()</code> says how many there are.</li>
-<li><code>for ($i = 1; $i &lt;= $n; $i++)</code> has a start, a check before each round, and a step after each round.</li>
-<li>Functions take typed parameters, and <code>return</code> hands back one value and ends the function.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. With <code>$temp = 30</code>, which branch runs in the ladder above? <i>The first one: T-shirt.</i> 2. How many times does <code>for ($i = 1; $i &lt;= 5; $i++)</code> run? <i>5 times.</i> 3. What does <code>count(['a', 'b'])</code> give? <i>2.</i></div>
 `);
 
 explain('h1',`
-<h4>Why PHP arrays matter so much</h4>
-<p>In the last lesson you met a simple array: a numbered list like <code>['bread', 'milk', 'eggs']</code>. Real data is usually richer than a list. A user has a name, a role and a city. A product has a title, a price and a stock count. You want to look things up by a <b>label</b>, not by a position number.</p>
-<p>Many languages give you two separate tools for this: a list for numbered items and a "dictionary" or "map" for labelled ones. PHP uses <b>one</b> tool for both. That makes PHP arrays the most-used data structure in the language. Form data, database rows, settings and JSON from other services all arrive as arrays. This lesson also introduces <b>strict types</b>, a modern PHP setting that catches a whole family of silly bugs.</p>
+<p>This is the PHP you will meet in every real job: typed functions that refuse bad input, arrays that act as both lists and labelled records, and short arrow functions that filter data in one line. Get these right and Laravel code stops looking like magic.</p>
 
-<h4>Quick recap: strings and interpolation</h4>
-<p>Two habits from the first lesson carry straight over. Double-quoted strings fill in variables, single-quoted strings do not:</p>
-<pre class="snip">$name = 'Ada';             // single quotes: fixed text
-echo "Hello, $name!\\n";    // double quotes: prints Hello, Ada!
-echo 'Total: ' . 30;       // the dot joins pieces</pre>
-<p>Many PHP developers use single quotes for any string that has nothing to fill in, and double quotes only when they need interpolation or <code>\\n</code>. The starter file follows that style, which is why <code>$name = 'Ada';</code> uses single quotes.</p>
+${V.card(1,'Types and strict mode','a bouncer at the door',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="A bouncer guards a door marked int only. The number 5 walks in; the text 5 in quotes is turned away">
+<rect class="bx-dark" x="330" y="18" width="80" height="150" rx="6"/>${V.ic('door',340,40,60,'ic-ok')}
+<text class="t-term" x="370" y="156" text-anchor="middle" style="font-weight:700">int only</text>
+${V.ic('shield',248,40,70,'ic-a')}<text class="t-b" x="283" y="132" text-anchor="middle">strict</text>
+<circle class="bx-ok" cx="174" cy="56" r="28"/><text class="t-m" x="174" y="64" text-anchor="middle" style="font-size:22px">5</text>
+<path class="ln-ok" d="M206 56H240"/><polygon class="ah-ok" points="238,49 238,63 250,56"/>
+<text class="t-s" x="174" y="104" text-anchor="middle">int: let in</text>
+<circle class="bx-bad" cx="60" cy="120" r="32"/><text class="t-m" x="60" y="128" text-anchor="middle" style="font-size:20px">"5"</text>
+${V.ic('cross',94,96,30,'ic-bad')}
+<text class="t-s" x="60" y="174" text-anchor="middle">string: turned away</text>
+</svg><figcaption>With strict types on, a parameter marked int only accepts a real whole number. The text "5" looks like a number but is a string, so it is refused at the door.</figcaption></figure>
+${V.like(`<p>A bouncer checking tickets. Without strict mode the bouncer squints at a hand-written "5" and lets it in as if it were a real ticket. With strict mode, only the genuine ticket gets through.</p>`)}
+${V.why(`<p>PHP began as a relaxed language that converted values for you. That was handy for web forms, where everything arrives as text, but it hid bugs: <code>"5 apples"</code> could slip in as 5 with only a warning. PHP 7 added <code>declare(strict_types=1)</code> so teams could switch the guessing off. Most modern projects turn it on in every file.</p>`)}
+${V.anat([[1,'declare(strict_types=1);'],'\n\n',[2,'function'],' add(',[3,'int'],' $a, int $b)',[4,': int'],' {\n    return $a + $b;\n}'],[
+ '<b>Strict mode.</b> Must be the very first statement in the file. It applies to calls made from that file.',
+ '<b>function</b> starts the definition.',
+ '<b>Parameter type.</b> Common types: <code>int</code> (whole number), <code>float</code> (decimal), <code>string</code> (text), <code>bool</code> (true/false), <code>array</code>.',
+ '<b>Return type.</b> PHP checks the value you return matches it.'])}
+${V.steps([
+ ['Someone calls <b>add("2", 3)</b>. The first value is a <b>string</b> (text in quotes), but $a is labelled <b>int</b>.',`<svg viewBox="0 0 420 192" role="img" aria-label="add is called with the string 2 and the int 3">
+<text class="t-m" x="10" y="26" style="font-size:17px">add("2", 3)</text>
+<text class="t-m" x="10" y="80">$a</text><rect class="bx-warn" x="44" y="56" width="100" height="38" rx="6"/><text class="t-m" x="94" y="81" text-anchor="middle" style="font-size:18px">"2"</text>
+<text class="t-s" x="154" y="80">wants int, got string</text>
+<text class="t-m" x="10" y="130">$b</text><rect class="bx-ok" x="44" y="106" width="100" height="38" rx="6"/><text class="t-m" x="94" y="131" text-anchor="middle" style="font-size:18px">3</text>
+<text class="t-s" x="154" y="130">int: fine</text>
+</svg>`],
+ ['<b>Without</b> strict mode, PHP quietly converts "2" into the number 2 and returns 5. It works, but the mistake that sent text is now hidden.',`<svg viewBox="0 0 420 192" role="img" aria-label="Without strict types, 2 is converted and the result is 5">
+<text class="t-m" x="10" y="26" style="font-size:17px">add("2", 3)</text>
+<text class="t-m" x="10" y="80">$a</text><rect class="bx-warn" x="44" y="56" width="100" height="38" rx="6"/><text class="t-m t-dim" x="94" y="81" text-anchor="middle" style="font-size:18px">"2"</text>
+<text class="t-warn" x="156" y="81" style="font-size:16px">&#10140;</text><rect class="bx-ok" x="180" y="56" width="70" height="38" rx="6"/><text class="t-m" x="215" y="81" text-anchor="middle" style="font-size:18px">2</text>
+<text class="t-m" x="10" y="130">$b</text><rect class="bx-ok" x="44" y="106" width="100" height="38" rx="6"/><text class="t-m" x="94" y="131" text-anchor="middle" style="font-size:18px">3</text>
+<text class="t-b t-warn" x="270" y="81">quietly changed</text>
+<text class="t-b" x="10" y="164" style="font-size:17px">returns 5</text>
+</svg>`],
+ ['<b>With</b> <b>declare(strict_types=1)</b> at the top, PHP refuses and throws a <b>TypeError</b>. The bug is caught on the exact line that caused it.',`<svg viewBox="0 0 420 192" role="img" aria-label="With strict types, a TypeError is thrown">
+<text class="t-m" x="10" y="26" style="font-size:17px">add("2", 3)</text>
+<text class="t-m" x="10" y="80">$a</text><rect class="bx-bad" x="44" y="56" width="100" height="38" rx="6"/><text class="t-m" x="94" y="81" text-anchor="middle" style="font-size:18px">"2"</text>
+${V.ic('cross',154,58,34,'ic-bad')}
+<text class="t-m" x="10" y="130">$b</text><rect class="bx-ok" x="44" y="106" width="100" height="38" rx="6"/><text class="t-m" x="94" y="131" text-anchor="middle" style="font-size:18px">3</text>
+<text class="t-b t-bad" x="200" y="81">refused</text>
+<text class="t-bad" x="10" y="166" style="font-size:14px">TypeError: add(): Argument #1 ($a)</text>
+<text class="t-bad" x="10" y="186" style="font-size:14px">must be of type int, string given</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('declare(strict_types=1);','First statement in the file, right after &lt;?php'),V.no('echo "hi"; declare(...)','Anywhere else is a fatal error'),
+ V.no('echo \'Hello, $name!\';','Single quotes never fill in variables'),V.ok('echo "Hello, $name!";','Double quotes interpolate'),
+ V.ok('\'Total: \' . $total','The dot joins strings'),
+ V.rh('Conventions'),
+ V.ok('strict in every file','Laravel and Symfony teams usually require it'),V.ok('type every parameter','Types are free, checked documentation'))}
+${V.hook(`Strict mode is a bouncer: a "5" in quotes is not a 5.`)}
+`)}
 
-<h4>One array, two shapes</h4>
-<p>Under the hood, every PHP array is an <b>ordered map</b>: a list of pairs, each pair being a <b>key</b> (the label) and a <b>value</b> (the thing stored). "Ordered" means PHP remembers the order you added the pairs in.</p>
-<ul>
-<li>An <b>indexed array</b> (a list) lets PHP choose the keys for you: 0, 1, 2 and so on.</li>
-<li>An <b>associative array</b> uses keys you choose, usually strings. You pair each key with its value using the arrow <code>=&gt;</code>, read aloud as "maps to".</li>
-</ul>
-<pre class="snip">$items = ['bread', 'milk', 'eggs'];                // keys 0, 1, 2
-$user = ['name' =&gt; 'Ada', 'role' =&gt; 'admin', 'city' =&gt; 'London'];</pre>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="An indexed array and an associative array, both as key and value pairs">
-<text class="t-b" x="90" y="22" text-anchor="middle">Indexed</text>
-<text class="t-b" x="315" y="22" text-anchor="middle">Associative</text>
-<rect class="bx-info" x="10" y="34" width="50" height="40"/><text class="t-m" x="35" y="59" text-anchor="middle">0</text>
-<rect class="bx" x="60" y="34" width="110" height="40"/><text class="t-m" x="115" y="59" text-anchor="middle">'bread'</text>
-<rect class="bx-info" x="10" y="74" width="50" height="40"/><text class="t-m" x="35" y="99" text-anchor="middle">1</text>
-<rect class="bx" x="60" y="74" width="110" height="40"/><text class="t-m" x="115" y="99" text-anchor="middle">'milk'</text>
-<rect class="bx-info" x="10" y="114" width="50" height="40"/><text class="t-m" x="35" y="139" text-anchor="middle">2</text>
-<rect class="bx" x="60" y="114" width="110" height="40"/><text class="t-m" x="115" y="139" text-anchor="middle">'eggs'</text>
-<rect class="bx-a" x="210" y="34" width="86" height="40"/><text class="t-m" x="253" y="59" text-anchor="middle">'name'</text>
-<rect class="bx" x="296" y="34" width="114" height="40"/><text class="t-m" x="353" y="59" text-anchor="middle">'Ada'</text>
-<rect class="bx-a" x="210" y="74" width="86" height="40"/><text class="t-m" x="253" y="99" text-anchor="middle">'role'</text>
-<rect class="bx" x="296" y="74" width="114" height="40"/><text class="t-m" x="353" y="99" text-anchor="middle">'admin'</text>
-<rect class="bx-a" x="210" y="114" width="86" height="40"/><text class="t-m" x="253" y="139" text-anchor="middle">'city'</text>
-<rect class="bx" x="296" y="114" width="114" height="40"/><text class="t-m" x="353" y="139" text-anchor="middle">'London'</text>
-<text class="t-s" x="90" y="176" text-anchor="middle">keys made for you</text>
-<text class="t-s" x="310" y="176" text-anchor="middle">keys you choose</text>
-<text class="t-s" x="210" y="200" text-anchor="middle">Both are the same thing: ordered key and value pairs</text>
-</svg><figcaption>Left, an indexed array: PHP numbers the keys 0, 1, 2. Right, an associative array: you choose the keys name, role and city. Either way, each row is a key paired with a value.</figcaption></figure>
-<p>You read and write single values with square brackets around the key:</p>
-<pre class="snip">echo $user['name'];          // Ada
-$user['city'] = 'Paris';     // replace a value
-$user['email'] = 'a@x.com';  // a new key adds a new pair
-$items[] = 'tea';            // empty brackets: add to the end
-echo "City: {$user['city']}\\n";   // curly braces inside quotes</pre>
-<p>That last line shows a useful trick. To put an array value inside a double-quoted string, wrap it in curly braces so PHP knows exactly where the expression starts and ends.</p>
+${V.card(2,'Arrays','numbered lockers or labelled drawers',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Left: an indexed array, lockers 0 1 2 holding 72, 95, 88. Right: an associative array, drawers labelled name, role, city holding Ada, admin, London">
+<text class="t-b" x="10" y="20">Indexed (a list)</text>
+<rect class="bx" x="10" y="34" width="58" height="76" rx="6"/><text class="t-m" x="39" y="78" text-anchor="middle" style="font-size:18px">72</text>
+<rect class="bx" x="72" y="34" width="58" height="76" rx="6"/><text class="t-m" x="101" y="78" text-anchor="middle" style="font-size:18px">95</text>
+<rect class="bx" x="134" y="34" width="58" height="76" rx="6"/><text class="t-m" x="163" y="78" text-anchor="middle" style="font-size:18px">88</text>
+<text class="t-b t-a" x="39" y="132" text-anchor="middle">[0]</text><text class="t-b t-a" x="101" y="132" text-anchor="middle">[1]</text><text class="t-b t-a" x="163" y="132" text-anchor="middle">[2]</text>
+<text class="t-m" x="10" y="176" style="font-size:14px">[72, 95, 88]</text>
+<path class="ln-d" d="M208 10V190"/>
+<text class="t-b" x="222" y="20">Labelled (a map)</text>
+<rect class="bx-info" x="222" y="34" width="188" height="30" rx="5"/><text class="t-s" x="232" y="54">name</text><text class="t-m" x="296" y="55">'Ada'</text>
+<rect class="bx-info" x="222" y="68" width="188" height="30" rx="5"/><text class="t-s" x="232" y="88">role</text><text class="t-m" x="296" y="89">'admin'</text>
+<rect class="bx-info" x="222" y="102" width="188" height="30" rx="5"/><text class="t-s" x="232" y="122">city</text><text class="t-m" x="296" y="123">'London'</text>
+<text class="t-m" x="222" y="176" style="font-size:14px">['name' =&gt; 'Ada']</text>
+</svg><figcaption>Both are PHP arrays. An indexed array numbers its slots from 0. An associative array lets you choose the labels, called keys.</figcaption></figure>
+${V.like(`<p>An indexed array is a row of school lockers: you find things by number. An associative array is a filing cabinet with labelled drawers: you find things by name, like <code>$user['city']</code>.</p>`)}
+${V.why(`<p>Most languages have two separate tools for this, such as lists and dictionaries. PHP has <b>one</b> array type that does both: under the hood it is an ordered map, so every slot has a key, and for a plain list PHP just picks the keys 0, 1, 2 for you.</p>`)}
+${V.anat([[1,'$user'],' = ',[2,'['],[3,"'name'"],' ',[4,'=&gt;'],' ',[5,"'Ada'"],', \'role\' =&gt; \'admin\'',[2,']'],';'],[
+ '<b>Variable</b> holding the whole array.',
+ '<b>Square brackets</b> wrap the array.',
+ '<b>Key.</b> The label. Usually a string in quotes, or a whole number.',
+ '<b>Double arrow</b> <code>=&gt;</code> joins a key to its value. Not <code>:</code> and not <code>=</code>.',
+ '<b>Value.</b> Anything: text, a number, even another array.'])}
+${V.steps([
+ ['<b>foreach ($user as $key =&gt; $value)</b> opens the first drawer. $key gets <b>name</b>, $value gets <b>Ada</b>, and the body prints a line.',`<svg viewBox="0 0 420 160" role="img" aria-label="First pass: key name, value Ada">
+<rect class="bx-hl" x="10" y="14" width="160" height="38" rx="5"/><text class="t-s" x="20" y="38">name</text><text class="t-m" x="84" y="39">'Ada'</text>
+<rect class="bx-info" x="10" y="60" width="160" height="38" rx="5"/><text class="t-s" x="20" y="84">role</text><text class="t-m" x="84" y="85">'admin'</text>
+<rect class="bx-info" x="10" y="106" width="160" height="38" rx="5"/><text class="t-s" x="20" y="130">city</text><text class="t-m" x="84" y="131">'London'</text>
+<text class="t-s" x="182" y="24">$key</text><rect class="bx-a" x="182" y="30" width="96" height="34" rx="5"/><text class="t-m" x="230" y="53" text-anchor="middle">'name'</text>
+<text class="t-s" x="182" y="88">$value</text><rect class="bx-ok" x="182" y="94" width="96" height="34" rx="5"/><text class="t-m" x="230" y="117" text-anchor="middle">'Ada'</text>
+<rect class="bx-dark" x="288" y="14" width="126" height="130" rx="6"/>
+<text class="t-term" x="296" y="40" style="font-size:14px">name: Ada</text>
+</svg>`],
+ ['Second pass: the next drawer. $key is <b>role</b>, $value is <b>admin</b>.',`<svg viewBox="0 0 420 160" role="img" aria-label="Second pass: key role, value admin">
+<rect class="bx-info" x="10" y="14" width="160" height="38" rx="5"/><text class="t-s" x="20" y="38">name</text><text class="t-m" x="84" y="39">'Ada'</text>
+<rect class="bx-hl" x="10" y="60" width="160" height="38" rx="5"/><text class="t-s" x="20" y="84">role</text><text class="t-m" x="84" y="85">'admin'</text>
+<rect class="bx-info" x="10" y="106" width="160" height="38" rx="5"/><text class="t-s" x="20" y="130">city</text><text class="t-m" x="84" y="131">'London'</text>
+<text class="t-s" x="182" y="24">$key</text><rect class="bx-a" x="182" y="30" width="96" height="34" rx="5"/><text class="t-m" x="230" y="53" text-anchor="middle">'role'</text>
+<text class="t-s" x="182" y="88">$value</text><rect class="bx-ok" x="182" y="94" width="96" height="34" rx="5"/><text class="t-m" x="230" y="117" text-anchor="middle">'admin'</text>
+<rect class="bx-dark" x="288" y="14" width="126" height="130" rx="6"/>
+<text class="t-term" x="296" y="40" style="font-size:14px">name: Ada</text>
+<text class="t-term" x="296" y="64" style="font-size:14px">role: admin</text>
+</svg>`],
+ ['Last drawer: <b>city</b> and <b>London</b>. No drawers left, so the loop ends. Arrays keep their order, so the lines come out in the order you wrote them.',`<svg viewBox="0 0 420 160" role="img" aria-label="Third pass: key city, value London">
+<rect class="bx-info" x="10" y="14" width="160" height="38" rx="5"/><text class="t-s" x="20" y="38">name</text><text class="t-m" x="84" y="39">'Ada'</text>
+<rect class="bx-info" x="10" y="60" width="160" height="38" rx="5"/><text class="t-s" x="20" y="84">role</text><text class="t-m" x="84" y="85">'admin'</text>
+<rect class="bx-hl" x="10" y="106" width="160" height="38" rx="5"/><text class="t-s" x="20" y="130">city</text><text class="t-m" x="84" y="131">'London'</text>
+<text class="t-s" x="182" y="24">$key</text><rect class="bx-a" x="182" y="30" width="96" height="34" rx="5"/><text class="t-m" x="230" y="53" text-anchor="middle">'city'</text>
+<text class="t-s" x="182" y="88">$value</text><rect class="bx-ok" x="182" y="94" width="96" height="34" rx="5"/><text class="t-m" x="230" y="117" text-anchor="middle">'London'</text>
+<rect class="bx-dark" x="288" y="14" width="126" height="130" rx="6"/>
+<text class="t-term" x="296" y="40" style="font-size:14px">name: Ada</text>
+<text class="t-term" x="296" y="64" style="font-size:14px">role: admin</text>
+<text class="t-term" x="296" y="88" style="font-size:14px">city: London</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('$scores[0]','Indexes start at 0, so this is the first item'),V.no('[\'name\': \'Ada\']','PHP uses =&gt;, not a colon'),
+ V.no('$user[\'age\']','A key that does not exist: "Warning: Undefined array key"'),V.ok('$list[] = 42;','Empty brackets add to the end'),
+ V.ok('foreach ($a as $k =&gt; $v)','Array first, then key =&gt; value'),
+ V.rh('Conventions'),
+ V.ok('\'first_name\'','Keys in snake_case, matching database columns'),V.ok('[1, 2, 3,]','A trailing comma is allowed and makes adding lines tidy'))}
+${V.hook(`Lockers by number, drawers by name: one PHP array does both.`)}
+`)}
 
-<h4>foreach with keys and values</h4>
-<p>You already know <code>foreach ($items as $item)</code>, which hands you each value. For an associative array you usually want the label too. Add a second name with the arrow: <code>foreach ($array as $key =&gt; $value)</code>.</p>
-<pre class="snip">foreach ($user as $key =&gt; $value) {
-    // round 1: $key is 'name', $value is 'Ada'
-    // round 2: $key is 'role', $value is 'admin'
-    // round 3: $key is 'city', $value is 'London'
-}</pre>
-<p>On each round PHP fills both variables from the next pair, in the order the pairs were added. Inside the loop you can print them in any format you like, for example with interpolation in a double-quoted string, ending in <code>\\n</code> so each pair gets its own line. The names <code>$key</code> and <code>$value</code> are only a convention. <code>$field =&gt; $text</code> works just as well.</p>
+${V.card(3,'Arrow functions and filtering','a sieve for your data',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Scores 72, 95, 88 and 61 pour into a sieve marked s at least 70. 72, 95 and 88 pass through; 61 is caught">
+<circle class="bx" cx="60" cy="30" r="22"/><text class="t-m" x="60" y="37" text-anchor="middle" style="font-size:18px">72</text>
+<circle class="bx" cx="160" cy="30" r="22"/><text class="t-m" x="160" y="37" text-anchor="middle" style="font-size:18px">95</text>
+<circle class="bx" cx="260" cy="30" r="22"/><text class="t-m" x="260" y="37" text-anchor="middle" style="font-size:18px">88</text>
+<circle class="bx-bad" cx="360" cy="30" r="22"/><text class="t-m" x="360" y="37" text-anchor="middle" style="font-size:18px">61</text>
+<path class="bx-a" d="M20 64H400L330 112H90Z"/>
+<text class="t-m" x="210" y="94" text-anchor="middle" style="font-size:16px">fn($s) =&gt; $s &gt;= 70</text>
+${V.ic('cross',372,64,26,'ic-bad')}
+<path class="ln-ok" d="M210 114V136"/><polygon class="ah-ok" points="203,134 217,134 210,146"/>
+<rect class="bx-ok" x="110" y="150" width="200" height="40" rx="8"/><text class="t-m" x="210" y="177" text-anchor="middle" style="font-size:18px">72, 95, 88</text>
+</svg><figcaption>array_filter tips every value into the sieve. The arrow function is the test: values where it says true fall through and are kept. 61 fails and is left behind.</figcaption></figure>
+${V.like(`<p>A sieve in a kitchen. The holes are your rule. Everything is poured in, only what fits the rule comes out the bottom.</p>`)}
+${V.why(`<p>Writing a loop, an if and a new array just to keep some values is a lot of typing for a simple idea. PHP 7.4 added <b>arrow functions</b>, tiny one-line functions you can hand to helpers like <code>array_filter</code> and <code>array_map</code>.</p>`)}
+${V.anat([[1,'array_filter'],'(',[2,'$scores'],', ',[3,'fn($s)'],' ',[4,'=&gt;'],' ',[5,'$s &gt;= 70'],')'],[
+ '<b>Helper.</b> Keeps the values for which your test returns true.',
+ '<b>The input array.</b> It is not changed; you get a new array back.',
+ '<b>fn and its parameter.</b> $s holds one score at a time.',
+ '<b>Arrow.</b> "Gives back".',
+ '<b>One expression</b> that is the answer. No braces, no return keyword.'])}
+${V.rules(V.rh('Rules'),
+ V.ok('fn($s) =&gt; $s &gt;= 70','Exactly one expression after the arrow'),V.no('fn($s) =&gt; { return ...; }','No braces in an arrow function; use function () { } for longer code'),
+ V.no('array_sum($n) / count($n)','With an empty array this divides by zero: DivisionByZeroError'),V.ok('if (count($n) === 0) return 0.0;','Guard the empty case first'),
+ V.ok('implode(\', \', $passed)','Joins array values into one string'),
+ V.rh('Conventions'),
+ V.ok('array_values(...)','array_filter keeps the old keys; this renumbers them 0, 1, 2'),V.ok('$passed, $scores','Name arrays in the plural'))}
+${V.build(`<ol><li>Interpolate: put <code>$name</code> inside a double-quoted string.</li><li>For the average, add with <code>array_sum</code>, divide by <code>count</code>, and return 0.0 first if the array is empty.</li><li>Loop <code>$user</code> with <code>foreach ($user as $key =&gt; $value)</code> and print <code>"$key: $value\\n"</code>.</li><li>Fix <code>add()</code> to return <code>$a + $b</code>; strict mode does the type checking for you.</li><li>Filter with <code>fn($s) =&gt; $s &gt;= 70</code> and print the result with <code>implode</code>.</li></ol>`)}
+${V.hook(`Pour it in, keep what passes: <code>array_filter</code> plus a one-line <code>fn</code>.`)}
+`)}
 
-<h4>Handy array functions, and the average task</h4>
-<p>PHP has a big library of array functions. Three you need now:</p>
-<ul>
-<li><code>count($numbers)</code>: how many items.</li>
-<li><code>array_sum($numbers)</code>: all the values added together.</li>
-<li><code>implode(', ', $list)</code>: join the values into one string, with <code>', '</code> between each pair of neighbours. <code>implode(', ', [72, 95])</code> gives <code>72, 95</code>.</li>
-</ul>
-<p>The mean (average) of some numbers is their sum divided by how many there are. For <code>[80, 90, 85]</code>: the sum is 255, the count is 3, and 255 divided by 3 is 85.</p>
-<p>Now the edge case. For an empty array, the count is 0, and dividing by zero is impossible. PHP 8 refuses with a <code>DivisionByZeroError</code>, which stops your program. The task wants 0 for an empty list, so check for that case <b>first</b> and return early:</p>
-<pre class="snip">if (count($numbers) === 0) {
-    return 0.0;     // nothing to average
-}
-// only reached when there is at least one number</pre>
-<p>This pattern, called a <b>guard clause</b>, handles the awkward case at the top so the main calculation can stay simple. Notice <code>0.0</code>: the function promises a <code>float</code> (a number that can have a decimal point). Returning a whole number from a float function is allowed, because PHP can widen 85 to 85.0 without losing anything, but writing <code>0.0</code> makes your intention obvious. When PHP echoes the float 85.0, it prints just 85.</p>
-
-<h4>Functions you can pass around: arrow functions</h4>
-<p>Some array functions need you to supply a small rule. <code>array_filter()</code> is one: it walks through an array and keeps only the items your rule says yes to. You give it the rule as an <b>arrow function</b>, a tiny function with no name, written <code>fn(parameter) =&gt; expression</code>:</p>
-<pre class="snip">$double = fn($x) =&gt; $x * 2;
-echo $double(5);                         // 10
-
-$passed = array_filter($scores, fn($s) =&gt; $s &gt;= 70);</pre>
-<p>An arrow function automatically returns the value of its expression, so there is no <code>return</code> keyword and no braces. <code>array_filter</code> calls it once for every score. If the answer is <code>true</code>, the item is kept; if <code>false</code>, it is dropped.</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="array_filter keeps items that pass the rule and keeps their original keys">
-<rect class="bx" x="12" y="20" width="86" height="40" rx="6"/><text class="t-m" x="55" y="45" text-anchor="middle">0 =&gt; 72</text>
-<rect class="bx" x="112" y="20" width="86" height="40" rx="6"/><text class="t-m" x="155" y="45" text-anchor="middle">1 =&gt; 95</text>
-<rect class="bx" x="212" y="20" width="86" height="40" rx="6"/><text class="t-m" x="255" y="45" text-anchor="middle">2 =&gt; 88</text>
-<rect class="bx" x="312" y="20" width="86" height="40" rx="6"/><text class="t-m" x="355" y="45" text-anchor="middle">3 =&gt; 61</text>
-<path class="ln" d="M55 60v16M155 60v16M255 60v16M355 60v16"/>
-<polygon class="ah" points="49,76 61,76 55,84"/><polygon class="ah" points="149,76 161,76 155,84"/><polygon class="ah" points="249,76 261,76 255,84"/><polygon class="ah" points="349,76 361,76 355,84"/>
-<rect class="bx-a" x="30" y="84" width="360" height="40" rx="8"/><text class="t-m" x="210" y="109" text-anchor="middle">fn($s) =&gt; $s &gt;= 70</text>
-<path class="ln-ok" d="M55 124v18M155 124v18M255 124v18"/>
-<polygon class="ah-ok" points="49,142 61,142 55,150"/><polygon class="ah-ok" points="149,142 161,142 155,150"/><polygon class="ah-ok" points="249,142 261,142 255,150"/>
-<rect class="bx-ok" x="12" y="150" width="86" height="40" rx="6"/><text class="t-m" x="55" y="175" text-anchor="middle">0 =&gt; 72</text>
-<rect class="bx-ok" x="112" y="150" width="86" height="40" rx="6"/><text class="t-m" x="155" y="175" text-anchor="middle">1 =&gt; 95</text>
-<rect class="bx-ok" x="212" y="150" width="86" height="40" rx="6"/><text class="t-m" x="255" y="175" text-anchor="middle">2 =&gt; 88</text>
-<text class="t-s t-bad" x="355" y="175" text-anchor="middle">61 dropped</text>
-<text class="t-s" x="210" y="212" text-anchor="middle">The kept items keep their original keys</text>
-</svg><figcaption>Every score goes through the rule "is it at least 70?". 72, 95 and 88 pass and are kept, with their original keys 0, 1 and 2. 61 fails and is dropped.</figcaption></figure>
-<p>One detail: <code>array_filter</code> keeps the original keys. Here that does not matter, because the dropped item was last, and <code>implode()</code> ignores keys anyway. If you filter out an item from the middle, the keys will have a gap, and <code>array_values()</code> renumbers them from 0. A close cousin, <code>array_map($fn, $array)</code>, transforms every item instead of filtering.</p>
-
-<h4>Types and <code>declare(strict_types=1)</code></h4>
-<p>You have seen typed functions like <code>function add(int $a, int $b): int</code>. By default, PHP is forgiving about those types. If you call <code>add("2", 3)</code>, PHP notices that the text <code>"2"</code> looks like a number and quietly converts it to the integer 2. This is called <b>coercive mode</b>.</p>
-<p>That sounds helpful, but it hides bugs. Text from a form, a file or a URL is always a string. If it slips through unconverted, you want to know at once, not three steps later when something odd happens. So modern PHP files start with this line:</p>
-<pre class="snip">&lt;?php
-declare(strict_types=1);   // must be the very first statement</pre>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Calling add with the string 2: converted in default mode, refused in strict mode">
-<rect class="bx-info" x="10" y="70" width="130" height="40" rx="6"/><text class="t-m" x="75" y="95" text-anchor="middle">add("2", 3)</text>
-<path class="ln" d="M140 90H148V40H160M148 90V140H160"/>
-<polygon class="ah" points="158,34 158,46 166,40"/><polygon class="ah" points="158,134 158,146 166,140"/>
-<text class="t-s" x="233" y="14" text-anchor="middle">default mode</text>
-<rect class="bx-warn" x="166" y="20" width="134" height="40" rx="6"/><text class="t" x="233" y="45" text-anchor="middle">"2" becomes 2</text>
-<path class="ln" d="M300 40H306"/><polygon class="ah" points="306,34 306,46 314,40"/>
-<rect class="bx" x="314" y="20" width="98" height="40" rx="6"/><text class="t-m" x="363" y="45" text-anchor="middle">5</text>
-<text class="t-s" x="233" y="114" text-anchor="middle">strict_types=1</text>
-<rect class="bx-ok" x="166" y="120" width="134" height="40" rx="6"/><text class="t" x="233" y="145" text-anchor="middle">refused</text>
-<path class="ln" d="M300 140H306"/><polygon class="ah" points="306,134 306,146 314,140"/>
-<rect class="bx-bad" x="314" y="120" width="98" height="40" rx="6"/><text class="t-b" x="363" y="145" text-anchor="middle">TypeError</text>
-<text class="t-s" x="210" y="190" text-anchor="middle">Strict mode catches the mix-up at the call</text>
-</svg><figcaption>The same call, two outcomes. In default mode PHP silently converts the text "2" into the number 2 and returns 5. With strict types on, PHP refuses the string and throws a TypeError, pointing straight at the bad call.</figcaption></figure>
-<p>A few facts worth knowing about strict types:</p>
-<ul>
-<li>It must be the first statement in the file, right after <code>&lt;?php</code>. Anywhere else is an error.</li>
-<li>It applies to the calls made <b>from that file</b>, for parameters and return values.</li>
-<li>The one conversion it still allows is an <code>int</code> into a <code>float</code>, because that never loses information. That is why returning 85 from <code>average()</code> is fine.</li>
-</ul>
-<p>The fourth task checks this directly: once <code>add()</code> really adds, <code>add(2, 3)</code> must give 5, and <code>add("2", 3)</code> must throw a <code>TypeError</code>. The starter file already has strict types turned on, so making <code>add()</code> work correctly is all it takes.</p>
-<div class="mistake"><b>Common mistake</b>Dividing before checking for an empty array. <code>array_sum([]) / count([])</code> is 0 divided by 0, which throws <code>DivisionByZeroError</code>. Put the guard clause first, before any division.</div>
-<div class="mistake"><b>Common mistake</b>Writing <code>$user[name]</code> without quotes around the key. PHP 8 treats the bare word as an undefined constant and stops with an error. String keys always need quotes: <code>$user['name']</code>.</div>
-
-<h4>Reading the errors you will hit</h4>
-<ul>
-<li><b>TypeError: add(): Argument #1 ($a) must be of type int, string given</b>: a value of the wrong type reached a typed parameter. The message names the function, the parameter and what it got instead.</li>
-<li><b>Warning: Undefined array key "nmae"</b>: you asked for a key that is not in the array. Check the spelling against where the array was built.</li>
-<li><b>DivisionByZeroError: Division by zero</b>: something was divided by 0. Add a guard.</li>
-</ul>
-<div class="try"><b>Try it in your head</b>What does <code>implode(' / ', array_filter([5, 12, 8, 20], fn($n) =&gt; $n &gt; 7))</code> produce? 5 fails, 12 passes, 8 passes, 20 passes, so the result is <code>12 / 8 / 20</code>.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Every PHP array is an ordered map of keys to values: indexed arrays number the keys, associative arrays use your own with <code>=&gt;</code>.</li>
-<li><code>foreach ($array as $key =&gt; $value)</code> walks the pairs in order.</li>
-<li><code>count()</code>, <code>array_sum()</code> and <code>implode()</code> cover a lot of daily work; guard against empty arrays before dividing.</li>
-<li><code>fn($x) =&gt; ...</code> is a short function that returns its expression, perfect for <code>array_filter()</code> and <code>array_map()</code>.</li>
-<li><code>declare(strict_types=1)</code> turns silent type conversions into a <code>TypeError</code>, so mistakes show up where they happen.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. In <code>['a', 'b', 'c']</code>, what is the key of 'c'? <i>2.</i> 2. With strict types on, what happens with <code>add(2.5, 1)</code> if both parameters are int? <i>A TypeError: a float is not an int.</i> 3. What does <code>array_filter([5, 80, 90], fn($x) =&gt; $x &gt; 50)</code> keep? <i>80 and 90.</i></div>
 `);
 
 explain('h2',`
-<h4>Why classes exist</h4>
-<p>So far your data and your functions have lived apart. A product might be an array like <code>['name' =&gt; 'Mug', 'price' =&gt; 10.0]</code>, and somewhere else there is a function that calculates its tax. That works for a page of code. In a big app it falls apart: anyone can put a wrong value into the array, nothing tells you which functions belong to products, and a typo in a key fails silently.</p>
-<p><b>Object-oriented programming</b>, usually shortened to OOP, fixes this by bundling the data and the functions that work on it into one unit. Laravel, Symfony and almost every modern PHP library are built this way, so reading their code means reading classes.</p>
+<p>Laravel, Symfony and WordPress are built out of <b>classes</b>. Once you can read one, you can open any of their files and understand what you are looking at. This lesson builds a tiny shop catalogue the modern PHP 8 way.</p>
 
-<h4>Classes and objects</h4>
-<p>A <b>class</b> is a blueprint. It describes what every product has (a name, a price) and what every product can do (work out its price with tax). An <b>object</b> is one real thing built from that blueprint: this particular mug, that particular ebook. You can build as many objects from one class as you like, and each keeps its own values.</p>
-<ul>
-<li>The values an object holds are called <b>properties</b>. They are variables that belong to the object.</li>
-<li>The functions written inside a class are called <b>methods</b>. They are functions that belong to the object.</li>
-</ul>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="One Product class used to build two separate objects">
-<rect class="bx-a" x="10" y="40" width="150" height="120" rx="8"/>
-<text class="t-b" x="85" y="66" text-anchor="middle">class Product</text>
-<text class="t-s" x="85" y="96" text-anchor="middle">name</text>
-<text class="t-s" x="85" y="116" text-anchor="middle">basePrice</text>
-<text class="t-s" x="85" y="136" text-anchor="middle">price()</text>
-<path class="ln" d="M160 80H180V50H232"/><polygon class="ah" points="232,44 232,56 240,50"/>
-<path class="ln" d="M160 120H180V150H232"/><polygon class="ah" points="232,144 232,156 240,150"/>
-<text class="t-s" x="206" y="42" text-anchor="middle">new</text>
-<text class="t-s" x="206" y="142" text-anchor="middle">new</text>
-<rect class="bx-ok" x="240" y="10" width="170" height="80" rx="8"/>
-<text class="t-m" x="325" y="34" text-anchor="middle">$mug</text>
-<text class="t-s" x="325" y="56" text-anchor="middle">name: Coffee Mug</text>
-<text class="t-s" x="325" y="76" text-anchor="middle">basePrice: 10.0</text>
-<rect class="bx-ok" x="240" y="110" width="170" height="80" rx="8"/>
-<text class="t-m" x="325" y="134" text-anchor="middle">$ebook</text>
-<text class="t-s" x="325" y="156" text-anchor="middle">name: PHP Ebook</text>
-<text class="t-s" x="325" y="176" text-anchor="middle">basePrice: 15.0</text>
-</svg><figcaption>One class, many objects. The Product class lists what every product has and can do. Each use of new builds a separate object with its own values: a coffee mug costing 10 and an ebook costing 15.</figcaption></figure>
-<p>You build an object with <code>new</code>, and reach into it with the arrow <code>-&gt;</code>:</p>
-<pre class="snip">$mug = new Product('Coffee Mug', 10.0);
-echo $mug-&gt;name;              // a property: Coffee Mug
-echo $mug-&gt;priceWithTax();    // a method call: 12</pre>
-<p>Inside a method, the object that the method was called on is available as <code>$this</code>. When you run <code>$mug-&gt;price()</code>, <code>$this</code> means <code>$mug</code>, so <code>$this-&gt;basePrice</code> reads the mug's own price.</p>
+${V.card(1,'Classes and objects','a blueprint and the houses built from it',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="One blueprint labelled class Product. Arrows marked new lead to two houses: mug with price 10 and lamp with price 25">
+<rect class="bx-info" x="10" y="20" width="150" height="150" rx="6"/>
+<path class="ln-d" d="M10 70H160M10 120H160M60 20V170M110 20V170"/>
+<path class="ln" style="stroke-width:3" d="M40 110L85 66 130 110V152H40Z"/>
+<text class="t-m" x="85" y="190" text-anchor="middle" style="font-size:15px">class Product</text>
+<path class="ln-a" d="M166 70 236 48"/><polygon class="ah-a" points="232,40 244,46 236,55"/>
+<path class="ln-a" d="M166 120 236 142"/><polygon class="ah-a" points="236,135 244,145 232,150"/>
+<text class="t-b t-a" x="190" y="102" style="font-size:16px">new</text>
+${V.ic('house',248,6,74,'ic-ok')}<text class="t-m" x="330" y="38" style="font-size:15px">$mug</text><text class="t-s" x="330" y="60">'Mug', 10.0</text>
+${V.ic('house',248,104,74,'ic-warn')}<text class="t-m" x="330" y="136" style="font-size:15px">$lamp</text><text class="t-s" x="330" y="158">'Lamp', 25.0</text>
+</svg><figcaption>A class is the blueprint. Each object is a separate house built from it with new. They share the same design but hold their own values.</figcaption></figure>
+${V.like(`<p>An architect draws <b>one</b> blueprint, and a builder can build a whole street of houses from it. You cannot live in a blueprint; you live in a house. In code, you cannot use a class's values directly; you use an <b>object</b> made from it.</p>`)}
+${V.why(`<p>As programs grow, loose variables and functions turn into spaghetti. Object-oriented programming, popular since the 1980s, bundles data and the functions that use it into one unit. PHP gained proper classes in PHP 5 (2004), and PHP 8 made them much shorter to write.</p>`)}
+${V.anat([[1,'$mug'],' = ',[2,'new'],' ',[3,'Product'],[4,"('Mug', 10.0)"],';\necho ',[1,'$mug'],[5,'-&gt;'],'name;'],[
+ '<b>Variable</b> holding the finished object (the house).',
+ '<b>new</b> means "build one now".',
+ '<b>Class name.</b> Which blueprint to use.',
+ '<b>Arguments</b> passed to the constructor, the setup method that runs once when the object is built.',
+ '<b>Object arrow.</b> <code>-&gt;</code> reaches inside an object: a property (a value) or a method (a function).'])}
+${V.steps([
+ ['The class <b>Product</b> is only a plan. Nothing exists in memory yet.',`<svg viewBox="0 0 420 180" role="img" aria-label="Only the blueprint exists">
+<rect class="bx-info" x="10" y="14" width="150" height="150" rx="6"/>
+<text class="t-m" x="22" y="40" style="font-size:15px">Product</text>
+<text class="t-s" x="22" y="70">name</text><text class="t-s" x="22" y="96">basePrice</text>
+<text class="t-s" x="22" y="130">price()</text><text class="t-s" x="22" y="154">priceWithTax()</text>
+<text class="t-s" x="206" y="40">Memory</text><rect class="ln-d" x="204" y="48" width="206" height="116" rx="8"/>
+<text class="t-s" x="307" y="112" text-anchor="middle">empty</text>
+</svg>`],
+ ['<b>new Product(\'Mug\', 10.0)</b> builds a new object from the plan. The constructor runs and fills its properties.',`<svg viewBox="0 0 420 180" role="img" aria-label="An object is built and filled">
+<rect class="bx-info" x="10" y="14" width="150" height="150" rx="6"/>
+<text class="t-m" x="22" y="40" style="font-size:15px">Product</text>
+<text class="t-s" x="22" y="70">name</text><text class="t-s" x="22" y="96">basePrice</text>
+<text class="t-s" x="22" y="130">price()</text><text class="t-s" x="22" y="154">priceWithTax()</text>
+<text class="t-s" x="206" y="40">Memory</text><rect class="bx-ok" x="204" y="48" width="206" height="116" rx="8"/>
+<text class="t-s" x="216" y="82">name</text><text class="t-m" x="310" y="82">'Mug'</text>
+<text class="t-s" x="216" y="114">basePrice</text><text class="t-m" x="310" y="114">10.0</text>
+<path class="ln-a" d="M162 90H196"/><polygon class="ah-a" points="194,83 194,97 204,90"/>
+</svg>`],
+ ['The variable <b>$mug</b> now points at that object. Build another with different values and the two never mix.',`<svg viewBox="0 0 420 180" role="img" aria-label="mug points at the object">
+<rect class="bx-info" x="10" y="14" width="150" height="150" rx="6"/>
+<text class="t-m" x="22" y="40" style="font-size:15px">Product</text>
+<text class="t-s" x="22" y="70">name</text><text class="t-s" x="22" y="96">basePrice</text>
+<text class="t-s" x="22" y="130">price()</text><text class="t-s" x="22" y="154">priceWithTax()</text>
+<text class="t-s" x="206" y="40">Memory</text><rect class="bx-ok" x="204" y="48" width="206" height="116" rx="8"/>
+<text class="t-s" x="216" y="82">name</text><text class="t-m" x="310" y="82">'Mug'</text>
+<text class="t-s" x="216" y="114">basePrice</text><text class="t-m" x="310" y="114">10.0</text>
+<path class="bx-a" d="M300 132H390L402 146 390 160H300Z"/><text class="t-m" x="346" y="152" text-anchor="middle">$mug</text>
+</svg>`],
+ ['<b>$mug-&gt;priceWithTax()</b> runs the method on <b>this</b> object. Inside, <b>$this</b> means "the object I was called on", so it works out 10.0 × 1.2 = <b>12</b>.',`<svg viewBox="0 0 420 180" role="img" aria-label="priceWithTax returns 12">
+<rect class="bx-info" x="10" y="14" width="150" height="150" rx="6"/>
+<text class="t-m" x="22" y="40" style="font-size:15px">Product</text>
+<text class="t-s" x="22" y="70">name</text><text class="t-s" x="22" y="96">basePrice</text>
+<text class="t-s" x="22" y="130">price()</text><rect class="bx-hl" x="16" y="138" width="138" height="24" rx="4"/><text class="t-s" x="22" y="155">priceWithTax()</text>
+<text class="t-s" x="206" y="40">Memory</text><rect class="bx-ok" x="204" y="48" width="206" height="116" rx="8"/>
+<text class="t-s" x="216" y="82">name</text><text class="t-m" x="310" y="82">'Mug'</text>
+<text class="t-s" x="216" y="114">basePrice</text><text class="t-m" x="310" y="114">10.0</text>
+<path class="bx-a" d="M300 132H390L402 146 390 160H300Z"/><text class="t-m" x="346" y="152" text-anchor="middle">$mug</text>
+<text class="t-b t-ok" x="216" y="152" style="font-size:18px">= 12</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.no('Product(\'Mug\', 10.0)','Without new, PHP looks for a function called Product'),V.ok('$mug-&gt;name','-&gt; for properties and methods'),
+ V.no('$mug.name','The dot joins strings; it does not reach into objects'),V.ok('$this-&gt;basePrice','Inside a method, $this is the current object'),
+ V.rh('Conventions'),
+ V.ok('class Product','PascalCase: every word starts with a capital'),V.ok('Product.php','One class per file, named exactly like the class'),
+ V.ok('priceWithTax()','Methods in camelCase, named after what they do'))}
+${V.hook(`Class is the blueprint, object is the house, <code>new</code> is the builder, <code>-&gt;</code> is the front door.`)}
+`)}
 
-<h4>The constructor and property promotion</h4>
-<p>When you write <code>new Product('Coffee Mug', 10.0)</code>, PHP runs a special method called the <b>constructor</b>, always named <code>__construct</code> (two underscores). Its job is to set up the new object. In older PHP it took three steps per property: declare it, accept a parameter, copy one into the other.</p>
-<pre class="snip">class Product {
-    public string $name;                     // 1. declare
-    public function __construct(string $name) {   // 2. accept
-        $this-&gt;name = $name;                 // 3. copy
-    }
-}</pre>
-<p>PHP 8 added <b>constructor property promotion</b>, which does all three in one go. Put a visibility word such as <code>public</code> or <code>private</code> in front of a constructor parameter, and PHP declares the property and fills it for you:</p>
-<pre class="snip">class Product {
-    public function __construct(
-        public string $name,
-        private float $basePrice,
-    ) {}     // empty body: nothing else to do
-}</pre>
-<p>The trailing comma after the last parameter is allowed, and it makes adding another parameter later a one-line change.</p>
+${V.card(2,'Constructor promotion and visibility','who is allowed in which room',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="A house in three zones: public front garden open to everyone, protected family rooms for the class and its children, private safe for the class only">
+<rect class="bx-ok" x="10" y="40" width="130" height="120" rx="6"/>${V.ic('people',45,56,60,'ic-ok')}
+<text class="t-b" x="75" y="138" text-anchor="middle">public</text><text class="t-s" x="75" y="28" text-anchor="middle">anyone</text>
+<rect class="bx-info" x="146" y="40" width="130" height="120" rx="6"/>${V.ic('house',181,56,60,'ic-info')}
+<text class="t-b" x="211" y="138" text-anchor="middle">protected</text><text class="t-s" x="211" y="28" text-anchor="middle">family (subclasses)</text>
+<rect class="bx-bad" x="282" y="40" width="128" height="120" rx="6"/>${V.ic('lock',316,56,60,'ic-bad')}
+<text class="t-b" x="346" y="138" text-anchor="middle">private</text><text class="t-s" x="346" y="28" text-anchor="middle">this class only</text>
+</svg><figcaption>Visibility decides who may touch a property or method. Keep things private unless the outside world genuinely needs them.</figcaption></figure>
+${V.like(`<p>A house: anyone can walk through the <b>public</b> front garden, only family enter the <b>protected</b> rooms, and only the owner opens the <b>private</b> safe. The base price lives in the safe, so nobody outside can change it by accident.</p>`)}
+${V.why(`<p>Before PHP 8, each property was written three times: declared, listed as a constructor parameter, then assigned with <code>$this-&gt;name = $name;</code>. <b>Constructor promotion</b> (PHP 8.0) does all three in one line.</p>`)}
+${V.anat([[1,'public function __construct'],'(\n    ',[2,'public'],' ',[3,'string'],' ',[4,'$name'],',\n    ',[2,'private'],' float $basePrice,\n) {}'],[
+ '<b>The constructor.</b> Two underscores. Runs automatically when <code>new</code> builds the object.',
+ '<b>Visibility.</b> Writing it here turns the parameter into a property. That is the "promotion".',
+ '<b>Type</b> of the property.',
+ '<b>Name.</b> Becomes <code>$this-&gt;name</code> inside and <code>$mug-&gt;name</code> outside.'])}
+${V.rules(V.rh('Rules'),
+ V.no('$mug-&gt;basePrice','From outside: "Error: Cannot access private property"'),V.ok('$mug-&gt;price()','Expose a public method that reads it'),
+ V.no('__construct(string $name)','No visibility word means no property is created'),V.no('_construct','One underscore is just an ordinary method'),
+ V.rh('Conventions'),
+ V.ok('private by default','Open things up only when needed'),V.ok('trailing comma','One parameter per line, comma after the last'))}
+${V.hook(`Public garden, protected family room, private safe. Promotion writes it all in one line.`)}
+`)}
 
-<h4>Visibility: who may touch what</h4>
-<p>The words <code>public</code>, <code>protected</code> and <code>private</code> control where a property or method can be used from. This is how a class protects its data from being changed in ways it did not expect, an idea called <b>encapsulation</b>.</p>
-<div class="tbl-wrap"><table><tr><th>Keyword</th><th>Who can use it</th></tr>
-<tr><td><code>public</code></td><td>Anyone: code outside the class, the class itself and its subclasses.</td></tr>
-<tr><td><code>protected</code></td><td>The class itself and classes that extend it, but not outside code.</td></tr>
-<tr><td><code>private</code></td><td>Only code inside this exact class.</td></tr></table></div>
-<p>In this lesson the base price is <code>private</code>. Outside code that tries <code>$mug-&gt;basePrice</code> gets <b>Error: Cannot access private property Product::$basePrice</b>. Instead, the class offers a public method, <code>price()</code>, to read it. That way, if pricing rules change later (discounts, currencies), only the class changes, and every caller keeps working. The first task checks both halves: tax works, and the private property really is private.</p>
+${V.card(3,'Interfaces, inheritance and traits','contracts, family trees and toolkits',`
+<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Interface HasPrice is a contract. Product signs it and uses the HasSlug toolkit. DigitalProduct is a child of Product">
+<rect class="bx-warn" x="10" y="14" width="150" height="62" rx="6"/>${V.ic('file',18,22,40,'ic-warn')}
+<text class="t-m" x="64" y="40" style="font-size:14px">HasPrice</text><text class="t-s" x="64" y="62">price()</text>
+<rect class="bx-info" x="260" y="14" width="150" height="62" rx="6"/>${V.ic('gear',268,22,40,'ic-info')}
+<text class="t-m" x="314" y="40" style="font-size:14px">HasSlug</text><text class="t-s" x="314" y="62">slug()</text>
+<rect class="bx-a" x="135" y="108" width="150" height="40" rx="6"/><text class="t-m" x="210" y="134" text-anchor="middle" style="font-size:16px">Product</text>
+<path class="ln-d" d="M90 76 160 108"/><text class="t-s" x="34" y="100">implements</text>
+<path class="ln-d" d="M330 76 260 108"/><text class="t-s" x="330" y="100">use</text>
+<path class="ln" d="M210 172V150"/><polygon class="ah" points="203,156 217,156 210,146"/>
+<rect class="bx-ok" x="110" y="172" width="200" height="34" rx="6"/><text class="t-m" x="210" y="195" text-anchor="middle" style="font-size:15px">DigitalProduct</text>
+<text class="t-s" x="320" y="194">extends</text>
+</svg><figcaption>An interface is a promise Product signs. A trait is a toolkit of methods copied in. A subclass extends Product, inheriting everything and changing what it needs.</figcaption></figure>
+${V.like(`<p>An <b>interface</b> is a job advert: "must be able to give a price". A <b>subclass</b> is a child who inherits the family recipes and tweaks one. A <b>trait</b> is a sticker pack of skills you can stick on any class, even unrelated ones.</p>`)}
+${V.why(`<p>PHP lets a class have only one parent, to avoid confusing family trees. Interfaces (since PHP 5) let unrelated classes promise the same methods, so code can accept "anything with a price()". Traits (PHP 5.4) were added so classes in different families could still share code.</p>`)}
+${V.anat([[1,'class'],' DigitalProduct ',[2,'extends Product'],' ',[3,'implements HasPrice'],' {\n    ',[4,'use HasSlug;'],'\n}'],[
+ '<b>class</b> and its name.',
+ '<b>extends.</b> Inherit every method and property of one parent class.',
+ '<b>implements.</b> Promise to provide every method the interface lists. A class can implement many.',
+ '<b>use</b> inside the class pulls in a trait\'s methods.'])}
+${V.steps([
+ ['<b>$ebook-&gt;priceWithTax()</b>. PHP looks in <b>DigitalProduct</b> first and finds its own version, which skips tax. That is an <b>override</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="priceWithTax found in DigitalProduct">
+<rect class="bx-a" x="10" y="14" width="190" height="70" rx="6"/><text class="t-m" x="20" y="36" style="font-size:14px">Product</text>
+<text class="t-s" x="20" y="58">price()  priceWithTax()</text><text class="t-s" x="20" y="76">slug() from HasSlug</text>
+<path class="ln" d="M105 112V88"/><polygon class="ah" points="98,94 112,94 105,84"/>
+<rect class="bx-hl" x="10" y="112" width="190" height="46" rx="6"/><text class="t-m" x="20" y="132" style="font-size:14px">DigitalProduct</text><text class="t-s" x="20" y="152">priceWithTax()</text>
+<text class="t-m" x="220" y="40" style="font-size:15px">$ebook-&gt;priceWithTax()</text>
+<text class="t-b t-ok" x="220" y="140">found here: 15.0</text>
+</svg>`],
+ ['<b>$ebook-&gt;price()</b>. DigitalProduct has no price(), so PHP climbs to the parent, <b>Product</b>, and uses that one.',`<svg viewBox="0 0 420 170" role="img" aria-label="price found in Product">
+<rect class="bx-hl" x="10" y="14" width="190" height="70" rx="6"/><text class="t-m" x="20" y="36" style="font-size:14px">Product</text>
+<text class="t-s" x="20" y="58">price()  priceWithTax()</text><text class="t-s" x="20" y="76">slug() from HasSlug</text>
+<path class="ln" d="M105 112V88"/><polygon class="ah" points="98,94 112,94 105,84"/>
+<rect class="bx" x="10" y="112" width="190" height="46" rx="6"/><text class="t-m" x="20" y="132" style="font-size:14px">DigitalProduct</text><text class="t-s" x="20" y="152">priceWithTax()</text>
+<text class="t-m" x="220" y="40" style="font-size:15px">$ebook-&gt;price()</text>
+<text class="t-s" x="220" y="140">not in the child...</text>
+<text class="t-b t-ok" x="220" y="66">...found in parent</text>
+</svg>`],
+ ['<b>$ebook-&gt;slug()</b>. Product copied slug() in from the trait, so the child inherits it too and gets <b>php-ebook</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="slug found via the trait">
+<rect class="bx" x="10" y="14" width="190" height="70" rx="6"/><text class="t-m" x="20" y="36" style="font-size:14px">Product</text>
+<text class="t-s" x="20" y="58">price()  priceWithTax()</text><rect class="bx-hl" x="14" y="63" width="172" height="18" rx="3"/><text class="t-s" x="20" y="77">slug() from HasSlug</text>
+<path class="ln" d="M105 112V88"/><polygon class="ah" points="98,94 112,94 105,84"/>
+<rect class="bx" x="10" y="112" width="190" height="46" rx="6"/><text class="t-m" x="20" y="132" style="font-size:14px">DigitalProduct</text><text class="t-s" x="20" y="152">priceWithTax()</text>
+<text class="t-m" x="220" y="40" style="font-size:15px">$ebook-&gt;slug()</text>
+<text class="t-b t-ok" x="220" y="76">'php-ebook'</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.no('extends A, B','Only one parent class is allowed'),V.ok('implements A, B','Many interfaces are fine'),
+ V.no('implements HasPrice, no price()','Missing a promised method is a fatal error'),V.ok('compatible override','An override must stay compatible with the parent method\'s parameters and return type'),
+ V.rh('Conventions'),
+ V.ok('HasPrice, Sluggable','Interface and trait names describe an ability'),V.ok('interfaces first','Type parameters with the interface, not a concrete class'))}
+${V.hook(`Interface: a promise. extends: a family. Trait: a sticker pack.`)}
+`)}
 
-<h4>Methods, default parameters and rounding</h4>
-<p>A method that adds 20% tax could look like this:</p>
-<pre class="snip">public function priceWithTax(float $rate = 0.2): float {
-    return round($this-&gt;price() * (1 + $rate), 2);
-}</pre>
-<p>Step by step for the mug: <code>$this-&gt;price()</code> is 10.0. <code>1 + $rate</code> is 1.2. 10.0 times 1.2 is 12.0. <code>round(..., 2)</code> rounds to 2 decimal places, and 12.0 is returned.</p>
-<p>Two new ideas are hiding in there. <code>$rate = 0.2</code> is a <b>default value</b>: if the caller leaves the argument out, 0.2 is used. And <code>round()</code> is there because computers store decimal numbers in binary, which cannot represent most decimals exactly. For example, 0.1 + 0.2 comes out as 0.30000000000000004. Rounding money to 2 places hides those tiny errors. (Serious shops store prices as whole pennies for this reason.)</p>
+${V.card(4,'Enums','a dial with fixed positions',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A dial that can only point to Draft or Published. A typo like publishd is not on the dial">
+<circle class="bx-info" cx="110" cy="96" r="64"/><path class="ln-a" style="stroke-width:5" d="M110 96 70 56"/><circle class="dot-m" cx="110" cy="96" r="7"/>
+<text class="t-b" x="36" y="30">Draft</text><text class="t-b" x="140" y="30">Published</text>
+<rect class="bx-bad" x="250" y="70" width="160" height="50" rx="8"/><text class="t-m" x="330" y="101" text-anchor="middle" style="font-size:17px">'publishd'</text>
+${V.ic('cross',386,52,30,'ic-bad')}
+<text class="t-s" x="330" y="148" text-anchor="middle">not a position: refused</text>
+</svg><figcaption>An enum lists every value something is allowed to have. A typo cannot sneak in, because it is not on the dial.</figcaption></figure>
+${V.like(`<p>A washing machine dial. It clicks to fixed settings and nothing in between. Compare that with a text box where someone types "publishd" and the bug hides for weeks.</p>`)}
+${V.anat([[1,'enum'],' ',[2,'Status'],[3,': string'],' {\n    ',[4,'case Draft'],' = ',[5,"'draft'"],';\n    case Published = \'published\';\n}'],[
+ '<b>enum</b> (PHP 8.1) starts the list.',
+ '<b>Name</b>, in PascalCase like a class.',
+ '<b>Backing type.</b> Each case also has a plain value, handy for databases.',
+ '<b>A case.</b> Use it as <code>Status::Draft</code>.',
+ '<b>Backing value.</b> Read it with <code>-&gt;value</code>.'])}
+${V.rules(V.ok('Status::from(\'published\')','Turns stored text back into a case'),V.no('Status::from(\'deleted\')','Not a case: throws a ValueError'),
+ V.ok('Status::tryFrom(\'deleted\')','Returns null instead of throwing'),V.ok('$p-&gt;status === Status::Draft','Compare cases with ==='))}
+${V.build(`<ol><li>Write <code>class Product</code> with a promoted constructor: public name, private basePrice.</li><li>Add <code>price()</code> and <code>priceWithTax()</code>, using <code>round(..., 2)</code>.</li><li>Declare <code>interface HasPrice</code> and add <code>implements HasPrice</code>.</li><li>Write <code>trait HasSlug</code> with <code>strtolower</code> and <code>str_replace</code>, then <code>use HasSlug;</code>.</li><li>Add the enum and a promoted <code>Status $status = Status::Draft</code>.</li><li>Finish with <code>DigitalProduct extends Product</code> overriding <code>priceWithTax()</code>.</li></ol>`)}
+${V.hook(`If the list of allowed values is fixed, make it an enum, not a string.`)}
+`)}
 
-<h4>Interfaces, traits and inheritance</h4>
-<p>Three tools let classes share and promise behaviour. They fit together like this:</p>
-<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="Product implements HasPrice, uses HasSlug, and DigitalProduct extends Product">
-<rect class="bx-info" x="20" y="10" width="170" height="50" rx="8"/>
-<text class="t-s" x="105" y="28" text-anchor="middle">interface</text><text class="t-b" x="105" y="50" text-anchor="middle">HasPrice</text>
-<rect class="bx-warn" x="230" y="10" width="170" height="50" rx="8"/>
-<text class="t-s" x="315" y="28" text-anchor="middle">trait</text><text class="t-b" x="315" y="50" text-anchor="middle">HasSlug</text>
-<rect class="bx-a" x="110" y="100" width="200" height="50" rx="8"/>
-<text class="t-s" x="210" y="118" text-anchor="middle">class</text><text class="t-b" x="210" y="140" text-anchor="middle">Product</text>
-<path class="ln" d="M150 100V80H105V68"/><polygon class="ah" points="99,68 111,68 105,60"/>
-<text class="t-s" x="98" y="90" text-anchor="end">implements</text>
-<path class="ln" d="M270 100V80H315V68"/><polygon class="ah" points="309,68 321,68 315,60"/>
-<text class="t-s" x="322" y="90">uses</text>
-<rect class="bx" x="110" y="190" width="200" height="50" rx="8"/>
-<text class="t-s" x="210" y="208" text-anchor="middle">class</text><text class="t-b" x="210" y="230" text-anchor="middle">DigitalProduct</text>
-<path class="ln" d="M210 190V158"/><polygon class="ah" points="204,158 216,158 210,150"/>
-<text class="t-s" x="220" y="178">extends</text>
-</svg><figcaption>Product implements the HasPrice interface, which is a promise to have a price method. It uses the HasSlug trait, which copies in a ready-made slug method. DigitalProduct extends Product, so it inherits everything Product has and can change parts of it.</figcaption></figure>
-<p><b>An interface is a promise.</b> It lists method names and types, with no code inside them. A class that says <code>implements HasPrice</code> promises to provide every method on the list, and PHP refuses to load the class if one is missing.</p>
-<pre class="snip">interface HasPrice {
-    public function price(): float;   // no body: just the promise
-}
-class Product implements HasPrice { ... }</pre>
-<p>Why bother? Because other code can now accept "anything with a price" without caring what it is. A basket can total products, gift cards and delivery charges alike, as long as each implements <code>HasPrice</code>. You can test the promise with <code>instanceof</code>: <code>$mug instanceof HasPrice</code> is <code>true</code>.</p>
-<p><b>A trait is a reusable chunk of methods.</b> Writing <code>use HasSlug;</code> inside a class is like pasting the trait's methods into it. A <b>slug</b> is the URL-friendly version of a name, so "Coffee Mug" becomes <code>coffee-mug</code>: lower case, with spaces swapped for hyphens. Two built-in functions do it: <code>str_replace(' ', '-', $text)</code> swaps every space for a hyphen, and <code>strtolower()</code> lowers the case. Inside the trait, <code>$this-&gt;name</code> refers to the name of whatever class is using it.</p>
-<p><b>Inheritance with <code>extends</code></b> creates a subclass: a more specific version of an existing class. <code>class DigitalProduct extends Product</code> gets every method and property of Product for free. To change one behaviour, write a method with the same name in the subclass. This is called <b>overriding</b>, and PHP will use the subclass's version for DigitalProduct objects. Digital goods here are tax-free, so the override simply returns the plain price. Its signature (parameters and return type) must stay compatible with the parent's, and inside an override you can still call the original with <code>parent::priceWithTax()</code>.</p>
-<p>Note that a subclass cannot reach the parent's <code>private</code> properties directly, which is one more reason the parent offers <code>price()</code>.</p>
-
-<h4>Enums: a fixed set of choices</h4>
-<p>A product's status is either draft or published. You could store the strings <code>'draft'</code> and <code>'published'</code>, but nothing would stop a typo like <code>'pubished'</code>. An <b>enum</b> (short for enumeration) defines the complete list of allowed values, and PHP rejects anything else.</p>
-<pre class="snip">enum Status: string {
-    case Draft = 'draft';
-    case Published = 'published';
-}
-$s = Status::Draft;
-echo $s-&gt;value;                    // draft
-var_dump(Status::from('published') === Status::Published);  // bool(true)</pre>
-<p>The <code>: string</code> makes it a <b>backed enum</b>: each case carries a string, read with <code>-&gt;value</code>. That is handy for saving to a database. Going the other way, <code>Status::from('published')</code> turns a stored string back into the case, and throws an error for an unknown string; <code>Status::tryFrom()</code> returns <code>null</code> instead. To make new products start as drafts, give the constructor parameter a default: <code>public Status $status = Status::Draft</code>.</p>
-<div class="tip"><b>Tip</b>Declare interfaces, traits and enums above the classes that use them. PHP can usually cope with the order in one file, but putting dependencies first avoids "not found" errors and reads more naturally.</div>
-<div class="mistake"><b>Common mistake</b>Forgetting <code>$this-&gt;</code> inside a method. Writing <code>return $basePrice;</code> looks for a local variable that does not exist and gives an "Undefined variable" warning. Properties are always reached through <code>$this-&gt;basePrice</code>.</div>
-
-<h4>Reading the errors you will hit</h4>
-<ul>
-<li><b>Cannot access private property</b>: outside code touched something private. Use a public method instead.</li>
-<li><b>Class Product contains 1 abstract method and must therefore be declared abstract or implement the remaining methods</b>: you said <code>implements</code> but did not write every method the interface lists.</li>
-<li><b>Too few arguments to function Product::__construct()</b>: <code>new Product()</code> was called without the values the constructor needs.</li>
-<li><b>"pubished" is not a valid backing value for enum Status</b>: <code>from()</code> was given a string that matches no case.</li>
-</ul>
-<div class="try"><b>Try it in your head</b>With the classes above, what do <code>(new Product('Tea Pot', 20.0))-&gt;priceWithTax()</code> and <code>(new DigitalProduct('Tea Pot', 20.0))-&gt;slug()</code> return? The first is 20.0 times 1.2, so 24. The second uses the trait the subclass inherited, giving <code>tea-pot</code>.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>A class is a blueprint; <code>new</code> builds objects; <code>-&gt;</code> reaches properties and methods; <code>$this</code> is the current object.</li>
-<li>Constructor promotion (<code>public string $name</code> in the constructor) declares and fills properties in one step.</li>
-<li><code>private</code> hides data inside the class; <code>protected</code> also allows subclasses; <code>public</code> allows everyone.</li>
-<li>An interface is a promise, a trait is shared code, and <code>extends</code> builds a subclass that can override methods.</li>
-<li>Backed enums list every allowed value; use <code>-&gt;value</code>, <code>from()</code> and <code>tryFrom()</code>.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. How many objects does <code>new Product(...)</code> written twice create? <i>Two, each with its own values.</i> 2. Can code outside the class read a private property? <i>No, it throws an Error.</i> 3. How many classes can one class extend? <i>One, but it can implement many interfaces and use many traits.</i></div>
 `);
 
 explain('h3',`

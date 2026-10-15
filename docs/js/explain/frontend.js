@@ -1,267 +1,370 @@
 /* frontend: "Explained step by step" walkthroughs. */
 
 explain('fb1',`
-<h4>What a web page really is</h4>
-<p>When you open a website, your browser (Chrome, Firefox, Safari) downloads a plain text file from another computer and turns it into the page you see. That text file is written in <b>HTML</b>, which stands for HyperText Markup Language. "Markup" means you take ordinary text and mark it up with labels that say what each piece is: this line is a heading, this one is a paragraph, this word is a link.</p>
-<p>HTML is not a programming language. It cannot add numbers or make decisions. It only <i>describes</i> content. That is exactly why it is the right place to start: there is nothing to calculate, just things to name.</p>
-<p>A page is built from three languages that each have one job:</p>
-<ul>
-<li><b>HTML</b> says what is on the page: a heading, a paragraph, a picture.</li>
-<li><b>CSS</b> says how it looks: colours, sizes and spacing. That is the next lesson.</li>
-<li><b>JavaScript</b> makes it do things, like reacting to a click. That comes after.</li>
-</ul>
-<div class="analogy"><b>Think of it like</b>Building a house. HTML is the walls and rooms, CSS is the paint and furniture, and JavaScript is the electricity that makes the lights switch on. You build the walls first.</div>
+<p>Every web page you have ever opened, from Google to YouTube, is HTML underneath. Learn its few simple rules and you can put your own page on the internet.</p>
 
-<h4>Tags and elements</h4>
-<p>HTML labels content with <b>tags</b>. A tag is a short word between angle brackets, the less-than and greater-than signs. Most tags come in pairs:</p>
-<ul>
-<li>An <b>opening tag</b>, such as <code>&lt;p&gt;</code>, marks where something starts.</li>
-<li>A <b>closing tag</b>, such as <code>&lt;/p&gt;</code>, marks where it ends. It is the same word with a forward slash in front.</li>
-</ul>
-<p>The opening tag, the content and the closing tag together make one <b>element</b>. So <code>&lt;p&gt;I like maths.&lt;/p&gt;</code> is a paragraph element whose content is "I like maths." The browser never shows the tags themselves. It reads them, then shows the content in the right way: headings big and bold, paragraphs as blocks of text, links underlined and clickable.</p>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="An anchor element split into opening tag with an attribute, content and closing tag">
-<text class="t-s" x="84" y="22" text-anchor="middle">attribute</text><text class="t-s" x="158" y="22" text-anchor="middle">value</text>
-<path class="ln-d" d="M84 28v22"/><path class="ln-d" d="M158 28v22"/>
-<rect class="bx-a" x="14" y="52" width="210" height="46" rx="6"/>
-<text class="t-m" x="119" y="81" text-anchor="middle" style="font-size:17px">&lt;a href="/about"&gt;</text>
-<rect class="bx-ok" x="232" y="52" width="76" height="46" rx="6"/>
-<text class="t-m" x="270" y="81" text-anchor="middle" style="font-size:17px">About</text>
-<rect class="bx-info" x="316" y="52" width="90" height="46" rx="6"/>
-<text class="t-m" x="361" y="81" text-anchor="middle" style="font-size:17px">&lt;/a&gt;</text>
-<g text-anchor="middle">
-<text class="t-b t-a" x="119" y="124">opening tag</text>
-<text class="t-b t-ok" x="270" y="124">content</text>
-<text class="t-b t-info" x="361" y="124">closing tag</text>
-</g>
-<path class="ln" d="M18 142v10h388v-10"/>
-<text class="t-b" x="210" y="176" text-anchor="middle">all of it together is one element</text>
-<text class="t-s" x="210" y="198" text-anchor="middle">The browser shows only the content: a link saying About.</text>
-</svg><figcaption>A link element in three parts. The opening tag holds the tag name a and an attribute called href. The content is the word About. The closing tag repeats the name with a slash. Together they form one element.</figcaption></figure>
+${V.card(1,'Tags and elements','labels around content',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="The element p Hello p: an opening tag, the content and a closing tag">
+<rect class="bx-a" x="14" y="28" width="90" height="56" rx="8"/><text class="t-m" x="59" y="64" text-anchor="middle" style="font-size:22px">&lt;p&gt;</text>
+<rect class="bx-ok" x="114" y="28" width="192" height="56" rx="8"/><text class="t" x="210" y="64" text-anchor="middle" style="font-size:22px">Hello!</text>
+<rect class="bx-a" x="316" y="28" width="90" height="56" rx="8"/><text class="t-m" x="361" y="64" text-anchor="middle" style="font-size:22px">&lt;/p&gt;</text>
+<text class="t-s" x="59" y="108" text-anchor="middle">opening tag</text><text class="t-s" x="210" y="108" text-anchor="middle">content</text><text class="t-s" x="361" y="108" text-anchor="middle">closing tag</text>
+<path class="ln" d="M14 122V130H406V122"/>
+<text class="t-b" x="210" y="156" text-anchor="middle">all three together = one element</text>
+</svg><figcaption>A tag is a word inside angle brackets. The opening tag and the closing tag (with a slash) wrap the content like two slices of bread.</figcaption></figure>
+${V.like(`<p>Labels on a parcel. The content is the thing inside; the tag says what kind of thing it is: "this is a heading", "this is a paragraph". The browser reads the labels and decides how to show each parcel.</p>`)}
+${V.why(`<p>In 1989 to 1991 Tim Berners-Lee at CERN wanted scientists to share documents that linked to each other. He invented <b>HTML</b>, HyperText Markup Language. "Markup" comes from editors who marked up paper manuscripts with notes like "make this a heading". HTML does the same thing with tags.</p>`)}
+${V.anat([[1,'&lt;h1&gt;'],[2,'Ada Lovelace'],[3,'&lt;/h1&gt;']],[
+ '<b>Opening tag.</b> The tag name inside <code>&lt; &gt;</code>. <code>h1</code> means "the biggest heading".',
+ '<b>Content.</b> What the reader actually sees.',
+ '<b>Closing tag.</b> The same name with a slash: "the heading ends here".'])}
+<p><b>Watch the browser read your file.</b> It goes from top to bottom, turning tags into things on the screen.</p>
+${V.steps([
+ ['The browser receives the file as plain text. Nothing is on the page yet.',`<svg viewBox="0 0 420 190" role="img" aria-label="HTML code on the left, an empty browser window on the right">
+<rect class="bx-dark" x="6" y="8" width="220" height="168" rx="8"/>
+<text class="t-term" x="28" y="36" style="font-size:14px">&lt;h1&gt;Ada&lt;/h1&gt;</text>
+<text class="t-term" x="28" y="62" style="font-size:14px">&lt;p&gt;I like maths.&lt;/p&gt;</text>
+<text class="t-term" x="28" y="88" style="font-size:14px">&lt;ul&gt;</text>
+<text class="t-term" x="46" y="114" style="font-size:14px">&lt;li&gt;Tea&lt;/li&gt;</text>
+<text class="t-term" x="46" y="140" style="font-size:14px">&lt;li&gt;Cake&lt;/li&gt;</text>
+<text class="t-term" x="28" y="166" style="font-size:14px">&lt;/ul&gt;</text>
+<rect class="bx" x="238" y="8" width="176" height="168" rx="8"/><path class="ln" d="M238 30H414"/>
+<circle class="dot-m" cx="252" cy="19" r="4"/><circle class="dot-m" cx="266" cy="19" r="4"/><circle class="dot-m" cx="280" cy="19" r="4"/>
+${V.ic('globe',300,70,56,'ic-info')}
+</svg>`],
+ ['<b>&amp;lt;h1&amp;gt;</b> means "biggest heading", so <b>Ada</b> appears large and bold. The tags themselves are never shown.',`<svg viewBox="0 0 420 190" role="img" aria-label="The h1 line turns into a big heading Ada">
+<rect class="bx-dark" x="6" y="8" width="220" height="168" rx="8"/>
+<text class="t-a" x="12" y="36" style="font-size:13px">&#9654;</text>
+<text class="t-term" x="28" y="36" style="font-size:14px">&lt;h1&gt;Ada&lt;/h1&gt;</text>
+<text class="t-term t-dim" x="28" y="62" style="font-size:14px">&lt;p&gt;I like maths.&lt;/p&gt;</text>
+<text class="t-term t-dim" x="28" y="88" style="font-size:14px">&lt;ul&gt;</text>
+<text class="t-term t-dim" x="46" y="114" style="font-size:14px">&lt;li&gt;Tea&lt;/li&gt;</text>
+<text class="t-term t-dim" x="46" y="140" style="font-size:14px">&lt;li&gt;Cake&lt;/li&gt;</text>
+<text class="t-term t-dim" x="28" y="166" style="font-size:14px">&lt;/ul&gt;</text>
+<rect class="bx" x="238" y="8" width="176" height="168" rx="8"/><path class="ln" d="M238 30H414"/>
+<circle class="dot-m" cx="252" cy="19" r="4"/><circle class="dot-m" cx="266" cy="19" r="4"/><circle class="dot-m" cx="280" cy="19" r="4"/>
+<rect class="bx-hl" x="246" y="40" width="160" height="38" rx="5"/><text class="t-b" x="254" y="70" style="font-size:26px">Ada</text>
+</svg>`],
+ ['<b>&amp;lt;p&amp;gt;</b> is a paragraph: normal text, with space above and below it.',`<svg viewBox="0 0 420 190" role="img" aria-label="The p line turns into a paragraph">
+<rect class="bx-dark" x="6" y="8" width="220" height="168" rx="8"/>
+<text class="t-term t-dim" x="28" y="36" style="font-size:14px">&lt;h1&gt;Ada&lt;/h1&gt;</text>
+<text class="t-a" x="12" y="62" style="font-size:13px">&#9654;</text>
+<text class="t-term" x="28" y="62" style="font-size:14px">&lt;p&gt;I like maths.&lt;/p&gt;</text>
+<text class="t-term t-dim" x="28" y="88" style="font-size:14px">&lt;ul&gt;</text>
+<text class="t-term t-dim" x="46" y="114" style="font-size:14px">&lt;li&gt;Tea&lt;/li&gt;</text>
+<text class="t-term t-dim" x="46" y="140" style="font-size:14px">&lt;li&gt;Cake&lt;/li&gt;</text>
+<text class="t-term t-dim" x="28" y="166" style="font-size:14px">&lt;/ul&gt;</text>
+<rect class="bx" x="238" y="8" width="176" height="168" rx="8"/><path class="ln" d="M238 30H414"/>
+<circle class="dot-m" cx="252" cy="19" r="4"/><circle class="dot-m" cx="266" cy="19" r="4"/><circle class="dot-m" cx="280" cy="19" r="4"/>
+<text class="t-b" x="254" y="70" style="font-size:26px">Ada</text>
+<rect class="bx-hl" x="246" y="84" width="160" height="30" rx="5"/><text class="t" x="254" y="104">I like maths.</text>
+</svg>`],
+ ['<b>&amp;lt;ul&amp;gt;</b> starts a bulleted list, and each <b>&amp;lt;li&amp;gt;</b> inside it becomes one bullet point. The page is done.',`<svg viewBox="0 0 420 190" role="img" aria-label="The list turns into two bullet points, Tea and Cake">
+<rect class="bx-dark" x="6" y="8" width="220" height="168" rx="8"/>
+<text class="t-term t-dim" x="28" y="36" style="font-size:14px">&lt;h1&gt;Ada&lt;/h1&gt;</text>
+<text class="t-term t-dim" x="28" y="62" style="font-size:14px">&lt;p&gt;I like maths.&lt;/p&gt;</text>
+<text class="t-a" x="12" y="88" style="font-size:13px">&#9654;</text>
+<text class="t-term" x="28" y="88" style="font-size:14px">&lt;ul&gt;</text>
+<text class="t-term" x="46" y="114" style="font-size:14px">&lt;li&gt;Tea&lt;/li&gt;</text>
+<text class="t-term" x="46" y="140" style="font-size:14px">&lt;li&gt;Cake&lt;/li&gt;</text>
+<text class="t-term" x="28" y="166" style="font-size:14px">&lt;/ul&gt;</text>
+<rect class="bx" x="238" y="8" width="176" height="168" rx="8"/><path class="ln" d="M238 30H414"/>
+<circle class="dot-m" cx="252" cy="19" r="4"/><circle class="dot-m" cx="266" cy="19" r="4"/><circle class="dot-m" cx="280" cy="19" r="4"/>
+<text class="t-b" x="254" y="70" style="font-size:26px">Ada</text>
+<text class="t" x="254" y="104">I like maths.</text>
+<rect class="bx-hl" x="246" y="118" width="160" height="52" rx="5"/>
+<circle class="dot-m" cx="262" cy="138" r="3.5"/><text class="t" x="274" y="143">Tea</text>
+<circle class="dot-m" cx="262" cy="160" r="3.5"/><text class="t" x="274" y="165">Cake</text>
+</svg>`]])}
+${V.rules(V.rh('Rules: break one and the page goes wrong'),
+ V.no('&lt;p&gt;Hello','Forgot the closing tag: the paragraph swallows what comes next'),V.ok('&lt;p&gt;Hello&lt;/p&gt;','Every opened tag gets closed'),
+ V.no('&lt;p&gt;Hi&lt;p&gt;','The closing tag needs its slash: &lt;/p&gt;'),V.ok('&lt;img ...&gt;','A few tags, like img, have no closing tag'),
+ V.rh('Conventions'),
+ V.ok('&lt;h1&gt; not &lt;H1&gt;','Write tag names in lowercase'),V.ok('one &lt;h1&gt; per page','The main title. Use h2 to h6 for smaller headings'))}
+${V.hook(`Open it, fill it, close it: <code>&lt;tag&gt;</code> content <code>&lt;/tag&gt;</code>. The slash means "the end".`)}
+`)}
 
-<h4>The skeleton every page shares</h4>
-<p>Open the starter code in the editor and you will see a few lines already there. Every HTML page has the same outline:</p>
-<pre class="snip">&lt;!doctype html&gt;          &lt;!-- "this is modern HTML" --&gt;
-&lt;html lang="en"&gt;          &lt;!-- the whole page; lang = English --&gt;
-&lt;head&gt;                    &lt;!-- information ABOUT the page --&gt;
-  &lt;meta charset="utf-8"&gt;  &lt;!-- which letters to expect --&gt;
-  &lt;title&gt;About me&lt;/title&gt; &lt;!-- the text on the browser tab --&gt;
-&lt;/head&gt;
-&lt;body&gt;                    &lt;!-- everything people SEE --&gt;
-&lt;/body&gt;
-&lt;/html&gt;</pre>
-<p>The notes on the right of each line are <b>comments</b>: notes for humans that the browser ignores. The key idea is the split between <code>&lt;head&gt;</code> and <code>&lt;body&gt;</code>. The head holds settings, such as the title shown on the browser tab. The body holds the visible page. All of today's work goes inside <code>&lt;body&gt;</code>, between its opening and closing tags.</p>
-<p><code>charset="utf-8"</code> tells the browser which system of characters the file uses. UTF-8 covers every alphabet and symbol, so accented letters and the copyright sign come out correctly.</p>
+${V.card(2,'Nesting','boxes inside boxes',`
+<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Nested boxes: html contains body, body contains h1, p and ul, and ul contains three li items">
+<rect class="bx" x="6" y="6" width="408" height="198" rx="10"/><text class="t-m" x="18" y="26">html</text>
+<rect class="bx-info" x="18" y="34" width="384" height="162" rx="8"/><text class="t-m" x="30" y="54">body</text>
+<rect class="bx-a" x="30" y="62" width="120" height="46" rx="6"/><text class="t-m" x="90" y="91" text-anchor="middle">h1</text>
+<rect class="bx-a" x="30" y="118" width="120" height="66" rx="6"/><text class="t-m" x="90" y="156" text-anchor="middle">p</text>
+<rect class="bx-ok" x="164" y="62" width="226" height="122" rx="6"/><text class="t-m" x="176" y="84">ul</text>
+<rect class="bx" x="200" y="70" width="178" height="30" rx="5"/><text class="t-m" x="289" y="90" text-anchor="middle">li</text>
+<rect class="bx" x="200" y="108" width="178" height="30" rx="5"/><text class="t-m" x="289" y="128" text-anchor="middle">li</text>
+<rect class="bx" x="200" y="146" width="178" height="30" rx="5"/><text class="t-m" x="289" y="166" text-anchor="middle">li</text>
+</svg><figcaption>A page is boxes inside boxes. html holds everything. body holds what you see. The list ul holds its items li.</figcaption></figure>
+${V.like(`<p>Russian dolls, or folders inside folders on your computer. Each box sits <b>completely</b> inside the one around it. The outer box is the <b>parent</b>, the boxes inside are its <b>children</b>.</p>`)}
+${V.why(`<p>The browser needs to know what belongs to what. A list item on its own means nothing; inside a list it becomes a bullet. Nesting gives the page a clear shape, and later CSS and JavaScript use that shape to find things.</p>`)}
+${V.rules(V.rh('Rules'),
+ V.no('&lt;b&gt;&lt;i&gt;Hi&lt;/b&gt;&lt;/i&gt;','Crossed boxes: the inner one must close first'),V.ok('&lt;b&gt;&lt;i&gt;Hi&lt;/i&gt;&lt;/b&gt;','Last opened, first closed'),
+ V.no('&lt;li&gt; on its own','An li always lives inside a ul (or an ol)'),V.ok('content inside &lt;body&gt;','Everything the reader sees goes in body'),
+ V.rh('Conventions'),
+ V.ok('indent children','Two spaces per level, so you can see the boxes in the code'))}
+${V.hook(`Last opened, first closed. Children live inside their parent.`)}
+`)}
 
-<h4>The five tags for today</h4>
-<p><b>Headings</b> go from <code>&lt;h1&gt;</code>, the most important, down to <code>&lt;h6&gt;</code>. Use one <code>&lt;h1&gt;</code> for the page's main title, like your name, then <code>&lt;h2&gt;</code> for sections such as "Things I like". Pick a heading by importance, not by size. Size is CSS's job.</p>
-<p><b>Paragraphs</b> use <code>&lt;p&gt;</code>. Each one becomes its own block with a gap above and below. Pressing Enter inside your code does not start a new paragraph on the page; the browser treats line breaks and extra spaces in your code as a single space. Only a new <code>&lt;p&gt;</code> makes a new paragraph.</p>
-<p><b>Links</b> use <code>&lt;a&gt;</code>, short for anchor. On its own an <code>&lt;a&gt;</code> goes nowhere. It needs to know its destination, and that is where attributes come in.</p>
+${V.card(3,'Attributes: links and images','extra details inside the opening tag',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="A link points to an address with href. An image shows a picture and its alt text is read aloud">
+<text class="t-info" x="24" y="40" style="font-size:20px;font-weight:700">Visit MDN</text><path class="ln-a" d="M24 47H124"/>
+<path class="ln-a" d="M74 56V92"/><polygon class="ah-a" points="67,90 81,90 74,102"/>
+${V.ic('globe',46,104,56,'ic-info')}
+<text class="t-s" x="24" y="176">href = where it goes</text>
+<rect class="bx" x="230" y="12" width="176" height="96" rx="6"/>
+<path class="bx-ok" d="M238 100 284 56 316 82 340 64 398 100Z"/><circle class="dot" cx="372" cy="36" r="11"/>
+${V.ic('chat',230,120,40,'ic-info')}
+<text class="t" x="278" y="138">"Sunset over hills"</text>
+<text class="t-s" x="278" y="160">alt, read aloud</text>
+</svg><figcaption>Attributes add details. A link needs an address (href). An image needs a file (src) and a description (alt) for anyone who cannot see it.</figcaption></figure>
+${V.like(`<p>An attribute is like a sticker on the parcel with extra details: "deliver to this address", "fragile". A link is a signpost: the words are what you read, <b>href</b> is where it takes you.</p>`)}
+${V.why(`<p>Some tags cannot do their job with content alone. A link must know its destination. An image is not text at all, so it needs a file to load and words that describe it. Blind people use <b>screen readers</b>, programs that read the page aloud. Without <b>alt</b> they hear nothing useful.</p>`)}
+${V.anat([[1,'&lt;img'],' ',[2,'src'],[3,'="sunset.jpg"'],' ',[4,'alt="Sunset over hills"'],[5,'&gt;']],[
+ '<b>Tag name.</b> img means image.',
+ '<b>Attribute name.</b> src is short for source: which file to show.',
+ '<b>Value.</b> Always in double quotes, joined to the name with <code>=</code>.',
+ '<b>alt text.</b> Says what the picture shows, in a few words.',
+ '<b>No closing tag.</b> An image has no content to wrap, so <code>&lt;/img&gt;</code> does not exist.'])}
+<p><b>Watch what alt does</b> when things go wrong, and when someone cannot see the screen.</p>
+${V.steps([
+ ['The picture loads. Most visitors never see the alt text at all.',`<svg viewBox="0 0 420 170" role="img" aria-label="The image loads normally">
+<rect class="bx" x="20" y="14" width="180" height="130" rx="6"/>
+<path class="bx-ok" d="M28 136 82 76 122 112 150 92 192 136Z"/><circle class="dot" cx="166" cy="42" r="13"/>
+${V.ic('check',226,30,40,'ic-ok')}<text class="t-b" x="276" y="56">Picture loads</text>
+<text class="t-s" x="226" y="100">alt="Sunset over hills"</text><text class="t-s" x="226" y="122">is there, but hidden</text>
+</svg>`],
+ ['The file is missing or the internet is slow. The browser shows the <b>alt text</b> instead, so the reader still knows what belongs there.',`<svg viewBox="0 0 420 170" role="img" aria-label="The image fails and the alt text is shown instead">
+<rect class="bx-bad" x="20" y="14" width="180" height="130" rx="6"/>
+${V.ic('cross',34,24,30,'ic-bad')}<text class="t" x="34" y="92">Sunset over hills</text>
+${V.ic('warn',226,30,40,'ic-warn')}<text class="t-b" x="276" y="56">File missing</text>
+<text class="t-s" x="226" y="100">The browser shows</text><text class="t-s" x="226" y="122">the alt text instead</text>
+</svg>`],
+ ['A blind visitor uses a screen reader. When it reaches the image it says <b>"image, Sunset over hills"</b> out loud.',`<svg viewBox="0 0 420 170" role="img" aria-label="A screen reader reads the alt text aloud">
+<rect class="bx" x="20" y="14" width="180" height="130" rx="6"/>
+<path class="bx-ok" d="M28 136 82 76 122 112 150 92 192 136Z"/><circle class="dot" cx="166" cy="42" r="13"/>
+${V.ic('person',226,20,48,'ic-info')}${V.ic('chat',280,24,40,'ic-info')}
+<text class="t-b" x="226" y="100">"image, Sunset</text><text class="t-b" x="226" y="124">over hills"</text>
+</svg>`],
+ ['A lazy alt like the file name helps nobody. The screen reader says <b>"IMG_0412.jpg"</b>. Describe what the picture shows instead.',`<svg viewBox="0 0 420 170" role="img" aria-label="A bad alt text, the file name, is read aloud and is useless">
+<rect class="bx" x="20" y="14" width="180" height="130" rx="6"/>
+<path class="bx-ok" d="M28 136 82 76 122 112 150 92 192 136Z"/><circle class="dot" cx="166" cy="42" r="13"/>
+${V.ic('person',226,20,48,'ic-info')}${V.ic('cross',280,26,36,'ic-bad')}
+<text class="t-b t-bad" x="226" y="100">"IMG_0412.jpg"</text><text class="t-s" x="226" y="124">Tells them nothing</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('href="https://example.com"','Links to other sites start with https://'),V.no('href="www.example.com"','Without https:// the browser looks for a file on your own site'),
+ V.no('src=cat.jpg alt=my cat','Values go in quotes, or spaces break them'),V.ok('&lt;a href="..."&gt;Visit&lt;/a&gt;','The link text goes between the tags'),
+ V.rh('Conventions'),
+ V.ok('alt="Girl reading a book"','Describe what it shows, briefly'),V.no('alt="image"','The reader already knows it is an image'),
+ V.no('&lt;a&gt;Click here&lt;/a&gt;','Say where it goes: "Read the MDN guide"'))}
+${V.build(`<ol><li>Inside <code>&lt;body&gt;</code>, add an <code>h1</code> with your name.</li><li>Below it, a <code>p</code> with a sentence about you.</li><li>Add an <code>a</code> whose <code>href</code> is a full address starting <code>https://</code>, with link text between the tags.</li><li>Add a <code>ul</code> and put three <code>li</code> items inside it.</li><li>Add an <code>img</code> with a picture address in <code>src</code> and a real description in <code>alt</code>. Press Run.</li></ol>`)}
+${V.hook(`Name="value" in the opening tag. href says where, src says which file, alt says what it shows.`)}
+`)}
 
-<h4>Attributes: extra information inside the opening tag</h4>
-<p>An <b>attribute</b> is a setting written inside the opening tag, in the form <code>name="value"</code>. For a link, the attribute <code>href</code> (hypertext reference) holds the address:</p>
-<pre class="snip">&lt;a href="https://developer.mozilla.org"&gt;My favourite learning site&lt;/a&gt;</pre>
-<p>Read it like a sentence: "a link, going to developer.mozilla.org, whose clickable words are My favourite learning site." A full address starts with <code>https://</code>. Without it, the browser thinks you mean a file on your own site, so <code>href="google.com"</code> looks for a page called google.com next to yours, and fails.</p>
-<p><b>Lists</b> need two tags working together. <code>&lt;ul&gt;</code> (unordered list) is the list itself, and each item inside it is an <code>&lt;li&gt;</code> (list item). The browser adds the bullet points for you. If the order matters, like steps in a recipe, use <code>&lt;ol&gt;</code> (ordered list) instead and you get numbers.</p>
-<pre class="snip">&lt;h2&gt;Things I like&lt;/h2&gt;
-&lt;ul&gt;
-  &lt;li&gt;Maths&lt;/li&gt;
-  &lt;li&gt;Music&lt;/li&gt;
-&lt;/ul&gt;</pre>
-<p><b>Images</b> use <code>&lt;img&gt;</code>, and they are different in one way: an image has no content between tags, because the picture is loaded from a file. So <code>&lt;img&gt;</code> has <b>no closing tag</b>. It is called a <b>void element</b>. Everything it needs goes in two attributes:</p>
-<ul>
-<li><code>src</code> (source): the address of the picture file. In this lesson, <code>https://picsum.photos/200</code> serves a random 200 pixel photo.</li>
-<li><code>alt</code> (alternative text): a short description of what the picture shows.</li>
-</ul>
-<pre class="snip">&lt;img src="https://picsum.photos/200" alt="A misty mountain lake at sunrise"&gt;</pre>
-
-<h4>Why alt text matters</h4>
-<p>Many people browse the web without seeing the screen. Blind and partially sighted people use a <b>screen reader</b>, a program that reads the page aloud. When it reaches an image, it reads the alt text. Without alt text it can only say "image", or read out the file name, which helps nobody.</p>
-<p>Alt text also appears when the picture fails to load, on a slow train connection for example, and search engines read it to understand your images. Describe what the image shows, as you would to a friend on the phone. "Photo" is not helpful. "My dog Biscuit catching a frisbee" is.</p>
-<div class="tip"><b>Tip</b>If an image is pure decoration and carries no meaning, give it an empty <code>alt=""</code>. That tells screen readers to skip it, which is better than leaving <code>alt</code> out.</div>
-
-<h4>Nesting: boxes inside boxes</h4>
-<p>Elements can sit inside other elements. The <code>&lt;li&gt;</code> items sit inside the <code>&lt;ul&gt;</code>, the list sits inside <code>&lt;body&gt;</code>, and the body sits inside <code>&lt;html&gt;</code>. This is called <b>nesting</b>. The outer element is the <b>parent</b> and the ones inside are its <b>children</b>, just like a family tree.</p>
-<figure class="fig"><svg viewBox="0 0 420 260" role="img" aria-label="The page as a family tree: html contains head and body; body contains h1, p, ul and img; ul contains three li items">
-<rect class="bx-dark" x="165" y="10" width="90" height="34" rx="6"/><text class="t-term" x="210" y="32" text-anchor="middle">html</text>
-<path class="ln" d="M210 44v14M100 58h220M100 58v12M320 58v12"/>
-<rect class="bx" x="55" y="70" width="90" height="34" rx="6"/><text class="t-m" x="100" y="92" text-anchor="middle">head</text>
-<rect class="bx-a" x="275" y="70" width="90" height="34" rx="6"/><text class="t-m" x="320" y="92" text-anchor="middle">body</text>
-<path class="ln" d="M100 104v16"/>
-<rect class="bx" x="55" y="120" width="90" height="34" rx="6"/><text class="t-m" x="100" y="142" text-anchor="middle">title</text>
-<path class="ln-a" d="M320 104v14M180 118h200M180 118v12M240 118v12M310 118v12M380 118v12"/>
-<rect class="bx-ok" x="155" y="130" width="50" height="32" rx="6"/><text class="t-m" x="180" y="151" text-anchor="middle">h1</text>
-<rect class="bx-ok" x="215" y="130" width="50" height="32" rx="6"/><text class="t-m" x="240" y="151" text-anchor="middle">p</text>
-<rect class="bx-ok" x="285" y="130" width="50" height="32" rx="6"/><text class="t-m" x="310" y="151" text-anchor="middle">ul</text>
-<rect class="bx-ok" x="355" y="130" width="50" height="32" rx="6"/><text class="t-m" x="380" y="151" text-anchor="middle">img</text>
-<path class="ln-ok" d="M310 162v14M250 176h120M250 176v12M310 176v12M370 176v12"/>
-<rect class="bx-info" x="227" y="188" width="46" height="30" rx="6"/><text class="t-m" x="250" y="208" text-anchor="middle">li</text>
-<rect class="bx-info" x="287" y="188" width="46" height="30" rx="6"/><text class="t-m" x="310" y="208" text-anchor="middle">li</text>
-<rect class="bx-info" x="347" y="188" width="46" height="30" rx="6"/><text class="t-m" x="370" y="208" text-anchor="middle">li</text>
-<text class="t-s" x="100" y="176" text-anchor="middle">page settings</text>
-<text class="t-s" x="20" y="244">Each line joins a parent (above) to its children (below).</text>
-</svg><figcaption>The finished page as a tree. The html element holds the head and the body. Inside the body sit the heading, the paragraph, the list and the image. The list in turn holds three list items.</figcaption></figure>
-<p>The one rule of nesting: <b>close tags in the reverse order you opened them</b>, like closing boxes inside boxes. <code>&lt;p&gt;&lt;a href="…"&gt;Hi&lt;/a&gt;&lt;/p&gt;</code> is correct. <code>&lt;p&gt;&lt;a href="…"&gt;Hi&lt;/p&gt;&lt;/a&gt;</code> crosses the lids over, and the browser has to guess what you meant.</p>
-<p>Indent each child two spaces further than its parent. The browser does not care about indentation, but you will, because it lets you see the tree at a glance and spot a missing closing tag.</p>
-
-<h4>Building the page, one task at a time</h4>
-<p>Work through the tasks in order and press <b>Run</b> (or Ctrl+Enter) after each one to see the preview update:</p>
-<ol>
-<li>A <code>&lt;h1&gt;</code> with your name, directly inside <code>&lt;body&gt;</code>.</li>
-<li>A <code>&lt;p&gt;</code> under it with a sentence about yourself.</li>
-<li>An <code>&lt;a&gt;</code> whose <code>href</code> is a full address beginning with <code>https://</code>, with some words between the tags so there is something to click.</li>
-<li>A <code>&lt;ul&gt;</code> holding at least three <code>&lt;li&gt;</code> items.</li>
-<li>An <code>&lt;img&gt;</code> with both a <code>src</code> and a real <code>alt</code> description.</li>
-</ol>
-<div class="mistake"><b>Common mistake</b>Forgetting a closing tag. If you write <code>&lt;h1&gt;Ada Lovelace</code> and never close it, the browser keeps going and everything after it may turn into a giant heading. When text looks wrong, find the last element that looks right and check its closing tag.</div>
-<div class="mistake"><b>Common mistake</b>Forgetting the quotes or the equals sign in an attribute, as in <code>&lt;a href=https://example.com&gt;</code> or <code>&lt;img src "cat.jpg"&gt;</code>. Always write <code>name="value"</code>, with straight double quotes. Quotes pasted from a word processor are curly, and the browser does not recognise them.</div>
-
-<h4>When the page does not look right</h4>
-<p>HTML almost never shows a red error message. Browsers are designed to be forgiving: they show <i>something</i> even when your code is broken. That is kind to visitors but means you have to be the detective:</p>
-<ul>
-<li><b>Text appears with angle brackets showing</b>, like a visible <code>&lt;p</code>: you probably missed a <code>&gt;</code>.</li>
-<li><b>The link is not clickable</b>: check that <code>href</code> is inside the opening tag and has quotes.</li>
-<li><b>A broken image icon appears</b>: the <code>src</code> address is wrong. Your alt text shows instead, which is exactly its job.</li>
-<li><b>Nothing appears at all</b>: check the content is between <code>&lt;body&gt;</code> and <code>&lt;/body&gt;</code>, not in the head.</li>
-</ul>
-<div class="try"><b>Try it in your head</b>What will this show: <code>&lt;ul&gt;&lt;li&gt;Tea&lt;/li&gt;&lt;li&gt;Coffee&lt;/li&gt;&lt;/ul&gt;</code>? Answer: a bulleted list with two items, Tea and Coffee. And what is wrong with <code>&lt;img src="dog.jpg"&gt;&lt;/img&gt;</code>? Answer: img is a void element, so it has no closing tag, and it is missing its alt text.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>HTML describes what is on a page by wrapping content in tags. Opening tag, content and closing tag together form an element.</li>
-<li>The head holds information about the page, and the body holds everything people see.</li>
-<li>Use <code>&lt;h1&gt;</code> to <code>&lt;h6&gt;</code> for headings, <code>&lt;p&gt;</code> for paragraphs, <code>&lt;ul&gt;</code> with <code>&lt;li&gt;</code> for lists.</li>
-<li>Attributes such as <code>href</code>, <code>src</code> and <code>alt</code> go inside the opening tag as <code>name="value"</code>.</li>
-<li><code>&lt;img&gt;</code> has no closing tag, and its alt text describes the picture for people who cannot see it.</li>
-<li>Elements nest like boxes in boxes: close them in reverse order and indent children.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. What is wrong with <code>&lt;h1&gt;Hi&lt;h1&gt;</code>? <i>The second tag needs a slash: &lt;/h1&gt;.</i> 2. Where must an <code>li</code> live? <i>Inside a ul (or ol).</i> 3. Who hears the alt text? <i>Screen-reader users, and everyone sees it if the image fails.</i></div>
 `);
 
 explain('fb2',`
-<h4>Why CSS exists</h4>
-<p>In the last lesson you wrote HTML, and the browser showed it in its own plain default style: black text, a serif font, blue underlined links. HTML says <i>what</i> things are. It deliberately says nothing about how they look.</p>
-<p>That job belongs to <b>CSS</b>, Cascading Style Sheets. Keeping the two apart is a big idea: you can restyle a whole website, every heading and every button, without touching a single word of content. One small change in the CSS updates a thousand pages at once.</p>
-<p>In this lesson the CSS lives inside a <code>&lt;style&gt;</code> element in the page's head. The starter code already has an empty one with a comment saying "Write your CSS rules here". Everything you write today goes between <code>&lt;style&gt;</code> and <code>&lt;/style&gt;</code>. On bigger sites the same rules usually live in a separate <code>.css</code> file that every page links to, but they are written exactly the same way.</p>
+<p>HTML decides what is on the page. CSS decides how it looks. The same HTML can look like a plain school report or a slick shop, just by changing the CSS.</p>
 
-<h4>The shape of a CSS rule</h4>
-<p>CSS is a list of <b>rules</b>. Each rule answers two questions: <i>which elements?</i> and <i>what should change about them?</i></p>
-<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="A CSS rule: selector, braces, and declarations made of property and value">
-<rect class="bx-dark" x="20" y="14" width="210" height="168" rx="8"/>
-<text class="t-term" x="36" y="44" style="font-size:17px">h1 {</text>
-<text class="t-term" x="56" y="80" style="font-size:17px">color: navy;</text>
-<path class="ln-ok" d="M56 89h50"/><path class="ln-a" d="M127 89h41"/>
-<text class="t-s t-ok" x="81" y="108" text-anchor="middle">property</text><text class="t-s t-a" x="148" y="108" text-anchor="middle">value</text>
-<text class="t-term" x="56" y="142" style="font-size:17px">font-size: 40px;</text>
-<text class="t-term" x="36" y="170" style="font-size:17px">}</text>
-<path class="ln-a" d="M86 38h154"/><text class="t-b t-a" x="248" y="43">selector</text>
-<path class="ln-d" d="M186 75h54"/><text class="t-s" x="248" y="80">declaration</text>
-<path class="ln-d" d="M224 137h16"/><text class="t-s" x="248" y="142">declaration</text>
-<text class="t-s" x="210" y="208" text-anchor="middle">Curly braces hold the declarations.</text>
-<text class="t-s" x="210" y="228" text-anchor="middle">Each declaration ends with a semicolon.</text>
-</svg><figcaption>The selector h1 picks every main heading. Inside the curly braces are declarations. Each declaration is a property, a colon, a value and a semicolon, so color colon navy means make the text colour navy.</figcaption></figure>
-<p>Two pieces of vocabulary:</p>
-<ul>
-<li>The <b>selector</b>, before the curly braces, chooses which elements the rule applies to.</li>
-<li>Each <b>declaration</b>, inside the braces, is one change: a <b>property</b> (the thing to change, such as <code>color</code>), a colon, a <b>value</b> (what to change it to, such as <code>navy</code>) and a semicolon.</li>
-</ul>
-<p>CSS uses American spelling for its own words. You write <code>color</code>, never "colour", or the browser will not recognise it.</p>
+${V.card(1,'A CSS rule','who to style, and how',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="An instruction card says h1, colour navy. The browser paints every h1 on the page">
+<rect class="bx-warn" x="10" y="20" width="182" height="124" rx="10"/>
+<text class="t-m" x="24" y="52" style="font-size:16px">h1 {</text>
+<text class="t-m" x="40" y="80" style="font-size:14px">color: navy;</text>
+<text class="t-m" x="40" y="106" style="font-size:14px">font-size: 40px;</text>
+<text class="t-m" x="24" y="132" style="font-size:16px">}</text>
+<path class="ln-a" d="M198 82H234"/><polygon class="ah-a" points="232,75 232,89 244,82"/>
+<rect class="bx" x="250" y="10" width="162" height="150" rx="8"/>
+<text class="t-b t-info" x="262" y="48" style="font-size:22px">Heading</text>
+<path class="ln" d="M262 64H398M262 78H380"/>
+<text class="t-b t-info" x="262" y="114" style="font-size:22px">Heading</text>
+<path class="ln" d="M262 130H398M262 144H372"/>
+</svg><figcaption>One rule, many matches. The rule names which elements (every h1) and what to change. The browser applies it to all of them at once.</figcaption></figure>
+${V.like(`<p>A note for a decorator: "<b>All front doors</b>: paint them navy and make them taller." The first part says which things, the rest says what to do to them.</p>`)}
+${V.why(`<p>In the early web, people styled each heading by hand with <code>&lt;font&gt;</code> tags. Changing the colour of a site meant editing every page. In 1994 Håkon Wium Lie proposed <b>CSS</b>, Cascading Style Sheets, and the first version became a standard in 1996. Now one rule restyles every match on every page.</p>`)}
+${V.anat([[1,'h1'],' ',[2,'{'],' ',[3,'color'],[4,':'],' ',[5,'navy'],[6,';'],' ',[2,'}']],[
+ '<b>Selector.</b> Which elements to style. Here: every <code>&lt;h1&gt;</code>.',
+ '<b>Curly braces.</b> Hold the list of changes for those elements.',
+ '<b>Property.</b> What to change: <code>color</code> (text colour), <code>font-size</code>, <code>padding</code>...',
+ '<b>Colon.</b> Joins the property to its value.',
+ '<b>Value.</b> The new setting.',
+ '<b>Semicolon.</b> Ends one declaration (property + value). Never skip it.'])}
+<p><b>Watch one missing semicolon break two lines.</b></p>
+${V.steps([
+ ['Both declarations end with a semicolon. The heading turns navy and big.',`<svg viewBox="0 0 420 170" role="img" aria-label="Correct rule: heading is navy and large">
+<rect class="bx-dark" x="6" y="8" width="250" height="124" rx="8"/>
+<text class="t-term" x="20" y="36" style="font-size:15px">h1 {</text>
+<text class="t-term" x="38" y="64" style="font-size:15px">color: navy;</text>
+<text class="t-term" x="38" y="92" style="font-size:15px">font-size: 40px;</text>
+<text class="t-term" x="20" y="120" style="font-size:15px">}</text>
+<rect class="bx" x="268" y="8" width="146" height="124" rx="8"/>
+<text class="t-b t-info" x="341" y="84" text-anchor="middle" style="font-size:34px">Title</text>
+${V.ic('check',10,140,24,'ic-ok')}<text class="t" x="40" y="158">Both declarations work</text>
+</svg>`],
+ ['Someone deletes the semicolon after <b>navy</b>. The browser keeps reading and treats lines 2 and 3 as <b>one</b> long value: "navy font-size: 40px".',`<svg viewBox="0 0 420 170" role="img" aria-label="Missing semicolon: two lines read as one value">
+<rect class="bx-dark" x="6" y="8" width="250" height="124" rx="8"/>
+<text class="t-term" x="20" y="36" style="font-size:15px">h1 {</text>
+<rect class="bx-bad" x="30" y="46" width="216" height="56" rx="5"/>
+<text class="t-m" x="38" y="64" style="font-size:15px">color: navy</text>
+<text class="t-m" x="38" y="92" style="font-size:15px">font-size: 40px;</text>
+<text class="t-bad" x="140" y="66" style="font-size:20px;font-weight:700">?</text>
+<text class="t-term" x="20" y="120" style="font-size:15px">}</text>
+<rect class="bx" x="268" y="8" width="146" height="124" rx="8"/>
+<text class="t-s" x="341" y="76" text-anchor="middle">reading...</text>
+${V.ic('warn',10,140,24,'ic-warn')}<text class="t" x="40" y="158">Lines 2 and 3 become one value</text>
+</svg>`],
+ ['That is not a real colour, so the browser silently throws the whole declaration away. Both settings are lost, and there is no error message to warn you.',`<svg viewBox="0 0 420 170" role="img" aria-label="Both declarations dropped: heading stays black and small">
+<rect class="bx-dark" x="6" y="8" width="250" height="124" rx="8"/>
+<text class="t-term" x="20" y="36" style="font-size:15px">h1 {</text>
+<text class="t-term t-dim" x="38" y="64" style="font-size:15px">color: navy</text>
+<text class="t-term t-dim" x="38" y="92" style="font-size:15px">font-size: 40px;</text>
+<path class="ln-x" d="M34 59H150M34 87H186"/>
+<text class="t-term" x="20" y="120" style="font-size:15px">}</text>
+<rect class="bx" x="268" y="8" width="146" height="124" rx="8"/>
+<text class="t-b" x="341" y="78" text-anchor="middle" style="font-size:20px">Title</text>
+${V.ic('cross',10,140,24,'ic-bad')}<text class="t t-bad" x="40" y="158">Both lost, no error shown</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.no('color navy;','Missing colon: ignored'),V.no('color: navy','Missing semicolon: breaks the next line too'),
+ V.no('font-size: 40 px;','No space between a number and its unit'),V.ok('margin: 0;','Zero needs no unit'),
+ V.rh('Conventions'),
+ V.ok('one declaration per line','Easy to read and easy to spot a missing ;'))}
+${V.hook(`Who, then how: <code>selector { property: value; }</code>. Every line ends with a semicolon.`)}
+`)}
 
-<h4>Three ways to choose elements</h4>
-<p>The selector is the most important part of a rule, because a style that hits the wrong elements is useless. Start with three kinds.</p>
-<p><b>By tag name.</b> Write the tag without angle brackets. <code>h1 { … }</code> styles every <code>&lt;h1&gt;</code> on the page. <code>body { … }</code> styles the body, and because text styles like fonts are <b>inherited</b> (passed down from parent to children), a font set on the body flows into every heading and paragraph inside it.</p>
-<p><b>By class.</b> In the HTML you give an element a <code>class</code> attribute, such as <code>&lt;div class="card"&gt;</code>. In the CSS you select it with a full stop in front: <code>.card { … }</code>. A class is a reusable label. Ten elements can share it, and one element can have several, separated by spaces: <code>class="card featured"</code>. Most real CSS is written with classes.</p>
-<p><b>By id.</b> In the HTML, <code>&lt;button id="buy"&gt;</code>. In the CSS, a hash sign in front: <code>#buy { … }</code>. An id names <b>one unique element</b>. No two elements on a page may share an id.</p>
-<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="Three selectors pointing at the elements they match in the coffee shop page">
-<g text-anchor="middle">
-<rect class="bx-a" x="14" y="20" width="96" height="38" rx="6"/><text class="t-m" x="62" y="44">h1</text>
-<rect class="bx-ok" x="14" y="96" width="96" height="38" rx="6"/><text class="t-m" x="62" y="120">.card</text>
-<rect class="bx-info" x="14" y="172" width="96" height="38" rx="6"/><text class="t-m" x="62" y="196">#buy</text>
-</g>
-<rect class="bx" x="180" y="10" width="228" height="210" rx="8"/>
-<text class="t-m" x="194" y="44">&lt;h1&gt;Bean There</text>
-<text class="t-m" x="194" y="74">&lt;p&gt;Fresh coffee…</text>
-<rect class="bx-ok" x="190" y="90" width="208" height="120" rx="6"/>
-<text class="t-m" x="200" y="116">&lt;div class="card"&gt;</text>
-<text class="t-m" x="212" y="146">&lt;h2&gt;Flat white</text>
-<rect class="bx-info" x="204" y="164" width="186" height="34" rx="5"/>
-<text class="t-m" x="212" y="187">&lt;button id="buy"&gt;</text>
-<path class="ln-a" d="M110 39h70"/><polygon class="ah-a" points="178,33 178,45 188,39"/>
-<path class="ln-ok" d="M110 115h68"/><polygon class="ah-ok" points="178,109 178,121 188,115"/>
-<path class="ln" d="M110 191h82"/><polygon class="ah" points="192,185 192,197 202,191"/>
-</svg><figcaption>Each selector on the left points at what it matches in the page on the right. The tag selector h1 finds the heading. The class selector dot card finds the element with class card. The id selector hash buy finds the one button whose id is buy.</figcaption></figure>
-<div class="mistake"><b>Common mistake</b>Mixing up the symbols. The HTML attribute is written without a symbol, <code>class="card"</code>, and the CSS selector with one, <code>.card</code>. Writing <code>card { }</code> in the CSS looks for a tag called card, which does not exist, so nothing happens and no error appears.</div>
+${V.card(2,'Selectors','tag, class or id',`
+<figure class="fig"><svg viewBox="0 0 420 175" role="img" aria-label="Three kinds of selector: a tag picks every element of a kind, a class picks a team, an id picks one person">
+${V.ic('people',30,8,76,'ic-a')}${V.ic('tag',172,12,72,'ic-ok')}${V.ic('person',314,8,76,'ic-info')}
+<text class="t-m" x="68" y="112" text-anchor="middle" style="font-size:22px">p</text>
+<text class="t-m" x="208" y="112" text-anchor="middle" style="font-size:22px">.card</text>
+<text class="t-m" x="352" y="112" text-anchor="middle" style="font-size:22px">#buy</text>
+<text class="t-s" x="68" y="140" text-anchor="middle">every &lt;p&gt;</text>
+<text class="t-s" x="208" y="140" text-anchor="middle">every element with</text><text class="t-s" x="208" y="158" text-anchor="middle">class="card"</text>
+<text class="t-s" x="352" y="140" text-anchor="middle">the one element</text><text class="t-s" x="352" y="158" text-anchor="middle">with id="buy"</text>
+</svg><figcaption>A tag selector is a word, a class selector starts with a dot, and an id selector starts with a hash.</figcaption></figure>
+${V.like(`<p>A school assembly. "<b>Everyone</b> in Year 9, stand up" is a tag. "Everyone in the <b>football team</b>, stand up" is a class: a group you choose to join, and anyone can be in it. "<b>Sam Patel</b>, stand up" is an id: exactly one person.</p>`)}
+<p><b>Watch each selector find its matches</b> on this small page.</p>
+${V.steps([
+ ['The selector <b>p</b> matches every paragraph, whatever its class.',`<svg viewBox="0 0 420 195" role="img" aria-label="Selector p matches the two p elements">
+<rect class="bx" x="10" y="10" width="250" height="30" rx="5"/><text class="t-m" x="22" y="31" style="font-size:14px">&lt;h1&gt;</text>
+<rect class="bx-hl" x="10" y="46" width="250" height="30" rx="5"/><text class="t-m" x="22" y="67" style="font-size:14px">&lt;p&gt;</text>
+<rect class="bx-hl" x="10" y="82" width="250" height="30" rx="5"/><text class="t-m" x="22" y="103" style="font-size:14px">&lt;p class="card"&gt;</text>
+<rect class="bx" x="10" y="118" width="250" height="30" rx="5"/><text class="t-m" x="22" y="139" style="font-size:14px">&lt;div class="card"&gt;</text>
+<rect class="bx" x="10" y="154" width="250" height="30" rx="5"/><text class="t-m" x="22" y="175" style="font-size:14px">&lt;button id="buy"&gt;</text>
+<text class="t-m t-a" x="290" y="90" style="font-size:30px">p</text><text class="t-s" x="290" y="120">2 matches</text>
+</svg>`],
+ ['<b>.card</b> matches any element with class="card", whether it is a p, a div or anything else.',`<svg viewBox="0 0 420 195" role="img" aria-label="Selector .card matches the two elements with class card">
+<rect class="bx" x="10" y="10" width="250" height="30" rx="5"/><text class="t-m" x="22" y="31" style="font-size:14px">&lt;h1&gt;</text>
+<rect class="bx" x="10" y="46" width="250" height="30" rx="5"/><text class="t-m" x="22" y="67" style="font-size:14px">&lt;p&gt;</text>
+<rect class="bx-hl" x="10" y="82" width="250" height="30" rx="5"/><text class="t-m" x="22" y="103" style="font-size:14px">&lt;p class="card"&gt;</text>
+<rect class="bx-hl" x="10" y="118" width="250" height="30" rx="5"/><text class="t-m" x="22" y="139" style="font-size:14px">&lt;div class="card"&gt;</text>
+<rect class="bx" x="10" y="154" width="250" height="30" rx="5"/><text class="t-m" x="22" y="175" style="font-size:14px">&lt;button id="buy"&gt;</text>
+<text class="t-m t-a" x="290" y="90" style="font-size:30px">.card</text><text class="t-s" x="290" y="120">2 matches</text>
+</svg>`],
+ ['<b>#buy</b> matches the single element with id="buy". An id must be unique on the page.',`<svg viewBox="0 0 420 195" role="img" aria-label="Selector #buy matches the button">
+<rect class="bx" x="10" y="10" width="250" height="30" rx="5"/><text class="t-m" x="22" y="31" style="font-size:14px">&lt;h1&gt;</text>
+<rect class="bx" x="10" y="46" width="250" height="30" rx="5"/><text class="t-m" x="22" y="67" style="font-size:14px">&lt;p&gt;</text>
+<rect class="bx" x="10" y="82" width="250" height="30" rx="5"/><text class="t-m" x="22" y="103" style="font-size:14px">&lt;p class="card"&gt;</text>
+<rect class="bx" x="10" y="118" width="250" height="30" rx="5"/><text class="t-m" x="22" y="139" style="font-size:14px">&lt;div class="card"&gt;</text>
+<rect class="bx-hl" x="10" y="154" width="250" height="30" rx="5"/><text class="t-m" x="22" y="175" style="font-size:14px">&lt;button id="buy"&gt;</text>
+<text class="t-m t-a" x="290" y="90" style="font-size:30px">#buy</text><text class="t-s" x="290" y="120">1 match</text>
+</svg>`],
+ ['A clash: <b>p</b> says grey, <b>.card</b> says green. Both match the third line. The more <b>specific</b> selector wins, so it turns green. If two are equally specific, the one written later wins.',`<svg viewBox="0 0 420 195" role="img" aria-label="p and .card both match; the class wins">
+<rect class="bx" x="10" y="10" width="250" height="30" rx="5"/><text class="t-m" x="22" y="31" style="font-size:14px">&lt;h1&gt;</text>
+<rect class="bx" x="10" y="46" width="250" height="30" rx="5"/><text class="t-m" x="22" y="67" style="font-size:14px">&lt;p&gt;</text>
+<rect class="bx-ok" x="10" y="82" width="250" height="30" rx="5"/><text class="t-m" x="22" y="103" style="font-size:14px">&lt;p class="card"&gt;</text>
+<rect class="bx" x="10" y="118" width="250" height="30" rx="5"/><text class="t-m" x="22" y="139" style="font-size:14px">&lt;div class="card"&gt;</text>
+<rect class="bx" x="10" y="154" width="250" height="30" rx="5"/><text class="t-m" x="22" y="175" style="font-size:14px">&lt;button id="buy"&gt;</text>
+<text class="t-m t-dim" x="276" y="40" style="font-size:14px">p: grey</text><path class="ln-x" d="M274 35H344"/>
+<text class="t-m" x="276" y="68" style="font-size:14px">.card: green</text>
+<text class="t-b t-ok" x="276" y="104">.card wins</text>
+<text class="t-s" x="276" y="140">id beats class</text><text class="t-s" x="276" y="160">class beats tag</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('class="card"','In HTML: no dot'),V.ok('.card { }','In CSS: a dot means class'),
+ V.no('class=".card"','A dot in the HTML is wrong'),V.no('two id="buy"','An id must appear only once per page'),
+ V.rh('Conventions'),
+ V.ok('.price-tag','Lowercase words joined with hyphens'),V.ok('style with classes','Most of your CSS should use classes; keep ids for one-offs'))}
+${V.hook(`Word for a kind, dot for a team, hash for one. Id beats class beats tag.`)}
+`)}
 
-<h4>When two rules disagree</h4>
-<p>The C in CSS stands for <b>cascading</b>: several rules can apply to the same element, and the browser combines them. When two rules set the <i>same</i> property to different values, it picks a winner:</p>
-<ol>
-<li>The <b>more specific</b> selector wins. An id is more specific than a class, and a class is more specific than a tag name. So <code>#buy { color: white; }</code> beats <code>button { color: black; }</code>.</li>
-<li>If they are equally specific, the rule written <b>later</b> wins.</li>
-</ol>
-<p>You will not need clever tricks today. Just remember: if a style "does not work", another, more specific rule may be overriding it.</p>
+${V.card(3,'Colours and fonts','three ways to say one colour',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="Three paint tins labelled navy, #000080 and rgb(0, 0, 128) all hold the same colour">
+${V.ic('jar',30,8,80,'ic-info')}${V.ic('jar',170,8,80,'ic-info')}${V.ic('jar',310,8,80,'ic-info')}
+<text class="t-m" x="70" y="118" text-anchor="middle" style="font-size:17px">navy</text>
+<text class="t-m" x="210" y="118" text-anchor="middle" style="font-size:17px">#000080</text>
+<text class="t-m" x="350" y="118" text-anchor="middle" style="font-size:15px">rgb(0, 0, 128)</text>
+<text class="t-s" x="210" y="148" text-anchor="middle">three labels, the same paint</text>
+</svg><figcaption>A colour can be a name, a hex code or an rgb() value. These three are exactly the same navy.</figcaption></figure>
+${V.like(`<p>Mixing light. Every screen colour is a mix of <b>red</b>, <b>green</b> and <b>blue</b> light, each from 0 (off) to 255 (full). A hex code is just those three amounts written in base 16.</p>`)}
+${V.anat([[1,'#'],[2,'00'],[3,'00'],[4,'80']],[
+ '<b>Hash.</b> Says "this is a hex colour".',
+ '<b>Red.</b> Two digits from <code>00</code> (none) to <code>ff</code> (full). Digits go 0 to 9, then a to f.',
+ '<b>Green.</b> Same scale.',
+ '<b>Blue.</b> <code>80</code> is 128, about half. So this is a darkish blue.'])}
+${V.rules(V.rh('Rules'),
+ V.ok('color','Colour of the text'),V.ok('background','Colour behind it'),
+ V.no('colour: red;','CSS uses American spelling: color'),V.no('#00080','Five digits is not a colour: use six (or the short three)'),
+ V.rh('Conventions'),
+ V.ok('font-family: system-ui, sans-serif;','A list: use the device font, and if it is missing, any clean sans-serif'))}
+${V.hook(`Red, green, blue, two digits each. And always spell it <code>color</code>.`)}
+`)}
 
-<h4>Colours and fonts</h4>
-<p>You can write a colour in three common ways:</p>
-<ul>
-<li>A <b>name</b>: <code>white</code>, <code>navy</code>, <code>tomato</code>. Easy, but there are only about 140.</li>
-<li>A <b>hex code</b>: <code>#6b3e26</code>. After the hash come three pairs of characters for red, green and blue. Each pair runs from <code>00</code> (none) to <code>ff</code> (full). Hex counts 0 to 9 and then a to f, so <code>ff</code> means 255.</li>
-<li>An <b>rgb() value</b>: <code>rgb(107, 62, 38)</code>, the same three amounts written in ordinary numbers from 0 to 255.</li>
-</ul>
-<p>Decode <code>#6b3e26</code> step by step: red <code>6b</code> is 107, green <code>3e</code> is 62, blue <code>26</code> is 38. A fair amount of red, less green, very little blue: a warm coffee brown. <code>#ffffff</code> is all three at full, which is white, and <code>#000000</code> is black.</p>
-<p>The property <code>color</code> sets the <b>text</b> colour. The property <code>background</code> (or <code>background-color</code>) sets the colour <b>behind</b> it. A button needs both: a dark background and light text, so people can read it.</p>
-<p>For fonts, <code>font-family</code> takes a list, tried left to right:</p>
-<pre class="snip">body {
-  font-family: system-ui, sans-serif;
-}</pre>
-<p><code>system-ui</code> means "the device's own interface font", the one the phone or laptop uses for its menus. If that is not available, the browser falls back to any <code>sans-serif</code> font, a clean style without the little feet on letters. Always end the list with a general family like this as a safety net.</p>
+${V.card(4,'The box model','every element is a framed picture',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="Box model like a framed picture: content in the middle, padding around it, then the border, then margin outside">
+<rect class="ln-d" x="10" y="10" width="230" height="170" rx="4"/>
+<rect class="bx-a" x="34" y="32" width="182" height="126" rx="3" style="stroke-width:6"/>
+<rect class="bx-ok" x="74" y="62" width="102" height="58" rx="4"/><text class="t-b" x="125" y="96" text-anchor="middle">content</text>
+<path class="ln" d="M256 22H230M256 58H216M256 92H170M256 140H150"/>
+<text class="t-b" x="262" y="27">margin</text><text class="t-s" x="262" y="44">outside the frame</text>
+<text class="t-b" x="262" y="63">border</text>
+<text class="t-b" x="262" y="97">content</text>
+<text class="t-b" x="262" y="145">padding</text><text class="t-s" x="262" y="162">inside the frame</text>
+</svg><figcaption>From the inside out: the content, then padding, then the border, then margin. Padding is inside the frame; margin is the empty wall around it.</figcaption></figure>
+${V.like(`<p>A framed picture on a wall. The <b>content</b> is the photo. The <b>padding</b> is the white card mount around it. The <b>border</b> is the frame. The <b>margin</b> is the empty wall that keeps other pictures from touching it.</p>`)}
+${V.why(`<p>Browsers need a simple, predictable way to lay out thousands of elements. Treating each one as a rectangle with four layers means every element, from a button to a whole section, follows the same rules.</p>`)}
+${V.anat([[1,'.card'],' {\n  ',[2,'padding: 12px;'],'\n  ',[3,'border: 3px dashed #333;'],'\n  ',[4,'margin-bottom: 20px;'],'\n}'],[
+ '<b>Selector.</b> Every element with class="card".',
+ '<b>Padding.</b> One value sets all four sides inside the border.',
+ '<b>Border.</b> Width, style (solid, dashed, dotted) and colour. Without a style, no border appears.',
+ '<b>Margin.</b> <code>margin-bottom</code> sets only the bottom side. There are -top, -left and -right versions too.'])}
+<p><b>Watch the layers build up</b>, and see the next element get pushed down.</p>
+${V.steps([
+ ['Just the content. The next element sits right underneath it.',`<svg viewBox="0 0 420 180" role="img" aria-label="Content only">
+<rect class="bx-ok" x="150" y="40" width="120" height="40" rx="3"/><text class="t" x="210" y="66" text-anchor="middle">Coffee £3</text>
+<rect class="bx" x="126" y="84" width="168" height="34" rx="4"/><text class="t-s" x="210" y="106" text-anchor="middle">next card</text>
+<text class="t-b t-ok" x="310" y="40">content</text>
+</svg>`],
+ ['<b>padding</b> adds space inside, around the content. The box grows, so the next card moves down.',`<svg viewBox="0 0 420 180" role="img" aria-label="Padding added around content">
+<rect class="ln-d" x="130" y="20" width="160" height="80" rx="3"/>
+<rect class="bx-ok" x="150" y="40" width="120" height="40" rx="3"/><text class="t" x="210" y="66" text-anchor="middle">Coffee £3</text>
+<rect class="bx" x="126" y="104" width="168" height="34" rx="4"/><text class="t-s" x="210" y="126" text-anchor="middle">next card</text>
+<text class="t-b t-ok" x="310" y="40">content</text><text class="t-b" x="310" y="68">+ padding</text>
+</svg>`],
+ ['<b>border</b> draws the frame around the padding.',`<svg viewBox="0 0 420 180" role="img" aria-label="Border drawn around padding">
+<rect class="bx-a" x="128" y="18" width="164" height="84" rx="3" style="stroke-width:5"/>
+<rect class="bx-ok" x="150" y="40" width="120" height="40" rx="3"/><text class="t" x="210" y="66" text-anchor="middle">Coffee £3</text>
+<rect class="bx" x="126" y="108" width="168" height="34" rx="4"/><text class="t-s" x="210" y="130" text-anchor="middle">next card</text>
+<text class="t-b t-ok" x="310" y="40">content</text><text class="t-b" x="310" y="68">+ padding</text><text class="t-b t-a" x="310" y="96">+ border</text>
+</svg>`],
+ ['<b>margin-bottom</b> adds invisible space outside the border. It pushes the next card further away.',`<svg viewBox="0 0 420 180" role="img" aria-label="Margin below pushes the next card away">
+<rect class="bx-a" x="128" y="18" width="164" height="84" rx="3" style="stroke-width:5"/>
+<rect class="bx-ok" x="150" y="40" width="120" height="40" rx="3"/><text class="t" x="210" y="66" text-anchor="middle">Coffee £3</text>
+<rect class="ln-d" x="128" y="106" width="164" height="30" rx="2"/><text class="t-s" x="210" y="126" text-anchor="middle">margin</text>
+<rect class="bx" x="126" y="140" width="168" height="34" rx="4"/><text class="t-s" x="210" y="162" text-anchor="middle">next card</text>
+<text class="t-b t-ok" x="310" y="40">content</text><text class="t-b" x="310" y="68">+ padding</text><text class="t-b t-a" x="310" y="96">+ border</text><text class="t-b" x="310" y="124">+ margin</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('padding','Space inside the border'),V.ok('margin','Space outside the border'),
+ V.no('border: 2px #333;','No style given, so no border is drawn'),V.ok('border: 2px solid #333;','Width, style, colour'),
+ V.rh('Conventions'),
+ V.ok('padding for roominess','Text touching a border looks cramped'),V.ok('margin for spacing','Use margin to space cards apart'))}
+${V.build(`<ol><li>Write a <code>body</code> rule that sets <code>font-family</code> to a clean list ending in <code>sans-serif</code>.</li><li>Write an <code>h1</code> rule that changes its <code>color</code>.</li><li>In a <code>.card</code> rule, add padding and a border with a width, a style and a colour.</li><li>In the same rule, add a bottom margin.</li><li>Write a <code>#buy</code> rule with a <code>background</code> and white text.</li></ol>`)}
+${V.hook(`Photo, mount, frame, wall: content, padding, border, margin. Padding is in, margin is out.`)}
+`)}
 
-<h4>The box model</h4>
-<p>Here is the idea that unlocks all page layout: <b>every element is a rectangle</b>. Even a single word in a link has an invisible box around it. Each box is built in four layers, from the inside out.</p>
-<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="Box model: content inside padding, inside border, inside margin">
-<rect class="bx-warn" x="10" y="10" width="400" height="230" rx="4"/>
-<rect class="bx-a" x="56" y="44" width="308" height="162" rx="4"/>
-<rect class="bx-ok" x="64" y="52" width="292" height="146" rx="2"/>
-<rect class="bx-info" x="120" y="96" width="180" height="58" rx="2"/>
-<text class="t-b" x="210" y="31" text-anchor="middle">margin: space outside</text>
-<text class="t-b t-a" x="210" y="225" text-anchor="middle">border: the visible edge</text>
-<text class="t-b t-ok" x="210" y="80" text-anchor="middle">padding: space inside</text>
-<text class="t-b t-info" x="210" y="122" text-anchor="middle">content</text>
-<text class="t-s" x="210" y="142" text-anchor="middle">the text itself</text>
-</svg><figcaption>Four nested layers. In the middle is the content, the text itself. Around it is the padding, empty space inside the edge. Then the border, the visible line. Outside everything is the margin, empty space that pushes neighbours away.</figcaption></figure>
-<ol>
-<li><b>Content</b>: the text or image itself.</li>
-<li><b>Padding</b>: empty space between the content and the border. It takes on the element's background colour, so it makes a card feel roomy.</li>
-<li><b>Border</b>: a line around the padding. <code>border: 2px solid #6b3e26;</code> sets the width, the style (<code>solid</code>, <code>dashed</code>, <code>dotted</code>) and the colour in one go. Without a style, no border appears at all.</li>
-<li><b>Margin</b>: empty, transparent space outside the border. It pushes other elements away.</li>
-</ol>
-<p>The simple test: do you want more room <b>inside</b> the frame, between the edge and the words? That is padding. Do you want more room <b>between</b> this box and the next one? That is margin.</p>
-<p>Sizes are usually in <code>px</code>, pixels, the tiny dots on a screen. <code>padding: 16px;</code> adds 16 pixels on all four sides. To change just one side, add the side's name: <code>margin-bottom: 24px;</code> adds space only underneath. The sides are <code>top</code>, <code>right</code>, <code>bottom</code> and <code>left</code>.</p>
-
-<h4>Putting it together on the coffee shop page</h4>
-<p>Here is how the tasks map onto rules. Each line uses one idea from above:</p>
-<pre class="snip">body  { font-family: system-ui, sans-serif; }  /* tag selector */
-h1    { color: #6b3e26; }                     /* text colour   */
-.card { padding: 16px;                         /* class selector */
-        border: 2px solid #6b3e26; }</pre>
-<p>For the remaining tasks, add <code>margin-bottom</code> to the <code>.card</code> rule (you can have several declarations in one rule), and write a new rule with the <code>#buy</code> selector that sets both <code>background</code> and <code>color</code>. Press Run after each change and watch the preview.</p>
-<div class="mistake"><b>Common mistake</b>A missing semicolon. In <code>color: white background: brown;</code> the browser reads one broken declaration and quietly ignores <b>both</b> lines. CSS never shows an error; things just do not change. When a style refuses to apply, check the semicolons and the spelling first.</div>
-
-<h4>Finding out why a style did not apply</h4>
-<p>Because CSS fails silently, you need a checklist:</p>
-<ul>
-<li>Is the selector right? A missing full stop or hash, or a typo in the class name, matches nothing.</li>
-<li>Is every declaration finished with a semicolon, and every rule closed with a curly brace?</li>
-<li>Is the property spelled the CSS way, <code>color</code> and not "colour", <code>background</code> and not "backround"?</li>
-<li>Is a more specific rule winning? In a real browser, right-click the element and choose Inspect. The developer tools list every rule that applies and cross out the ones that lost.</li>
-</ul>
-<div class="try"><b>Try it in your head</b>A card has <code>padding: 10px; border: 2px solid black; margin: 20px;</code>. How far is its text from the edge of the next card above it, if that card has no margin? Work outwards: 10 pixels of padding, 2 of border, 20 of margin, so 32 pixels in total. Which of those would be filled with the card's background colour? Only the 10 pixels of padding, because margin is always transparent.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>A CSS rule is a selector plus declarations: <code>property: value;</code>, each ending with a semicolon.</li>
-<li>Select by tag (<code>h1</code>), by class (<code>.card</code>, reusable) or by id (<code>#buy</code>, unique).</li>
-<li>When rules clash, the more specific selector wins, and if they are equal the later one wins.</li>
-<li>Colours can be names, hex codes or <code>rgb()</code>. <code>color</code> is text, <code>background</code> is behind it.</li>
-<li>Every element is a box: content, padding inside the border, the border, then margin outside.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Which selector matches <code>&lt;div class="card"&gt;</code>: <code>div</code>, <code>.card</code> or both? <i>Both. If they clash, .card wins.</i> 2. You want more space between a card's border and its text. Which property? <i>padding.</i> 3. Why might <code>color: red</code> on one line stop the next line working? <i>A missing semicolon joins them into one broken value.</i></div>
 `);
 
 explain('fb3',`
@@ -460,111 +563,146 @@ ${V.hook(`Arrays find things by position. Objects find things by name.`)}
 `);
 
 explain('fb4',`
-<h4>Bugs are normal, guessing is optional</h4>
-<p>A <b>bug</b> is any difference between what you wanted your code to do and what it actually does. Every programmer writes them, every day, at every level of experience. What separates a beginner from a professional is not fewer bugs. It is a calm, repeatable <b>method</b> for finding them.</p>
-<p>The beginner's instinct is to stare at the code and change things until it works. That is slow, and when it does finally work you do not know why. Debugging properly means treating the bug like a mystery: gather clues, form a theory, test it, then act.</p>
-<p>The starter code is a small shopping cart with <b>four</b> planted bugs. The instruction at the top says not to hunt for them line by line. That is the point of the lesson: let the computer tell you where to look.</p>
+<p>Every programmer writes bugs, every day, at every level. Professionals are not the people with fewer bugs. They are the people with a calm, repeatable <b>method</b> for finding them.</p>
 
-<h4>The debugging loop</h4>
-<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="A loop of five steps: run, read, guess, test, fix one thing, then run again">
-<rect class="bx-dark" x="150" y="10" width="120" height="38" rx="8"/><text class="t-term" x="210" y="35" text-anchor="middle">1. Run it</text>
-<rect class="bx-a" x="290" y="76" width="120" height="38" rx="8"/><text class="t-b" x="350" y="100" text-anchor="middle">2. Read</text>
-<rect class="bx-warn" x="250" y="170" width="120" height="38" rx="8"/><text class="t-b" x="310" y="194" text-anchor="middle">3. Guess</text>
-<rect class="bx-info" x="50" y="170" width="120" height="38" rx="8"/><text class="t-b" x="110" y="194" text-anchor="middle">4. Test</text>
-<rect class="bx-ok" x="10" y="76" width="120" height="38" rx="8"/><text class="t-b" x="70" y="100" text-anchor="middle">5. Fix one</text>
-<path class="ln" d="M270 34q70 4 78 34"/><polygon class="ah" points="342,66 354,66 348,76"/>
-<path class="ln" d="M350 114q2 40 -22 52"/><polygon class="ah" points="332,160 334,172 324,168"/>
-<path class="ln" d="M250 189h-70"/><polygon class="ah" points="182,183 182,195 172,189"/>
-<path class="ln" d="M80 170q-12 -30 -10 -48"/><polygon class="ah" points="64,124 76,124 70,114"/>
-<path class="ln" d="M70 76q4 -36 72 -42"/><polygon class="ah" points="140,28 140,40 150,34"/>
-<text class="t-s" x="210" y="236" text-anchor="middle">Go round once per bug, until it all works.</text>
-</svg><figcaption>The debugging loop. Run the code. Read what went wrong. Guess the cause. Test the guess by looking at real values. Fix one thing only. Then run again and go round the loop for the next problem.</figcaption></figure>
-<ol>
-<li><b>Run it.</b> See the problem happen with your own eyes. This is called <b>reproducing</b> the bug.</li>
-<li><b>Read</b> the error, or describe exactly what is wrong: "it printed undefined where I expected a price".</li>
-<li><b>Guess</b> a cause. One specific theory, not "something is broken".</li>
-<li><b>Test</b> the guess by looking at real values, usually with <code>console.log</code>.</li>
-<li><b>Fix one thing</b>, then run again. If you change five things at once and it starts working, you will not know which change mattered, and you may have added a new bug.</li>
-</ol>
+${V.card(1,'Read the error','the computer is giving you a clue',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A magnifying glass over the error ReferenceError: formatPrise is not defined. The first word is the type, the rest is the message">
+${V.ic('search',10,6,54,'ic-a')}
+<text class="t-b" x="76" y="30">Read it slowly, word by word.</text>
+<text class="t" x="76" y="52">It names the exact problem.</text>
+<rect class="bx-bad" x="8" y="70" width="404" height="42" rx="6"/>
+<text class="t-m t-bad" x="18" y="97" style="font-size:15px;font-weight:700">ReferenceError: formatPrise is not defined</text>
+<path class="ln" d="M14 118V126H140V118M154 118V126H404V118"/>
+<text class="t-b" x="77" y="148" text-anchor="middle">type</text><text class="t-s" x="77" y="164" text-anchor="middle">what kind of problem</text>
+<text class="t-b" x="279" y="148" text-anchor="middle">message</text><text class="t-s" x="279" y="164" text-anchor="middle">what exactly, in plain words</text>
+</svg><figcaption>An error message has two parts. The type tells you what kind of problem it is. The message names the exact thing that went wrong.</figcaption></figure>
+${V.like(`<p>The warning light on a car dashboard. It does not just say "broken"; it says "low oil". An error message is the same: it points at the part that needs fixing, if you read it.</p>`)}
+${V.why(`<p>Engineers called faults "bugs" long before computers. In 1947 Grace Hopper's team found a real moth stuck in the Harvard Mark II computer and taped it into their logbook as the "first actual case of bug being found". Today the computer does the searching for you and reports what it found.</p>`)}
+${V.anat([[1,'ReferenceError'],[2,':'],' ',[3,'formatPrise'],' ',[4,'is not defined']],[
+ '<b>Type.</b> The family of problem. Each type has usual causes (see below).',
+ '<b>Colon.</b> Separates the type from the details.',
+ '<b>The name it complains about.</b> Your best clue. Search your code for it.',
+ '<b>What is wrong with it.</b> Here: no variable or function with this exact name exists.'])}
+${V.rules(V.rh('What each error usually means'),
+ V.ok('ReferenceError: x is not defined','A typo in a name, or using something before creating it'),
+ V.ok('TypeError: Cannot read properties of undefined','You used something that does not exist, often one past the end of a list'),
+ V.ok('SyntaxError: Unexpected token','A missing bracket, quote or comma near that spot'),
+ V.ok('No error, wrong answer','A logic bug: the code runs, but does the wrong thing'),
+ V.rh('Rules'),
+ V.ok('Fix the first error first','JavaScript stops at the first problem; later ones appear after'),V.no('Panic at red text','A new error after a fix means progress'))}
+${V.hook(`Type, then message. The error is a clue, not an insult.`)}
+`)}
 
-<h4>How to read an error message</h4>
-<p>When JavaScript hits a problem it cannot get past, it stops and <b>throws an error</b>: a message saying what went wrong. Beginners often skim the red text in a panic. Slow down. It is the most useful clue you will ever get.</p>
-<figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="An error message split into its type and its message">
-<rect class="bx-dark" x="10" y="20" width="400" height="44" rx="6"/>
-<text class="t-term t-bad" x="22" y="48">ReferenceError:</text>
-<text class="t-term" x="168" y="48">formatPrise is not defined</text>
-<path class="ln-a" d="M22 74v8h132v-8"/><path class="ln-ok" d="M168 74v8h232v-8"/>
-<text class="t-b t-a" x="88" y="104" text-anchor="middle">the TYPE</text>
-<text class="t-b t-ok" x="284" y="104" text-anchor="middle">the MESSAGE</text>
-<text class="t-s" x="88" y="124" text-anchor="middle">what kind of problem</text>
-<text class="t-s" x="284" y="124" text-anchor="middle">exactly what, in plain words</text>
-</svg><figcaption>The first error this lesson's code produces. The type, ReferenceError, says what kind of problem it is: an unknown name. The message names the exact culprit: formatPrise is not defined.</figcaption></figure>
-<p>An error has up to three parts:</p>
-<ul>
-<li>The <b>type</b>, before the colon, tells you the category of problem.</li>
-<li>The <b>message</b> names the exact thing that failed, often by its variable or function name.</li>
-<li>The <b>location</b>, when shown, gives the line number where JavaScript gave up. The real mistake is usually on that line, though sometimes on one just above it.</li>
-</ul>
-<p>The types you will meet most often:</p>
-<div class="tbl-wrap"><table><tr><th>Error type</th><th>What it usually means</th></tr>
-<tr><td><code>ReferenceError</code></td><td>You used a name that does not exist. Very often a typo, or a capital letter in the wrong place.</td></tr>
-<tr><td><code>TypeError</code></td><td>The thing exists but is the wrong kind for what you did. Most often: reading a property of <code>undefined</code>.</td></tr>
-<tr><td><code>SyntaxError</code></td><td>The code is not valid JavaScript at all: a missing bracket, quote or comma. Nothing runs.</td></tr></table></div>
-<p>Important: JavaScript stops at the <b>first</b> error. Fixing it often reveals the next one. A new, different error after a fix is progress, not failure.</p>
+${V.card(2,'The debugging loop','a method, not luck',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A loop of five steps: run, read, guess, test, fix, then run again">
+<rect class="bx-a" x="4" y="10" width="70" height="84" rx="8"/>${V.ic('arrow',21,18,36,'ic-a')}<text class="t-b" x="39" y="80" text-anchor="middle">Run</text>
+<rect class="bx-a" x="87" y="10" width="70" height="84" rx="8"/>${V.ic('search',104,18,36,'ic-a')}<text class="t-b" x="122" y="80" text-anchor="middle">Read</text>
+<rect class="bx-a" x="170" y="10" width="70" height="84" rx="8"/>${V.ic('bulb',187,18,36,'ic-a')}<text class="t-b" x="205" y="80" text-anchor="middle">Guess</text>
+<rect class="bx-a" x="253" y="10" width="70" height="84" rx="8"/>${V.ic('list',270,18,36,'ic-a')}<text class="t-b" x="288" y="80" text-anchor="middle">Test</text>
+<rect class="bx-ok" x="336" y="10" width="70" height="84" rx="8"/>${V.ic('gear',353,18,36,'ic-ok')}<text class="t-b" x="371" y="80" text-anchor="middle">Fix</text>
+<polygon class="ah-a" points="76,46 76,58 85,52"/><polygon class="ah-a" points="159,46 159,58 168,52"/><polygon class="ah-a" points="242,46 242,58 251,52"/><polygon class="ah-a" points="325,46 325,58 334,52"/>
+<path class="ln-a" d="M371 98V126H39V106"/><polygon class="ah-a" points="32,108 46,108 39,97"/>
+<text class="t-s" x="205" y="152" text-anchor="middle">change ONE thing, then run again</text>
+</svg><figcaption>Run it, read what happens, guess the cause, test the guess, fix one thing. Then run again and repeat until it works.</figcaption></figure>
+${V.like(`<p>A doctor does not guess a cure from across the room. They look at the symptoms, think of a likely cause, run a test to check, then treat it, and check again.</p>`)}
+${V.why(`<p>Changing random things until it works wastes hours and often adds new bugs. If you change five things at once and it starts working, you will not know which change mattered.</p>`)}
+${V.anat([[1,'console.log'],'(',[2,"'i ='"],', ',[3,'i'],', ',[2,"'total ='"],', ',[3,'total'],')'],[
+ '<b>console.log.</b> Prints to the Output so you can see inside your running code.',
+ '<b>Labels.</b> Text in quotes, so you know which number is which.',
+ '<b>Values.</b> The real values right now. Compare them with what you expected.'])}
+<p><b>Watch the loop find four bugs</b> in a shopping-cart program, one at a time.</p>
+${V.steps([
+ ['Run. The first error is a <b>ReferenceError</b>. The name in the message does not exist: look closely and it is a typo. Fix that one name, then run again.',`<svg viewBox="0 0 420 160" role="img" aria-label="First run: ReferenceError">
+<rect class="bx-dark" x="6" y="8" width="408" height="80" rx="8"/>
+<text class="t-term t-bad" x="18" y="40" style="font-size:14px">ReferenceError: formatPrise is not defined</text>
+${V.ic('bug',8,104,36,'ic-bad')}<text class="t-b" x="52" y="122">Bug 1: a typo in a name</text><text class="t-s" x="52" y="144">Price, not Prise</text>
+</svg>`],
+ ['New error, which means progress. A <b>TypeError</b> reading <b>price</b> of <b>undefined</b>: the code asked a list item that does not exist for its price. The loop goes one step too far.',`<svg viewBox="0 0 420 160" role="img" aria-label="Second run: TypeError reading price of undefined">
+<rect class="bx-dark" x="6" y="8" width="408" height="80" rx="8"/>
+<text class="t-term t-bad" x="18" y="40" style="font-size:14px">TypeError: Cannot read properties</text>
+<text class="t-term t-bad" x="18" y="66" style="font-size:14px">of undefined (reading 'price')</text>
+${V.ic('bug',8,104,36,'ic-bad')}<text class="t-b" x="52" y="122">Bug 2: off by one</text><text class="t-s" x="52" y="144">The loop visits a locker that is not there</text>
+</svg>`],
+ ['No error now, but the output says <b>undefined</b>. A logic bug. formatPrice builds the text but never hands it back. It is missing <b>return</b>.',`<svg viewBox="0 0 420 160" role="img" aria-label="Third run: Total: undefined">
+<rect class="bx-dark" x="6" y="8" width="408" height="80" rx="8"/>
+<text class="t-term" x="18" y="40" style="font-size:14px">Total: undefined</text>
+${V.ic('bug',8,104,36,'ic-bad')}<text class="t-b" x="52" y="122">Bug 3: missing return</text><text class="t-s" x="52" y="144">Worked out, never handed back</text>
+</svg>`],
+ ['The total looks right, but free shipping says <b>true</b> for £32.50. Test the guess with console.log: the if <b>puts</b> 50 into total with one =, instead of comparing.',`<svg viewBox="0 0 420 160" role="img" aria-label="Fourth run: free shipping wrongly true">
+<rect class="bx-dark" x="6" y="8" width="408" height="80" rx="8"/>
+<text class="t-term" x="18" y="40" style="font-size:14px">Total: $32.50</text>
+<text class="t-term" x="18" y="66" style="font-size:14px">Free shipping? <tspan class="t-bad">true</tspan></text>
+${V.ic('bug',8,104,36,'ic-bad')}<text class="t-b" x="52" y="122">Bug 4: = instead of a comparison</text><text class="t-s" x="52" y="144">32.50 is under 50, so it should be false</text>
+</svg>`],
+ ['Every line is right. Four bugs, each found by running, reading and fixing <b>one</b> thing at a time.',`<svg viewBox="0 0 420 160" role="img" aria-label="Final run: correct output">
+<rect class="bx-dark" x="6" y="8" width="408" height="80" rx="8"/>
+<text class="t-term" x="18" y="40" style="font-size:14px">Total: $32.50</text>
+<text class="t-term" x="18" y="66" style="font-size:14px">Free shipping? <tspan class="t-ok">false</tspan></text>
+${V.ic('check',8,104,36,'ic-ok')}<text class="t-b t-ok" x="52" y="122">All fixed</text><text class="t-s" x="52" y="144">One change, one run, every time</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('one change, then Run','You always know what fixed it'),V.no('five changes at once','If it breaks, which one did it?'),
+ V.rh('Conventions'),
+ V.ok("console.log('total =', total)",'Label your logs'),V.ok('delete logs when done','Clean up before you share the code'))}
+${V.hook(`Run, read, guess, test, fix. One change at a time.`)}
+`)}
 
-<h4>Bug one: the name that does not exist</h4>
-<p>Run the starter code. The error says <code>formatPrise</code> is not defined. Search the code for that name and compare it with the function definitions. The function was created with one spelling and called with another. JavaScript treats names as exact strings of letters, so one wrong letter is a completely different name.</p>
-<p>That is the classic <code>ReferenceError</code>: always compare the name in the message, letter by letter, with where you defined it.</p>
+${V.card(3,'Three classic bugs','the ones everyone writes',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="One equals sign puts 50 into the box total. Greater-or-equal asks a yes or no question">
+<circle class="bx-info" cx="40" cy="44" r="24"/><text class="t-m" x="40" y="51" text-anchor="middle" style="font-size:18px">50</text>
+<path class="ln-a" d="M66 52 98 76"/><polygon class="ah-a" points="92,82 104,82 100,70"/>
+<rect class="bx-ok" x="96" y="84" width="96" height="44" rx="6"/><text class="t-m" x="144" y="112" text-anchor="middle">total</text>
+<text class="t-m" x="100" y="38" style="font-size:18px">total = 50</text>
+<text class="t-s" x="20" y="156">= puts a value in</text>
+<path class="ln-d" d="M214 10V160"/>
+<polygon class="bx-warn" points="320,24 404,70 320,116 236,70"/>
+<text class="t-m" x="320" y="66" text-anchor="middle" style="font-size:14px">total &gt;= 50</text><text class="t-m" x="320" y="86" text-anchor="middle" style="font-size:14px">?</text>
+<text class="t-s" x="240" y="156">&gt;=, ===, &lt; ask a question</text>
+</svg><figcaption>Inside an if, one = does not compare. It stores 50 in total, and 50 counts as true, so the if always runs.</figcaption></figure>
+${V.like(`<p>Off by one is the classic: a row of 2 lockers is numbered 0 and 1. Walk to locker 2 and you find a wall. Ask the wall for its price and the program crashes.</p>`)}
+<p><b>Watch the loop</b> <code>for (let i = 0; i &lt;= items.length; i++)</code> run over a cart with 2 items.</p>
+${V.steps([
+ ['i is 0. Is 0 &amp;lt;= 2? Yes. items[0] is the mug, price 12.',`<svg viewBox="0 0 420 165" role="img" aria-label="i is 0, locker 0 is the mug">
+<rect class="bx-hl" x="20" y="14" width="110" height="50" rx="6"/><text class="t" x="75" y="45" text-anchor="middle">Mug</text>
+<rect class="bx" x="140" y="14" width="110" height="50" rx="6"/><text class="t" x="195" y="45" text-anchor="middle">Tea</text>
+<rect class="ln-d" x="260" y="14" width="110" height="50" rx="6"/><text class="t-s" x="315" y="45" text-anchor="middle">nothing</text>
+<text class="t-b t-a" x="75" y="86" text-anchor="middle">[0]</text><text class="t-b t-a" x="195" y="86" text-anchor="middle">[1]</text><text class="t-b t-a" x="315" y="86" text-anchor="middle">[2]</text>
+<text class="t-m" x="20" y="122">i = 0:  0 &lt;= 2 is true</text>
+<text class="t" x="20" y="150">items[0].price is 12</text>
+</svg>`],
+ ['i is 1. Is 1 &amp;lt;= 2? Yes. items[1] is the tea, price 8.5.',`<svg viewBox="0 0 420 165" role="img" aria-label="i is 1, locker 1 is the tea">
+<rect class="bx" x="20" y="14" width="110" height="50" rx="6"/><text class="t" x="75" y="45" text-anchor="middle">Mug</text>
+<rect class="bx-hl" x="140" y="14" width="110" height="50" rx="6"/><text class="t" x="195" y="45" text-anchor="middle">Tea</text>
+<rect class="ln-d" x="260" y="14" width="110" height="50" rx="6"/><text class="t-s" x="315" y="45" text-anchor="middle">nothing</text>
+<text class="t-b t-a" x="75" y="86" text-anchor="middle">[0]</text><text class="t-b t-a" x="195" y="86" text-anchor="middle">[1]</text><text class="t-b t-a" x="315" y="86" text-anchor="middle">[2]</text>
+<text class="t-m" x="20" y="122">i = 1:  1 &lt;= 2 is true</text>
+<text class="t" x="20" y="150">items[1].price is 8.5</text>
+</svg>`],
+ ['i is 2. Is 2 &amp;lt;= 2? Still yes, so the loop goes on. But there is no items[2]. It is <b>undefined</b>, and asking undefined for .price crashes.',`<svg viewBox="0 0 420 165" role="img" aria-label="i is 2, there is no locker 2, crash">
+<rect class="bx" x="20" y="14" width="110" height="50" rx="6"/><text class="t" x="75" y="45" text-anchor="middle">Mug</text>
+<rect class="bx" x="140" y="14" width="110" height="50" rx="6"/><text class="t" x="195" y="45" text-anchor="middle">Tea</text>
+<rect class="bx-bad" x="260" y="14" width="110" height="50" rx="6"/>${V.ic('cross',299,21,36,'ic-bad')}
+<text class="t-b t-a" x="75" y="86" text-anchor="middle">[0]</text><text class="t-b t-a" x="195" y="86" text-anchor="middle">[1]</text><text class="t-b t-a" x="315" y="86" text-anchor="middle">[2]</text>
+<text class="t-m" x="20" y="122">i = 2:  2 &lt;= 2 is <tspan class="t-bad">true!</tspan></text>
+<text class="t t-bad" x="20" y="150">items[2] is undefined: TypeError</text>
+</svg>`],
+ ['With <b>&amp;lt;</b> instead of <b>&amp;lt;=</b>, the check is 2 &amp;lt; 2, which is false. The loop stops after the last real item.',`<svg viewBox="0 0 420 165" role="img" aria-label="With less-than, the loop stops at the right place">
+<rect class="bx-ok" x="20" y="14" width="110" height="50" rx="6"/><text class="t" x="75" y="45" text-anchor="middle">Mug</text>
+<rect class="bx-ok" x="140" y="14" width="110" height="50" rx="6"/><text class="t" x="195" y="45" text-anchor="middle">Tea</text>
+<rect class="ln-d" x="260" y="14" width="110" height="50" rx="6"/><text class="t-s" x="315" y="45" text-anchor="middle">never visited</text>
+<text class="t-b t-a" x="75" y="86" text-anchor="middle">[0]</text><text class="t-b t-a" x="195" y="86" text-anchor="middle">[1]</text><text class="t-b t-a" x="315" y="86" text-anchor="middle">[2]</text>
+<text class="t-m" x="20" y="122">i = 2:  2 &lt; 2 is <tspan class="t-ok">false</tspan></text>
+<text class="t t-ok" x="20" y="150">Loop ends. Positions go 0 to length - 1.</text>
+</svg>`]])}
+${V.rules(V.rh('The three classics'),
+ V.no('i &lt;= list.length','Off by one: goes past the end'),V.ok('i &lt; list.length','Stops at the last real position'),
+ V.no('if (x = 50)','Stores 50 in x, and 50 counts as true'),V.ok('if (x &gt;= 50)','Compares and gives true or false'),
+ V.no("'$' + amount;",'Works out the text, then throws it away: the caller gets undefined'),V.ok("return '$' + amount;",'Hands the answer back'))}
+${V.build(`<ol><li>Press Run and read the first red line out loud.</li><li>Find the name it mentions and fix just that.</li><li>Run again. Read the new error and work out which line it points at.</li><li>When there is no error but a wrong answer, add a labelled <code>console.log</code> and compare the real values with what you expected.</li><li>Repeat until the output matches the expected lines exactly.</li></ol>`)}
+${V.hook(`Lockers go 0 to length minus 1. One = stores, a comparison asks. No return, no answer.`)}
+`)}
 
-<h4>Bug two: off by one</h4>
-<p>Fix the typo and run again. A new error appears: a <code>TypeError</code> that cannot read <code>price</code> of <code>undefined</code>. Decode it slowly. Something tried to do <code>something.price</code>, and that something was <code>undefined</code>, JavaScript's word for "no value here".</p>
-<p>The only place that reads <code>.price</code> is inside <code>cartTotal</code>, on <code>items[i]</code>. Arrays are <b>numbered from zero</b>: the first item is at position 0, the second at position 1. So a list of 2 items has positions 0 and 1, and its <code>length</code> is 2. Ask for position 2 and you get <code>undefined</code>, because nothing is there.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="An array of two items at positions 0 and 1; position 2 is empty and gives undefined">
-<g text-anchor="middle">
-<rect class="bx-ok" x="30" y="40" width="110" height="50" rx="6"/><text class="t-b" x="85" y="70">Mug</text>
-<rect class="bx-ok" x="150" y="40" width="110" height="50" rx="6"/><text class="t-b" x="205" y="70">Tea</text>
-<rect class="bx-bad" x="270" y="40" width="110" height="50" rx="6"/><text class="t-m t-bad" x="325" y="70">undefined</text>
-<text class="t-m" x="85" y="26">i = 0</text><text class="t-m" x="205" y="26">i = 1</text><text class="t-m t-bad" x="325" y="26">i = 2</text>
-</g>
-<path class="ln-ok" d="M30 112h230"/><text class="t-s t-ok" x="145" y="132" text-anchor="middle">i &lt; length: stops here, correct</text>
-<path class="ln-a" d="M30 156h350"/><text class="t-s t-a" x="205" y="176" text-anchor="middle">i &lt;= length: one step too far</text>
-<text class="t-s" x="325" y="112" text-anchor="middle">length is 2</text>
-</svg><figcaption>The cart has two items, at positions 0 and 1, so its length is 2. A loop that runs while i is less than the length visits 0 and 1 and stops. A loop that runs while i is less than or equal to the length also tries position 2, finds nothing there, and crashes reading price of undefined.</figcaption></figure>
-<p>This is called an <b>off-by-one error</b>, and it is one of the most common bugs in all of programming. Look at the loop's condition and ask: when <code>i</code> equals the length, should the loop still run? It should not.</p>
-<p>The loop here is a counting loop, <code>for (let i = 0; …; i++)</code>. It has three parts: start <code>i</code> at 0, keep going while the condition is true, and add 1 to <code>i</code> after each pass. The <code>for…of</code> loop from the last lesson avoids this whole class of bug, because it never deals with positions.</p>
-
-<h4>Bug three: the function that forgets to answer</h4>
-<p>Run again. No error now, but the output says <code>Total: undefined</code>. When there is no error but a wrong answer, it is a <b>logic bug</b>: the code runs, it just does the wrong thing.</p>
-<p>Follow the value backwards. The line prints <code>formatPrice(…)</code>, so <code>formatPrice</code> handed back <code>undefined</code>. Look inside it. It builds the text with a dollar sign and two decimal places, but nothing sends that text back. A function without a <code>return</code> always gives back <code>undefined</code>. The work happens, then gets thrown away.</p>
-<p>By the way, <code>toFixed(2)</code> turns a number into a string with exactly two digits after the point, so 32.5 becomes <code>'32.50'</code>.</p>
-
-<h4>Bug four: one equals sign too few</h4>
-<p>Now the total prints correctly, 32.50, but "Free shipping?" says <code>true</code>. Free shipping should only start at 50. Test your guess with a log at the top of <code>isFreeShipping</code>:</p>
-<pre class="snip">function isFreeShipping(total) {
-  console.log('total is', total);   // what came in?
-  // ...rest of the function
-}</pre>
-<p>It logs 32.5, as expected. So the input is fine, and the problem must be in the condition. Look at it: one equals sign. Remember that a single <code>=</code> <b>stores</b> a value. It does not compare. The condition sets <code>total</code> to 50, and the value 50 counts as "true enough" for an <code>if</code>. In JavaScript, every number except 0 counts as true in a condition. So the function says yes to everything.</p>
-<p>The task wording tells you the right comparison: "totals of 50 <i>or more</i>". Pick the operator that means greater than or equal.</p>
-<div class="mistake"><b>Common mistake</b>Leaving debugging logs in your finished code. They clutter the output, and here the last task checks the exact output lines. Delete them once the bug is fixed.</div>
-
-<h4>Making the invisible visible</h4>
-<p><code>console.log</code> is your torch. When the output is wrong, log the values at each step and compare them with what you expected. The bug lives exactly where the two first differ. Label your logs so you know which is which:</p>
-<pre class="snip">console.log('i =', i, 'item =', items[i]);
-console.log('sum so far:', total);</pre>
-<p>In a real browser you can go further. Press F12 to open the developer tools, where the Console tab shows the same errors with clickable line numbers. Writing the word <code>debugger;</code> on a line pauses the code there while the tools are open, so you can inspect every variable and step through one line at a time.</p>
-<div class="mistake"><b>Common mistake</b>Fixing the symptom instead of the cause. Wrapping the crashing line in a check like "only read price if the item exists" would hide bug two, but the loop would still be wrong. Ask why the value was wrong in the first place.</div>
-<div class="try"><b>Try it in your head</b>A list has 5 items. What is the last valid position? Answer: 4, because positions start at 0. And what does this print: <code>function f() { 2 + 2; } console.log(f());</code>? Answer: undefined, because the function works out 4 but never returns it.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Debug with a loop: run, read, guess, test, fix one thing, run again.</li>
-<li>Read errors slowly: the type says what kind of problem, the message names the culprit, the line says where.</li>
-<li>ReferenceError usually means a typo in a name. TypeError reading something of undefined often means an index past the end.</li>
-<li>Arrays start at 0, so the last position is length minus one. Loop while <code>i &lt; length</code>.</li>
-<li>No error but a wrong answer is a logic bug: log values to find where reality and expectation split.</li>
-<li>A missing <code>return</code> gives <code>undefined</code>, and a single <code>=</code> assigns rather than compares.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. <code>ReferenceError: totl is not defined</code>. Likely cause? <i>A typo: it should be total.</i> 2. A list has 3 items. What is the last index? <i>2.</i> 3. The code runs with no error but prints a wrong number. First move? <i>console.log the values to find where they first differ from what you expect.</i></div>
 `);
 
 explain('f1',`

@@ -1,410 +1,701 @@
-/* python: "Explained step by step" walkthroughs. */
+/* python: visual "Understand it" walkthroughs. */
 
 explain('yb1',`
-<h4>What a program actually is</h4>
-<p>A <b>program</b> is a list of instructions that a computer follows, one line at a time, from top to bottom. Computers are fast but completely literal: they do exactly what you wrote, not what you meant. A programming language is a way of writing those instructions that both you and the computer can read.</p>
-<p><b>Python</b> is one of those languages. It was designed to be readable, so its instructions look a lot like short English sentences. It runs websites, analyses data, automates boring jobs and powers most AI research, which is why it is such a popular first language.</p>
-<p>When you press <b>Run</b>, a program called the <b>Python interpreter</b> reads your code and carries out each line in order. In this app the interpreter runs inside your browser, but the code you write here is the same Python people run on servers and laptops.</p>
-<div class="analogy"><b>Think of it like</b>A recipe. Each line is one step, the steps happen in order, and the cook (the interpreter) does exactly what the recipe says. If a step says "add salt" before you have a pan, the cook stops and complains.</div>
+<p>Every app you use, from YouTube's recommendations to the program that marks exam papers, starts with three tiny skills: showing something, remembering something and knowing what kind of thing it is. Today you learn all three in Python, the language behind most of the world's data science and AI.</p>
 
-<h4>Your first instruction: <code>print</code></h4>
-<pre class="snip">print("Hello, world!")</pre>
-<p>This one line has three parts:</p>
-<ul>
-<li><code>print</code> is the name of a <b>function</b>. A function is a ready-made command that does one job. The job of <code>print</code> is to show something on the screen, in the Output area below your code.</li>
-<li>The round brackets <code>( )</code> mean "run this function now, with whatever is inside". What you put inside is called the <b>argument</b>.</li>
-<li><code>"Hello, world!"</code> is a piece of text. The quotes tell Python where the text starts and ends. Without them, Python would think <code>Hello</code> was the name of something and get confused.</li>
-</ul>
-<p>Single quotes and double quotes both work: <code>'hi'</code> and <code>"hi"</code> are the same. Just use the same kind at both ends.</p>
-<p>Lines that start with <code>#</code> are <b>comments</b>. Python skips them completely. They are notes for the humans who read the code, including you next week.</p>
+${V.card(1,'print()','the program\'s loudspeaker',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="The line print Hello world goes into Python and Hello, world! appears in the output. print of 2 plus 3 shows 5">
+<rect class="bx-dark" x="8" y="14" width="226" height="56" rx="8"/><text class="t-term" x="20" y="48" style="font-size:14px">print("Hello, world!")</text>
+<path class="ln-a" d="M238 42H258"/><polygon class="ah-a" points="256,35 256,49 268,42"/>
+<rect class="bx-ok" x="272" y="14" width="140" height="56" rx="8"/><text class="t-m" x="342" y="48" text-anchor="middle">Hello, world!</text>
+<rect class="bx-dark" x="8" y="96" width="226" height="56" rx="8"/><text class="t-term" x="20" y="130" style="font-size:14px">print(2 + 3)</text>
+<path class="ln-a" d="M238 124H258"/><polygon class="ah-a" points="256,117 256,131 268,124"/>
+<rect class="bx-ok" x="272" y="96" width="140" height="56" rx="8"/><text class="t-m" x="342" y="132" text-anchor="middle" style="font-size:22px">5</text>
+</svg><figcaption>Whatever you put inside the brackets, print shows in the Output area. If it is a sum, Python works out the answer first and prints that.</figcaption></figure>
+${V.like(`<p>A school loudspeaker. Your program does lots of work silently. <code>print</code> is the button you press to announce something so a person can hear (well, see) it.</p>`)}
+${V.why(`<p>A program that never shows anything is useless to a human. Python was created by Guido van Rossum and first released in 1991, with the goal of being as readable as English. That is why its "show this" command is simply the word <b>print</b>.</p>`)}
+${V.anat([[1,'print'],[2,'('],[3,'"Hello, world!"'],[2,')']],[
+ '<b>Function name.</b> A function is a ready-made command that does one job. This one shows things.',
+ '<b>Brackets.</b> They mean "run it now", and they hold what you hand over. That item is called the <b>argument</b>.',
+ '<b>A string.</b> Text in quotes. The quotes show Python where the text starts and ends.'])}
+${V.rules(V.rh('Rules: break one and Python stops with an error'),
+ V.ok('print("hi")','Lower case p, round brackets'),V.no('Print("hi")','Capitals matter: Print is a different (unknown) name'),
+ V.no('print "hi"','Old Python 2 style. Python 3 needs brackets'),V.no('print("hi\')','Open and close with the same kind of quote'),
+ V.rh('Conventions'),V.ok('# a comment','Python skips anything after #. Use it for notes to humans'))}
+${V.hook(`Brackets to run it, quotes round text: <code>print("...")</code> is your program's voice.`)}
+`)}
 
-<h4>Variables: names stuck on values</h4>
-<p>Programs need to remember things: a name someone typed, a price, a score. A <b>variable</b> is a name you give to a value so you can use it later.</p>
-<pre class="snip">name = "Ada"      # store the text "Ada" under the name name
-age = 36          # store the number 36 under the name age
-print(name)       # shows: Ada
-print(age)        # shows: 36</pre>
-<p>The <code>=</code> sign here does not mean "equals" like in maths. It means <b>"make this name point at this value"</b>. Python always works out the right-hand side first, then attaches the name on the left to the result. That is why <code>age = age + 1</code> makes sense: take the current age, add one, and point <code>age</code> at the new number.</p>
-<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="Four variable names pointing at four values, each with its type">
-<g text-anchor="middle"><text class="t-s" x="80" y="22">variable</text><text class="t-s" x="262" y="22">value</text><text class="t-s" x="372" y="22">type</text></g>
-<rect class="bx-a" x="20" y="36" width="120" height="38" rx="6"/><text class="t-m" x="80" y="60" text-anchor="middle">name</text>
-<path class="ln" d="M140 55h60"/><polygon class="ah" points="200,49 200,61 208,55"/>
-<rect class="bx" x="210" y="36" width="104" height="38" rx="6"/><text class="t-m" x="262" y="60" text-anchor="middle">"Ada"</text>
-<text class="t-b t-a" x="372" y="60" text-anchor="middle">str</text>
-<rect class="bx-a" x="20" y="88" width="120" height="38" rx="6"/><text class="t-m" x="80" y="112" text-anchor="middle">age</text>
-<path class="ln" d="M140 107h60"/><polygon class="ah" points="200,101 200,113 208,107"/>
-<rect class="bx" x="210" y="88" width="104" height="38" rx="6"/><text class="t-m" x="262" y="112" text-anchor="middle">36</text>
-<text class="t-b t-ok" x="372" y="112" text-anchor="middle">int</text>
-<rect class="bx-a" x="20" y="140" width="120" height="38" rx="6"/><text class="t-m" x="80" y="164" text-anchor="middle">price</text>
-<path class="ln" d="M140 159h60"/><polygon class="ah" points="200,153 200,165 208,159"/>
-<rect class="bx" x="210" y="140" width="104" height="38" rx="6"/><text class="t-m" x="262" y="164" text-anchor="middle">19.99</text>
-<text class="t-b t-info" x="372" y="164" text-anchor="middle">float</text>
-<rect class="bx-a" x="20" y="192" width="120" height="38" rx="6"/><text class="t-m" x="80" y="216" text-anchor="middle">is_member</text>
-<path class="ln" d="M140 211h60"/><polygon class="ah" points="200,205 200,217 208,211"/>
-<rect class="bx" x="210" y="192" width="104" height="38" rx="6"/><text class="t-m" x="262" y="216" text-anchor="middle">True</text>
-<text class="t-b t-warn" x="372" y="216" text-anchor="middle">bool</text>
-</svg><figcaption>A variable is a name tag tied to a value. The name lives on the left, the value it points at is in the middle, and every value carries a type: str for text, int for whole numbers, float for decimals and bool for True or False.</figcaption></figure>
-<p>A few rules for names. They can contain letters, digits and underscores, but cannot start with a digit or contain spaces. Capital letters matter, so <code>Age</code> and <code>age</code> are two different variables. Python style is lowercase words joined by underscores, like <code>first_name</code>. Choose names that say what the value means: <code>price</code> tells the next reader far more than <code>p</code>.</p>
+${V.card(2,'Variables','name tags tied to values',`
+<figure class="fig"><svg viewBox="0 0 420 196" role="img" aria-label="Three name tags on strings: name tied to the text Ada, age tied to 36, is_member tied to True">
+<path class="bx-a" d="M24 12H112L124 26 112 40H24Z"/><text class="t-m" x="70" y="31" text-anchor="middle">name</text>
+<path class="bx-a" d="M162 12H250L262 26 250 40H162Z"/><text class="t-m" x="208" y="31" text-anchor="middle">age</text>
+<path class="bx-a" d="M296 12H398L410 26 398 40H296Z"/><text class="t-m" x="348" y="31" text-anchor="middle">is_member</text>
+<path class="ln-d" d="M70 40V68M208 40V68M348 40V68"/>
+<circle class="bx-info" cx="70" cy="110" r="42"/><text class="t-m" x="70" y="117" text-anchor="middle" style="font-size:19px">"Ada"</text>
+<circle class="bx-ok" cx="208" cy="110" r="42"/><text class="t-m" x="208" y="118" text-anchor="middle" style="font-size:22px">36</text>
+<circle class="bx-warn" cx="348" cy="110" r="42"/><text class="t-m" x="348" y="117" text-anchor="middle" style="font-size:19px">True</text>
+<text class="t-b" x="70" y="184" text-anchor="middle">str</text><text class="t-b" x="208" y="184" text-anchor="middle">int</text><text class="t-b" x="348" y="184" text-anchor="middle">bool</text>
+</svg><figcaption>A Python variable is a name tag tied to a value. The value is the real thing; the tag is just how you find it again. Move the tag and the name points somewhere new.</figcaption></figure>
+${V.like(`<p>Name tags at a party. The person (the value) exists on their own. The sticker says what to call them. You can peel a sticker off and stick it on someone else, and two stickers can even be on the same person.</p>`)}
+${V.why(`<p>Inside the computer, values sit in memory at numbered addresses. Nobody wants to write "the thing at slot 140229". A variable lets you say <code>age</code> instead, so your code reads like a sentence.</p>`)}
+${V.anat([[1,'age'],' ',[2,'='],' ',[3,'36']],[
+ '<b>Name.</b> The tag. You choose it.',
+ '<b>Assignment.</b> One <code>=</code> means "tie this name to this value". It is not "equals" from maths.',
+ '<b>Value.</b> Python works this side out first, then ties the name to the answer.'])}
+<p><b>Watch Python run it.</b> Follow the arrow and see what happens to the tags.</p>
+${V.steps([
+ ['Line 1. Python makes the text <b>"Ada"</b> and ties the tag <b>name</b> to it.',`<svg viewBox="0 0 420 190" role="img" aria-label="name tied to Ada">
+<rect class="bx-dark" x="6" y="8" width="204" height="150" rx="8"/>
+<text class="t-a" x="12" y="42" style="font-size:15px">&#9654;</text><text class="t-term" x="30" y="42" style="font-size:14px">name = "Ada"</text>
+<text class="t-term t-dim" x="30" y="74" style="font-size:14px">age = 36</text>
+<text class="t-term t-dim" x="30" y="106" style="font-size:14px">age = age + 1</text>
+<text class="t-term t-dim" x="30" y="138" style="font-size:14px">print(age)</text>
+<path class="bx-a" d="M222 36H284L296 50 284 64H222Z"/><text class="t-m" x="253" y="55" text-anchor="middle">name</text>
+<path class="ln-d" d="M296 50H316"/><rect class="bx-info" x="318" y="30" width="92" height="40" rx="20"/><text class="t-m" x="364" y="56" text-anchor="middle">"Ada"</text>
+</svg>`],
+ ['Line 2. A new value, <b>36</b>, gets the tag <b>age</b>.',`<svg viewBox="0 0 420 190" role="img" aria-label="age tied to 36">
+<rect class="bx-dark" x="6" y="8" width="204" height="150" rx="8"/>
+<text class="t-term t-dim" x="30" y="42" style="font-size:14px">name = "Ada"</text>
+<text class="t-a" x="12" y="74" style="font-size:15px">&#9654;</text><text class="t-term" x="30" y="74" style="font-size:14px">age = 36</text>
+<text class="t-term t-dim" x="30" y="106" style="font-size:14px">age = age + 1</text>
+<text class="t-term t-dim" x="30" y="138" style="font-size:14px">print(age)</text>
+<path class="bx-a" d="M222 36H284L296 50 284 64H222Z"/><text class="t-m" x="253" y="55" text-anchor="middle">name</text>
+<path class="ln-d" d="M296 50H316"/><rect class="bx-info" x="318" y="30" width="92" height="40" rx="20"/><text class="t-m" x="364" y="56" text-anchor="middle">"Ada"</text>
+<path class="bx-a" d="M222 96H274L286 110 274 124H222Z"/><text class="t-m" x="248" y="115" text-anchor="middle">age</text>
+<path class="ln-d" d="M286 110H300"/><rect class="bx-ok" x="302" y="90" width="50" height="40" rx="20"/><text class="t-m" x="327" y="116" text-anchor="middle">36</text>
+</svg>`],
+ ['Line 3. The right side runs first: age is 36, plus 1 is <b>37</b>. Python makes the new value 37 and moves the <b>age</b> tag onto it. Nothing points at 36 any more, so Python throws it away.',`<svg viewBox="0 0 420 190" role="img" aria-label="age tag moves from 36 to 37">
+<rect class="bx-dark" x="6" y="8" width="204" height="150" rx="8"/>
+<text class="t-term t-dim" x="30" y="42" style="font-size:14px">name = "Ada"</text>
+<text class="t-term t-dim" x="30" y="74" style="font-size:14px">age = 36</text>
+<text class="t-a" x="12" y="106" style="font-size:15px">&#9654;</text><text class="t-term" x="30" y="106" style="font-size:14px">age = age + 1</text>
+<text class="t-term t-dim" x="30" y="138" style="font-size:14px">print(age)</text>
+<path class="bx-a" d="M222 36H284L296 50 284 64H222Z"/><text class="t-m" x="253" y="55" text-anchor="middle">name</text>
+<path class="ln-d" d="M296 50H316"/><rect class="bx-info" x="318" y="30" width="92" height="40" rx="20"/><text class="t-m" x="364" y="56" text-anchor="middle">"Ada"</text>
+<path class="bx-a" d="M222 96H274L286 110 274 124H222Z"/><text class="t-m" x="248" y="115" text-anchor="middle">age</text>
+<rect class="bx" x="302" y="90" width="50" height="40" rx="20"/><text class="t-m t-dim" x="327" y="116" text-anchor="middle">36</text><path class="ln-x" d="M306 126 348 94"/>
+<path class="ln-a" d="M286 110C300 152 352 152 372 132"/><rect class="bx-ok" x="360" y="90" width="50" height="40" rx="20"/><text class="t-m" x="385" y="116" text-anchor="middle">37</text>
+<text class="t-s" x="232" y="178" style="font-size:14px">36 + 1 = 37</text>
+</svg>`],
+ ['Line 4. <b>print(age)</b> follows the tag and shows what it points at: <b>37</b>.',`<svg viewBox="0 0 420 190" role="img" aria-label="Output 37">
+<rect class="bx-dark" x="6" y="8" width="204" height="150" rx="8"/>
+<text class="t-term t-dim" x="30" y="42" style="font-size:14px">name = "Ada"</text>
+<text class="t-term t-dim" x="30" y="74" style="font-size:14px">age = 36</text>
+<text class="t-term t-dim" x="30" y="106" style="font-size:14px">age = age + 1</text>
+<text class="t-a" x="12" y="138" style="font-size:15px">&#9654;</text><text class="t-term" x="30" y="138" style="font-size:14px">print(age)</text>
+<path class="bx-a" d="M222 36H284L296 50 284 64H222Z"/><text class="t-m" x="253" y="55" text-anchor="middle">name</text>
+<path class="ln-d" d="M296 50H316"/><rect class="bx-info" x="318" y="30" width="92" height="40" rx="20"/><text class="t-m" x="364" y="56" text-anchor="middle">"Ada"</text>
+<path class="bx-a" d="M222 96H274L286 110 274 124H222Z"/><text class="t-m" x="248" y="115" text-anchor="middle">age</text>
+<path class="ln-d" d="M286 110H358"/><rect class="bx-ok" x="360" y="90" width="50" height="40" rx="20"/><text class="t-m" x="385" y="116" text-anchor="middle">37</text>
+<text class="t-b" x="8" y="182">Output:</text><text class="t-m t-ok" x="76" y="182" style="font-size:18px">37</text>
+</svg>`]])}
+${V.rules(V.rh('Rules: break one and the code will not run'),
+ V.no('2nd_place','A name cannot start with a digit'),V.ok('place_2','Digits are fine after the first character'),
+ V.no('first name','No spaces: Python sees two names'),V.no('first-name','A hyphen is read as minus'),
+ V.no('class = 3','Keywords such as class, if, for, def and True are taken'),V.ok('age vs Age','Capitals matter: these are two different names'),
+ V.rh('Conventions: PEP 8, the official Python style guide'),
+ V.ok('first_name','snake_case: lower-case words joined by underscores'),V.no('firstName','Works, but it is JavaScript style, not Python style'),
+ V.no('x, data2, thing','Vague names. Say what it holds: price, user_count'),V.ok('MAX_LIVES = 3','ALL_CAPS signals a constant: please never change it'),
+ V.no('print = 5','Never reuse built-in names. After this, print() stops working'))}
+${V.build(`<ol><li>Decide what to remember: your name and age.</li><li>Pick snake_case names: <code>name</code>, <code>age</code>.</li><li>Tie them to values: <code>name = "Ada"</code> and <code>age = 36</code>. Text in quotes, numbers without.</li><li>Use them: <code>print(name)</code>.</li><li>Change one: <code>age = age + 1</code>, then print it again.</li></ol>`)}
+${V.hook(`A variable is a sticker, not a box. One <code>=</code> sticks a name on a value.`)}
+`)}
 
-<h4>Types: what kind of value is it?</h4>
-<p>Every value in Python has a <b>type</b>. The type decides what you can do with the value. You can multiply two numbers, and you can make text upper case, but "upper-case the number 7" means nothing. These four types cover most beginner programs:</p>
-<div class="tbl-wrap"><table><tr><th>Type</th><th>Short for</th><th>Holds</th><th>Examples</th></tr>
-<tr><td><code>str</code></td><td>string</td><td>Text: a "string" of characters in quotes</td><td><code>"Ada"</code>, <code>'42'</code>, <code>""</code></td></tr>
-<tr><td><code>int</code></td><td>integer</td><td>Whole numbers, no decimal point</td><td><code>36</code>, <code>0</code>, <code>-4</code></td></tr>
-<tr><td><code>float</code></td><td>floating-point number</td><td>Numbers with a decimal point</td><td><code>19.99</code>, <code>3.0</code></td></tr>
-<tr><td><code>bool</code></td><td>Boolean</td><td>Yes or no</td><td><code>True</code>, <code>False</code></td></tr></table></div>
-<p>You can ask Python for the type of anything with the <code>type()</code> function. <code>print(type(36))</code> reports class int, and <code>print(type("36"))</code> reports class str. "Class" is Python's word for a type.</p>
-<p>Notice that <code>True</code> and <code>False</code> start with a capital letter and have no quotes. With quotes, <code>"True"</code> would just be a four-letter piece of text.</p>
-<div class="tip"><b>Tip</b>Arithmetic uses <code>+</code>, <code>-</code>, <code>*</code> for multiply and <code>/</code> for divide. Dividing always gives a float: <code>10 / 2</code> is <code>5.0</code>, not <code>5</code>.</div>
+${V.card(3,'Types','what kind of value is it?',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="Four types: str holds text like Ada, int holds whole numbers like 36, float holds decimals like 19.99, bool holds True or False">
+<rect class="bx-info" x="6" y="8" width="200" height="66" rx="10"/><text class="t-m" x="20" y="48" style="font-size:20px">"Ada"</text><text class="t-b" x="106" y="36">str</text><text class="t" x="106" y="60" style="font-size:14px">text</text>
+<rect class="bx-ok" x="214" y="8" width="200" height="66" rx="10"/><text class="t-m" x="230" y="48" style="font-size:20px">36</text><text class="t-b" x="300" y="36">int</text><text class="t" x="300" y="60" style="font-size:14px">whole number</text>
+<rect class="bx-a" x="6" y="84" width="200" height="66" rx="10"/><text class="t-m" x="20" y="124" style="font-size:20px">19.99</text><text class="t-b" x="106" y="112">float</text><text class="t" x="106" y="136" style="font-size:14px">decimal</text>
+<rect class="bx-warn" x="214" y="84" width="200" height="66" rx="10"/><text class="t-m" x="230" y="124" style="font-size:20px">True</text><text class="t-b" x="300" y="112">bool</text><text class="t" x="300" y="136" style="font-size:14px">yes or no</text>
+</svg><figcaption>Every value has a type, and the type decides what you can do with it. You can multiply numbers and make text upper case, but not the other way round.</figcaption></figure>
+${V.like(`<p>Shapes in a shape-sorter toy. A star will not go through the circle hole. In the same way, Python will not add the text <code>"36"</code> to the number <code>1</code>. You must turn the star into a circle first.</p>`)}
+${V.why(`<p>The computer stores text and numbers in completely different ways. Types tell Python how to read the bits, and stop you doing nonsense by accident, like "multiply my name by 7".</p>`)}
+${V.anat([[1,'age_num'],' = ',[2,'int'],'(',[3,'"36"'],')'],[
+ '<b>New name</b> for the converted value.',
+ '<b>Converter.</b> Named after the type you want: <code>int()</code>, <code>float()</code>, <code>str()</code>.',
+ '<b>The input.</b> Text that looks like a number. Anything typed by a person or read from a file arrives as text.'])}
+${V.steps([
+ ['<b>age_text</b> is tied to <b>"36"</b>. The quotes make it a <b>str</b>: the characters 3 and 6, not a number.',`<svg viewBox="0 0 420 196" role="img" aria-label="age_text holds the string 36">
+<rect class="bx-dark" x="6" y="8" width="230" height="140" rx="8"/>
+<text class="t-a" x="12" y="40" style="font-size:15px">&#9654;</text><text class="t-term" x="28" y="40" style="font-size:14px">age_text = "36"</text>
+<text class="t-term t-dim" x="28" y="72" style="font-size:14px">age_text + 1</text>
+<text class="t-term t-dim" x="28" y="104" style="font-size:14px">age_num = int(age_text)</text>
+<text class="t-term t-dim" x="28" y="136" style="font-size:14px">age_num + 1</text>
+<text class="t-m" x="250" y="30">age_text</text><rect class="bx-warn" x="250" y="40" width="80" height="40" rx="6"/><text class="t-m" x="290" y="66" text-anchor="middle">"36"</text><text class="t-b" x="344" y="66">str</text>
+</svg>`],
+ ['Python refuses to mix text and a number. It stops with a <b>TypeError</b>: can only concatenate str (not "int") to str.',`<svg viewBox="0 0 420 196" role="img" aria-label="TypeError when adding text and a number">
+<rect class="bx-dark" x="6" y="8" width="230" height="140" rx="8"/>
+<text class="t-term t-dim" x="28" y="40" style="font-size:14px">age_text = "36"</text>
+<text class="t-a" x="12" y="72" style="font-size:15px">&#9654;</text><text class="t-term" x="28" y="72" style="font-size:14px">age_text + 1</text>
+<text class="t-term t-dim" x="28" y="104" style="font-size:14px">age_num = int(age_text)</text>
+<text class="t-term t-dim" x="28" y="136" style="font-size:14px">age_num + 1</text>
+<text class="t-m" x="250" y="30">age_text</text><rect class="bx-warn" x="250" y="40" width="80" height="40" rx="6"/><text class="t-m" x="290" y="66" text-anchor="middle">"36"</text><text class="t-b" x="344" y="66">str</text>
+${V.ic('cross',252,96,34,'ic-bad')}<text class="t-b t-bad" x="294" y="120">TypeError</text>
+<text class="t-bad" x="8" y="180" style="font-size:14px">str + int: Python will not guess what you meant</text>
+</svg>`],
+ ['<b>int("36")</b> reads the characters and builds the real number <b>36</b>. The new tag <b>age_num</b> is tied to it.',`<svg viewBox="0 0 420 196" role="img" aria-label="int converts the string 36 to the number 36">
+<rect class="bx-dark" x="6" y="8" width="230" height="140" rx="8"/>
+<text class="t-term t-dim" x="28" y="40" style="font-size:14px">age_text = "36"</text>
+<text class="t-term t-dim" x="28" y="72" style="font-size:14px">age_text + 1</text>
+<text class="t-a" x="12" y="104" style="font-size:15px">&#9654;</text><text class="t-term" x="28" y="104" style="font-size:14px">age_num = int(age_text)</text>
+<text class="t-term t-dim" x="28" y="136" style="font-size:14px">age_num + 1</text>
+<text class="t-m" x="250" y="30">age_text</text><rect class="bx-warn" x="250" y="40" width="80" height="40" rx="6"/><text class="t-m" x="290" y="66" text-anchor="middle">"36"</text><text class="t-b" x="344" y="66">str</text>
+<path class="ln-a" d="M290 82V100"/><polygon class="ah-a" points="283,98 297,98 290,108"/><text class="t-m t-a" x="304" y="100" style="font-size:14px">int()</text>
+<text class="t-m" x="250" y="126">age_num</text><rect class="bx-ok" x="250" y="134" width="80" height="40" rx="6"/><text class="t-m" x="290" y="160" text-anchor="middle">36</text><text class="t-b" x="344" y="160">int</text>
+</svg>`],
+ ['Now it is a real number, so maths works: 36 + 1 = <b>37</b>.',`<svg viewBox="0 0 420 196" role="img" aria-label="age_num plus 1 is 37">
+<rect class="bx-dark" x="6" y="8" width="230" height="140" rx="8"/>
+<text class="t-term t-dim" x="28" y="40" style="font-size:14px">age_text = "36"</text>
+<text class="t-term t-dim" x="28" y="72" style="font-size:14px">age_text + 1</text>
+<text class="t-term t-dim" x="28" y="104" style="font-size:14px">age_num = int(age_text)</text>
+<text class="t-a" x="12" y="136" style="font-size:15px">&#9654;</text><text class="t-term" x="28" y="136" style="font-size:14px">age_num + 1</text>
+<text class="t-m" x="250" y="30">age_text</text><rect class="bx-warn" x="250" y="40" width="80" height="40" rx="6"/><text class="t-m" x="290" y="66" text-anchor="middle">"36"</text><text class="t-b" x="344" y="66">str</text>
+<text class="t-m" x="250" y="126">age_num</text><rect class="bx-ok" x="250" y="134" width="80" height="40" rx="6"/><text class="t-m" x="290" y="160" text-anchor="middle">36</text><text class="t-b" x="344" y="160">int</text>
+<text class="t-b t-ok" x="8" y="182" style="font-size:17px">36 + 1 = 37</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('True, False','Capital first letter, no quotes'),V.no('true, "True"','Lower case is an unknown name; quotes make it text'),
+ V.ok('"36" + "1"','Gives "361": plus joins two strings'),V.no('"36" + 1','TypeError: convert first with int()'),
+ V.ok('10 / 2','Gives 5.0: dividing always makes a float'),V.ok('type(36)','Asks Python for the type: int'))}
+${V.hook(`Quotes make text. Text is not a number until <code>int()</code> says so.`)}
+`)}
 
-<h4>Text that looks like a number is still text</h4>
-<p>This is the single most common beginner surprise. <code>"36"</code> with quotes is a string of two characters, a 3 and a 6. <code>36</code> without quotes is a number. They print the same, but they behave very differently:</p>
-<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="Adding strings joins them, adding ints does maths, and int() converts between them">
-<rect class="bx-warn" x="20" y="16" width="110" height="40" rx="6"/><text class="t-m" x="75" y="42" text-anchor="middle">"36"</text>
-<text class="t-s" x="75" y="74" text-anchor="middle">str</text>
-<path class="ln-a" d="M130 36h140"/><polygon class="ah-a" points="270,30 270,42 278,36"/>
-<text class="t-m t-a" x="204" y="28" text-anchor="middle">int("36")</text>
-<rect class="bx-ok" x="290" y="16" width="110" height="40" rx="6"/><text class="t-m" x="345" y="42" text-anchor="middle">36</text>
-<text class="t-s" x="345" y="74" text-anchor="middle">int</text>
-<line class="ln-d" x1="20" y1="94" x2="400" y2="94"/>
-<text class="t-m" x="30" y="130">"36" + "1"</text><path class="ln" d="M190 125h40"/><polygon class="ah" points="230,119 230,131 238,125"/>
-<text class="t-m t-warn" x="256" y="130">"361"</text><text class="t-s" x="320" y="130">joins text</text>
-<text class="t-m" x="30" y="174">36 + 1</text><path class="ln" d="M190 169h40"/><polygon class="ah" points="230,163 230,175 238,169"/>
-<text class="t-m t-ok" x="256" y="174">37</text><text class="t-s" x="320" y="174">adds</text>
-<text class="t-m" x="30" y="214">"36" + 1</text><path class="ln" d="M190 209h40"/><polygon class="ah" points="230,203 230,215 238,209"/>
-<text class="t-b t-bad" x="256" y="214">TypeError</text>
-</svg><figcaption>The plus sign joins two strings end to end, adds two numbers, and refuses to mix a string with a number. The int function turns the text "36" into the number 36 so you can do maths with it.</figcaption></figure>
-<p>Why does this matter? Anything a person types into a program, and anything read from a file, arrives as a string. If someone types their age, you get <code>"36"</code>, and you must <b>convert</b> it before doing maths. The conversion functions are named after the types:</p>
-<pre class="snip">age_text = "36"
-age_num = int(age_text)     # 36, a whole number
-float("19.99")              # 19.99, a decimal
-str(36)                     # "36", back to text
-int(3.9)                    # 3: int() chops off the decimals</pre>
-<p>Conversion only works when the text really looks like that type. <code>int("abc")</code> fails, and so does <code>int("3.5")</code>, because "3.5" is not a whole number. Use <code>float("3.5")</code> for that.</p>
-<div class="mistake"><b>Common mistake</b>Writing <code>"Age: " + 36</code>. Python refuses to guess whether you wanted text or maths, and stops with <code>TypeError: can only concatenate str (not "int") to str</code>. "Concatenate" just means "join end to end". Convert the number with <code>str(36)</code>, or better, use an f-string.</div>
+${V.card(4,'f-strings and rounding','fill in the blanks',`
+<figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="A form with two blanks, name and age, filled in to read Ada is 36 years old">
+<rect class="bx" x="8" y="8" width="404" height="56" rx="8"/><text class="t-m" x="22" y="42" style="font-size:16px">f"<tspan class="t-a">{name}</tspan> is <tspan class="t-a">{age}</tspan> years old"</text>
+<path class="ln-a" d="M210 68V88"/><polygon class="ah-a" points="203,86 217,86 210,96"/>
+<rect class="bx-ok" x="8" y="98" width="404" height="46" rx="8"/><text class="t-m" x="22" y="128" style="font-size:16px"><tspan class="t-ok">Ada</tspan> is <tspan class="t-ok">36</tspan> years old</text>
+</svg><figcaption>An f-string is a sentence with blanks. Each pair of curly braces is a blank, and Python fills it with the value of whatever is inside.</figcaption></figure>
+${V.like(`<p>A birthday card that says "Happy birthday, ____!". You write the card once and fill the blank for each friend. The <code>f</code> before the quotes tells Python "this card has blanks".</p>`)}
+${V.anat([[1,'f'],[2,'"'],[3,'{name}'],' is ',[3,'{age}'],' years old',[2,'"']],[
+ '<b>The f.</b> Short for "formatted". Without it, the braces are printed as they are.',
+ '<b>Quotes.</b> It is still a string.',
+ '<b>Blanks.</b> Any variable or sum goes inside the braces, even <code>{age + 1}</code>.'])}
+${V.watch(`<p><b>Decimals are stored approximately.</b> <code>1.1 * 3</code> gives <code>3.3000000000000003</code>. For money, round to two places: <code>round(1.1 * 3, 2)</code> gives <code>3.3</code>. The second number in <code>round</code> is how many decimal places to keep.</p>`)}
+${V.rules(V.ok('f"Hi {name}"','The f goes right before the opening quote'),V.no('"Hi {name}"','Forgot the f: prints Hi {name} literally'),
+ V.no('"Hi " + age','TypeError: f-strings convert numbers for you, + does not'))}
+${V.hook(`Read the f as "fill in": braces are the blanks, Python writes in the answers.`)}
+`)}
 
-<h4>f-strings: dropping values into text</h4>
-<p>You will constantly want sentences built from variables, like "Ada is 36 years old". An <b>f-string</b> is the modern, readable way to do it. Put the letter <code>f</code> straight before the opening quote, then write any variable inside curly braces <code>{ }</code>:</p>
-<pre class="snip">name = "Ada"
-age = 36
-greeting = f"Hi, I'm {name} and I'm {age} years old."
-print(greeting)   # Hi, I'm Ada and I'm 36 years old.</pre>
-<p>Step by step, Python reads the f-string from left to right. Ordinary characters are copied as they are. When it meets <code>{name}</code>, it looks up the variable <code>name</code>, finds <code>"Ada"</code> and puts that text in its place. When it meets <code>{age}</code>, it finds the number 36 and converts it to text for you. The result is one normal string.</p>
-<p>You can put small calculations in the braces too: <code>f"Next year: {age + 1}"</code> gives <code>Next year: 37</code>.</p>
-<div class="mistake"><b>Common mistake</b>Forgetting the <code>f</code>. Then <code>"Hi {name}"</code> prints the braces literally: <code>Hi {name}</code>. If you see curly braces in your output, check for the missing f.</div>
-
-<h4>Decimals are slightly fuzzy: <code>round()</code></h4>
-<p>Computers store decimal numbers in binary, and most decimals cannot be stored exactly in binary, just as one third cannot be written exactly as 0.333... in decimal. Usually you never notice. Sometimes you do:</p>
-<pre class="snip">print(0.1 + 0.2)          # 0.30000000000000004
-print(round(0.1 + 0.2, 2))  # 0.3</pre>
-<p>The <code>round</code> function takes two arguments separated by a comma: the number, and how many decimal places to keep. For money, keep two. So for a price of 19.99 and a quantity of 3, you multiply them and round the result to 2 places, which gives 59.97. Rounding is how you present a tidy answer; serious finance software goes further and uses exact decimal types, but <code>round</code> is right for now.</p>
-
-<h4>Reading the errors you will meet</h4>
-<p>Errors are normal. Every programmer sees dozens a day. Python prints a <b>traceback</b>: the last line names the kind of error and explains it, and the lines above point at where it happened. Read the last line first.</p>
-<div class="tbl-wrap"><table><tr><th>Last line says</th><th>What it means</th></tr>
-<tr><td><code>NameError: name 'nme' is not defined</code></td><td>You used a name Python has never seen. Usually a typo, or the variable is created further down.</td></tr>
-<tr><td><code>SyntaxError: unterminated string literal</code></td><td>A quote was opened but never closed.</td></tr>
-<tr><td><code>TypeError: can only concatenate str ...</code></td><td>You mixed text and a number with <code>+</code>.</td></tr>
-<tr><td><code>ValueError: invalid literal for int()</code></td><td>You tried <code>int()</code> on text that is not a whole number.</td></tr></table></div>
-<div class="try"><b>Try it in your head</b>What is the type of <code>"42"</code>, and what does <code>int("42") + 1</code> give? The quotes make <code>"42"</code> a str. <code>int("42")</code> turns it into the number 42, and adding 1 gives the int <code>43</code>. What would <code>"42" + "1"</code> give? The text <code>"421"</code>.</div>
-
-<h4>Recap</h4>
-<ul>
-<li><code>print(...)</code> shows a value in the output. Text goes in quotes; <code>#</code> starts a comment.</li>
-<li><code>name = value</code> attaches a name to a value. The right-hand side is worked out first.</li>
-<li>The four basic types are <code>str</code>, <code>int</code>, <code>float</code> and <code>bool</code>. <code>type(x)</code> tells you which one you have.</li>
-<li><code>"36"</code> is text and <code>36</code> is a number. Convert with <code>int()</code>, <code>float()</code> and <code>str()</code>.</li>
-<li>f-strings like <code>f"Hi {name}"</code> put values into text. Don't forget the <code>f</code>.</li>
-<li>Decimals are stored approximately, so use <code>round(value, 2)</code> to show money.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. What type is <code>"42"</code>? <i>str, because of the quotes.</i> 2. After <code>x = 5</code> then <code>x = x * 2</code>, what does <code>print(x)</code> show? <i>10.</i> 3. Is <code>total-price</code> a valid variable name? <i>No. The hyphen is minus; use total_price.</i></div>
 `);
 
 explain('yb2',`
-<h4>Why programs need decisions, loops and functions</h4>
-<p>So far your code has run straight down the page, every line exactly once. That is enough for a calculator, but real programs need three more powers:</p>
-<ul>
-<li><b>Deciding</b>: do one thing or another depending on the situation. "If the score is 90 or more, give an A."</li>
-<li><b>Repeating</b>: do the same work for every item, or until something changes. "Add up every even number in this list."</li>
-<li><b>Packaging</b>: give a piece of work a name, so you can reuse it whenever you need it, with different inputs. That named piece of work is a <b>function</b>.</li>
-</ul>
-<p>Almost every program ever written is built from those three ideas plus the variables you already know.</p>
+<p>A program that only runs top to bottom is a calculator. Add three powers and it becomes a real program: it can <b>decide</b> (if), <b>repeat</b> (loops) and <b>reuse</b> (functions). Every game, app and website is built from these.</p>
 
-<h4>Indentation: how Python groups lines</h4>
-<p>Before any of that, you need one rule that makes Python different from many languages. Python uses the <b>spaces at the start of a line</b> to know which lines belong together.</p>
-<p>A line that ends with a colon <code>:</code> opens a <b>block</b>. The block is every line below it that is indented further. The block ends as soon as a line goes back to the old indentation.</p>
-<pre class="snip">if temperature &gt; 25:
-    print("T-shirt weather")   # inside the block
-    print("Wear sun cream")    # also inside
-print("Have a nice day")       # back out: always runs</pre>
-<p>The standard is <b>4 spaces</b> per level. The code editor usually inserts them for you when you press Tab or Enter after a colon. Many languages use curly braces for this job and treat indentation as decoration. In Python, indentation <i>is</i> the structure, so it has to be consistent.</p>
-<div class="mistake"><b>Common mistake</b>Forgetting to indent after a colon. Python stops with <code>IndentationError: expected an indented block after 'if' statement on line 2</code>. The fix is to indent the line below by 4 spaces. A related error, <code>unindent does not match any outer indentation level</code>, means you used 3 spaces on one line and 4 on another.</div>
+${V.card(1,'Indentation','Python\'s blocks are made of spaces',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="An if line ending in a colon, two indented lines forming its block, and an unindented line that always runs">
+<rect class="bx-info" x="55" y="50" width="194" height="62" rx="8"/>
+<text class="t-m" x="16" y="36" style="font-size:16px">if hot:</text>
+<circle class="dot-m" cx="22" cy="68" r="3"/><circle class="dot-m" cx="31" cy="68" r="3"/><circle class="dot-m" cx="40" cy="68" r="3"/><circle class="dot-m" cx="49" cy="68" r="3"/>
+<text class="t-m" x="60" y="74" style="font-size:16px">print("T-shirt")</text>
+<text class="t-m" x="60" y="102" style="font-size:16px">print("Sun cream")</text>
+<text class="t-m" x="16" y="146" style="font-size:16px">print("Bye")</text>
+<text class="t-b t-a" x="90" y="36">&#8592; colon opens a block</text>
+<text class="t-b t-info" x="262" y="78">the block:</text><text class="t" x="262" y="98">runs only if hot</text>
+<text class="t" x="140" y="146">&#8592; back at the edge: always runs</text>
+</svg><figcaption>The colon says "a block starts here". Every line indented 4 spaces below it belongs to that block. The first line back at the left edge is outside it.</figcaption></figure>
+${V.like(`<p>A to-do list with sub-points. "Pack bag" is the heading, and the indented items under it (pencil case, PE kit) belong to it. The next un-indented line is a new job.</p>`)}
+${V.why(`<p>Most languages mark blocks with curly braces <code>{ }</code>, and people indent anyway so humans can read it. Python's creator decided the indentation should <b>be</b> the structure, so the code always looks exactly the way it works.</p>`)}
+${V.anat([[1,'if hot'],[2,':'],'\n',[3,'    '],[4,'print("T-shirt")']],[
+ '<b>The header.</b> A line that starts a block: <code>if</code>, <code>elif</code>, <code>else</code>, <code>for</code>, <code>while</code>, <code>def</code>.',
+ '<b>Colon.</b> Must end every header line.',
+ '<b>Four spaces.</b> The indent. Your editor adds them when you press Tab.',
+ '<b>The block.</b> One or more lines, all at the same indent.'])}
+${V.rules(V.rh('Rules: break one and Python will not run'),
+ V.no('if hot','Missing colon: SyntaxError'),V.no('if hot:<br>print("hi")','Nothing indented under the colon: IndentationError'),
+ V.no('2 spaces, then 4','Every line in one block must line up exactly'),V.no('tabs + spaces','Mixing them confuses Python (TabError)'),
+ V.rh('Conventions'),V.ok('4 spaces','The PEP 8 standard. Set your editor to insert spaces for Tab'))}
+${V.hook(`Colon opens, spaces hold, back to the edge to close.`)}
+`)}
 
-<h4>Comparisons: questions with a True or False answer</h4>
-<p>A decision needs a question. In Python, a question is a <b>comparison</b>, and its answer is a bool: <code>True</code> or <code>False</code>.</p>
-<div class="tbl-wrap"><table><tr><th>Write</th><th>Asks</th><th>Example that is True</th></tr>
-<tr><td><code>==</code></td><td>equal to?</td><td><code>5 == 5</code></td></tr>
-<tr><td><code>!=</code></td><td>not equal to?</td><td><code>5 != 3</code></td></tr>
-<tr><td><code>&gt;</code> and <code>&lt;</code></td><td>greater than? less than?</td><td><code>7 &gt; 2</code></td></tr>
-<tr><td><code>&gt;=</code> and <code>&lt;=</code></td><td>greater or equal? less or equal?</td><td><code>90 &gt;= 90</code></td></tr></table></div>
-<p>Notice the double equals. A single <code>=</code> <b>stores</b> a value: <code>x = 5</code> means "point x at 5". A double <code>==</code> <b>asks</b>: <code>x == 5</code> means "is x equal to 5?" and gives True or False.</p>
-<p>One more operator you need for this lesson: <code>%</code>, called <b>modulo</b>, gives the <b>remainder</b> after a division. <code>7 % 2</code> is 1, because 7 divided by 2 is 3 remainder 1. <code>8 % 2</code> is 0. Every even number divides by 2 with nothing left over, so <code>n % 2 == 0</code> is the standard way to ask "is n even?".</p>
+${V.card(2,'Decisions','if, elif, else: a sorting ladder',`
+<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="A ladder of checks: score at least 90 gives A, at least 80 gives B, at least 70 gives C, else F">
+<text class="t-m" x="8" y="22" style="font-size:16px">grade(score)</text>
+<rect class="bx-warn" x="8" y="40" width="200" height="32" rx="6"/><text class="t-m" x="108" y="61" text-anchor="middle">score >= 90 ?</text>
+<path class="ln" d="M212 56H286"/><polygon class="ah" points="284,50 284,62 296,56"/><text class="t-s" x="226" y="50" style="font-size:14px">True</text>
+<rect class="bx" x="300" y="40" width="56" height="32" rx="6"/><text class="t-b" x="328" y="62" text-anchor="middle" style="font-size:18px">"A"</text>
+<path class="ln" d="M108 72V84"/><polygon class="ah" points="102,82 114,82 108,92"/><text class="t-s" x="120" y="88" style="font-size:14px">False</text>
+<rect class="bx-warn" x="8" y="94" width="200" height="32" rx="6"/><text class="t-m" x="108" y="115" text-anchor="middle">score >= 80 ?</text>
+<path class="ln" d="M212 110H286"/><polygon class="ah" points="284,104 284,116 296,110"/><text class="t-s" x="226" y="104" style="font-size:14px">True</text>
+<rect class="bx" x="300" y="94" width="56" height="32" rx="6"/><text class="t-b" x="328" y="116" text-anchor="middle" style="font-size:18px">"B"</text>
+<path class="ln" d="M108 126V138"/><polygon class="ah" points="102,136 114,136 108,146"/><text class="t-s" x="120" y="142" style="font-size:14px">False</text>
+<rect class="bx-warn" x="8" y="148" width="200" height="32" rx="6"/><text class="t-m" x="108" y="169" text-anchor="middle">score >= 70 ?</text>
+<path class="ln" d="M212 164H286"/><polygon class="ah" points="284,158 284,170 296,164"/><text class="t-s" x="226" y="158" style="font-size:14px">True</text>
+<rect class="bx" x="300" y="148" width="56" height="32" rx="6"/><text class="t-b" x="328" y="170" text-anchor="middle" style="font-size:18px">"C"</text>
+<path class="ln" d="M108 180V192"/><polygon class="ah" points="102,190 114,190 108,200"/><text class="t-s" x="120" y="196" style="font-size:14px">False</text>
+<rect class="bx" x="8" y="202" width="200" height="32" rx="6"/><text class="t-m" x="108" y="223" text-anchor="middle">else</text>
+<path class="ln" d="M212 218H286"/><polygon class="ah" points="284,212 284,224 296,218"/>
+<rect class="bx" x="300" y="202" width="56" height="32" rx="6"/><text class="t-b" x="328" y="224" text-anchor="middle" style="font-size:18px">"F"</text>
+</svg><figcaption>Python asks each question in order, top to bottom. The first one that is True wins and its exit is taken. Only if every question is False does else run.</figcaption></figure>
+${V.like(`<p>Coin-sorting machine. A coin rolls past slots, from the biggest to the smallest, and drops into the first slot it fits. It never drops into two.</p>`)}
+${V.anat([[1,'if'],' ',[2,'score &gt;= 90'],':\n    return "A"\n',[3,'elif'],' score &gt;= 80:\n    return "B"\n',[4,'else'],':\n    return "F"'],[
+ '<b>if</b> asks the first question.',
+ '<b>Condition.</b> Anything that ends up <code>True</code> or <code>False</code>.',
+ '<b>elif</b> means "else if". It is only asked if every question above was False. You can have as many as you need.',
+ '<b>else</b> catches everything left. No condition, and it is optional.'])}
+${V.steps([
+ ['<b>grade(85)</b> is called. First question: is 85 &gt;= 90? <b>False</b>, so Python moves down.',`<svg viewBox="0 0 420 240" role="img" aria-label="85 is not at least 90, so go down">
+<text class="t-m" x="8" y="22" style="font-size:16px">grade(85)</text>
+<rect class="bx-hl" x="8" y="40" width="200" height="32" rx="6"/><text class="t-m" x="108" y="61" text-anchor="middle">85 >= 90 ?</text>
+<path class="ln" d="M212 56H286"/><polygon class="ah" points="284,50 284,62 296,56"/><text class="t-s" x="226" y="50" style="font-size:14px">True</text>
+<rect class="bx" x="300" y="40" width="56" height="32" rx="6"/><text class="t-b" x="328" y="62" text-anchor="middle" style="font-size:18px">"A"</text>
+<path class="ln-a" d="M108 72V84"/><polygon class="ah-a" points="102,82 114,82 108,92"/><text class="t-b t-bad" x="120" y="88" style="font-size:14px">False</text>
+<rect class="bx" x="8" y="94" width="200" height="32" rx="6"/><text class="t-m" x="108" y="115" text-anchor="middle">85 >= 80 ?</text>
+<path class="ln" d="M212 110H286"/><polygon class="ah" points="284,104 284,116 296,110"/><text class="t-s" x="226" y="104" style="font-size:14px">True</text>
+<rect class="bx" x="300" y="94" width="56" height="32" rx="6"/><text class="t-b" x="328" y="116" text-anchor="middle" style="font-size:18px">"B"</text>
+<path class="ln" d="M108 126V138"/><polygon class="ah" points="102,136 114,136 108,146"/><text class="t-s" x="120" y="142" style="font-size:14px">False</text>
+<rect class="bx" x="8" y="148" width="200" height="32" rx="6"/><text class="t-m" x="108" y="169" text-anchor="middle">85 >= 70 ?</text>
+<path class="ln" d="M212 164H286"/><polygon class="ah" points="284,158 284,170 296,164"/><text class="t-s" x="226" y="158" style="font-size:14px">True</text>
+<rect class="bx" x="300" y="148" width="56" height="32" rx="6"/><text class="t-b" x="328" y="170" text-anchor="middle" style="font-size:18px">"C"</text>
+<path class="ln" d="M108 180V192"/><polygon class="ah" points="102,190 114,190 108,200"/><text class="t-s" x="120" y="196" style="font-size:14px">False</text>
+<rect class="bx" x="8" y="202" width="200" height="32" rx="6"/><text class="t-m" x="108" y="223" text-anchor="middle">else</text>
+<path class="ln" d="M212 218H286"/><polygon class="ah" points="284,212 284,224 296,218"/>
+<rect class="bx" x="300" y="202" width="56" height="32" rx="6"/><text class="t-b" x="328" y="224" text-anchor="middle" style="font-size:18px">"F"</text>
+</svg>`],
+ ['Next question: is 85 &gt;= 80? <b>True</b>. Python takes the B exit.',`<svg viewBox="0 0 420 240" role="img" aria-label="85 is at least 80, so take the B exit">
+<text class="t-m" x="8" y="22" style="font-size:16px">grade(85)</text>
+<rect class="bx" x="8" y="40" width="200" height="32" rx="6"/><text class="t-m t-dim" x="108" y="61" text-anchor="middle">85 >= 90 ?</text>
+<path class="ln" d="M212 56H286"/><polygon class="ah" points="284,50 284,62 296,56"/><text class="t-s t-dim" x="226" y="50" style="font-size:14px">True</text>
+<rect class="bx" x="300" y="40" width="56" height="32" rx="6"/><text class="t-b t-dim" x="328" y="62" text-anchor="middle" style="font-size:18px">"A"</text>
+<path class="ln-a" d="M108 72V84"/><polygon class="ah-a" points="102,82 114,82 108,92"/><text class="t-b t-bad" x="120" y="88" style="font-size:14px">False</text>
+<rect class="bx-hl" x="8" y="94" width="200" height="32" rx="6"/><text class="t-m" x="108" y="115" text-anchor="middle">85 >= 80 ?</text>
+<path class="ln-ok" d="M212 110H286"/><polygon class="ah-ok" points="284,104 284,116 296,110"/><text class="t-s" x="226" y="104" style="font-size:14px">True</text>
+<rect class="bx-ok" x="300" y="94" width="56" height="32" rx="6"/><text class="t-b" x="328" y="116" text-anchor="middle" style="font-size:18px">"B"</text>
+<path class="ln" d="M108 126V138"/><polygon class="ah" points="102,136 114,136 108,146"/><text class="t-s t-dim" x="120" y="142" style="font-size:14px">False</text>
+<rect class="bx" x="8" y="148" width="200" height="32" rx="6"/><text class="t-m t-dim" x="108" y="169" text-anchor="middle">85 >= 70 ?</text>
+<path class="ln" d="M212 164H286"/><polygon class="ah" points="284,158 284,170 296,164"/><text class="t-s t-dim" x="226" y="158" style="font-size:14px">True</text>
+<rect class="bx" x="300" y="148" width="56" height="32" rx="6"/><text class="t-b t-dim" x="328" y="170" text-anchor="middle" style="font-size:18px">"C"</text>
+<path class="ln" d="M108 180V192"/><polygon class="ah" points="102,190 114,190 108,200"/><text class="t-s t-dim" x="120" y="196" style="font-size:14px">False</text>
+<rect class="bx" x="8" y="202" width="200" height="32" rx="6"/><text class="t-m t-dim" x="108" y="223" text-anchor="middle">else</text>
+<path class="ln" d="M212 218H286"/><polygon class="ah" points="284,212 284,224 296,218"/>
+<rect class="bx" x="300" y="202" width="56" height="32" rx="6"/><text class="t-b t-dim" x="328" y="224" text-anchor="middle" style="font-size:18px">"F"</text>
+</svg>`],
+ ['<b>return "B"</b> hands the answer back and ends the function. The questions below are never even asked.',`<svg viewBox="0 0 420 240" role="img" aria-label="grade returns B and the rest is skipped">
+<text class="t-m" x="8" y="22" style="font-size:16px">grade(85)</text>
+<text class="t-b t-ok" x="412" y="22" text-anchor="end" style="font-size:16px">returns "B"</text>
+<rect class="bx" x="8" y="40" width="200" height="32" rx="6"/><text class="t-m t-dim" x="108" y="61" text-anchor="middle">85 >= 90 ?</text>
+<path class="ln" d="M212 56H286"/><polygon class="ah" points="284,50 284,62 296,56"/><text class="t-s t-dim" x="226" y="50" style="font-size:14px">True</text>
+<rect class="bx" x="300" y="40" width="56" height="32" rx="6"/><text class="t-b t-dim" x="328" y="62" text-anchor="middle" style="font-size:18px">"A"</text>
+<path class="ln-a" d="M108 72V84"/><polygon class="ah-a" points="102,82 114,82 108,92"/><text class="t-b t-bad" x="120" y="88" style="font-size:14px">False</text>
+<rect class="bx-ok" x="8" y="94" width="200" height="32" rx="6"/><text class="t-m" x="108" y="115" text-anchor="middle">85 >= 80 ?</text>
+<path class="ln-ok" d="M212 110H286"/><polygon class="ah-ok" points="284,104 284,116 296,110"/><text class="t-s" x="226" y="104" style="font-size:14px">True</text>
+<rect class="bx-ok" x="300" y="94" width="56" height="32" rx="6"/><text class="t-b" x="328" y="116" text-anchor="middle" style="font-size:18px">"B"</text>
+<path class="ln" d="M108 126V138"/><polygon class="ah" points="102,136 114,136 108,146"/><text class="t-s t-dim" x="120" y="142" style="font-size:14px">False</text>
+<rect class="bx" x="8" y="148" width="200" height="32" rx="6"/><text class="t-m t-dim" x="108" y="169" text-anchor="middle">85 >= 70 ?</text>
+<path class="ln" d="M212 164H286"/><polygon class="ah" points="284,158 284,170 296,164"/><text class="t-s t-dim" x="226" y="158" style="font-size:14px">True</text>
+<rect class="bx" x="300" y="148" width="56" height="32" rx="6"/><text class="t-b t-dim" x="328" y="170" text-anchor="middle" style="font-size:18px">"C"</text>
+<path class="ln" d="M108 180V192"/><polygon class="ah" points="102,190 114,190 108,200"/><text class="t-s t-dim" x="120" y="196" style="font-size:14px">False</text>
+<rect class="bx" x="8" y="202" width="200" height="32" rx="6"/><text class="t-m t-dim" x="108" y="223" text-anchor="middle">else</text>
+<path class="ln" d="M212 218H286"/><polygon class="ah" points="284,212 284,224 296,218"/>
+<rect class="bx" x="300" y="202" width="56" height="32" rx="6"/><text class="t-b t-dim" x="328" y="224" text-anchor="middle" style="font-size:18px">"F"</text>
+<text class="t-s" x="366" y="170" style="font-size:14px">skipped</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('score == 90','Two = signs compare: "is it equal?"'),V.no('if score = 90:','One = stores a value. Python refuses it here'),
+ V.ok('!=  &lt;  &gt;  &lt;=  &gt;=','Not equal, less, more, at most, at least'),V.no('else if','Python spells it elif'),
+ V.rh('Conventions'),V.ok('biggest first','Put the strictest check at the top. If &gt;= 70 came first, 95 would get a C'))}
+${V.hook(`Top to bottom, first True wins. One = stores, two == compare.`)}
+`)}
 
-<h4>Decisions: <code>if</code>, <code>elif</code> and <code>else</code></h4>
-<p>An <code>if</code> runs its block only when its question is True. You can chain more questions with <code>elif</code> (short for "else if"), and finish with <code>else</code>, which catches everything that matched nothing above.</p>
-<pre class="snip">if score &gt;= 90:
-    letter = "A"
-elif score &gt;= 80:      # only asked if the first was False
-    letter = "B"
-elif score &gt;= 70:
-    letter = "C"
-else:                  # none of the above
-    letter = "F"</pre>
-<p>Python asks the questions <b>in order, top to bottom</b>, and stops at the first one that is True. Only one block ever runs. Here is the path for a score of 85:</p>
-<figure class="fig"><svg viewBox="0 0 420 316" role="img" aria-label="An if elif else chain for a score of 85, stopping at the second question">
-<rect class="bx" x="70" y="8" width="150" height="36" rx="8"/><text class="t-m" x="145" y="31" text-anchor="middle">score = 85</text>
-<path class="ln" d="M145 44v10"/><polygon class="ah" points="139,52 151,52 145,60"/>
-<rect class="bx" x="30" y="62" width="230" height="40" rx="8"/><text class="t-m" x="145" y="87" text-anchor="middle">score &gt;= 90 ?</text>
-<path class="ln-d" d="M260 82h44"/><text class="t-s" x="284" y="74" text-anchor="middle">yes</text>
-<rect class="bx" x="312" y="64" width="88" height="36" rx="6"/><text class="t-m" x="356" y="87" text-anchor="middle">"A"</text>
-<path class="ln-a" d="M145 102v20"/><polygon class="ah-a" points="139,120 151,120 145,128"/><text class="t-s t-a" x="157" y="120">no</text>
-<rect class="bx-a" x="30" y="132" width="230" height="40" rx="8"/><text class="t-m" x="145" y="157" text-anchor="middle">score &gt;= 80 ?</text>
-<path class="ln-ok" d="M260 152h44"/><polygon class="ah-ok" points="302,146 302,158 310,152"/><text class="t-s t-ok" x="284" y="144" text-anchor="middle">yes</text>
-<rect class="bx-ok" x="312" y="134" width="88" height="36" rx="6"/><text class="t-m" x="356" y="157" text-anchor="middle">"B"</text>
-<path class="ln-d" d="M145 172v28"/>
-<rect class="bx" x="30" y="202" width="230" height="40" rx="8"/><text class="t-m" x="145" y="227" text-anchor="middle">score &gt;= 70 ?</text>
-<path class="ln-d" d="M260 222h44"/>
-<rect class="bx" x="312" y="204" width="88" height="36" rx="6"/><text class="t-m" x="356" y="227" text-anchor="middle">"C"</text>
-<path class="ln-d" d="M145 242v28"/>
-<rect class="bx" x="30" y="272" width="230" height="36" rx="8"/><text class="t-m" x="145" y="295" text-anchor="middle">else</text>
-<path class="ln-d" d="M260 290h44"/>
-<rect class="bx" x="312" y="272" width="88" height="36" rx="6"/><text class="t-m" x="356" y="295" text-anchor="middle">"F"</text>
-</svg><figcaption>For a score of 85, the first question is False, so Python moves down. The second question is True, so the answer is B and Python skips everything below. The dashed paths are never even checked.</figcaption></figure>
-<p>This is why the order matters. Because 90 was already ruled out, the <code>elif score &gt;= 80</code> line effectively means "80 to 89". If you put the <code>&gt;= 70</code> check first, a score of 95 would stop there and get a C.</p>
-<p>A score of exactly 90 is worth checking too. <code>90 &gt;= 90</code> is True, so it gets an A. With <code>&gt;</code> instead of <code>&gt;=</code>, it would wrongly fall through to B. Values sitting exactly on a boundary are where most bugs hide.</p>
+${V.card(3,'Loops','the same job, again and again',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="A conveyor belt carries the numbers 1, 2, 3 and 4 past a robot that does the same job to each">
+<path class="ln" style="stroke-width:5" d="M10 110H410"/>
+<circle class="bx" cx="40" cy="126" r="12"/><circle class="bx" cx="380" cy="126" r="12"/>
+<rect class="bx" x="24" y="56" width="50" height="50" rx="6"/><text class="t-m" x="49" y="89" text-anchor="middle" style="font-size:20px">1</text>
+<rect class="bx" x="88" y="56" width="50" height="50" rx="6"/><text class="t-m" x="113" y="89" text-anchor="middle" style="font-size:20px">2</text>
+<rect class="bx-warn" x="186" y="56" width="50" height="50" rx="6"/><text class="t-m" x="211" y="89" text-anchor="middle" style="font-size:20px">3</text>
+<rect class="bx" x="300" y="56" width="50" height="50" rx="6"/><text class="t-m" x="325" y="89" text-anchor="middle" style="font-size:20px">4</text>
+${V.ic('robot',186,4,50,'ic-a')}
+<text class="t-b t-a" x="246" y="34">n = 3</text>
+<text class="t" x="210" y="152" text-anchor="middle">for n in numbers: one trip per item</text>
+</svg><figcaption>A for loop is a conveyor belt. Each item comes past in turn, gets the name n for that trip, and the same block of code runs on it.</figcaption></figure>
+${V.like(`<p>Marking a pile of homework. You pick up the top book, do the same marking steps, put it down, and pick up the next, until the pile is empty.</p>`)}
+${V.why(`<p>Computers are brilliant at boring repetition. Without loops, adding up 1,000 numbers would take 1,000 lines. With a loop it takes three, and it works for any length of list.</p>`)}
+${V.anat([[1,'for'],' ',[2,'n'],' ',[3,'in'],' ',[4,'numbers'],':'],[
+ '<b>for</b> starts a loop that visits every item.',
+ '<b>Loop variable.</b> A name tag that moves to the next item on every trip. You choose the name.',
+ '<b>in</b> joins the name to the collection.',
+ '<b>The collection.</b> A list, a string, or <code>range(5)</code>, which gives 0, 1, 2, 3, 4.'])}
+<p><b>Watch sum_evens([1, 2, 3, 4]) run.</b> The <code>%</code> sign gives the remainder after dividing, so <code>n % 2 == 0</code> means "n is even". <code>total += n</code> is short for <code>total = total + n</code>.</p>
+${V.steps([
+ ['Before the loop: start a running total at <b>0</b>.',`<svg viewBox="0 0 420 206" role="img" aria-label="sum_evens step 0">
+<rect class="bx-dark" x="6" y="8" width="186" height="140" rx="8"/>
+<text class="t-term" x="16" y="34" style="font-size:14px">total&#160;=&#160;0</text>
+<text class="t-term t-dim" x="16" y="60" style="font-size:14px">for&#160;n&#160;in&#160;numbers:</text>
+<text class="t-term t-dim" x="16" y="86" style="font-size:14px">&#160;&#160;&#160;&#160;if&#160;n&#160;%&#160;2&#160;==&#160;0:</text>
+<text class="t-term t-dim" x="16" y="112" style="font-size:14px">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;total&#160;+=&#160;n</text>
+<text class="t-term t-dim" x="16" y="138" style="font-size:14px">return&#160;total</text>
+<path class="ln" style="stroke-width:4" d="M206 92H414"/>
+<rect class="bx" x="210" y="44" width="44" height="44" rx="6"/><text class="t-m" x="232" y="73" text-anchor="middle" style="font-size:19px">1</text>
+<rect class="bx" x="261" y="44" width="44" height="44" rx="6"/><text class="t-m" x="283" y="73" text-anchor="middle" style="font-size:19px">2</text>
+<rect class="bx" x="312" y="44" width="44" height="44" rx="6"/><text class="t-m" x="334" y="73" text-anchor="middle" style="font-size:19px">3</text>
+<rect class="bx" x="363" y="44" width="44" height="44" rx="6"/><text class="t-m" x="385" y="73" text-anchor="middle" style="font-size:19px">4</text>
+<text class="t-s" x="210" y="34" style="font-size:14px">numbers</text>
+<text class="t-m" x="10" y="186" style="font-size:16px">total</text>
+<rect class="bx-ok" x="70" y="160" width="76" height="38" rx="6"/><text class="t-m" x="108" y="186" text-anchor="middle" style="font-size:19px">0</text>
+</svg>`],
+ ['Trip 1: n is <b>1</b>. 1 divided by 2 leaves 1, so it is odd. The if is False and nothing is added.',`<svg viewBox="0 0 420 206" role="img" aria-label="sum_evens step 1">
+<rect class="bx-dark" x="6" y="8" width="186" height="140" rx="8"/>
+<text class="t-term t-dim" x="16" y="34" style="font-size:14px">total&#160;=&#160;0</text>
+<text class="t-term" x="16" y="60" style="font-size:14px">for&#160;n&#160;in&#160;numbers:</text>
+<text class="t-term" x="16" y="86" style="font-size:14px">&#160;&#160;&#160;&#160;if&#160;n&#160;%&#160;2&#160;==&#160;0:</text>
+<text class="t-term t-dim" x="16" y="112" style="font-size:14px">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;total&#160;+=&#160;n</text>
+<text class="t-term t-dim" x="16" y="138" style="font-size:14px">return&#160;total</text>
+<path class="ln" style="stroke-width:4" d="M206 92H414"/>
+<rect class="bx-hl" x="210" y="44" width="44" height="44" rx="6"/><text class="t-m" x="232" y="73" text-anchor="middle" style="font-size:19px">1</text>
+<text class="t-s" x="232" y="114" text-anchor="middle" style="font-size:14px">skip</text>
+<rect class="bx" x="261" y="44" width="44" height="44" rx="6"/><text class="t-m" x="283" y="73" text-anchor="middle" style="font-size:19px">2</text>
+<rect class="bx" x="312" y="44" width="44" height="44" rx="6"/><text class="t-m" x="334" y="73" text-anchor="middle" style="font-size:19px">3</text>
+<rect class="bx" x="363" y="44" width="44" height="44" rx="6"/><text class="t-m" x="385" y="73" text-anchor="middle" style="font-size:19px">4</text>
+<text class="t-s" x="210" y="34" style="font-size:14px">numbers</text>
+<text class="t-b t-a" x="232" y="138" text-anchor="middle">n = 1</text>
+<text class="t-m" x="10" y="186" style="font-size:16px">total</text>
+<rect class="bx-ok" x="70" y="160" width="76" height="38" rx="6"/><text class="t-m" x="108" y="186" text-anchor="middle" style="font-size:19px">0</text>
+<text class="t" x="164" y="186" style="font-size:15px">1 % 2 is 1: odd, skip</text>
+</svg>`],
+ ['Trip 2: n is <b>2</b>. The remainder is 0, so it is even. total becomes 0 + 2 = <b>2</b>.',`<svg viewBox="0 0 420 206" role="img" aria-label="sum_evens step 2">
+<rect class="bx-dark" x="6" y="8" width="186" height="140" rx="8"/>
+<text class="t-term t-dim" x="16" y="34" style="font-size:14px">total&#160;=&#160;0</text>
+<text class="t-term" x="16" y="60" style="font-size:14px">for&#160;n&#160;in&#160;numbers:</text>
+<text class="t-term" x="16" y="86" style="font-size:14px">&#160;&#160;&#160;&#160;if&#160;n&#160;%&#160;2&#160;==&#160;0:</text>
+<text class="t-term" x="16" y="112" style="font-size:14px">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;total&#160;+=&#160;n</text>
+<text class="t-term t-dim" x="16" y="138" style="font-size:14px">return&#160;total</text>
+<path class="ln" style="stroke-width:4" d="M206 92H414"/>
+<rect class="bx" x="210" y="44" width="44" height="44" rx="6"/><text class="t-m t-dim" x="232" y="73" text-anchor="middle" style="font-size:19px">1</text>
+<text class="t-s" x="232" y="114" text-anchor="middle" style="font-size:14px">skip</text>
+<rect class="bx-hl" x="261" y="44" width="44" height="44" rx="6"/><text class="t-m" x="283" y="73" text-anchor="middle" style="font-size:19px">2</text>
+<text class="t-b t-ok" x="283" y="114" text-anchor="middle">even</text>
+<rect class="bx" x="312" y="44" width="44" height="44" rx="6"/><text class="t-m" x="334" y="73" text-anchor="middle" style="font-size:19px">3</text>
+<rect class="bx" x="363" y="44" width="44" height="44" rx="6"/><text class="t-m" x="385" y="73" text-anchor="middle" style="font-size:19px">4</text>
+<text class="t-s" x="210" y="34" style="font-size:14px">numbers</text>
+<text class="t-b t-a" x="283" y="138" text-anchor="middle">n = 2</text>
+<text class="t-m" x="10" y="186" style="font-size:16px">total</text>
+<rect class="bx-ok" x="70" y="160" width="76" height="38" rx="6"/><text class="t-m" x="108" y="186" text-anchor="middle" style="font-size:19px">2</text>
+<text class="t" x="164" y="186" style="font-size:15px">2 % 2 is 0: 0 + 2 = 2</text>
+</svg>`],
+ ['Trip 3: n is <b>3</b>. Odd, skipped.',`<svg viewBox="0 0 420 206" role="img" aria-label="sum_evens step 3">
+<rect class="bx-dark" x="6" y="8" width="186" height="140" rx="8"/>
+<text class="t-term t-dim" x="16" y="34" style="font-size:14px">total&#160;=&#160;0</text>
+<text class="t-term" x="16" y="60" style="font-size:14px">for&#160;n&#160;in&#160;numbers:</text>
+<text class="t-term" x="16" y="86" style="font-size:14px">&#160;&#160;&#160;&#160;if&#160;n&#160;%&#160;2&#160;==&#160;0:</text>
+<text class="t-term t-dim" x="16" y="112" style="font-size:14px">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;total&#160;+=&#160;n</text>
+<text class="t-term t-dim" x="16" y="138" style="font-size:14px">return&#160;total</text>
+<path class="ln" style="stroke-width:4" d="M206 92H414"/>
+<rect class="bx" x="210" y="44" width="44" height="44" rx="6"/><text class="t-m t-dim" x="232" y="73" text-anchor="middle" style="font-size:19px">1</text>
+<text class="t-s" x="232" y="114" text-anchor="middle" style="font-size:14px">skip</text>
+<rect class="bx" x="261" y="44" width="44" height="44" rx="6"/><text class="t-m t-dim" x="283" y="73" text-anchor="middle" style="font-size:19px">2</text>
+<text class="t-b t-ok" x="283" y="114" text-anchor="middle">even</text>
+<rect class="bx-hl" x="312" y="44" width="44" height="44" rx="6"/><text class="t-m" x="334" y="73" text-anchor="middle" style="font-size:19px">3</text>
+<text class="t-s" x="334" y="114" text-anchor="middle" style="font-size:14px">skip</text>
+<rect class="bx" x="363" y="44" width="44" height="44" rx="6"/><text class="t-m" x="385" y="73" text-anchor="middle" style="font-size:19px">4</text>
+<text class="t-s" x="210" y="34" style="font-size:14px">numbers</text>
+<text class="t-b t-a" x="334" y="138" text-anchor="middle">n = 3</text>
+<text class="t-m" x="10" y="186" style="font-size:16px">total</text>
+<rect class="bx-ok" x="70" y="160" width="76" height="38" rx="6"/><text class="t-m" x="108" y="186" text-anchor="middle" style="font-size:19px">2</text>
+<text class="t" x="164" y="186" style="font-size:15px">3 % 2 is 1: odd, skip</text>
+</svg>`],
+ ['Trip 4: n is <b>4</b>. Even, so total becomes 2 + 4 = <b>6</b>.',`<svg viewBox="0 0 420 206" role="img" aria-label="sum_evens step 4">
+<rect class="bx-dark" x="6" y="8" width="186" height="140" rx="8"/>
+<text class="t-term t-dim" x="16" y="34" style="font-size:14px">total&#160;=&#160;0</text>
+<text class="t-term" x="16" y="60" style="font-size:14px">for&#160;n&#160;in&#160;numbers:</text>
+<text class="t-term" x="16" y="86" style="font-size:14px">&#160;&#160;&#160;&#160;if&#160;n&#160;%&#160;2&#160;==&#160;0:</text>
+<text class="t-term" x="16" y="112" style="font-size:14px">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;total&#160;+=&#160;n</text>
+<text class="t-term t-dim" x="16" y="138" style="font-size:14px">return&#160;total</text>
+<path class="ln" style="stroke-width:4" d="M206 92H414"/>
+<rect class="bx" x="210" y="44" width="44" height="44" rx="6"/><text class="t-m t-dim" x="232" y="73" text-anchor="middle" style="font-size:19px">1</text>
+<text class="t-s" x="232" y="114" text-anchor="middle" style="font-size:14px">skip</text>
+<rect class="bx" x="261" y="44" width="44" height="44" rx="6"/><text class="t-m t-dim" x="283" y="73" text-anchor="middle" style="font-size:19px">2</text>
+<text class="t-b t-ok" x="283" y="114" text-anchor="middle">even</text>
+<rect class="bx" x="312" y="44" width="44" height="44" rx="6"/><text class="t-m t-dim" x="334" y="73" text-anchor="middle" style="font-size:19px">3</text>
+<text class="t-s" x="334" y="114" text-anchor="middle" style="font-size:14px">skip</text>
+<rect class="bx-hl" x="363" y="44" width="44" height="44" rx="6"/><text class="t-m" x="385" y="73" text-anchor="middle" style="font-size:19px">4</text>
+<text class="t-b t-ok" x="385" y="114" text-anchor="middle">even</text>
+<text class="t-s" x="210" y="34" style="font-size:14px">numbers</text>
+<text class="t-b t-a" x="385" y="138" text-anchor="middle">n = 4</text>
+<text class="t-m" x="10" y="186" style="font-size:16px">total</text>
+<rect class="bx-ok" x="70" y="160" width="76" height="38" rx="6"/><text class="t-m" x="108" y="186" text-anchor="middle" style="font-size:19px">6</text>
+<text class="t" x="164" y="186" style="font-size:15px">4 % 2 is 0: 2 + 4 = 6</text>
+</svg>`],
+ ['The belt is empty, so the loop ends. Python carries on with the next un-indented line: <b>return total</b> gives back 6.',`<svg viewBox="0 0 420 206" role="img" aria-label="sum_evens step 5">
+<rect class="bx-dark" x="6" y="8" width="186" height="140" rx="8"/>
+<text class="t-term t-dim" x="16" y="34" style="font-size:14px">total&#160;=&#160;0</text>
+<text class="t-term t-dim" x="16" y="60" style="font-size:14px">for&#160;n&#160;in&#160;numbers:</text>
+<text class="t-term t-dim" x="16" y="86" style="font-size:14px">&#160;&#160;&#160;&#160;if&#160;n&#160;%&#160;2&#160;==&#160;0:</text>
+<text class="t-term t-dim" x="16" y="112" style="font-size:14px">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;total&#160;+=&#160;n</text>
+<text class="t-term" x="16" y="138" style="font-size:14px">return&#160;total</text>
+<path class="ln" style="stroke-width:4" d="M206 92H414"/>
+<rect class="bx" x="210" y="44" width="44" height="44" rx="6"/><text class="t-m t-dim" x="232" y="73" text-anchor="middle" style="font-size:19px">1</text>
+<text class="t-s" x="232" y="114" text-anchor="middle" style="font-size:14px">skip</text>
+<rect class="bx" x="261" y="44" width="44" height="44" rx="6"/><text class="t-m t-dim" x="283" y="73" text-anchor="middle" style="font-size:19px">2</text>
+<text class="t-b t-ok" x="283" y="114" text-anchor="middle">even</text>
+<rect class="bx" x="312" y="44" width="44" height="44" rx="6"/><text class="t-m t-dim" x="334" y="73" text-anchor="middle" style="font-size:19px">3</text>
+<text class="t-s" x="334" y="114" text-anchor="middle" style="font-size:14px">skip</text>
+<rect class="bx" x="363" y="44" width="44" height="44" rx="6"/><text class="t-m t-dim" x="385" y="73" text-anchor="middle" style="font-size:19px">4</text>
+<text class="t-b t-ok" x="385" y="114" text-anchor="middle">even</text>
+<text class="t-s" x="210" y="34" style="font-size:14px">numbers</text>
+<text class="t-m" x="10" y="186" style="font-size:16px">total</text>
+<rect class="bx-ok" x="70" y="160" width="76" height="38" rx="6"/><text class="t-m" x="108" y="186" text-anchor="middle" style="font-size:19px">6</text>
+<text class="t-b t-ok" x="164" y="186" style="font-size:15px">returns 6</text>
+</svg>`]])}
+<p><b>while</b> is the other loop. It repeats as long as a condition stays True, so it suits "keep going until..." jobs, like a countdown:</p>
+<pre class="snip">while n &gt; 0:          # check, then run the block, then check again
+    result.append(n)    # add n to the end of the list
+    n = n - 1           # change n, or the loop never stops</pre>
+${V.rules(V.rh('Rules'),
+ V.ok('for n in numbers:','Colon at the end, block indented below'),V.no('while n &gt; 0: (n never changes)','An infinite loop: the program never finishes'),
+ V.ok('range(3)','0, 1, 2. It stops before 3'),
+ V.rh('Conventions'),V.ok('for name in names:','Plural list, singular loop name'),V.ok('for when you know the items','while when you only know when to stop'))}
+${V.hook(`for walks the list; while waits for False. Always change what while is watching.`)}
+`)}
 
-<h4>Loops with <code>for</code>: once per item</h4>
-<p>A <code>for</code> loop runs its block once for each item in a collection, such as a list. A <b>list</b> is an ordered collection written in square brackets: <code>[1, 2, 3, 4]</code>. You will study lists properly in the next lesson.</p>
-<pre class="snip">numbers = [1, 2, 3, 4]
-total = 0
-for n in numbers:          # n becomes 1, then 2, then 3, then 4
-    if n % 2 == 0:         # is it even?
-        total = total + n  # then add it to the running total
-print(total)               # 6</pre>
-<p>The name after <code>for</code>, here <code>n</code>, is a variable that Python points at each item in turn. Let's trace it step by step:</p>
-<div class="tbl-wrap"><table><tr><th>Round</th><th>n</th><th>n % 2 == 0?</th><th>total after</th></tr>
-<tr><td>1</td><td>1</td><td>False</td><td>0</td></tr>
-<tr><td>2</td><td>2</td><td>True</td><td>2</td></tr>
-<tr><td>3</td><td>3</td><td>False</td><td>2</td></tr>
-<tr><td>4</td><td>4</td><td>True</td><td>6</td></tr></table></div>
-<p>This pattern, start a variable at zero and add to it inside the loop, is called an <b>accumulator</b>. You will use it constantly. Notice that <code>total = 0</code> sits <i>before</i> the loop. Put it inside, and it would reset to zero every round.</p>
-<p>If you just want to repeat something a number of times, <code>range</code> makes the numbers for you: <code>for i in range(3):</code> runs with i as 0, 1 and 2. It starts at 0 and stops <i>before</i> the number you give it.</p>
+${V.card(4,'Functions','machines you build once',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="The greet machine: put in Ada and Hello, Ada! comes out; put in nothing and the default friend is used">
+<rect class="bx-a" x="140" y="26" width="140" height="130" rx="12"/>${V.ic('machine',180,38,60,'ic-a')}
+<text class="t-m" x="210" y="124" text-anchor="middle">greet</text>
+<text class="t-s" x="210" y="146" text-anchor="middle" style="font-size:14px">default: "friend"</text>
+<text class="t-m" x="8" y="62">"Ada"</text><path class="ln-a" d="M66 56H128"/><polygon class="ah-a" points="126,49 126,63 138,56"/>
+<text class="t-m t-dim" x="8" y="130">(nothing)</text><path class="ln" d="M94 124H128"/><polygon class="ah" points="126,117 126,131 138,124"/>
+<path class="ln-ok" d="M284 56H302"/><polygon class="ah-ok" points="300,49 300,63 312,56"/>
+<rect class="bx-ok" x="314" y="36" width="100" height="40" rx="6"/><text class="t-m" x="364" y="61" text-anchor="middle" style="font-size:14px">Hello, Ada!</text>
+<path class="ln-ok" d="M284 124H302"/><polygon class="ah-ok" points="300,117 300,131 312,124"/>
+<rect class="bx-ok" x="314" y="104" width="100" height="40" rx="6"/><text class="t-m" x="364" y="122" text-anchor="middle" style="font-size:14px">Hello,</text><text class="t-m" x="364" y="138" text-anchor="middle" style="font-size:14px">friend!</text>
+<text class="t" x="210" y="182" text-anchor="middle">input in, the same steps, answer out</text>
+</svg><figcaption>A function is a machine with a name. You feed it inputs (arguments), it runs its steps, and it hands back a result. A default value is used when you feed it nothing.</figcaption></figure>
+${V.like(`<p>A smoothie maker. You build the machine once. After that, anyone can throw in fruit, press the button and get a drink, without knowing how the blades work.</p>`)}
+${V.why(`<p>Copying the same ten lines into five places means five places to fix when there is a bug. A function gives those lines one name, so you write them once and call them anywhere.</p>`)}
+${V.anat([[1,'def'],' ',[2,'greet'],'(',[3,'name="friend"'],')',[4,':'],'\n    ',[5,'return'],' f"Hello, {name}!"'],[
+ '<b>def</b>: "I am defining a machine". Nothing runs yet.',
+ '<b>Name.</b> snake_case and a verb, because functions do things.',
+ '<b>Parameter</b> with a <b>default</b>. A parameter is a name tag that gets tied to whatever you pass in. If you pass nothing, it uses "friend".',
+ '<b>Colon.</b> The indented body follows.',
+ '<b>return</b> hands the answer back to the caller and stops the function.'])}
+${V.rules(V.rh('Rules'),
+ V.ok('greet("Ada")','Brackets run it'),V.no('greet','No brackets: you only point at the machine'),
+ V.ok('return answer','The caller gets the answer back'),V.no('print(answer)','Printing is not returning. The caller gets None'),
+ V.no('def f(a="x", b):','Parameters with defaults must come last'),
+ V.rh('Conventions'),V.ok('calculate_total()','snake_case verb that says what it does'))}
+${V.build(`<ol><li>Name the job: <code>greet</code>.</li><li>Decide the input and its default: <code>name="friend"</code>.</li><li>Write the header: <code>def greet(name="friend"):</code></li><li>Indent the body and <code>return</code> the f-string.</li><li>Test both ways: <code>greet()</code> and <code>greet("Ada")</code>.</li></ol>`)}
+${V.hook(`def builds the machine, brackets switch it on, return hands out the answer.`)}
+`)}
 
-<h4>Loops with <code>while</code>: until a condition is False</h4>
-<p>A <code>while</code> loop does not walk through a list. It keeps asking a question, and repeats its block for as long as the answer is True.</p>
-<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="A while loop checks n greater than 0, runs its body, and goes back to the check">
-<rect class="bx-a" x="100" y="20" width="180" height="40" rx="8"/><text class="t-m" x="190" y="45" text-anchor="middle">n &gt; 0 ?</text>
-<path class="ln-ok" d="M190 60v32"/><polygon class="ah-ok" points="184,90 196,90 190,98"/><text class="t-s t-ok" x="202" y="84">yes</text>
-<rect class="bx-ok" x="70" y="100" width="240" height="66" rx="8"/>
-<text class="t-m" x="190" y="127" text-anchor="middle">result.append(n)</text><text class="t-m" x="190" y="151" text-anchor="middle">n = n - 1</text>
-<path class="ln" d="M70 133h-40v-93h62"/><polygon class="ah" points="92,34 92,46 100,40"/>
-<path class="ln-a" d="M280 40h65v148"/><polygon class="ah-a" points="339,186 351,186 345,194"/><text class="t-s t-a" x="312" y="32" text-anchor="middle">no</text>
-<rect class="bx" x="280" y="196" width="130" height="40" rx="8"/><text class="t" x="345" y="221" text-anchor="middle">return result</text>
-<text class="t-s" x="20" y="214">n: 3, 2, 1, then 0</text>
-<text class="t-s" x="20" y="234">result: [3, 2, 1]</text>
-</svg><figcaption>Each round, Python asks whether n is greater than 0. If yes, it runs the body, which adds n to the result and makes n one smaller, then loops back to the question. When n reaches 0 the answer is no, and the loop ends.</figcaption></figure>
-<pre class="snip">n = 3
-result = []                # an empty list
-while n &gt; 0:
-    result.append(n)       # add n to the end of the list
-    n = n - 1              # count down
-print(result)              # [3, 2, 1]</pre>
-<p><code>result.append(n)</code> adds an item to the end of a list. The dot means "use the append ability that belongs to this list".</p>
-<p>If <code>n</code> starts at 0, the question is False straight away, the body never runs, and you get an empty list <code>[]</code>. That is correct, and it is another boundary worth testing.</p>
-<div class="mistake"><b>Common mistake</b>Forgetting <code>n = n - 1</code>. Then n is 3 forever, the question is always True, and the loop never ends. This is an <b>infinite loop</b>: the program freezes until you stop it. Every <code>while</code> loop needs something inside it that moves it towards stopping.</div>
-<p>Which loop should you use? Use <code>for</code> when you have a collection to go through. Use <code>while</code> when you are waiting for something to change and do not know in advance how many rounds it will take.</p>
-
-<h4>Functions: <code>def</code>, parameters and <code>return</code></h4>
-<p>A <b>function</b> is a named piece of work with inputs and an output. You have used built-in ones like <code>print</code> and <code>int</code>. Now you write your own with <code>def</code>, short for "define".</p>
-<pre class="snip">def area(width, height):   # name, then inputs in brackets, then a colon
-    return width * height  # the answer goes back to whoever asked
-
-print(area(3, 4))          # 12
-print(area(5, 2))          # 10</pre>
-<p>Some words to know:</p>
-<ul>
-<li><b>Parameters</b> are the input names in the <code>def</code> line: <code>width</code> and <code>height</code>. They are variables that exist only while the function runs.</li>
-<li><b>Arguments</b> are the actual values you pass in when you <b>call</b> the function: 3 and 4. They are matched to the parameters in order.</li>
-<li><code>return</code> hands a value back and ends the function immediately. The call <code>area(3, 4)</code> is then replaced by that value, 12.</li>
-</ul>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Calling greet with Ada sends the argument in and the returned text comes back">
-<rect class="bx" x="10" y="20" width="160" height="150" rx="8"/>
-<text class="t-s" x="90" y="42" text-anchor="middle">your code</text>
-<text class="t-m" x="90" y="70" text-anchor="middle">greet("Ada")</text>
-<text class="t-s" x="90" y="104" text-anchor="middle">becomes</text>
-<text class="t-m t-ok" x="90" y="146" text-anchor="middle">"Hello, Ada!"</text>
-<path class="ln-a" d="M170 65h52"/><polygon class="ah-a" points="222,59 222,71 230,65"/><text class="t-s t-a" x="200" y="55" text-anchor="middle">call</text>
-<rect class="bx-a" x="232" y="20" width="178" height="150" rx="8"/>
-<text class="t-s" x="321" y="42" text-anchor="middle">inside greet</text>
-<text class="t-m" x="321" y="80" text-anchor="middle">name = "Ada"</text>
-<text class="t-m" x="321" y="126" text-anchor="middle">return f"..."</text>
-<path class="ln-ok" d="M232 141h-54"/><polygon class="ah-ok" points="178,135 178,147 170,141"/><text class="t-s t-ok" x="200" y="131" text-anchor="middle">return</text>
-<text class="t-s" x="210" y="198" text-anchor="middle">The call is replaced by the returned value.</text>
-</svg><figcaption>When you call greet with the argument Ada, Python jumps into the function and points the parameter name at Ada. The return line sends the finished text back, and the call in your code is replaced by that value.</figcaption></figure>
-<p>Parameters can have a <b>default value</b>, used when the caller leaves the argument out:</p>
-<pre class="snip">def greet(name="friend"):
-    return f"Hello, {name}!"
-
-greet()        # "Hello, friend!"  (default used)
-greet("Ada")   # "Hello, Ada!"     (default replaced)</pre>
-<div class="mistake"><b>Common mistake</b>Using <code>print</code> instead of <code>return</code> inside a function. Printing shows text on screen but gives nothing back, so the caller receives the special value <code>None</code>, which means "nothing". The tasks check what your functions <i>return</i>, so make sure each one ends in a <code>return</code> line.</div>
-<p>Also check the indentation of <code>return</code> inside loops. In <code>sum_evens</code>, the <code>return total</code> line must line up with the <code>for</code>, not sit inside the loop. Inside the loop it would return after the very first number.</p>
-
-<div class="try"><b>Try it in your head</b>What does <code>grade(70)</code> return? 70 is not 90 or more, and not 80 or more, but it is 70 or more, so <code>"C"</code>. And <code>countdown(2)</code>? n is 2, append 2, n becomes 1, append 1, n becomes 0 and the loop stops: <code>[2, 1]</code>.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>A colon opens a block, and the indented lines (4 spaces) below it are the block.</li>
-<li><code>if</code>, <code>elif</code>, <code>else</code> check questions top to bottom and run only the first block whose question is True.</li>
-<li><code>=</code> stores, <code>==</code> compares. <code>n % 2 == 0</code> asks whether n is even.</li>
-<li><code>for item in list:</code> runs once per item. <code>while condition:</code> runs until the condition is False, so make sure something changes.</li>
-<li><code>def name(param):</code> defines a function; <code>return value</code> hands the answer back. Defaults like <code>name="friend"</code> make an argument optional.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. What does <code>grade(70)</code> return? <i>"C", because 70 &gt;= 70 is True.</i> 2. What is <code>7 % 2</code>? <i>1, so 7 is odd.</i> 3. A function prints its answer but has no return. What does the caller get? <i>None.</i></div>
 `);
 
 explain('y1',`
-<h4>Why collections matter</h4>
-<p>One variable holds one value. Real programs deal with many: every word in a document, every player in a game, every order in a shop. Making a separate variable for each would be impossible, so Python gives you <b>collections</b>: single values that hold many other values.</p>
-<p>Python has four built in, and each answers a different need. A <b>list</b> keeps things in order. A <b>tuple</b> is a fixed group that never changes. A <b>dictionary</b> looks things up by name. A <b>set</b> keeps only unique items. Choosing the right one makes code shorter, clearer and faster.</p>
-<p>You have already met two tools you will use here: f-strings from the first lesson, like <code>f"Hello, {name}!"</code>, and <code>for</code> loops with indented blocks from the second.</p>
+<p>Real programs juggle lots of values at once: a playlist, a class register, a high-score table. Python gives you four built-in containers for this, plus a one-line trick, the comprehension, that experienced Python developers use every day. You already know f-strings, like <code>f"Hello, {name}!"</code>; now you put them to work on real data.</p>
 
-<h4>Lists: ordered and changeable</h4>
-<p>A <b>list</b> is written with square brackets and commas:</p>
-<pre class="snip">fruit = ["apple", "kiwi", "plum", "fig"]
-print(len(fruit))     # 4: len() counts the items
-fruit.append("lime")  # add to the end
-print(fruit[0])       # apple: the first item</pre>
-<p>Each item has a numbered position called an <b>index</b>. The surprising part is that Python counts from <b>zero</b>. The first item is index 0, the second is index 1, and the last is one less than the length. Python also lets you count backwards from the end with negative numbers: <code>-1</code> is always the last item.</p>
-<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A list of four fruits with indexes 0 to 3 above and minus 4 to minus 1 below">
-<g text-anchor="middle">
-<text class="t-b t-ok" x="75" y="30">0</text><text class="t-b t-ok" x="165" y="30">1</text><text class="t-b t-ok" x="255" y="30">2</text><text class="t-b t-ok" x="345" y="30">3</text>
-</g>
-<rect class="bx" x="30" y="44" width="90" height="48" rx="4"/><rect class="bx" x="120" y="44" width="90" height="48" rx="4"/><rect class="bx" x="210" y="44" width="90" height="48" rx="4"/><rect class="bx" x="300" y="44" width="90" height="48" rx="4"/>
-<g text-anchor="middle">
-<text class="t-m" x="75" y="74">"apple"</text><text class="t-m" x="165" y="74">"kiwi"</text><text class="t-m" x="255" y="74">"plum"</text><text class="t-m" x="345" y="74">"fig"</text>
-<text class="t-b t-a" x="75" y="118">-4</text><text class="t-b t-a" x="165" y="118">-3</text><text class="t-b t-a" x="255" y="118">-2</text><text class="t-b t-a" x="345" y="118">-1</text>
-<text class="t-s" x="210" y="156">fruit[1] is "kiwi"; fruit[-1] is "fig"</text>
-</g>
-</svg><figcaption>Each item in a list has two addresses. Counting from the front starts at zero, so kiwi is at index 1. Counting from the back starts at minus one, so the last item, fig, is always at minus one.</figcaption></figure>
-<p>You can also take a <b>slice</b>, a smaller list, with a colon: <code>fruit[1:3]</code> gives <code>["kiwi", "plum"]</code>. The slice includes the start index and stops <i>before</i> the end index, just like <code>range</code>.</p>
-<div class="mistake"><b>Common mistake</b>Asking for <code>fruit[4]</code> in a four-item list. The positions are 0 to 3, so Python stops with <code>IndexError: list index out of range</code>. If you see it, print <code>len()</code> of your list and remember that the last index is the length minus one.</div>
-<p>A <b>tuple</b> looks like a list with round brackets, such as <code>(51.5, -0.12)</code> for a latitude and longitude. Once made, it cannot be changed. Use it for small groups that belong together and should stay fixed.</p>
+${V.card(1,'Four containers','pick the right one for the job',`
+<figure class="fig"><svg viewBox="0 0 420 216" role="img" aria-label="Four containers: a list is a row of boxes, a tuple is a locked pair, a dict is a cabinet with labelled drawers, a set is a bag of unique items">
+<rect class="bx" x="6" y="6" width="200" height="100" rx="10"/><text class="t-b" x="18" y="30">list</text><text class="t-m t-a" x="62" y="30">[ ]</text>
+<rect class="bx-info" x="18" y="42" width="40" height="34" rx="5"/><text class="t-m" x="38" y="65" text-anchor="middle">7</text>
+<rect class="bx-info" x="62" y="42" width="40" height="34" rx="5"/><text class="t-m" x="82" y="65" text-anchor="middle">2</text>
+<rect class="bx-info" x="106" y="42" width="40" height="34" rx="5"/><text class="t-m" x="126" y="65" text-anchor="middle">7</text>
+<text class="t" x="18" y="98" style="font-size:14px">in order, can change</text>
+<rect class="bx" x="214" y="6" width="200" height="100" rx="10"/><text class="t-b" x="226" y="30">tuple</text><text class="t-m t-a" x="280" y="30">( )</text>
+<rect class="bx-warn" x="226" y="42" width="128" height="34" rx="5"/><text class="t-m" x="290" y="65" text-anchor="middle" style="font-size:14px">51.5, -0.12</text>${V.ic('lock',362,40,36,'ic-warn')}
+<text class="t" x="226" y="98" style="font-size:14px">fixed once made</text>
+<rect class="bx" x="6" y="112" width="200" height="100" rx="10"/><text class="t-b" x="18" y="136">dict</text><text class="t-m t-a" x="62" y="136">{k: v}</text>
+<rect class="bx-ok" x="18" y="146" width="150" height="24" rx="4"/><text class="t-m" x="26" y="164" style="font-size:14px">"name": "Ada"</text>
+<rect class="bx-ok" x="18" y="174" width="150" height="24" rx="4"/><text class="t-m" x="26" y="192" style="font-size:14px">"age": 36</text>
+<rect class="bx" x="214" y="112" width="200" height="100" rx="10"/><text class="t-b" x="226" y="136">set</text><text class="t-m t-a" x="262" y="136">{ }</text>
+<circle class="bx-a" cx="246" cy="170" r="17"/><text class="t-m" x="246" y="176" text-anchor="middle">a</text>
+<circle class="bx-a" cx="288" cy="170" r="17"/><text class="t-m" x="288" y="176" text-anchor="middle">b</text>
+<circle class="bx-a" cx="330" cy="170" r="17"/><text class="t-m" x="330" y="176" text-anchor="middle">c</text>
+<text class="t" x="352" y="176" style="font-size:14px">no</text><text class="t" x="352" y="196" style="font-size:14px">repeats</text>
+</svg><figcaption>A list is an ordered row (repeats allowed). A tuple is a fixed, locked group. A dict finds values by label. A set holds each item only once.</figcaption></figure>
+${V.like(`<p>A <b>list</b> is a shopping list: in order, and you can cross things out or add more. A <b>tuple</b> is a map grid reference printed on a sign: fixed. A <b>dict</b> is a filing cabinet with labelled drawers. A <b>set</b> is a sticker album where each sticker can appear only once.</p>`)}
+${V.why(`<p>Each shape is fast at a different job. Finding one email among a million in a list means checking them one by one. A set (or a dict) jumps straight to the answer, because it files each item by a code worked out from its value, called a <b>hash</b>.</p>`)}
+${V.anat([[1,'[1, 2]'],'   ',[2,'(1, 2)'],'   ',[3,'{"a": 1}'],'   ',[4,'{1, 2}']],[
+ '<b>list.</b> Square brackets. Ask by position: <code>xs[0]</code> is the first.',
+ '<b>tuple.</b> Round brackets. Cannot be changed after it is made.',
+ '<b>dict.</b> Curly braces with <code>key: value</code> pairs.',
+ '<b>set.</b> Curly braces, no colons. Duplicates vanish.'])}
+${V.rules(V.rh('Rules'),
+ V.ok('xs[0]','Positions start at 0'),V.no('xs[3] (3 items)','IndexError: one past the end'),
+ V.no('{}','This is an empty dict, not a set'),V.ok('set()','The way to make an empty set'),
+ V.no('point[0] = 9','A tuple cannot change: TypeError'),
+ V.rh('Conventions'),V.ok('players = [...]','Plural names for collections'),V.ok('email in emails_set','Use a set for fast "is it in there?" checks'))}
+${V.hook(`Square for order, round for fixed, curly with colons for labels, curly without for unique.`)}
+`)}
 
-<h4>Dictionaries: look things up by name</h4>
-<p>Lists are great when position matters. But often you want to find something by a <b>name</b>, not a number. "What is Ada's score?" is a lookup, not a position. That is what a <b>dictionary</b>, or <b>dict</b>, is for.</p>
-<p>A dict is a collection of <b>key: value</b> pairs in curly braces. The <b>key</b> is what you look up by, and the <b>value</b> is what you get back:</p>
-<pre class="snip">player = {"name": "Ada", "score": 92}
-print(player["name"])    # Ada: look up by key
-player["score"] = 95     # change a value
-player["level"] = 3      # a new key adds a new pair
-print("level" in player) # True: is this key present?</pre>
-<figure class="fig"><svg viewBox="0 0 420 236" role="img" aria-label="Dictionary keys pointing at values, with a missing key causing KeyError unless get is used">
-<g text-anchor="middle"><text class="t-s" x="80" y="20">key</text><text class="t-s" x="270" y="20">value</text></g>
-<rect class="bx-info" x="20" y="30" width="120" height="34" rx="6"/><text class="t-m" x="80" y="52" text-anchor="middle">"the"</text>
-<path class="ln" d="M140 47h82"/><polygon class="ah" points="222,41 222,53 230,47"/>
-<rect class="bx" x="232" y="30" width="76" height="34" rx="6"/><text class="t-m" x="270" y="52" text-anchor="middle">2</text>
-<rect class="bx-info" x="20" y="74" width="120" height="34" rx="6"/><text class="t-m" x="80" y="96" text-anchor="middle">"cat"</text>
-<path class="ln" d="M140 91h82"/><polygon class="ah" points="222,85 222,97 230,91"/>
-<rect class="bx" x="232" y="74" width="76" height="34" rx="6"/><text class="t-m" x="270" y="96" text-anchor="middle">1</text>
-<rect class="bx-info" x="20" y="118" width="120" height="34" rx="6"/><text class="t-m" x="80" y="140" text-anchor="middle">"and"</text>
-<path class="ln" d="M140 135h82"/><polygon class="ah" points="222,129 222,141 230,135"/>
-<rect class="bx" x="232" y="118" width="76" height="34" rx="6"/><text class="t-m" x="270" y="140" text-anchor="middle">1</text>
-<line class="ln-d" x1="20" y1="166" x2="400" y2="166"/>
-<rect class="bx-warn" x="20" y="190" width="120" height="34" rx="6"/><text class="t-m" x="80" y="212" text-anchor="middle">"dog"</text>
-<text class="t-m" x="160" y="200">d["dog"]</text><text class="t-b t-bad" x="250" y="200">KeyError</text>
-<text class="t-m" x="160" y="228">d.get("dog", 0)</text><text class="t-b t-ok" x="320" y="228">0</text>
-</svg><figcaption>A dictionary maps each key to one value, like words to their counts. Looking up a key that is not there with square brackets crashes with KeyError, while the get method returns the default you give it, here zero.</figcaption></figure>
-<p>Keys must be unique: one key, one value. Assigning to an existing key replaces its value. Looking up a missing key with square brackets raises <code>KeyError</code>. The <b>get</b> method is the safe alternative: <code>d.get(key, 0)</code> returns the value if the key exists, and your default (here 0) if not. Without a default, <code>get</code> returns <code>None</code>.</p>
-<p>To loop over a dict, use <code>.items()</code>, which gives you each key and value together. Writing two names after <code>for</code> unpacks each pair into them:</p>
-<pre class="snip">for word, count in counts.items():
-    print(f"{word}: {count}")</pre>
+${V.card(2,'Dicts','a cabinet with labelled drawers',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A cabinet called user with drawers labelled name, age and city">
+<rect class="bx" x="100" y="8" width="220" height="154" rx="10"/>
+<rect class="bx-info" x="112" y="20" width="196" height="40" rx="6"/><text class="t-m" x="124" y="46">"name"</text><text class="t-m t-a" x="296" y="46" text-anchor="end">"Ada"</text>
+<rect class="bx-info" x="112" y="66" width="196" height="40" rx="6"/><text class="t-m" x="124" y="92">"age"</text><text class="t-m t-a" x="296" y="92" text-anchor="end">36</text>
+<rect class="bx-info" x="112" y="112" width="196" height="40" rx="6"/><text class="t-m" x="124" y="138">"city"</text><text class="t-m t-a" x="296" y="138" text-anchor="end">"London"</text>
+<text class="t-b" x="10" y="90">user</text>
+<text class="t" x="332" y="70" style="font-size:14px">label =</text><text class="t" x="332" y="88" style="font-size:14px">key</text>
+<text class="t" x="332" y="116" style="font-size:14px">inside =</text><text class="t" x="332" y="134" style="font-size:14px">value</text>
+</svg><figcaption>A dict (short for dictionary) stores pairs. The label on the drawer is the key, what is inside is the value. user["age"] opens the drawer labelled age and gives you 36.</figcaption></figure>
+${V.like(`<p>A school office filing cabinet. Nobody says "give me drawer number 3". They say "give me the drawer labelled Year 9". Labels are unique, so there is exactly one drawer per label.</p>`)}
+${V.anat([[1,'counts'],[2,'[word]'],' = ',[1,'counts'],[3,'.get(word, 0)'],' ',[4,'+ 1']],[
+ '<b>The dict.</b> Our cabinet of word counts.',
+ '<b>Square brackets with a key.</b> On the left of = it means "put into this drawer", making the drawer if it is new.',
+ '<b>.get(key, default).</b> "Give me what is in this drawer, or 0 if there is no such drawer." No crash.',
+ '<b>Add one</b> for the word we just saw.'])}
+<p><b>Watch the counting trick on "the cat the".</b></p>
+${V.steps([
+ ['Start with an empty cabinet: <b>counts = {}</b>.',`<svg viewBox="0 0 420 224" role="img" aria-label="count_words step 0">
+<text class="t-m" x="10" y="24" style="font-size:14px">counts[word] = counts.get(word, 0) + 1</text>
+<rect class="bx" x="10" y="40" width="56" height="34" rx="6"/><text class="t-m" x="38" y="63" text-anchor="middle" style="font-size:14px">"the"</text>
+<rect class="bx" x="72" y="40" width="56" height="34" rx="6"/><text class="t-m" x="100" y="63" text-anchor="middle" style="font-size:14px">"cat"</text>
+<rect class="bx" x="134" y="40" width="56" height="34" rx="6"/><text class="t-m" x="162" y="63" text-anchor="middle" style="font-size:14px">"the"</text>
+<text class="t-m t-a" x="200" y="56" style="font-size:14px">counts = {}</text>
+<text class="t" x="200" y="76" style="font-size:14px">an empty cabinet</text>
+<text class="t-b" x="8" y="158">counts</text>
+<rect class="bx" x="80" y="92" width="250" height="124" rx="8"/>
+<rect class="ln-d" x="90" y="100" width="230" height="32" rx="5"/>
+<rect class="ln-d" x="90" y="138" width="230" height="32" rx="5"/>
+<rect class="ln-d" x="90" y="176" width="230" height="32" rx="5"/>
+</svg>`],
+ ['Word "the". There is no "the" drawer, so <b>get</b> gives the default 0. 0 + 1 = 1, and a new drawer "the" is made holding 1.',`<svg viewBox="0 0 420 224" role="img" aria-label="count_words step 1">
+<text class="t-m" x="10" y="24" style="font-size:14px">counts[word] = counts.get(word, 0) + 1</text>
+<rect class="bx-hl" x="10" y="40" width="56" height="34" rx="6"/><text class="t-m" x="38" y="63" text-anchor="middle" style="font-size:14px">"the"</text>
+<rect class="bx" x="72" y="40" width="56" height="34" rx="6"/><text class="t-m" x="100" y="63" text-anchor="middle" style="font-size:14px">"cat"</text>
+<rect class="bx" x="134" y="40" width="56" height="34" rx="6"/><text class="t-m" x="162" y="63" text-anchor="middle" style="font-size:14px">"the"</text>
+<text class="t-m t-a" x="200" y="56" style="font-size:14px">get("the", 0) gives 0</text>
+<text class="t" x="200" y="76" style="font-size:14px">no drawer yet: 0 + 1</text>
+<text class="t-b" x="8" y="158">counts</text>
+<rect class="bx" x="80" y="92" width="250" height="124" rx="8"/>
+<rect class="bx-ok" x="90" y="100" width="230" height="32" rx="5"/><text class="t-m" x="104" y="122">"the"</text><path class="ln" style="stroke-width:3" d="M190 116H220"/><text class="t-m" x="304" y="123" text-anchor="end" style="font-size:18px">1</text>
+<rect class="ln-d" x="90" y="138" width="230" height="32" rx="5"/>
+<rect class="ln-d" x="90" y="176" width="230" height="32" rx="5"/>
+</svg>`],
+ ['Word "cat". Same again: no drawer yet, so it starts at 0 and becomes 1.',`<svg viewBox="0 0 420 224" role="img" aria-label="count_words step 2">
+<text class="t-m" x="10" y="24" style="font-size:14px">counts[word] = counts.get(word, 0) + 1</text>
+<rect class="bx" x="10" y="40" width="56" height="34" rx="6"/><text class="t-m t-dim" x="38" y="63" text-anchor="middle" style="font-size:14px">"the"</text>
+<rect class="bx-hl" x="72" y="40" width="56" height="34" rx="6"/><text class="t-m" x="100" y="63" text-anchor="middle" style="font-size:14px">"cat"</text>
+<rect class="bx" x="134" y="40" width="56" height="34" rx="6"/><text class="t-m" x="162" y="63" text-anchor="middle" style="font-size:14px">"the"</text>
+<text class="t-m t-a" x="200" y="56" style="font-size:14px">get("cat", 0) gives 0</text>
+<text class="t" x="200" y="76" style="font-size:14px">no drawer yet: 0 + 1</text>
+<text class="t-b" x="8" y="158">counts</text>
+<rect class="bx" x="80" y="92" width="250" height="124" rx="8"/>
+<rect class="bx-info" x="90" y="100" width="230" height="32" rx="5"/><text class="t-m" x="104" y="122">"the"</text><path class="ln" style="stroke-width:3" d="M190 116H220"/><text class="t-m" x="304" y="123" text-anchor="end" style="font-size:18px">1</text>
+<rect class="bx-ok" x="90" y="138" width="230" height="32" rx="5"/><text class="t-m" x="104" y="160">"cat"</text><path class="ln" style="stroke-width:3" d="M190 154H220"/><text class="t-m" x="304" y="161" text-anchor="end" style="font-size:18px">1</text>
+<rect class="ln-d" x="90" y="176" width="230" height="32" rx="5"/>
+</svg>`],
+ ['Word "the" again. This time the drawer exists, so <b>get</b> gives 1. 1 + 1 = 2 goes back in the same drawer. Result: <b>{"the": 2, "cat": 1}</b>.',`<svg viewBox="0 0 420 224" role="img" aria-label="count_words step 3">
+<text class="t-m" x="10" y="24" style="font-size:14px">counts[word] = counts.get(word, 0) + 1</text>
+<rect class="bx" x="10" y="40" width="56" height="34" rx="6"/><text class="t-m t-dim" x="38" y="63" text-anchor="middle" style="font-size:14px">"the"</text>
+<rect class="bx" x="72" y="40" width="56" height="34" rx="6"/><text class="t-m t-dim" x="100" y="63" text-anchor="middle" style="font-size:14px">"cat"</text>
+<rect class="bx-hl" x="134" y="40" width="56" height="34" rx="6"/><text class="t-m" x="162" y="63" text-anchor="middle" style="font-size:14px">"the"</text>
+<text class="t-m t-a" x="200" y="56" style="font-size:14px">get("the", 0) gives 1</text>
+<text class="t" x="200" y="76" style="font-size:14px">drawer exists: 1 + 1</text>
+<text class="t-b" x="8" y="158">counts</text>
+<rect class="bx" x="80" y="92" width="250" height="124" rx="8"/>
+<rect class="bx-ok" x="90" y="100" width="230" height="32" rx="5"/><text class="t-m" x="104" y="122">"the"</text><path class="ln" style="stroke-width:3" d="M190 116H220"/><text class="t-m" x="304" y="123" text-anchor="end" style="font-size:18px">2</text>
+<rect class="bx-info" x="90" y="138" width="230" height="32" rx="5"/><text class="t-m" x="104" y="160">"cat"</text><path class="ln" style="stroke-width:3" d="M190 154H220"/><text class="t-m" x="304" y="161" text-anchor="end" style="font-size:18px">1</text>
+<rect class="ln-d" x="90" y="176" width="230" height="32" rx="5"/>
+<text class="t-b t-ok" x="340" y="140" style="font-size:14px">the: 2</text><text class="t-b t-ok" x="340" y="162" style="font-size:14px">cat: 1</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.no('counts["dog"]','A missing key crashes with KeyError'),V.ok('counts.get("dog", 0)','A missing key gives your default instead'),
+ V.ok('d[key] = value','Same key again? It overwrites. Keys are unique'),V.no('{[1, 2]: "x"}','Keys must be unchangeable: str, int, tuple. Not a list'),
+ V.ok('for k, v in d.items():','Loop over key and value together'),V.ok('"age" in user','in checks the keys'))}
+${V.hook(`Lists ask "which position?" Dicts ask "which label?" Use <code>.get(key, 0)</code> when the drawer might be missing.`)}
+`)}
 
-<h4>The counting idiom, step by step</h4>
-<p>Counting things is one of the most common jobs in programming, and dicts make it easy. The task asks you to count each word in <code>"the cat and the hat"</code>. First, split the text into words. Two string <b>methods</b> (functions that belong to a value, called with a dot) help: <code>.lower()</code> makes all letters lower case, so "The" and "the" count as the same word, and <code>.split()</code> breaks the text at spaces into a list.</p>
-<pre class="snip">words = "the cat and the hat".lower().split()
-# ["the", "cat", "and", "the", "hat"]
-counts = {}
-for word in words:
-    counts[word] = counts.get(word, 0) + 1</pre>
-<p>The key line reads the current count (0 if the word is new), adds 1, and stores it back. Trace it:</p>
-<div class="tbl-wrap"><table><tr><th>word</th><th>counts.get(word, 0)</th><th>counts afterwards</th></tr>
-<tr><td>the</td><td>0</td><td>the: 1</td></tr>
-<tr><td>cat</td><td>0</td><td>the: 1, cat: 1</td></tr>
-<tr><td>and</td><td>0</td><td>the: 1, cat: 1, and: 1</td></tr>
-<tr><td>the</td><td>1</td><td>the: 2, cat: 1, and: 1</td></tr>
-<tr><td>hat</td><td>0</td><td>the: 2, cat: 1, and: 1, hat: 1</td></tr></table></div>
-<p>Remember that a function must <code>return counts</code> at the end, after the loop, for the task to see the result.</p>
+${V.card(3,'Comprehensions','a production line in one line',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="Production line: take each n, keep the even ones, square them, collect the results">
+<rect class="bx" x="6" y="26" width="118" height="70" rx="10"/>${V.ic('repeat',46,32,36,'ic-info')}<text class="t" x="65" y="88" text-anchor="middle">take each n</text>
+<path class="ln-a" d="M126 61H140"/><polygon class="ah-a" points="138,54 138,68 150,61"/>
+<rect class="bx" x="152" y="26" width="118" height="70" rx="10"/>${V.ic('check',192,32,36,'ic-ok')}<text class="t" x="211" y="88" text-anchor="middle">keep evens</text>
+<path class="ln-a" d="M272 61H286"/><polygon class="ah-a" points="284,54 284,68 296,61"/>
+<rect class="bx" x="298" y="26" width="116" height="70" rx="10"/>${V.ic('gear',338,32,36,'ic-a')}<text class="t" x="356" y="88" text-anchor="middle">square it</text>
+<text class="t-m" x="210" y="138" text-anchor="middle" style="font-size:16px">nums [1..6] &#10140; [4, 16, 36]#10140; [4, 16, 36]</text>
+</svg><figcaption>A comprehension is a tiny factory. Items come in, an optional filter throws some away, a formula transforms the rest, and the results drop into a new list.</figcaption></figure>
+${V.why(`<p>Building a new list from an old one is so common that the loop version (make an empty list, loop, check, append) gets boring. Python borrowed this short form from maths, where you write "the set of n squared, for n in nums, where n is even".</p>`)}
+${V.anat([[1,'['],[2,'n * n'],' ',[3,'for n in nums'],' ',[4,'if n % 2 == 0'],[1,']']],[
+ '<b>Square brackets.</b> The result is a new list.',
+ '<b>What to make.</b> The formula applied to each item that survives.',
+ '<b>The loop.</b> Exactly like a normal for line, without the colon.',
+ '<b>The filter.</b> Optional. Only items where this is True get in.'])}
+${V.steps([
+ ['The factory starts with the input list and an empty result.',`<svg viewBox="0 0 420 200" role="img" aria-label="comprehension step 0">
+<text class="t-m" x="8" y="40">nums</text>
+<rect class="bx" x="64" y="16" width="44" height="38" rx="6"/><text class="t-m" x="86" y="42" text-anchor="middle" style="font-size:18px">1</text>
+<rect class="bx" x="122" y="16" width="44" height="38" rx="6"/><text class="t-m" x="144" y="42" text-anchor="middle" style="font-size:18px">2</text>
+<rect class="bx" x="180" y="16" width="44" height="38" rx="6"/><text class="t-m" x="202" y="42" text-anchor="middle" style="font-size:18px">3</text>
+<rect class="bx" x="238" y="16" width="44" height="38" rx="6"/><text class="t-m" x="260" y="42" text-anchor="middle" style="font-size:18px">4</text>
+<rect class="bx" x="296" y="16" width="44" height="38" rx="6"/><text class="t-m" x="318" y="42" text-anchor="middle" style="font-size:18px">5</text>
+<rect class="bx" x="354" y="16" width="44" height="38" rx="6"/><text class="t-m" x="376" y="42" text-anchor="middle" style="font-size:18px">6</text>
+<text class="t-m" x="8" y="178">even_squares</text>
+<rect class="bx-ok" x="130" y="152" width="282" height="40" rx="6"/><text class="t-m" x="144" y="178" style="font-size:18px">[]</text>
+</svg>`],
+ ['1 is odd, so the filter drops it. 2 is even, so it is squared: <b>4</b> goes into the result.',`<svg viewBox="0 0 420 200" role="img" aria-label="comprehension step 1">
+<text class="t-m" x="8" y="40">nums</text>
+<rect class="bx-hl" x="64" y="16" width="44" height="38" rx="6"/><text class="t-m" x="86" y="42" text-anchor="middle" style="font-size:18px">1</text>
+<text class="t-b t-bad" x="86" y="80" text-anchor="middle" style="font-size:14px">odd</text><text class="t-s" x="86" y="102" text-anchor="middle" style="font-size:14px">dropped</text>
+<rect class="bx-hl" x="122" y="16" width="44" height="38" rx="6"/><text class="t-m" x="144" y="42" text-anchor="middle" style="font-size:18px">2</text>
+<text class="t-b t-ok" x="144" y="80" text-anchor="middle" style="font-size:14px">even</text><path class="ln-ok" d="M144 86V104"/><polygon class="ah-ok" points="138,102 150,102 144,112"/><text class="t-m t-ok" x="144" y="132" text-anchor="middle" style="font-size:14px">2*2</text>
+<rect class="bx" x="180" y="16" width="44" height="38" rx="6"/><text class="t-m" x="202" y="42" text-anchor="middle" style="font-size:18px">3</text>
+<rect class="bx" x="238" y="16" width="44" height="38" rx="6"/><text class="t-m" x="260" y="42" text-anchor="middle" style="font-size:18px">4</text>
+<rect class="bx" x="296" y="16" width="44" height="38" rx="6"/><text class="t-m" x="318" y="42" text-anchor="middle" style="font-size:18px">5</text>
+<rect class="bx" x="354" y="16" width="44" height="38" rx="6"/><text class="t-m" x="376" y="42" text-anchor="middle" style="font-size:18px">6</text>
+<text class="t-m" x="8" y="178">even_squares</text>
+<rect class="bx-ok" x="130" y="152" width="282" height="40" rx="6"/><text class="t-m" x="144" y="178" style="font-size:18px">[4]</text>
+</svg>`],
+ ['3 is dropped. 4 is even: 4 * 4 = <b>16</b>.',`<svg viewBox="0 0 420 200" role="img" aria-label="comprehension step 2">
+<text class="t-m" x="8" y="40">nums</text>
+<rect class="bx" x="64" y="16" width="44" height="38" rx="6"/><text class="t-m t-dim" x="86" y="42" text-anchor="middle" style="font-size:18px">1</text>
+<text class="t-b t-bad" x="86" y="80" text-anchor="middle" style="font-size:14px">odd</text><text class="t-s" x="86" y="102" text-anchor="middle" style="font-size:14px">dropped</text>
+<rect class="bx" x="122" y="16" width="44" height="38" rx="6"/><text class="t-m t-dim" x="144" y="42" text-anchor="middle" style="font-size:18px">2</text>
+<text class="t-b t-ok" x="144" y="80" text-anchor="middle" style="font-size:14px">even</text><path class="ln-ok" d="M144 86V104"/><polygon class="ah-ok" points="138,102 150,102 144,112"/><text class="t-m t-ok" x="144" y="132" text-anchor="middle" style="font-size:14px">2*2</text>
+<rect class="bx-hl" x="180" y="16" width="44" height="38" rx="6"/><text class="t-m" x="202" y="42" text-anchor="middle" style="font-size:18px">3</text>
+<text class="t-b t-bad" x="202" y="80" text-anchor="middle" style="font-size:14px">odd</text><text class="t-s" x="202" y="102" text-anchor="middle" style="font-size:14px">dropped</text>
+<rect class="bx-hl" x="238" y="16" width="44" height="38" rx="6"/><text class="t-m" x="260" y="42" text-anchor="middle" style="font-size:18px">4</text>
+<text class="t-b t-ok" x="260" y="80" text-anchor="middle" style="font-size:14px">even</text><path class="ln-ok" d="M260 86V104"/><polygon class="ah-ok" points="254,102 266,102 260,112"/><text class="t-m t-ok" x="260" y="132" text-anchor="middle" style="font-size:14px">4*4</text>
+<rect class="bx" x="296" y="16" width="44" height="38" rx="6"/><text class="t-m" x="318" y="42" text-anchor="middle" style="font-size:18px">5</text>
+<rect class="bx" x="354" y="16" width="44" height="38" rx="6"/><text class="t-m" x="376" y="42" text-anchor="middle" style="font-size:18px">6</text>
+<text class="t-m" x="8" y="178">even_squares</text>
+<rect class="bx-ok" x="130" y="152" width="282" height="40" rx="6"/><text class="t-m" x="144" y="178" style="font-size:18px">[4, 16]</text>
+</svg>`],
+ ['5 is dropped. 6 becomes <b>36</b>. The result is <b>[4, 16, 36]</b>, the same as the five-line loop, in one readable line.',`<svg viewBox="0 0 420 200" role="img" aria-label="comprehension step 3">
+<text class="t-m" x="8" y="40">nums</text>
+<rect class="bx" x="64" y="16" width="44" height="38" rx="6"/><text class="t-m t-dim" x="86" y="42" text-anchor="middle" style="font-size:18px">1</text>
+<text class="t-b t-bad" x="86" y="80" text-anchor="middle" style="font-size:14px">odd</text><text class="t-s" x="86" y="102" text-anchor="middle" style="font-size:14px">dropped</text>
+<rect class="bx" x="122" y="16" width="44" height="38" rx="6"/><text class="t-m t-dim" x="144" y="42" text-anchor="middle" style="font-size:18px">2</text>
+<text class="t-b t-ok" x="144" y="80" text-anchor="middle" style="font-size:14px">even</text><path class="ln-ok" d="M144 86V104"/><polygon class="ah-ok" points="138,102 150,102 144,112"/><text class="t-m t-ok" x="144" y="132" text-anchor="middle" style="font-size:14px">2*2</text>
+<rect class="bx" x="180" y="16" width="44" height="38" rx="6"/><text class="t-m t-dim" x="202" y="42" text-anchor="middle" style="font-size:18px">3</text>
+<text class="t-b t-bad" x="202" y="80" text-anchor="middle" style="font-size:14px">odd</text><text class="t-s" x="202" y="102" text-anchor="middle" style="font-size:14px">dropped</text>
+<rect class="bx" x="238" y="16" width="44" height="38" rx="6"/><text class="t-m t-dim" x="260" y="42" text-anchor="middle" style="font-size:18px">4</text>
+<text class="t-b t-ok" x="260" y="80" text-anchor="middle" style="font-size:14px">even</text><path class="ln-ok" d="M260 86V104"/><polygon class="ah-ok" points="254,102 266,102 260,112"/><text class="t-m t-ok" x="260" y="132" text-anchor="middle" style="font-size:14px">4*4</text>
+<rect class="bx-hl" x="296" y="16" width="44" height="38" rx="6"/><text class="t-m" x="318" y="42" text-anchor="middle" style="font-size:18px">5</text>
+<text class="t-b t-bad" x="318" y="80" text-anchor="middle" style="font-size:14px">odd</text><text class="t-s" x="318" y="102" text-anchor="middle" style="font-size:14px">dropped</text>
+<rect class="bx-hl" x="354" y="16" width="44" height="38" rx="6"/><text class="t-m" x="376" y="42" text-anchor="middle" style="font-size:18px">6</text>
+<text class="t-b t-ok" x="376" y="80" text-anchor="middle" style="font-size:14px">even</text><path class="ln-ok" d="M376 86V104"/><polygon class="ah-ok" points="370,102 382,102 376,112"/><text class="t-m t-ok" x="376" y="132" text-anchor="middle" style="font-size:14px">6*6</text>
+<text class="t-m" x="8" y="178">even_squares</text>
+<rect class="bx-ok" x="130" y="152" width="282" height="40" rx="6"/><text class="t-m" x="144" y="178" style="font-size:18px">[4, 16, 36]</text>
+</svg>`]])}
+${V.rules(V.rh('Conventions'),
+ V.ok('[n * n for n in nums]','Short and clear: great'),V.no('[a for b in c for d in b if d if a]','Too clever. If it does not fit on one line, use a normal loop'),
+ V.ok('{w: len(w) for w in words}','Curly braces with a colon build a dict the same way'))}
+${V.hook(`Make what, for which, if when: <code>[make for item in list if test]</code>.`)}
+`)}
 
-<h4>Sets: unique items and fast "is it in there?"</h4>
-<p>A <b>set</b> is written with curly braces but no colons: <code>{"a", "b"}</code>. It has no order and no duplicates; adding something already there does nothing. <code>set(["a", "b", "a"])</code> gives <code>{"a", "b"}</code>.</p>
-<p>Sets shine at one question: <i>is this item in here?</i> To answer <code>x in some_list</code>, Python checks the items one by one, so a list of a million emails can take a million checks. A set stores items in a way that lets Python jump straight to where an item would be, so the check takes about the same tiny time whether the set holds ten items or ten million. Programmers write this as <b>O(1)</b> ("constant time") for sets and <b>O(n)</b> ("grows with the number of items") for lists.</p>
+${V.card(4,'Best by a field','max with key=lambda',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="Three player cards: Ada 92, Alan 87, Grace 95. The judge only looks at the score and picks Grace">
+<rect class="bx" x="8" y="62" width="122" height="96" rx="10"/>${V.ic('person',16,72,36,'ic-info')}<text class="t-b" x="58" y="96">Ada</text><text class="t-m" x="69" y="140" text-anchor="middle" style="font-size:20px">92</text>
+<rect class="bx" x="148" y="62" width="122" height="96" rx="10"/>${V.ic('person',156,72,36,'ic-info')}<text class="t-b" x="198" y="96">Alan</text><text class="t-m" x="209" y="140" text-anchor="middle" style="font-size:20px">87</text>
+<rect class="bx-ok" x="288" y="62" width="124" height="96" rx="10"/>${V.ic('person',296,72,36,'ic-ok')}<text class="t-b" x="338" y="96">Grace</text><text class="t-m t-ok" x="350" y="140" text-anchor="middle" style="font-size:20px">95</text>
+${V.ic('search',8,6,40,'ic-a')}<text class="t-b t-a" x="56" y="32">key: look only at the score</text>
+${V.ic('check',378,114,30,'ic-ok')}
+</svg><figcaption>max normally compares whole items. key= tells it what to look at: here, only each player's score. It hands back the whole winning card.</figcaption></figure>
+${V.like(`<p>A talent-show judge with a scorecard. They do not compare costumes or names, only the number on the card, and then call the winner up on stage.</p>`)}
+${V.anat([[1,'max'],'(',[2,'players'],', ',[3,'key='],[4,'lambda p: p["score"]'],')',[5,'["name"]']],[
+ '<b>max</b> finds the biggest. <code>min</code> and <code>sorted</code> work the same way.',
+ '<b>The list</b> of player dicts.',
+ '<b>key=</b> "compare by this, please".',
+ '<b>lambda.</b> A tiny no-name function: given a player p, give back p["score"].',
+ '<b>Pick the name</b> from the winning dict.'])}
+${V.rules(V.ok('lambda p: p["score"]','One expression, no return keyword'),V.no('max(players)','Python cannot compare two dicts: TypeError'),
+ V.ok('sorted(players, key=..., reverse=True)','A high-score table, best first'))}
+${V.hook(`key= is the judge's scorecard: compare by this, return the whole winner.`)}
+`)}
 
-<h4>Comprehensions: build a list in one line</h4>
-<p>A very common loop builds a new list from an old one: go through each item, maybe skip some, maybe transform the rest. You could write it the long way:</p>
-<pre class="snip">even_squares = []
-for n in nums:
-    if n % 2 == 0:
-        even_squares.append(n * n)</pre>
-<p>A <b>list comprehension</b> says the same thing in one readable line. Read it as "n times n, for each n in nums, if n is even":</p>
-<pre class="snip">even_squares = [n * n for n in nums if n % 2 == 0]</pre>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="A comprehension filters 1 to 6 down to the even numbers and squares them">
-<text class="t-s" x="20" y="38">nums</text>
-<text class="t-s" x="20" y="98">if even</text>
-<text class="t-s" x="20" y="158">n * n</text>
-<g text-anchor="middle">
-<rect class="bx" x="130" y="18" width="36" height="32" rx="4"/><text class="t-m" x="148" y="40">1</text>
-<rect class="bx" x="176" y="18" width="36" height="32" rx="4"/><text class="t-m" x="194" y="40">2</text>
-<rect class="bx" x="222" y="18" width="36" height="32" rx="4"/><text class="t-m" x="240" y="40">3</text>
-<rect class="bx" x="268" y="18" width="36" height="32" rx="4"/><text class="t-m" x="286" y="40">4</text>
-<rect class="bx" x="314" y="18" width="36" height="32" rx="4"/><text class="t-m" x="332" y="40">5</text>
-<rect class="bx" x="360" y="18" width="36" height="32" rx="4"/><text class="t-m" x="378" y="40">6</text>
-<text class="t-s" x="148" y="98">skip</text><text class="t-s" x="240" y="98">skip</text><text class="t-s" x="332" y="98">skip</text>
-<path class="ln-a" d="M194 50v20"/><polygon class="ah-a" points="188,68 200,68 194,76"/>
-<path class="ln-a" d="M286 50v20"/><polygon class="ah-a" points="280,68 292,68 286,76"/>
-<path class="ln-a" d="M378 50v20"/><polygon class="ah-a" points="372,68 384,68 378,76"/>
-<rect class="bx-a" x="176" y="78" width="36" height="32" rx="4"/><text class="t-m" x="194" y="100">2</text>
-<rect class="bx-a" x="268" y="78" width="36" height="32" rx="4"/><text class="t-m" x="286" y="100">4</text>
-<rect class="bx-a" x="360" y="78" width="36" height="32" rx="4"/><text class="t-m" x="378" y="100">6</text>
-<path class="ln-ok" d="M194 110v20"/><polygon class="ah-ok" points="188,128 200,128 194,136"/>
-<path class="ln-ok" d="M286 110v20"/><polygon class="ah-ok" points="280,128 292,128 286,136"/>
-<path class="ln-ok" d="M378 110v20"/><polygon class="ah-ok" points="372,128 384,128 378,136"/>
-<rect class="bx-ok" x="176" y="138" width="36" height="32" rx="4"/><text class="t-m" x="194" y="160">4</text>
-<rect class="bx-ok" x="264" y="138" width="44" height="32" rx="4"/><text class="t-m" x="286" y="160">16</text>
-<rect class="bx-ok" x="356" y="138" width="44" height="32" rx="4"/><text class="t-m" x="378" y="160">36</text>
-<text class="t-s" x="210" y="194">result: [4, 16, 36]</text>
-</g>
-</svg><figcaption>The comprehension walks through 1 to 6. The if part skips the odd numbers, and the n times n part squares each number that survives, giving 4, 16 and 36.</figcaption></figure>
-<p>The three parts always sit in the same places: <b>what to keep</b> first, then the <b>for</b> part, then an optional <b>if</b> filter. Comprehensions are for building one list. If your loop does several jobs, prints things or needs many lines, a normal loop is clearer.</p>
-
-<h4>Finding the best item: <code>max</code> with a <code>key</code></h4>
-<p><code>max([3, 9, 4])</code> gives 9. But what is the "biggest" of a list of dicts like <code>{"name": "Ada", "score": 92}</code>? Python can't guess, so you tell it what to compare with the <code>key</code> argument. You pass it a small function that takes one item and returns the thing to compare.</p>
-<p>A <b>lambda</b> is a tiny, unnamed, one-line function. <code>lambda p: p["score"]</code> means "given a player p, return p's score". It is the same as writing <code>def get_score(p): return p["score"]</code> and passing <code>get_score</code>.</p>
-<pre class="snip">best = max(players, key=lambda p: p["score"])
-# best is the whole dict: {"name": "Grace", "score": 95}
-print(best["name"])   # Grace</pre>
-<p>Notice that <code>max</code> gives back the <b>whole item</b>, not just the score. To return the name, look up <code>["name"]</code> on the result. <code>min</code> and <code>sorted</code> accept the same <code>key</code> argument.</p>
-<div class="mistake"><b>Common mistake</b>Mixing up the brackets. Square brackets <code>[]</code> make a list or look something up. Curly braces with colons <code>{"a": 1}</code> make a dict. Curly braces without colons make a set, except that empty <code>{}</code> is an empty dict; an empty set is written <code>set()</code>.</div>
-
-<div class="try"><b>Try it in your head</b>Given <code>nums = [1, 2, 3, 4, 5, 6]</code>, what is <code>[n + 1 for n in nums if n &gt; 4]</code>? Only 5 and 6 pass the filter, and adding 1 gives <code>[6, 7]</code>. And what is <code>nums[-2]</code>? Counting from the end, -1 is 6, so -2 is <code>5</code>.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Lists <code>[ ]</code> keep order and count from index 0; <code>-1</code> is the last item. Tuples <code>( )</code> are fixed groups.</li>
-<li>Dicts <code>{key: value}</code> look things up by key. <code>d.get(key, 0)</code> avoids KeyError, and <code>for k, v in d.items()</code> loops over pairs.</li>
-<li><code>counts[word] = counts.get(word, 0) + 1</code> is the standard way to count.</li>
-<li>Sets hold unique items and answer "is it in here?" almost instantly.</li>
-<li><code>[expr for x in xs if cond]</code> builds a filtered, transformed list in one line.</li>
-<li><code>max(items, key=lambda x: x["score"])</code> finds the item with the highest score, and returns the whole item.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. What is <code>[x * 2 for x in range(3)]</code>? <i>[0, 2, 4].</i> 2. <code>d = {"a": 1}</code>. What does <code>d.get("b", 0)</code> give? <i>0.</i> 3. You must check a million times whether an email is in a big collection. Which container? <i>A set.</i></div>
 `);
 
 explain('y2',`

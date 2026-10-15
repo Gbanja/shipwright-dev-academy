@@ -1,295 +1,313 @@
 /* Linux: "Explained step by step" walkthroughs. */
 
 explain('l1',`
-<h4>The terminal and the shell: a text conversation</h4>
-<p>Most of the time you use a computer by clicking: you open folders in a window, drag files around and double-click to open them. Servers do not work like that. A server is a computer in a data centre with no screen, no mouse and no desktop. The websites, apps and databases you will build run on machines like that, and almost all of them run <b>Linux</b>, an operating system (the core software that runs a computer).</p>
-<p>So engineers talk to computers in text instead. You type a short instruction, press Enter, and the computer types back an answer. Two pieces of software make this work:</p>
-<ul>
-<li>The <b>terminal</b> is the window: a box that shows text and lets you type.</li>
-<li>The <b>shell</b> is the program inside that window that actually listens. It reads what you typed, runs it, and prints the result. The most common shell on Linux is called <b>bash</b>.</li>
-</ul>
-<p>Each instruction you type is called a <b>command</b>. When the shell is ready for the next one, it shows a <b>prompt</b>: a short line of text that ends in <code>$</code> and then a blinking cursor.</p>
-<figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="A shell prompt split into user, computer, current folder, ready sign and command">
-<rect class="bx-dark" x="10" y="10" width="400" height="46" rx="6"/>
-<text class="t-term" x="24" y="40" style="font-size:17px">you@laptop:~/projects$ ls -la</text>
-<path class="ln" d="M40 60v20"/><path class="ln" d="M98 60v55"/><path class="ln" d="M194 60v20"/><path class="ln" d="M252 60v55"/><path class="ln-a" d="M300 60v20"/>
-<g text-anchor="middle">
-<text class="t" x="40" y="98">user</text>
-<text class="t" x="180" y="98">current folder</text>
-<text class="t-b t-a" x="318" y="98">command</text>
-<text class="t" x="98" y="133">computer</text>
-<text class="t" x="252" y="133">ready</text>
-</g>
-</svg><figcaption>A typical prompt. It tells you who you are logged in as, which computer you are on and which folder you are in, then the dollar sign says the shell is ready. Everything after it is what you type.</figcaption></figure>
-<p>A command often has extra parts. In <code>ls -la projects</code>, the word <code>ls</code> is the command itself, <code>-la</code> are <b>options</b> (also called <b>flags</b>: switches that change how it behaves, starting with a dash), and <code>projects</code> is an <b>argument</b> (the thing you want it to work on). Spaces separate the parts, so they matter.</p>
-<div class="analogy"><b>Think of it like</b>Texting a very literal assistant. It does exactly what you write, instantly, and never guesses what you meant. A typo is not a small mistake to it: it is a different instruction.</div>
+<p>Almost every server, Docker container and test robot in the world runs Linux, and none of them has a mouse. You move around them by typing. Learn to find your way with a handful of short words and you can work on any computer on the planet.</p>
 
-<h4>The filesystem is one big tree</h4>
-<p>Every file on a Linux computer lives in a <b>folder</b>, which Linux people usually call a <b>directory</b>. The two words mean the same thing. Folders can contain files and more folders, which contain more folders, and so on.</p>
-<p>If you draw that, you get an upside-down tree. At the very top is one folder that contains everything else. It is called the <b>root</b>, and its name is a single forward slash: <code>/</code>. Unlike Windows, there is no <code>C:</code> drive and no separate tree for each disk. Everything, even a USB stick, hangs somewhere under <code>/</code>.</p>
-<figure class="fig"><svg viewBox="0 0 420 372" role="img" aria-label="The Linux folder tree from root down to the site folder">
-<rect class="bx-a" x="185" y="10" width="50" height="34" rx="6"/><text class="t-m" x="210" y="32" text-anchor="middle">/</text>
-<path class="ln" d="M210 44v15M55 59h300M55 59v15M155 59v15M255 59v15M355 59v15"/>
-<rect class="bx" x="20" y="74" width="70" height="34" rx="6"/><text class="t-m" x="55" y="96" text-anchor="middle">bin</text>
-<rect class="bx" x="120" y="74" width="70" height="34" rx="6"/><text class="t-m" x="155" y="96" text-anchor="middle">etc</text>
-<rect class="bx-a" x="220" y="74" width="70" height="34" rx="6"/><text class="t-m" x="255" y="96" text-anchor="middle">home</text>
-<rect class="bx" x="320" y="74" width="70" height="34" rx="6"/><text class="t-m" x="355" y="96" text-anchor="middle">var</text>
-<path class="ln" d="M255 108v30"/>
-<rect class="bx-a" x="220" y="138" width="70" height="34" rx="6"/><text class="t-m" x="255" y="160" text-anchor="middle">you</text>
-<text class="t-s" x="210" y="160" text-anchor="end">your home, ~</text>
-<path class="ln" d="M255 172v15M60 187h307M60 187v15M165 187v15M267 187v15M367 187v15"/>
-<rect class="bx" x="10" y="202" width="100" height="34" rx="6"/><text class="t-m" x="60" y="224" text-anchor="middle">Documents</text>
-<rect class="bx-a" x="120" y="202" width="90" height="34" rx="6"/><text class="t-m" x="165" y="224" text-anchor="middle">projects</text>
-<rect class="bx-info" x="220" y="202" width="95" height="34" rx="14"/><text class="t-m" x="267" y="224" text-anchor="middle">notes.txt</text>
-<rect class="bx-info" x="325" y="202" width="85" height="34" rx="14"/><text class="t-m" x="367" y="224" text-anchor="middle">.bashrc</text>
-<path class="ln" d="M165 236v30"/>
-<rect class="bx-a" x="120" y="266" width="90" height="34" rx="6"/><text class="t-m" x="165" y="288" text-anchor="middle">site</text>
-<path class="ln" d="M165 300v30"/>
-<rect class="bx-a" x="120" y="330" width="90" height="34" rx="6"/><text class="t-m" x="165" y="352" text-anchor="middle">css</text>
-<rect class="bx" x="270" y="274" width="24" height="18" rx="4"/><text class="t-s" x="304" y="288">folder</text>
-<rect class="bx-info" x="270" y="304" width="24" height="18" rx="8"/><text class="t-s" x="304" y="318">file</text>
-<rect class="bx-a" x="270" y="334" width="24" height="18" rx="4"/><text class="t-s" x="304" y="348">one path</text>
-</svg><figcaption>The folder tree, drawn upside down with the root, slash, at the top. Square boxes are folders and rounded ones are files. The highlighted chain is the path slash home, slash you, slash projects, slash site, slash css, which you will build in this lesson.</figcaption></figure>
-<p>A few top-level folders you will meet again: <code>/bin</code> holds basic programs (yes, commands like <code>ls</code> are just program files), <code>/etc</code> holds settings, <code>/var</code> holds things that change, such as logs, and <code>/home</code> holds one folder per person.</p>
-<p>Your personal folder is your <b>home folder</b>. Here it is <code>/home/you</code>. It is where your own files live and where a new terminal starts. Because you refer to it so often, the shell gives it a nickname: the tilde, <code>~</code>. Typing <code>~</code> is exactly the same as typing <code>/home/you</code>.</p>
+${V.card(1,'One big tree','every file has one address',`
+<figure class="fig"><svg viewBox="0 0 420 212" role="img" aria-label="The Linux folder tree: root at the top, then etc, home and var; home holds you; you holds Documents, projects and notes.txt">
+<rect class="bx-dark" x="180" y="8" width="60" height="34" rx="6"/><text class="t-term" x="210" y="33" text-anchor="middle" style="font-size:22px">/</text>
+<path class="ln" d="M210 42V52H60V62M210 52V62M210 52H360V62"/>
+<rect class="bx-a" x="20" y="62" width="80" height="34" rx="6"/><text class="t-m" x="60" y="85" text-anchor="middle" style="font-size:17px">etc</text>
+<rect class="bx-a" x="165" y="62" width="90" height="34" rx="6"/><text class="t-m" x="210" y="85" text-anchor="middle" style="font-size:17px">home</text>
+<rect class="bx-a" x="320" y="62" width="80" height="34" rx="6"/><text class="t-m" x="360" y="85" text-anchor="middle" style="font-size:17px">var</text>
+<path class="ln" d="M210 96V114"/>
+<rect class="bx-ok" x="170" y="114" width="80" height="34" rx="6"/><text class="t-m" x="210" y="137" text-anchor="middle" style="font-size:17px">you</text>
+<text class="t t-ok" x="262" y="137" style="font-size:15px">~ is /home/you</text>
+<path class="ln" d="M210 148V158H85V168M210 158V168M210 158H335V168"/>
+<rect class="bx-a" x="25" y="168" width="120" height="34" rx="6"/><text class="t-m" x="85" y="191" text-anchor="middle" style="font-size:16px">Documents</text>
+<rect class="bx-a" x="155" y="168" width="110" height="34" rx="6"/><text class="t-m" x="210" y="191" text-anchor="middle" style="font-size:16px">projects</text>
+<rect class="bx-info" x="280" y="168" width="110" height="34" rx="6"/><text class="t-m" x="335" y="191" text-anchor="middle" style="font-size:16px">notes.txt</text>
+</svg><figcaption>Linux keeps everything in one upside-down tree. The top is called the root and is written <code>/</code>. Your own space is <code>/home/you</code>, nicknamed <code>~</code> (tilde). Orange boxes are folders, the blue one is a file.</figcaption></figure>
+${V.like(`<p>A huge office building. <code>/</code> is the front door. Every floor, corridor and room hangs off it, and a <b>path</b> is the directions from the front door to one room: "go to home, then you, then projects".</p>`)}
+${V.why(`<p>Windows gives each drive a letter, like <code>C:</code> and <code>D:</code>. Unix, the 1970s system Linux copies, chose one single tree instead. Even a USB stick appears as a folder inside it. One tree means every file has exactly one full address.</p>`)}
+${V.anat([[1,'/'],[2,'home'],[3,'/'],[2,'you'],[3,'/'],[2,'projects'],[3,'/'],[4,'site']],[
+ '<b>Leading slash.</b> "Start at the front door." A path that begins with <code>/</code> is <b>absolute</b>: it means the same place wherever you are.',
+ '<b>Folders on the way.</b> Walked through in order, top to bottom. A folder is also called a <b>directory</b>.',
+ '<b>Separator.</b> A forward slash between names. Never a backslash on Linux.',
+ '<b>Destination.</b> The folder or file you want to reach.'])}
+<p><b>Watch yourself move.</b> The terminal is on top. The strip below shows where you are standing.</p>
+${V.steps([
+ ['You open a terminal. <b>pwd</b> (print working directory) answers "where am I?". You always start at home.',`<svg viewBox="0 0 420 190" role="img" aria-label="pwd prints /home/you; you are in you">
+<rect class="bx-dark" x="4" y="6" width="412" height="82" rx="8"/>
+<text class="t-term" x="16" y="34" style="font-size:16px">$ pwd</text>
+<text class="t-term t-a" x="16" y="70" style="font-size:16px">/home/you</text>
+<rect class="bx" x="4" y="104" width="40" height="40" rx="6"/><text class="t-m" x="24" y="130" text-anchor="middle">/</text>
+<rect class="bx" x="62" y="104" width="70" height="40" rx="6"/><text class="t-m" x="97" y="130" text-anchor="middle">home</text>
+<rect class="bx-hl" x="150" y="104" width="60" height="40" rx="6"/><text class="t-m" x="180" y="130" text-anchor="middle">you</text>
+<rect class="bx" x="228" y="104" width="100" height="40" rx="6"/><text class="t-m" x="278" y="130" text-anchor="middle">projects</text>
+<rect class="bx" x="346" y="104" width="70" height="40" rx="6"/><text class="t-m" x="381" y="130" text-anchor="middle">site</text>
+<path class="ln" d="M44 124H62M132 124H150M210 124H228M328 124H346"/>
+${V.ic('person',165,150,30,'ic-a')}
+</svg>`],
+ ['<b>cd projects</b> (change directory). No slash at the start, so it is <b>relative</b>: "from where I stand, go into projects".',`<svg viewBox="0 0 420 190" role="img" aria-label="cd projects; pwd prints /home/you/projects">
+<rect class="bx-dark" x="4" y="6" width="412" height="82" rx="8"/>
+<text class="t-term" x="16" y="30" style="font-size:16px">$ cd projects</text>
+<text class="t-term" x="16" y="54" style="font-size:16px">$ pwd</text>
+<text class="t-term t-a" x="16" y="78" style="font-size:16px">/home/you/projects</text>
+<rect class="bx" x="4" y="104" width="40" height="40" rx="6"/><text class="t-m" x="24" y="130" text-anchor="middle">/</text>
+<rect class="bx" x="62" y="104" width="70" height="40" rx="6"/><text class="t-m" x="97" y="130" text-anchor="middle">home</text>
+<rect class="bx" x="150" y="104" width="60" height="40" rx="6"/><text class="t-m" x="180" y="130" text-anchor="middle">you</text>
+<rect class="bx-hl" x="228" y="104" width="100" height="40" rx="6"/><text class="t-m" x="278" y="130" text-anchor="middle">projects</text>
+<rect class="bx" x="346" y="104" width="70" height="40" rx="6"/><text class="t-m" x="381" y="130" text-anchor="middle">site</text>
+<path class="ln" d="M44 124H62M132 124H150M210 124H228M328 124H346"/>
+${V.ic('person',263,150,30,'ic-a')}
+</svg>`],
+ ['<b>cd ..</b> goes up one level. Two dots always mean "the folder above this one".',`<svg viewBox="0 0 420 190" role="img" aria-label="cd .. ; pwd prints /home/you">
+<rect class="bx-dark" x="4" y="6" width="412" height="82" rx="8"/>
+<text class="t-term" x="16" y="30" style="font-size:16px">$ cd ..</text>
+<text class="t-term" x="16" y="54" style="font-size:16px">$ pwd</text>
+<text class="t-term t-a" x="16" y="78" style="font-size:16px">/home/you</text>
+<rect class="bx" x="4" y="104" width="40" height="40" rx="6"/><text class="t-m" x="24" y="130" text-anchor="middle">/</text>
+<rect class="bx" x="62" y="104" width="70" height="40" rx="6"/><text class="t-m" x="97" y="130" text-anchor="middle">home</text>
+<rect class="bx-hl" x="150" y="104" width="60" height="40" rx="6"/><text class="t-m" x="180" y="130" text-anchor="middle">you</text>
+<rect class="bx" x="228" y="104" width="100" height="40" rx="6"/><text class="t-m" x="278" y="130" text-anchor="middle">projects</text>
+<rect class="bx" x="346" y="104" width="70" height="40" rx="6"/><text class="t-m" x="381" y="130" text-anchor="middle">site</text>
+<path class="ln" d="M44 124H62M132 124H150M210 124H228M328 124H346"/>
+${V.ic('person',165,150,30,'ic-a')}
+</svg>`],
+ ['An <b>absolute</b> path starts at <b>/</b>, so it works from anywhere. You jump straight to site in one go.',`<svg viewBox="0 0 420 190" role="img" aria-label="cd /home/you/projects/site; pwd prints that path">
+<rect class="bx-dark" x="4" y="6" width="412" height="82" rx="8"/>
+<text class="t-term" x="16" y="30" style="font-size:16px">$ cd /home/you/projects/site</text>
+<text class="t-term" x="16" y="54" style="font-size:16px">$ pwd</text>
+<text class="t-term t-a" x="16" y="78" style="font-size:16px">/home/you/projects/site</text>
+<rect class="bx-ok" x="4" y="104" width="40" height="40" rx="6"/><text class="t-m" x="24" y="130" text-anchor="middle">/</text>
+<rect class="bx-ok" x="62" y="104" width="70" height="40" rx="6"/><text class="t-m" x="97" y="130" text-anchor="middle">home</text>
+<rect class="bx-ok" x="150" y="104" width="60" height="40" rx="6"/><text class="t-m" x="180" y="130" text-anchor="middle">you</text>
+<rect class="bx-ok" x="228" y="104" width="100" height="40" rx="6"/><text class="t-m" x="278" y="130" text-anchor="middle">projects</text>
+<rect class="bx-hl" x="346" y="104" width="70" height="40" rx="6"/><text class="t-m" x="381" y="130" text-anchor="middle">site</text>
+<path class="ln-ok" d="M44 124H62M132 124H150M210 124H228M328 124H346"/>
+${V.ic('person',366,150,30,'ic-a')}
+</svg>`],
+ ['<b>cd -</b> jumps back to wherever you were last, and prints it. Lost? Plain <b>cd</b> or <b>cd ~</b> always takes you home.',`<svg viewBox="0 0 420 190" role="img" aria-label="cd - prints /home/you and returns you there">
+<rect class="bx-dark" x="4" y="6" width="412" height="82" rx="8"/>
+<text class="t-term" x="16" y="34" style="font-size:16px">$ cd -</text>
+<text class="t-term t-a" x="16" y="70" style="font-size:16px">/home/you</text>
+<rect class="bx" x="4" y="104" width="40" height="40" rx="6"/><text class="t-m" x="24" y="130" text-anchor="middle">/</text>
+<rect class="bx" x="62" y="104" width="70" height="40" rx="6"/><text class="t-m" x="97" y="130" text-anchor="middle">home</text>
+<rect class="bx-hl" x="150" y="104" width="60" height="40" rx="6"/><text class="t-m" x="180" y="130" text-anchor="middle">you</text>
+<rect class="bx" x="228" y="104" width="100" height="40" rx="6"/><text class="t-m" x="278" y="130" text-anchor="middle">projects</text>
+<rect class="bx" x="346" y="104" width="70" height="40" rx="6"/><text class="t-m" x="381" y="130" text-anchor="middle">site</text>
+<path class="ln" d="M44 124H62M132 124H150M210 124H228M328 124H346"/>
+${V.ic('person',165,150,30,'ic-a')}
+</svg>`]])}
+${V.rules(V.rh('Rules: get these wrong and the command fails'),
+ V.ok('cd /etc','Starts with / : absolute, works from anywhere'),V.ok('cd projects','No / : relative, starts where you are'),
+ V.no('cd Projects','Names are case-sensitive: Projects and projects are different'),V.no('cd my folder','A space splits it into two words. Use "my folder"'),
+ V.no('cd \\home\\you','Backslashes are Windows. Linux uses /'),
+ V.rh('Conventions: what professionals do'),
+ V.ok('my-site, notes.txt','Lower case, hyphens, no spaces in names'),V.ok('pwd','When in doubt, check where you are before you act'))}
+${V.hook(`Slash first: from the front door. No slash: from where you stand. <code>..</code> is up, <code>~</code> is home, <code>-</code> is back.`)}
+`)}
 
-<h4>Where am I, and what is here? <code>pwd</code> and <code>ls</code></h4>
-<p>At every moment the shell is "standing" in one folder, called the <b>working directory</b> or current folder. Commands act on that folder unless you say otherwise, so the first habit to build is checking where you are.</p>
-<ul>
-<li><code>pwd</code> means "print working directory". It prints the full address of the folder you are standing in, like <code>/home/you</code>.</li>
-<li><code>ls</code> means "list". It shows the names of the files and folders in the current folder.</li>
-</ul>
-<p><code>ls</code> has two flags you will use constantly. <code>-l</code> gives the <b>long</b> format: one line per item with extra details such as size, date and permissions (the next lesson decodes those). <code>-a</code> shows <b>all</b> items, including hidden ones. You can combine flags, so <code>ls -la</code> means both at once.</p>
-<p>Why would anything be hidden? On Linux, any file whose name starts with a dot is hidden from a plain <code>ls</code>. These <b>dotfiles</b> are usually settings, like <code>.bashrc</code>, which configures your shell. They are hidden only to keep the listing tidy, not for security.</p>
-<pre class="snip">$ ls
-Documents  Downloads  notes.txt  projects
-$ ls -a
-.  ..  .bashrc  Documents  Downloads  notes.txt  projects</pre>
-<p>Notice the two strange entries <code>.</code> and <code>..</code> at the start of the second listing. They are not real files. Every folder contains these two shortcuts, and they are the key to the next section.</p>
+${V.card(2,'Look around','pwd and ls switch the lights on',`
+<figure class="fig"><svg viewBox="0 0 420 196" role="img" aria-label="ls -la output in the home folder, with dot, dot dot and the hidden file .bashrc labelled">
+<rect class="bx-dark" x="4" y="6" width="270" height="184" rx="8"/>
+<text class="t-term" x="16" y="32" style="font-size:16px">$ ls -la</text>
+<text class="t-term" x="16" y="62" style="font-size:16px"><tspan class="t-a">d</tspan>rwxr-xr-x  .</text>
+<text class="t-term" x="16" y="88" style="font-size:16px"><tspan class="t-a">d</tspan>rwxr-xr-x  ..</text>
+<text class="t-term" x="16" y="114" style="font-size:16px">-rw-r--r--  .bashrc</text>
+<text class="t-term" x="16" y="140" style="font-size:16px"><tspan class="t-a">d</tspan>rwxr-xr-x  Documents</text>
+<text class="t-term" x="16" y="166" style="font-size:16px">-rw-r--r--  notes.txt</text>
+<path class="ln-d" d="M232 57H286M232 83H286M240 109H286"/>
+<text class="t" x="292" y="62">this folder</text>
+<text class="t" x="292" y="88">the one above</text>
+<text class="t t-a" x="292" y="114">hidden file</text>
+<text class="t" x="292" y="140"><tspan class="t-a" style="font-weight:700">d</tspan> = directory</text>
+<text class="t" x="292" y="166">- = file</text>
+</svg><figcaption>A shortened <code>ls -la</code>. Names that start with a dot are hidden from a plain <code>ls</code>. The first letter of each line says what it is. The other nine letters are permissions, which is the next lesson.</figcaption></figure>
+${V.like(`<p>Walking into a dark room. <code>pwd</code> tells you which room you are in; <code>ls</code> switches the light on. <code>-a</code> also opens the drawers where the hidden things are kept.</p>`)}
+${V.why(`<p>A terminal shows nothing until you ask, so "where am I?" and "what is here?" are the two questions you ask most. Hidden <b>dotfiles</b> such as <code>.bashrc</code> hold settings. They are hidden so they don't clutter your view, not because they are secret.</p>`)}
+${V.anat([[1,'ls'],' ',[2,'-l'],[3,'a'],' ',[4,'~/projects']],[
+ '<b>Command.</b> <code>ls</code> lists what is in a folder.',
+ '<b>-l (long).</b> One item per line with details: type, permissions, owner, size, date.',
+ '<b>a (all).</b> Include hidden dotfiles. Short flags can be squashed together: <code>-la</code> is <code>-l -a</code>.',
+ '<b>Where (optional).</b> Leave it out and ls lists the folder you are in.'])}
+${V.rules(V.ok('ls -la','Space between the command and its flags'),V.no('ls-la','No space: Linux looks for a command called "ls-la"'),
+ V.no('LS','Commands are lower case'),V.ok('tree','Draws the folders below you as a tree (may need installing on a real machine)'))}
+${V.hook(`<code>pwd</code>: where am I? <code>ls -la</code>: what is here, even the hidden things?`)}
+`)}
 
-<h4>Paths: absolute and relative</h4>
-<p>A <b>path</b> is the address of a file or folder: the names of the folders you pass through, separated by <code>/</code>. There are two kinds, and the difference is simply <b>where the address starts</b>.</p>
-<p>An <b>absolute path</b> starts with <code>/</code>, so it starts at the root. <code>/home/you/projects/site</code> means: from the top, go into <code>home</code>, then <code>you</code>, then <code>projects</code>, then <code>site</code>. Like a full postal address, it means the same thing no matter where you are standing.</p>
-<p>A <b>relative path</b> does not start with <code>/</code>. It starts from your current folder. If you are in <code>/home/you</code>, then <code>projects/site</code> means "from here, go into projects, then site", which lands in the same place. Like the directions "second door on the left", it only works from the right starting point.</p>
-<p>Now the three shortcuts, which work inside any path:</p>
-<div class="tbl-wrap"><table><tr><th>Symbol</th><th>Means</th><th>Example</th></tr>
-<tr><td><code>~</code></td><td>Your home folder</td><td><code>~/notes.txt</code> is <code>/home/you/notes.txt</code></td></tr>
-<tr><td><code>.</code></td><td>This folder, right here</td><td><code>./site</code> is the same as <code>site</code></td></tr>
-<tr><td><code>..</code></td><td>The folder one level up (the parent)</td><td><code>../..</code> goes up two levels</td></tr></table></div>
-<figure class="fig"><svg viewBox="0 0 420 280" role="img" aria-label="Relative paths from the site folder to the folders around it">
-<rect class="bx" x="20" y="16" width="150" height="40" rx="6"/><text class="t-m" x="95" y="41" text-anchor="middle">/home/you</text>
-<rect class="bx" x="20" y="86" width="150" height="40" rx="6"/><text class="t-m" x="95" y="111" text-anchor="middle">projects</text>
-<rect class="bx-a" x="20" y="156" width="150" height="40" rx="6"/><text class="t-m" x="95" y="181" text-anchor="middle">site</text>
-<rect class="bx" x="20" y="226" width="150" height="40" rx="6"/><text class="t-m" x="95" y="251" text-anchor="middle">css</text>
-<path class="ln" d="M95 56v30M95 126v30M95 196v30"/>
-<text class="t-m" x="196" y="41">../..</text><text class="t-s" x="262" y="41">or ~, up two</text>
-<text class="t-m" x="196" y="111">..</text><text class="t-s" x="262" y="111">up one level</text>
-<text class="t-m t-a" x="196" y="181">.</text><text class="t-s t-a" x="262" y="181">you are here</text>
-<text class="t-m" x="196" y="251">css</text><text class="t-s" x="262" y="251">down into css</text>
-</svg><figcaption>You are standing in the site folder. From there, dot means site itself, dot dot means projects, dot dot slash dot dot means your home folder, and plain css goes down into the css folder.</figcaption></figure>
-<p>Let's work one through. You are in <code>/home/you/projects/site</code> and you want the file <code>notes.txt</code> in your home folder. Three paths all reach it:</p>
-<ol>
-<li>Absolute: <code>/home/you/notes.txt</code>. Start at the root and walk down.</li>
-<li>With the home shortcut: <code>~/notes.txt</code>. The shell swaps <code>~</code> for <code>/home/you</code>.</li>
-<li>Relative: <code>../../notes.txt</code>. From site, up to projects, up again to <code>/home/you</code>, then the file.</li>
-</ol>
-<div class="try"><b>Try it in your head</b>You are in <code>/home/you/projects</code>. Where does <code>../Documents</code> point? Up one level is <code>/home/you</code>, then into Documents, so <code>/home/you/Documents</code>. And is <code>~/projects</code> absolute or relative? It behaves like an absolute path, because the shell replaces <code>~</code> with <code>/home/you</code> before running the command.</div>
+${V.card(3,'Make, copy, move, delete','five verbs that shape the tree',`
+<figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="Five commands as pictures: mkdir makes a folder, touch makes a file, cp copies, mv moves or renames, rm deletes">
+${V.ic('folder',18,10,48,'ic-a')}${V.ic('file',100,10,48,'ic-info')}${V.ic('file',178,10,40,'ic-ok')}${V.ic('file',194,24,40,'ic-ok')}${V.ic('arrow',266,14,44,'ic-a')}${V.ic('cross',348,10,48,'ic-bad')}
+<text class="t-m" x="42" y="98" text-anchor="middle" style="font-size:17px">mkdir</text>
+<text class="t-m" x="124" y="98" text-anchor="middle" style="font-size:17px">touch</text>
+<text class="t-m" x="208" y="98" text-anchor="middle" style="font-size:17px">cp</text>
+<text class="t-m" x="290" y="98" text-anchor="middle" style="font-size:17px">mv</text>
+<text class="t-m" x="372" y="98" text-anchor="middle" style="font-size:17px">rm</text>
+<text class="t" x="42" y="126" text-anchor="middle">new folder</text>
+<text class="t" x="124" y="126" text-anchor="middle">new file</text>
+<text class="t" x="208" y="126" text-anchor="middle">copy</text>
+<text class="t" x="290" y="126" text-anchor="middle">move or</text>
+<text class="t" x="290" y="144" text-anchor="middle">rename</text>
+<text class="t t-bad" x="372" y="126" text-anchor="middle">delete</text>
+<text class="t t-bad" x="372" y="144" text-anchor="middle">forever</text>
+</svg><figcaption>The five verbs. Each is short for an English word: make directory, touch (create an empty file), copy, move, remove.</figcaption></figure>
+${V.like(`<p><code>cp</code> is a photocopier: you end up with two. <code>mv</code> is picking a box up and putting it somewhere else; giving it a new label is just a move to a new name. <code>rm</code> is a shredder, and there is no recycle bin to rescue you.</p>`)}
+${V.anat([[1,'mkdir'],' ',[2,'-p'],' ',[3,'projects/site/css']],[
+ '<b>Command.</b> Make a directory.',
+ '<b>-p (parents).</b> Also create any missing folders on the way. Without it, mkdir fails if <code>projects</code> doesn\'t exist yet.',
+ '<b>Path.</b> Relative here, so it is built inside the folder you are in.'])}
+${V.steps([
+ ['<b>mkdir -p</b> builds three folders in one go, one inside the next.',`<svg viewBox="0 0 420 236" role="img" aria-label="mkdir -p creates projects, site and css">
+<rect class="bx-dark" x="4" y="6" width="412" height="40" rx="8"/><text class="t-term" x="16" y="32" style="font-size:16px">$ mkdir -p projects/site/css</text>
+<rect class="bx" x="6" y="62" width="128" height="70" rx="8"/><text class="t-m" x="16" y="84">~</text><text class="t-m" x="22" y="114">notes.txt</text>
+<text class="t-m t-ok" x="160" y="82" style="font-size:16px">projects/</text>
+<text class="t-m t-ok" x="184" y="110" style="font-size:16px">site/</text>
+<text class="t-m t-ok" x="208" y="138" style="font-size:16px">css/</text>
+</svg>`],
+ ['Inside site, <b>touch</b> creates two empty files. Note <b>css/style.css</b>: a relative path into the css folder.',`<svg viewBox="0 0 420 236" role="img" aria-label="touch creates index.html and css/style.css">
+<rect class="bx-dark" x="4" y="6" width="412" height="40" rx="8"/><text class="t-term" x="16" y="32" style="font-size:16px">$ touch index.html css/style.css</text>
+<rect class="bx" x="6" y="62" width="128" height="70" rx="8"/><text class="t-m" x="16" y="84">~</text><text class="t-m" x="22" y="114">notes.txt</text>
+<text class="t-m" x="160" y="82" style="font-size:16px">projects/</text>
+<text class="t-m" x="184" y="110" style="font-size:16px">site/</text>
+<text class="t-m" x="208" y="138" style="font-size:16px">css/</text>
+<text class="t-m t-ok" x="232" y="166" style="font-size:16px">style.css</text>
+<text class="t-m t-ok" x="208" y="194" style="font-size:16px">index.html</text>
+</svg>`],
+ ['<b>cp ~/notes.txt .</b> copies the notes here. The lone dot means "this folder". The original stays at home.',`<svg viewBox="0 0 420 236" role="img" aria-label="cp makes a copy of notes.txt inside site">
+<rect class="bx-dark" x="4" y="6" width="412" height="40" rx="8"/><text class="t-term" x="16" y="32" style="font-size:16px">$ cp ~/notes.txt .</text>
+<rect class="bx-hl" x="6" y="62" width="128" height="70" rx="8"/><text class="t-m" x="16" y="84">~</text><text class="t-m" x="22" y="114">notes.txt</text>
+<text class="t-m" x="160" y="82" style="font-size:16px">projects/</text>
+<text class="t-m" x="184" y="110" style="font-size:16px">site/</text>
+<text class="t-m" x="208" y="138" style="font-size:16px">css/</text>
+<text class="t-m" x="232" y="166" style="font-size:16px">style.css</text>
+<text class="t-m" x="208" y="194" style="font-size:16px">index.html</text>
+<text class="t-m t-ok" x="208" y="222" style="font-size:16px">notes.txt</text>
+<path class="ln-ok" d="M70 132C80 200 130 218 192 217"/><polygon class="ah-ok" points="190,210 202,217 190,224"/>
+</svg>`],
+ ['<b>mv notes.txt README.md</b> renames it. Same file, new label. Check the shape any time with <b>tree</b>.',`<svg viewBox="0 0 420 236" role="img" aria-label="mv renames notes.txt to README.md">
+<rect class="bx-dark" x="4" y="6" width="412" height="40" rx="8"/><text class="t-term" x="16" y="32" style="font-size:16px">$ mv notes.txt README.md</text>
+<rect class="bx" x="6" y="62" width="128" height="70" rx="8"/><text class="t-m" x="16" y="84">~</text><text class="t-m" x="22" y="114">notes.txt</text>
+<text class="t-m" x="160" y="82" style="font-size:16px">projects/</text>
+<text class="t-m" x="184" y="110" style="font-size:16px">site/</text>
+<text class="t-m" x="208" y="138" style="font-size:16px">css/</text>
+<text class="t-m" x="232" y="166" style="font-size:16px">style.css</text>
+<text class="t-m" x="208" y="194" style="font-size:16px">index.html</text>
+<text class="t-m t-a" x="208" y="222" style="font-size:16px">README.md</text>
+</svg>`]])}
+${V.rules(V.rh('Rules: these bite'),
+ V.no('rm notes.txt','Gone at once. No bin, no undo. Read the line twice before Enter'),V.ok('rm -r old-dir','Folders need -r (recursive) to delete them and everything inside'),
+ V.ok('cp -r src backup','Copying a folder also needs -r'),V.no('mv a.txt b.txt','If b.txt already exists, it is silently replaced. Add -i to be asked first'),
+ V.rh('Conventions'),
+ V.ok('mkdir -p','Safe to repeat: no error if the folders already exist'),V.ok('ls before rm','Look at what you are about to delete'))}
+${V.build(`<ol><li>Check where you are with <code>pwd</code> and list everything, hidden files included.</li><li>Build a nested folder path in one command with <code>-p</code>, then <code>cd</code> into the middle folder.</li><li>Create two empty files with <code>touch</code>, one of them inside the sub-folder.</li><li>Copy a file from home with <code>~</code> and <code>.</code>, then rename the copy with <code>mv</code>.</li><li>Run <code>tree</code> to check, then go home.</li></ol>`)}
+${V.hook(`Make, touch, copy, move, remove. And <code>rm</code> never asks twice.`)}
+`)}
 
-<h4>Moving around with <code>cd</code></h4>
-<p><code>cd</code> means "change directory". It moves you to a different folder, using any kind of path. It prints nothing when it works, so follow it with <code>pwd</code> if you want to check.</p>
-<pre class="snip">cd projects        # down into projects (relative)
-cd /etc            # jump anywhere (absolute)
-cd ..              # up one level, to the parent
-cd ~               # back to your home folder
-cd                 # on its own: also home
-cd -               # back to the folder you were in before</pre>
-<p><code>cd -</code> is handy when you jump between two distant folders: it toggles back and forth, and prints the folder it moved you to.</p>
-
-<h4>Building things: <code>mkdir</code>, <code>touch</code> and <code>tree</code></h4>
-<p><code>mkdir</code> means "make directory". <code>mkdir site</code> creates one folder called <code>site</code> inside the current folder.</p>
-<p>What about <code>mkdir projects/site/css</code> when <code>site</code> does not exist yet? Plain <code>mkdir</code> refuses, because it only creates the last folder in the path and expects the ones before it to exist. The <code>-p</code> flag ("parents") tells it to create every missing folder along the way, and not to complain if some already exist. That is how the lesson builds three levels in one command.</p>
-<p><code>touch index.html</code> creates an empty file. (Its original job is to update a file's "last modified" time; creating the file when it is missing is a side effect everyone uses.) You can give it several names at once, and they can be paths: <code>touch index.html css/style.css</code> creates one file here and one inside <code>css</code>.</p>
-<p><code>tree</code> draws the folder below you as a tree, the same shape as the diagram above. It is a great way to check your work. It is not installed on every system; on Ubuntu, <code>sudo apt install tree</code> adds it.</p>
-<pre class="snip">$ tree
-.
-├── css
-│   └── style.css
-└── index.html</pre>
-<p>Notice the dot at the top: <code>tree</code> is showing "this folder" and everything inside it.</p>
-
-<h4>Copying, moving, renaming and deleting</h4>
-<p>These commands all follow the same pattern: <b>source first, destination second</b>.</p>
-<ul>
-<li><code>cp notes.txt backup.txt</code> <b>copies</b>: afterwards both files exist.</li>
-<li><code>mv notes.txt README.md</code> <b>moves</b>: the old name is gone. Moving a file to a new name in the same folder is how you <b>rename</b> on Linux; there is no separate rename command.</li>
-<li><code>mv notes.txt Documents/</code> moves it into another folder and keeps its name.</li>
-</ul>
-<p>When the destination is a folder, the file keeps its name and goes inside. That is why <code>cp ~/notes.txt .</code> works: copy the file from your home folder into <code>.</code>, this folder, still called <code>notes.txt</code>. After that, a <code>mv</code> can give the copy a new name, while the original in your home folder stays untouched.</p>
-<p><code>rm file</code> removes a file. To remove a folder and everything in it, add <code>-r</code> ("recursive", meaning it goes into every folder inside). Similarly, <code>cp -r</code> copies a whole folder.</p>
-<div class="mistake"><b>Common mistake</b>Expecting a recycle bin. <code>rm</code> deletes immediately and permanently, with no "are you sure?" and no undo. Before any <code>rm -r</code>, run <code>pwd</code> and <code>ls</code> to check exactly where you are and what you are about to delete. Typing <code>rm -ri</code> makes it ask before each file.</div>
-<div class="mistake"><b>Common mistake</b>Mixing up spaces. <code>cd my folder</code> gives cd two arguments, "my" and "folder". Put names with spaces in quotes, <code>cd "my folder"</code>, or better, avoid spaces in file names altogether and use dashes: <code>my-folder</code>.</div>
-
-<h4>Reading the errors you will hit</h4>
-<p>Error messages look scary but follow a pattern: the command's name, then what it tried, then why it failed. Read them slowly.</p>
-<ul>
-<li><code>No such file or directory</code>: the path does not exist <b>from where you are</b>. Usually you are in a different folder than you think, or there is a typo. Run <code>pwd</code> and <code>ls</code>.</li>
-<li><code>mkdir: cannot create directory 'projects/site/css': No such file or directory</code>: a parent folder is missing. Use <code>mkdir -p</code>.</li>
-<li><code>Not a directory</code>: you tried to <code>cd</code> into a file.</li>
-<li><code>rm: cannot remove 'site': Is a directory</code>: plain <code>rm</code> only removes files. Folders need <code>-r</code>, so pause and double-check first.</li>
-<li><code>command not found</code>: the shell does not know that command, often a typo such as <code>sl</code> for <code>ls</code>, or a program that is not installed.</li>
-</ul>
-<div class="tip"><b>Tip</b>In a real terminal, press Tab to complete a file or folder name for you; it avoids most typos. Press the Up arrow to bring back your previous commands, which also works in this sandbox.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>The terminal is the window; the shell (usually bash) reads your commands. A command is a name, then options starting with a dash, then arguments.</li>
-<li>All files live in one tree starting at the root, <code>/</code>. Your home folder is <code>/home/you</code>, nicknamed <code>~</code>.</li>
-<li><code>pwd</code> shows where you are, <code>ls -la</code> lists everything including hidden dotfiles, and <code>cd</code> moves you: <code>..</code> is up, <code>~</code> or plain <code>cd</code> is home, <code>-</code> is back.</li>
-<li>Absolute paths start with <code>/</code> and work from anywhere; relative paths start from where you are. <code>.</code> means this folder.</li>
-<li><code>mkdir -p</code> builds nested folders, <code>touch</code> makes empty files, <code>cp</code> copies, <code>mv</code> moves or renames, and <code>rm</code> deletes for good.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. You are in <code>/home/you/projects</code>. Where does <code>cd ..</code> take you? <i>/home/you.</i> 2. Is <code>projects/site</code> absolute or relative? <i>Relative: it doesn't start with /.</i> 3. Which command shows <code>.bashrc</code>: <code>ls</code> or <code>ls -a</code>? <i>ls -a.</i></div>
 `);
 
 explain('l2',`
-<h4>Why files have permissions at all</h4>
-<p>Linux was built for computers that many people share at the same time. A university server might have hundreds of students logged in at once, and a web server runs dozens of programs for different jobs. If everyone could read and change every file, one student could read another's exam answers, and a buggy program could delete the whole system.</p>
-<p>So Linux attaches a small set of rules to <b>every single file and folder</b>. The rules answer one question: <i>who is allowed to do what with this file?</i> Every time you open, save or run something, Linux checks those rules first. If the rules say no, you get the message <code>Permission denied</code>.</p>
-<div class="analogy"><b>Think of it like</b>A shared office building. Every room has a lock, and the lock says who may enter (read), who may move the furniture (write) and who may use the equipment (execute). The building manager, called <b>root</b>, has a master key to every room.</div>
+<p>Every file on a Linux computer carries a tiny lock that says who may open it, change it or run it. Get it wrong and your script won't start, or worse, your passwords are readable by everyone. Get it right and you can read any <code>ls -l</code> line, and any number like 755, at a glance.</p>
 
-<h4>Users and groups: who "you" are</h4>
-<p>When you log in, you are a <b>user</b> with a name, like <code>you</code>. Type <code>whoami</code> and Linux tells you your user name.</p>
-<p>Users can also belong to <b>groups</b>. A group is just a named list of users, like a team. For example, everyone on the web team might be in a group called <code>webdev</code>, so a file can be shared with the whole team at once without opening it up to everybody.</p>
-<p>There is one special user called <b>root</b>. Root is the administrator, and the permission rules do not apply to root at all. That is powerful and dangerous, which is why you will learn to borrow root's power only for single commands, using <code>sudo</code>.</p>
+${V.card(1,'Owner, group, others','three sets of keys',`
+<figure class="fig"><svg viewBox="0 0 420 214" role="img" aria-label="deploy.sh gives three sets of keys: the owner gets r w x, the group gets r and x, everyone else gets r and x">
+${V.ic('person',44,4,52,'ic-a')}${V.ic('people',184,4,52,'ic-info')}${V.ic('globe',324,4,52,'ic-ok')}
+<text class="t-b" x="70" y="84" text-anchor="middle" style="font-size:16px">Owner (u)</text>
+<text class="t-b" x="210" y="84" text-anchor="middle" style="font-size:16px">Group (g)</text>
+<text class="t-b" x="350" y="84" text-anchor="middle" style="font-size:16px">Others (o)</text>
+<rect class="bx-a" x="13" y="100" width="34" height="40" rx="6"/><text class="t-m" x="30" y="127" text-anchor="middle" style="font-size:20px;font-weight:700">r</text><rect class="bx-a" x="53" y="100" width="34" height="40" rx="6"/><text class="t-m" x="70" y="127" text-anchor="middle" style="font-size:20px;font-weight:700">w</text><rect class="bx-a" x="93" y="100" width="34" height="40" rx="6"/><text class="t-m" x="110" y="127" text-anchor="middle" style="font-size:20px;font-weight:700">x</text><rect class="bx-info" x="153" y="100" width="34" height="40" rx="6"/><text class="t-m" x="170" y="127" text-anchor="middle" style="font-size:20px;font-weight:700">r</text><rect class="ln-d" x="193" y="100" width="34" height="40" rx="6"/><text class="t-m" x="210" y="127" text-anchor="middle" style="font-size:20px">-</text><rect class="bx-info" x="233" y="100" width="34" height="40" rx="6"/><text class="t-m" x="250" y="127" text-anchor="middle" style="font-size:20px;font-weight:700">x</text><rect class="bx-ok" x="293" y="100" width="34" height="40" rx="6"/><text class="t-m" x="310" y="127" text-anchor="middle" style="font-size:20px;font-weight:700">r</text><rect class="ln-d" x="333" y="100" width="34" height="40" rx="6"/><text class="t-m" x="350" y="127" text-anchor="middle" style="font-size:20px">-</text><rect class="bx-ok" x="373" y="100" width="34" height="40" rx="6"/><text class="t-m" x="390" y="127" text-anchor="middle" style="font-size:20px;font-weight:700">x</text>
+<path class="ln-d" d="M140 70V150M280 70V150"/>
+<text class="t-m" x="210" y="196" text-anchor="middle" style="font-size:24px">-<tspan class="t-a">rwx</tspan><tspan class="t-info">r-x</tspan><tspan class="t-ok">r-x</tspan></text>
+</svg><figcaption>Every file hands out three sets of keys. The owner is one person. The group is a named team of users. Others is everybody else. <code>r</code>, <code>w</code> and <code>x</code> are the keys; a dash means that key is missing. Read left to right, the nine letters are exactly what <code>ls -l</code> prints.</figcaption></figure>
+${V.like(`<p>Think of a house. The <b>owner</b> has a full set of keys. The <b>family</b> (the group) gets some keys. A <b>stranger</b> walking past (others) gets maybe one key, or none. Every file keeps a little card that says exactly which keys each of the three gets.</p>`)}
+${V.why(`<p>Unix, the system Linux grew from, was built in the 1970s for one big computer shared by dozens of people at once. Without locks, anyone could read your work or delete the system by accident. So every file got an <b>owner</b> (one user), a <b>group</b> (a named team of users) and nine on/off switches. Type <code>whoami</code> to see your user name and <code>groups</code> to see the teams you belong to.</p>`)}
+${V.anat([[1,'-'],[2,'rwx'],[3,'r-x'],[4,'r-x'],' 1 ',[5,'you you'],'  48 Oct  9 10:30 ',[6,'deploy.sh']],[
+ '<b>Type.</b> <code>-</code> is a normal file, <code>d</code> is a directory (folder).',
+ '<b>Owner keys.</b> What the owner may do: here read, write and execute.',
+ '<b>Group keys.</b> What members of the file\'s group may do: read and execute, no write.',
+ '<b>Others keys.</b> What everybody else may do.',
+ '<b>Owner, then group.</b> The file belongs to the user <code>you</code> and the group <code>you</code>. Many Linux systems give each user a private group with the same name.',
+ '<b>File name.</b> The 1, the size (48 bytes) and the date are not about permissions.'])}
+<p><b>How Linux decides.</b> Every time someone opens, saves or runs a file, Linux walks through three gates in a fixed order. Watch it.</p>
+${V.steps([
+ ['Meet <b>report.txt</b>. Owner <b>ada</b> may read and write. Members of the group <b>devs</b> may only read. Everyone else gets nothing. Now three people knock.',`<svg viewBox="0 0 420 242" role="img" aria-label="report.txt: owner ada rw-, group devs r--, others none"><text class="t-m" x="210" y="26" text-anchor="middle" style="font-size:18px">-<tspan class="t-a">rw-</tspan><tspan class="t-info">r--</tspan><tspan class="t-ok">---</tspan> ada devs report.txt</text><rect class="bx" x="6" y="42" width="130" height="72" rx="8"/><text class="t-b" x="16" y="66" style="font-size:14px">1 Owner: ada</text><text class="t-m t-a" x="71" y="100" text-anchor="middle" style="font-size:22px;font-weight:700">rw-</text><rect class="bx" x="145" y="42" width="130" height="72" rx="8"/><text class="t-b" x="155" y="66" style="font-size:14px">2 Group: devs</text><text class="t-m t-info" x="210" y="100" text-anchor="middle" style="font-size:22px;font-weight:700">r--</text><rect class="bx" x="284" y="42" width="130" height="72" rx="8"/><text class="t-b" x="294" y="66" style="font-size:14px">3 Others</text><text class="t-m t-ok" x="349" y="100" text-anchor="middle" style="font-size:22px;font-weight:700">---</text><text class="t" x="10" y="152" style="font-size:16px">Checked in order: gate 1, then 2, then 3.</text></svg>`],
+ ['<b>ada</b> wants to write. Gate 1: is she the owner? Yes. So Linux uses the owner keys, <b>rw-</b>. The w key is there: allowed.',`<svg viewBox="0 0 420 242" role="img" aria-label="ada is the owner, owner keys include w, allowed"><text class="t-m" x="210" y="26" text-anchor="middle" style="font-size:18px">-<tspan class="t-a">rw-</tspan><tspan class="t-info">r--</tspan><tspan class="t-ok">---</tspan> ada devs report.txt</text><rect class="bx-hl" x="6" y="42" width="130" height="72" rx="8"/><text class="t-b" x="16" y="66" style="font-size:14px">1 Owner: ada</text><text class="t-m t-a" x="71" y="100" text-anchor="middle" style="font-size:22px;font-weight:700">rw-</text><text class="t-b t-ok" x="128" y="100" text-anchor="end" style="font-size:16px">yes</text><rect class="bx" x="145" y="42" width="130" height="72" rx="8"/><text class="t-b t-dim" x="155" y="66" style="font-size:14px">2 Group: devs</text><text class="t-m t-info t-dim" x="210" y="100" text-anchor="middle" style="font-size:22px;font-weight:700">r--</text><rect class="bx" x="284" y="42" width="130" height="72" rx="8"/><text class="t-b t-dim" x="294" y="66" style="font-size:14px">3 Others</text><text class="t-m t-ok t-dim" x="349" y="100" text-anchor="middle" style="font-size:22px;font-weight:700">---</text>${V.ic('person',8,124,44,'ic-a')}<text class="t-b" x="62" y="152" style="font-size:17px">ada <tspan class="t-a">wants to WRITE</tspan></text><text class="t" x="10" y="190" style="font-size:15px">Is ada the owner? Yes. Use rw-. Is w there? Yes.</text><rect class="bx-ok" x="6" y="202" width="408" height="34" rx="8"/><text class="t-b" x="210" y="225" text-anchor="middle" style="font-size:16px">Allowed</text></svg>`],
+ ['<b>bob</b> is in the devs group and wants to read. Gate 1: owner? No. Gate 2: in devs? Yes, so the group keys <b>r--</b> apply. r is there: allowed.',`<svg viewBox="0 0 420 242" role="img" aria-label="bob is in devs, group keys include r, allowed"><text class="t-m" x="210" y="26" text-anchor="middle" style="font-size:18px">-<tspan class="t-a">rw-</tspan><tspan class="t-info">r--</tspan><tspan class="t-ok">---</tspan> ada devs report.txt</text><rect class="bx" x="6" y="42" width="130" height="72" rx="8"/><text class="t-b t-dim" x="16" y="66" style="font-size:14px">1 Owner: ada</text><text class="t-m t-a t-dim" x="71" y="100" text-anchor="middle" style="font-size:22px;font-weight:700">rw-</text><text class="t-b t-bad" x="128" y="100" text-anchor="end" style="font-size:16px">no</text><rect class="bx-hl" x="145" y="42" width="130" height="72" rx="8"/><text class="t-b" x="155" y="66" style="font-size:14px">2 Group: devs</text><text class="t-m t-info" x="210" y="100" text-anchor="middle" style="font-size:22px;font-weight:700">r--</text><text class="t-b t-ok" x="267" y="100" text-anchor="end" style="font-size:16px">yes</text><rect class="bx" x="284" y="42" width="130" height="72" rx="8"/><text class="t-b t-dim" x="294" y="66" style="font-size:14px">3 Others</text><text class="t-m t-ok t-dim" x="349" y="100" text-anchor="middle" style="font-size:22px;font-weight:700">---</text>${V.ic('people',8,124,44,'ic-a')}<text class="t-b" x="62" y="152" style="font-size:17px">bob <tspan class="t-a">wants to READ</tspan></text><text class="t" x="10" y="190" style="font-size:15px">Owner? No. In devs? Yes. Use r--. Is r there? Yes.</text><rect class="bx-ok" x="6" y="202" width="408" height="34" rx="8"/><text class="t-b" x="210" y="225" text-anchor="middle" style="font-size:16px">Allowed</text></svg>`],
+ ['Now <b>bob</b> wants to write. He still matches gate 2, and r-- has no w. Denied. Linux stops at the <b>first</b> gate that matches; it never moves on to try another.',`<svg viewBox="0 0 420 242" role="img" aria-label="bob matches the group, r-- has no w, permission denied"><text class="t-m" x="210" y="26" text-anchor="middle" style="font-size:18px">-<tspan class="t-a">rw-</tspan><tspan class="t-info">r--</tspan><tspan class="t-ok">---</tspan> ada devs report.txt</text><rect class="bx" x="6" y="42" width="130" height="72" rx="8"/><text class="t-b t-dim" x="16" y="66" style="font-size:14px">1 Owner: ada</text><text class="t-m t-a t-dim" x="71" y="100" text-anchor="middle" style="font-size:22px;font-weight:700">rw-</text><text class="t-b t-bad" x="128" y="100" text-anchor="end" style="font-size:16px">no</text><rect class="bx-hl" x="145" y="42" width="130" height="72" rx="8"/><text class="t-b" x="155" y="66" style="font-size:14px">2 Group: devs</text><text class="t-m t-info" x="210" y="100" text-anchor="middle" style="font-size:22px;font-weight:700">r--</text><text class="t-b t-ok" x="267" y="100" text-anchor="end" style="font-size:16px">yes</text><rect class="bx" x="284" y="42" width="130" height="72" rx="8"/><text class="t-b t-dim" x="294" y="66" style="font-size:14px">3 Others</text><text class="t-m t-ok t-dim" x="349" y="100" text-anchor="middle" style="font-size:22px;font-weight:700">---</text>${V.ic('people',8,124,44,'ic-a')}<text class="t-b" x="62" y="152" style="font-size:17px">bob <tspan class="t-a">wants to WRITE</tspan></text><text class="t" x="10" y="190" style="font-size:15px">Owner? No. In devs? Yes. Use r--. Is w there? No.</text><rect class="bx-bad" x="6" y="202" width="408" height="34" rx="8"/><text class="t-b" x="210" y="225" text-anchor="middle" style="font-size:16px">Permission denied</text></svg>`],
+ ['<b>carol</b> is not the owner and not in devs, so she falls through to gate 3, where there are no keys at all. (Only root, coming up in card 4, can walk past every gate.)',`<svg viewBox="0 0 420 242" role="img" aria-label="carol is neither owner nor group, others has no keys, permission denied"><text class="t-m" x="210" y="26" text-anchor="middle" style="font-size:18px">-<tspan class="t-a">rw-</tspan><tspan class="t-info">r--</tspan><tspan class="t-ok">---</tspan> ada devs report.txt</text><rect class="bx" x="6" y="42" width="130" height="72" rx="8"/><text class="t-b t-dim" x="16" y="66" style="font-size:14px">1 Owner: ada</text><text class="t-m t-a t-dim" x="71" y="100" text-anchor="middle" style="font-size:22px;font-weight:700">rw-</text><text class="t-b t-bad" x="128" y="100" text-anchor="end" style="font-size:16px">no</text><rect class="bx" x="145" y="42" width="130" height="72" rx="8"/><text class="t-b t-dim" x="155" y="66" style="font-size:14px">2 Group: devs</text><text class="t-m t-info t-dim" x="210" y="100" text-anchor="middle" style="font-size:22px;font-weight:700">r--</text><text class="t-b t-bad" x="267" y="100" text-anchor="end" style="font-size:16px">no</text><rect class="bx-hl" x="284" y="42" width="130" height="72" rx="8"/><text class="t-b" x="294" y="66" style="font-size:14px">3 Others</text><text class="t-m t-ok" x="349" y="100" text-anchor="middle" style="font-size:22px;font-weight:700">---</text><text class="t-b t-ok" x="406" y="100" text-anchor="end" style="font-size:16px">yes</text>${V.ic('globe',8,124,44,'ic-a')}<text class="t-b" x="62" y="152" style="font-size:17px">carol <tspan class="t-a">wants to READ</tspan></text><text class="t" x="10" y="190" style="font-size:15px">Owner? No. In devs? No. Use ---. Is r there? No.</text><rect class="bx-bad" x="6" y="202" width="408" height="34" rx="8"/><text class="t-b" x="210" y="225" text-anchor="middle" style="font-size:16px">Permission denied</text></svg>`]])}
+${V.rules(V.rh('Rules: how the check really works'),
+ V.ok('owner, then group, then others','Checked in that order. The first gate you match is the only one used'),
+ V.no('"others has r, so I can read"','Not if you are the owner and the owner set has no r. You never fall through'),
+ V.ok('Permission denied','Means your matching set lacks the key you needed'))}
+${V.hook(`Three sets of keys: <b>u</b>ser (the owner), <b>g</b>roup, <b>o</b>thers. Linux tries them in that order and stops at the first one that fits.`)}
+`)}
 
-<h4>Reading <code>ls -l</code>, one character at a time</h4>
-<p>Run <code>ls -l</code> and each line starts with a 10-character code such as <code>-rwxr-xr-x</code>. It looks like noise at first, but it is a very tidy pattern: one character for the type, then three groups of three letters.</p>
-<figure class="fig"><svg viewBox="0 0 520 200" role="img" aria-label="The permission string -rwxr-xr-x split into type, owner, group and others">
-<rect class="bx" x="60" y="20" width="40" height="44" rx="4"/>
-<rect class="bx-a" x="100" y="20" width="40" height="44"/><rect class="bx-a" x="140" y="20" width="40" height="44"/><rect class="bx-a" x="180" y="20" width="40" height="44"/>
-<rect class="bx-ok" x="220" y="20" width="40" height="44"/><rect class="bx-ok" x="260" y="20" width="40" height="44"/><rect class="bx-ok" x="300" y="20" width="40" height="44"/>
-<rect class="bx-info" x="340" y="20" width="40" height="44"/><rect class="bx-info" x="380" y="20" width="40" height="44"/><rect class="bx-info" x="420" y="20" width="40" height="44" rx="0"/>
-<g class="t-m" text-anchor="middle" style="font-size:22px">
-<text class="t-m" x="80" y="50" style="font-size:22px">-</text>
-<text class="t-m" x="120" y="50" style="font-size:22px">r</text><text class="t-m" x="160" y="50" style="font-size:22px">w</text><text class="t-m" x="200" y="50" style="font-size:22px">x</text>
-<text class="t-m" x="240" y="50" style="font-size:22px">r</text><text class="t-m" x="280" y="50" style="font-size:22px">-</text><text class="t-m" x="320" y="50" style="font-size:22px">x</text>
-<text class="t-m" x="360" y="50" style="font-size:22px">r</text><text class="t-m" x="400" y="50" style="font-size:22px">-</text><text class="t-m" x="440" y="50" style="font-size:22px">x</text>
-</g>
-<path class="ln" d="M64 74v8h32v-8"/><path class="ln-a" d="M104 74v8h112v-8"/><path class="ln-ok" d="M224 74v8h112v-8"/><path class="ln" style="stroke:var(--l4)" d="M344 74v8h112v-8"/>
-<g text-anchor="middle">
-<text class="t-b" x="80" y="106">type</text>
-<text class="t-b t-a" x="160" y="106">owner</text><text class="t-b t-ok" x="280" y="106">group</text><text class="t-b t-info" x="400" y="106">others</text>
-<text class="t-s" x="80" y="126">file</text>
-<text class="t-s" x="160" y="126">read, write, run</text><text class="t-s" x="280" y="126">read, run</text><text class="t-s" x="400" y="126">read, run</text>
-</g>
-<text class="t-s" x="260" y="170" text-anchor="middle">First character: - is a normal file, d is a directory (folder).</text>
-<text class="t-s" x="260" y="190" text-anchor="middle">A dash in any other slot means "this permission is switched off".</text>
-</svg><figcaption>The 10 characters of <code>-rwxr-xr-x</code>. Each coloured block of three answers the same question (read? write? execute?) for a different set of people.</figcaption></figure>
-<p>Reading the example from left to right:</p>
-<ol>
-<li><code>-</code>: this is a normal file. A folder would show <code>d</code> here.</li>
-<li><code>rwx</code>: the <b>owner</b> (usually whoever created the file) can read, write and execute it.</li>
-<li><code>r-x</code>: members of the file's <b>group</b> can read and execute it, but the dash in the middle means they cannot change it.</li>
-<li><code>r-x</code>: <b>others</b>, meaning every other user on the machine, can also read and execute but not change it.</li>
-</ol>
-<p>The rest of the <code>ls -l</code> line tells you the owner's name and the group's name, so <code>-rwxr-xr-x 1 you you 48 Oct 9 deploy.sh</code> means the owner is <code>you</code> and the group is also called <code>you</code> (Linux gives each user a personal group with the same name).</p>
+${V.card(2,'r, w, x and the numbers','three switches worth 4, 2 and 1',`
+<figure class="fig"><svg viewBox="0 0 420 206" role="img" aria-label="Three light switches worth 4, 2 and 1. Read and execute are on, write is off, so the digit is 5"><rect class="bx-ok" x="14" y="46" width="90" height="96" rx="12"/><rect class="bx-dark" x="44" y="58" width="30" height="32" rx="6"/><text class="t-m" x="59" y="30" text-anchor="middle" style="font-size:24px;font-weight:700">r</text><text class="t-b t-ok" x="59" y="168" text-anchor="middle" style="font-size:18px">ON = 4</text><text class="t" x="59" y="194" text-anchor="middle">read: 4</text><rect class="bx" x="122" y="46" width="90" height="96" rx="12"/><rect class="bx-dark" x="152" y="98" width="30" height="32" rx="6"/><text class="t-m" x="167" y="30" text-anchor="middle" style="font-size:24px;font-weight:700">w</text><text class="t-b" x="167" y="168" text-anchor="middle" style="font-size:18px">off = 0</text><text class="t" x="167" y="194" text-anchor="middle">write: 2</text><rect class="bx-ok" x="230" y="46" width="90" height="96" rx="12"/><rect class="bx-dark" x="260" y="58" width="30" height="32" rx="6"/><text class="t-m" x="275" y="30" text-anchor="middle" style="font-size:24px;font-weight:700">x</text><text class="t-b t-ok" x="275" y="168" text-anchor="middle" style="font-size:18px">ON = 1</text><text class="t" x="275" y="194" text-anchor="middle">execute: 1</text><text class="t-m" x="378" y="96" text-anchor="middle" style="font-size:18px">4+0+1</text><text class="t-m t-a" x="378" y="140" text-anchor="middle" style="font-size:40px;font-weight:700">5</text><text class="t" x="378" y="168" text-anchor="middle">r-x</text></svg><figcaption>One set of keys is a panel of three switches worth 4, 2 and 1. Add up the switches that are on and you get one digit. Here read and execute are on: 4 + 1 = 5, written <code>r-x</code>.</figcaption></figure>
+${V.like(`<p>Each set of keys is a little panel of three light switches. The <b>read</b> switch is worth 4, <b>write</b> is worth 2, <b>execute</b> is worth 1. Add up the switches that are on and you get one digit from 0 to 7. Three panels (owner, group, others) give three digits, like 755.</p>`)}
+${V.why(`<p>The computer stores each switch as one bit, a 1 or a 0. Three bits can count from 0 to 7, so each set fits in one digit, and the whole lock fits in three digits. That is far quicker to type than nine letters, which is why every tutorial and server guide uses numbers.</p>`)}
+<div class="tbl-wrap"><table><tr><th>Key</th><th>On a file</th><th>On a folder</th></tr>
+<tr><td><code>r</code> = 4</td><td>Open it and see what is inside</td><td>List the names in it (<code>ls</code>)</td></tr>
+<tr><td><code>w</code> = 2</td><td>Change or empty it</td><td>Create, rename or delete files in it</td></tr>
+<tr><td><code>x</code> = 1</td><td>Run it as a program</td><td>Go into it (<code>cd</code>)</td></tr></table></div>
+<figure class="fig"><svg viewBox="0 0 420 148" role="img" aria-label="All eight digits: 0 none, 1 x, 2 w, 3 wx, 4 r, 5 rx, 6 rw, 7 rwx"><rect class="bx-bad" x="8" y="8" width="96" height="62" rx="8"/><text class="t-m" x="34" y="48" text-anchor="middle" style="font-size:26px;font-weight:700">0</text><text class="t-m" x="74" y="47" text-anchor="middle" style="font-size:18px">---</text><rect class="bx" x="110" y="8" width="96" height="62" rx="8"/><text class="t-m" x="136" y="48" text-anchor="middle" style="font-size:26px;font-weight:700">1</text><text class="t-m" x="176" y="47" text-anchor="middle" style="font-size:18px">--x</text><rect class="bx" x="212" y="8" width="96" height="62" rx="8"/><text class="t-m" x="238" y="48" text-anchor="middle" style="font-size:26px;font-weight:700">2</text><text class="t-m" x="278" y="47" text-anchor="middle" style="font-size:18px">-w-</text><rect class="bx" x="314" y="8" width="96" height="62" rx="8"/><text class="t-m" x="340" y="48" text-anchor="middle" style="font-size:26px;font-weight:700">3</text><text class="t-m" x="380" y="47" text-anchor="middle" style="font-size:18px">-wx</text><rect class="bx-ok" x="8" y="78" width="96" height="62" rx="8"/><text class="t-m" x="34" y="118" text-anchor="middle" style="font-size:26px;font-weight:700">4</text><text class="t-m" x="74" y="117" text-anchor="middle" style="font-size:18px">r--</text><rect class="bx-ok" x="110" y="78" width="96" height="62" rx="8"/><text class="t-m" x="136" y="118" text-anchor="middle" style="font-size:26px;font-weight:700">5</text><text class="t-m" x="176" y="117" text-anchor="middle" style="font-size:18px">r-x</text><rect class="bx-ok" x="212" y="78" width="96" height="62" rx="8"/><text class="t-m" x="238" y="118" text-anchor="middle" style="font-size:26px;font-weight:700">6</text><text class="t-m" x="278" y="117" text-anchor="middle" style="font-size:18px">rw-</text><rect class="bx-ok" x="314" y="78" width="96" height="62" rx="8"/><text class="t-m" x="340" y="118" text-anchor="middle" style="font-size:26px;font-weight:700">7</text><text class="t-m" x="380" y="117" text-anchor="middle" style="font-size:18px">rwx</text></svg><figcaption>Every possible digit. Only eight exist, because three switches can only make the totals 0 to 7. The green ones are the ones you will meet most: 7, 6, 5, 4 and 0.</figcaption></figure>
+${V.anat([[1,'chmod'],' ',[2,'7'],[3,'5'],[4,'5'],' ',[5,'deploy.sh']],[
+ '<b>chmod.</b> "Change mode": rewrite the lock on a file.',
+ '<b>Owner digit.</b> 7 = 4 + 2 + 1, so rwx.',
+ '<b>Group digit.</b> 5 = 4 + 1, so r-x.',
+ '<b>Others digit.</b> 5 again, r-x. The order of the digits never changes: owner, group, others.',
+ '<b>File.</b> The file whose lock you are changing.'])}
+<p><b>Watch 755 being decoded.</b> Each digit is unpacked into its three switches.</p>
+${V.steps([
+ ['Three digits, three sets of keys, always in the same order: <b>owner, group, others</b>. First digit: <b>7</b>. Which switches add up to 7? All three: 4 + 2 + 1. So the owner gets <b>rwx</b>.',`<svg viewBox="0 0 420 228" role="img" aria-label="7 is 4 plus 2 plus 1, rwx for the owner"><rect class="bx-hl" x="36" y="8" width="68" height="54" rx="8"/><text class="t-m" x="70" y="50" text-anchor="middle" style="font-size:38px;font-weight:700">7</text><rect class="bx-ok" x="8" y="74" width="38" height="36" rx="6"/><text class="t-m" x="27" y="98" text-anchor="middle" style="font-size:18px">4</text><text class="t-m t-ok" x="27" y="132" text-anchor="middle" style="font-size:17px">r</text><rect class="bx-ok" x="52" y="74" width="38" height="36" rx="6"/><text class="t-m" x="71" y="98" text-anchor="middle" style="font-size:18px">2</text><text class="t-m t-ok" x="71" y="132" text-anchor="middle" style="font-size:17px">w</text><rect class="bx-ok" x="96" y="74" width="38" height="36" rx="6"/><text class="t-m" x="115" y="98" text-anchor="middle" style="font-size:18px">1</text><text class="t-m t-ok" x="115" y="132" text-anchor="middle" style="font-size:17px">x</text><text class="t-m" x="70" y="160" text-anchor="middle" style="font-size:16px">4+2+1 = 7</text><text class="t-m t-a" x="70" y="192" text-anchor="middle" style="font-size:24px;font-weight:700">rwx</text><text class="t-b" x="70" y="218" text-anchor="middle" style="font-size:16px">owner</text><text class="t-m t-dim" x="210" y="50" text-anchor="middle" style="font-size:38px;font-weight:700">5</text><rect class="bx" x="148" y="74" width="38" height="36" rx="6"/><text class="t-m t-dim" x="167" y="98" text-anchor="middle" style="font-size:18px">4</text><text class="t-m t-dim" x="167" y="132" text-anchor="middle" style="font-size:17px">r</text><rect class="bx" x="192" y="74" width="38" height="36" rx="6"/><text class="t-m t-dim" x="211" y="98" text-anchor="middle" style="font-size:18px">2</text><text class="t-m t-dim" x="211" y="132" text-anchor="middle" style="font-size:17px">w</text><rect class="bx" x="236" y="74" width="38" height="36" rx="6"/><text class="t-m t-dim" x="255" y="98" text-anchor="middle" style="font-size:18px">1</text><text class="t-m t-dim" x="255" y="132" text-anchor="middle" style="font-size:17px">x</text><text class="t-b t-dim" x="210" y="218" text-anchor="middle" style="font-size:16px">group</text><text class="t-m t-dim" x="350" y="50" text-anchor="middle" style="font-size:38px;font-weight:700">5</text><rect class="bx" x="288" y="74" width="38" height="36" rx="6"/><text class="t-m t-dim" x="307" y="98" text-anchor="middle" style="font-size:18px">4</text><text class="t-m t-dim" x="307" y="132" text-anchor="middle" style="font-size:17px">r</text><rect class="bx" x="332" y="74" width="38" height="36" rx="6"/><text class="t-m t-dim" x="351" y="98" text-anchor="middle" style="font-size:18px">2</text><text class="t-m t-dim" x="351" y="132" text-anchor="middle" style="font-size:17px">w</text><rect class="bx" x="376" y="74" width="38" height="36" rx="6"/><text class="t-m t-dim" x="395" y="98" text-anchor="middle" style="font-size:18px">1</text><text class="t-m t-dim" x="395" y="132" text-anchor="middle" style="font-size:17px">x</text><text class="t-b t-dim" x="350" y="218" text-anchor="middle" style="font-size:16px">others</text></svg>`],
+ ['Second digit: <b>5</b>. 4 + 1 = 5, so read and execute are on and write is off. The group gets <b>r-x</b>.',`<svg viewBox="0 0 420 228" role="img" aria-label="5 is 4 plus 1, r-x for the group"><text class="t-m" x="70" y="50" text-anchor="middle" style="font-size:38px;font-weight:700">7</text><rect class="bx-ok" x="8" y="74" width="38" height="36" rx="6"/><text class="t-m" x="27" y="98" text-anchor="middle" style="font-size:18px">4</text><text class="t-m t-ok" x="27" y="132" text-anchor="middle" style="font-size:17px">r</text><rect class="bx-ok" x="52" y="74" width="38" height="36" rx="6"/><text class="t-m" x="71" y="98" text-anchor="middle" style="font-size:18px">2</text><text class="t-m t-ok" x="71" y="132" text-anchor="middle" style="font-size:17px">w</text><rect class="bx-ok" x="96" y="74" width="38" height="36" rx="6"/><text class="t-m" x="115" y="98" text-anchor="middle" style="font-size:18px">1</text><text class="t-m t-ok" x="115" y="132" text-anchor="middle" style="font-size:17px">x</text><text class="t-m" x="70" y="160" text-anchor="middle" style="font-size:16px">4+2+1 = 7</text><text class="t-m t-a" x="70" y="192" text-anchor="middle" style="font-size:24px;font-weight:700">rwx</text><text class="t-b" x="70" y="218" text-anchor="middle" style="font-size:16px">owner</text><rect class="bx-hl" x="176" y="8" width="68" height="54" rx="8"/><text class="t-m" x="210" y="50" text-anchor="middle" style="font-size:38px;font-weight:700">5</text><rect class="bx-ok" x="148" y="74" width="38" height="36" rx="6"/><text class="t-m" x="167" y="98" text-anchor="middle" style="font-size:18px">4</text><text class="t-m t-ok" x="167" y="132" text-anchor="middle" style="font-size:17px">r</text><rect class="bx" x="192" y="74" width="38" height="36" rx="6"/><text class="t-m t-dim" x="211" y="98" text-anchor="middle" style="font-size:18px">2</text><text class="t-m t-dim" x="211" y="132" text-anchor="middle" style="font-size:17px">w</text><rect class="bx-ok" x="236" y="74" width="38" height="36" rx="6"/><text class="t-m" x="255" y="98" text-anchor="middle" style="font-size:18px">1</text><text class="t-m t-ok" x="255" y="132" text-anchor="middle" style="font-size:17px">x</text><text class="t-m" x="210" y="160" text-anchor="middle" style="font-size:16px">4+0+1 = 5</text><text class="t-m t-a" x="210" y="192" text-anchor="middle" style="font-size:24px;font-weight:700">r-x</text><text class="t-b" x="210" y="218" text-anchor="middle" style="font-size:16px">group</text><text class="t-m t-dim" x="350" y="50" text-anchor="middle" style="font-size:38px;font-weight:700">5</text><rect class="bx" x="288" y="74" width="38" height="36" rx="6"/><text class="t-m t-dim" x="307" y="98" text-anchor="middle" style="font-size:18px">4</text><text class="t-m t-dim" x="307" y="132" text-anchor="middle" style="font-size:17px">r</text><rect class="bx" x="332" y="74" width="38" height="36" rx="6"/><text class="t-m t-dim" x="351" y="98" text-anchor="middle" style="font-size:18px">2</text><text class="t-m t-dim" x="351" y="132" text-anchor="middle" style="font-size:17px">w</text><rect class="bx" x="376" y="74" width="38" height="36" rx="6"/><text class="t-m t-dim" x="395" y="98" text-anchor="middle" style="font-size:18px">1</text><text class="t-m t-dim" x="395" y="132" text-anchor="middle" style="font-size:17px">x</text><text class="t-b t-dim" x="350" y="218" text-anchor="middle" style="font-size:16px">others</text></svg>`],
+ ['Third digit: <b>5</b> again, so others also get <b>r-x</b>.',`<svg viewBox="0 0 420 228" role="img" aria-label="5 is 4 plus 1, r-x for others"><text class="t-m" x="70" y="50" text-anchor="middle" style="font-size:38px;font-weight:700">7</text><rect class="bx-ok" x="8" y="74" width="38" height="36" rx="6"/><text class="t-m" x="27" y="98" text-anchor="middle" style="font-size:18px">4</text><text class="t-m t-ok" x="27" y="132" text-anchor="middle" style="font-size:17px">r</text><rect class="bx-ok" x="52" y="74" width="38" height="36" rx="6"/><text class="t-m" x="71" y="98" text-anchor="middle" style="font-size:18px">2</text><text class="t-m t-ok" x="71" y="132" text-anchor="middle" style="font-size:17px">w</text><rect class="bx-ok" x="96" y="74" width="38" height="36" rx="6"/><text class="t-m" x="115" y="98" text-anchor="middle" style="font-size:18px">1</text><text class="t-m t-ok" x="115" y="132" text-anchor="middle" style="font-size:17px">x</text><text class="t-m" x="70" y="160" text-anchor="middle" style="font-size:16px">4+2+1 = 7</text><text class="t-m t-a" x="70" y="192" text-anchor="middle" style="font-size:24px;font-weight:700">rwx</text><text class="t-b" x="70" y="218" text-anchor="middle" style="font-size:16px">owner</text><text class="t-m" x="210" y="50" text-anchor="middle" style="font-size:38px;font-weight:700">5</text><rect class="bx-ok" x="148" y="74" width="38" height="36" rx="6"/><text class="t-m" x="167" y="98" text-anchor="middle" style="font-size:18px">4</text><text class="t-m t-ok" x="167" y="132" text-anchor="middle" style="font-size:17px">r</text><rect class="bx" x="192" y="74" width="38" height="36" rx="6"/><text class="t-m t-dim" x="211" y="98" text-anchor="middle" style="font-size:18px">2</text><text class="t-m t-dim" x="211" y="132" text-anchor="middle" style="font-size:17px">w</text><rect class="bx-ok" x="236" y="74" width="38" height="36" rx="6"/><text class="t-m" x="255" y="98" text-anchor="middle" style="font-size:18px">1</text><text class="t-m t-ok" x="255" y="132" text-anchor="middle" style="font-size:17px">x</text><text class="t-m" x="210" y="160" text-anchor="middle" style="font-size:16px">4+0+1 = 5</text><text class="t-m t-a" x="210" y="192" text-anchor="middle" style="font-size:24px;font-weight:700">r-x</text><text class="t-b" x="210" y="218" text-anchor="middle" style="font-size:16px">group</text><rect class="bx-hl" x="316" y="8" width="68" height="54" rx="8"/><text class="t-m" x="350" y="50" text-anchor="middle" style="font-size:38px;font-weight:700">5</text><rect class="bx-ok" x="288" y="74" width="38" height="36" rx="6"/><text class="t-m" x="307" y="98" text-anchor="middle" style="font-size:18px">4</text><text class="t-m t-ok" x="307" y="132" text-anchor="middle" style="font-size:17px">r</text><rect class="bx" x="332" y="74" width="38" height="36" rx="6"/><text class="t-m t-dim" x="351" y="98" text-anchor="middle" style="font-size:18px">2</text><text class="t-m t-dim" x="351" y="132" text-anchor="middle" style="font-size:17px">w</text><rect class="bx-ok" x="376" y="74" width="38" height="36" rx="6"/><text class="t-m" x="395" y="98" text-anchor="middle" style="font-size:18px">1</text><text class="t-m t-ok" x="395" y="132" text-anchor="middle" style="font-size:17px">x</text><text class="t-m" x="350" y="160" text-anchor="middle" style="font-size:16px">4+0+1 = 5</text><text class="t-m t-a" x="350" y="192" text-anchor="middle" style="font-size:24px;font-weight:700">r-x</text><text class="t-b" x="350" y="218" text-anchor="middle" style="font-size:16px">others</text></svg>`],
+ ['Put the three together and <b>755</b> is <b>rwxr-xr-x</b>: the classic setting for scripts and folders.',`<svg viewBox="0 0 420 228" role="img" aria-label="755 becomes rwxr-xr-x"><text class="t-m" x="70" y="50" text-anchor="middle" style="font-size:38px;font-weight:700">7</text><text class="t-m t-a" x="70" y="96" text-anchor="middle" style="font-size:24px;font-weight:700">rwx</text><text class="t-b" x="70" y="124" text-anchor="middle" style="font-size:16px">owner</text><text class="t-m" x="210" y="50" text-anchor="middle" style="font-size:38px;font-weight:700">5</text><text class="t-m t-a" x="210" y="96" text-anchor="middle" style="font-size:24px;font-weight:700">r-x</text><text class="t-b" x="210" y="124" text-anchor="middle" style="font-size:16px">group</text><text class="t-m" x="350" y="50" text-anchor="middle" style="font-size:38px;font-weight:700">5</text><text class="t-m t-a" x="350" y="96" text-anchor="middle" style="font-size:24px;font-weight:700">r-x</text><text class="t-b" x="350" y="124" text-anchor="middle" style="font-size:16px">others</text><rect class="bx-ok" x="6" y="142" width="408" height="78" rx="10"/><text class="t-m" x="210" y="176" text-anchor="middle" style="font-size:26px;font-weight:700">-rwxr-xr-x</text><text class="t" x="210" y="206" text-anchor="middle" style="font-size:16px">You change and run it. Everyone else reads and runs.</text></svg>`]])}
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="755 for scripts and folders, 644 for normal files, 600 for secrets"><rect class="bx-ok" x="6" y="6" width="408" height="58" rx="8"/><text class="t-m" x="22" y="44" style="font-size:26px;font-weight:700">755</text><text class="t-m t-a" x="96" y="43" style="font-size:19px">rwxr-xr-x</text><text class="t-b" x="226" y="31" style="font-size:15px">Scripts and folders</text><text class="t" x="226" y="53" style="font-size:14px">all can read and run it</text><rect class="bx-info" x="6" y="72" width="408" height="58" rx="8"/><text class="t-m" x="22" y="110" style="font-size:26px;font-weight:700">644</text><text class="t-m t-a" x="96" y="109" style="font-size:19px">rw-r--r--</text><text class="t-b" x="226" y="97" style="font-size:15px">Normal files</text><text class="t" x="226" y="119" style="font-size:14px">all read, only you write</text><rect class="bx-warn" x="6" y="138" width="408" height="58" rx="8"/><text class="t-m" x="22" y="176" style="font-size:26px;font-weight:700">600</text><text class="t-m t-a" x="96" y="175" style="font-size:19px">rw-------</text><text class="t-b" x="226" y="163" style="font-size:15px">Secrets, SSH keys</text><text class="t" x="226" y="185" style="font-size:14px">only you, nobody else</text></svg><figcaption>The three numbers you will type for years. Read each one digit by digit: 6 is 4 + 2 (read and write), 4 is read only, 0 is nothing.</figcaption></figure>
+${V.rules(V.rh('Rules: get these wrong and things break or leak'),
+ V.no('chmod 777 file','Everyone on the machine can change it. Never the fix for "Permission denied"'),
+ V.ok('chmod 600 ~/.ssh/id_ed25519','SSH refuses private keys that anyone else can read'),
+ V.no('chmod 644 folder/','Without x nobody can cd into the folder. Folders want 755'),
+ V.ok('chmod 755 deploy.sh','Scripts need x to run'),
+ V.rh('Conventions: the professional defaults'),
+ V.ok('644','Ordinary files: web pages, code, images'),V.ok('755','Scripts and folders'),V.ok('600','Secrets: .env files, keys, passwords'))}
+${V.build(`<ol><li>Say who needs what in words: "I read and write; nobody else gets anything."</li><li>Owner: read + write = 4 + 2 = <b>6</b>.</li><li>Group: nothing = <b>0</b>. Others: nothing = <b>0</b>.</li><li>Write the digits in order: <code>chmod 600 file</code>.</li><li>Check with <code>ls -l</code>: you should see <code>-rw-------</code>.</li></ol>`)}
+${V.hook(`Read 4, write 2, run 1. Add them up per person, in the order owner, group, others. 7 is everything, 0 is nothing.`)}
+`)}
 
-<h4>What read, write and execute really mean</h4>
-<p>The three letters mean slightly different things for files and for folders. This trips up almost everyone, so it is worth slowing down here.</p>
-<div class="tbl-wrap"><table><tr><th>Letter</th><th>On a file</th><th>On a folder</th></tr>
-<tr><td><code>r</code> read</td><td>Open it and look at what is inside (<code>cat file</code>).</td><td>List the names of what is inside (<code>ls folder</code>).</td></tr>
-<tr><td><code>w</code> write</td><td>Change or empty its contents.</td><td>Create, rename or delete files inside it.</td></tr>
-<tr><td><code>x</code> execute</td><td>Run it as a program or script.</td><td>Enter it with <code>cd</code> and reach the files inside it.</td></tr></table></div>
-<p>Two surprising consequences follow from that table:</p>
-<ul>
-<li>Deleting a file depends on the <b>folder's</b> write permission, not the file's. The file is just an entry in the folder's list, and removing an entry is changing the folder.</li>
-<li>A folder without <code>x</code> is like a locked door with a window: with <code>r</code> you can see the names inside, but you cannot open any of the files. That is why folders almost always have <code>x</code> wherever they have <code>r</code>.</li>
-</ul>
+${V.card(3,'chmod in action','fixing "Permission denied"',`
+${V.anat([[1,'chmod'],' ',[2,'u'],[3,'+'],[4,'x'],' ',[5,'deploy.sh']],[
+ '<b>chmod.</b> The same command, used with letters instead of digits.',
+ '<b>Who.</b> <code>u</code> owner (user), <code>g</code> group, <code>o</code> others, <code>a</code> all. Leave it out and it means all (minus anything your system blocks by default).',
+ '<b>How.</b> <code>+</code> switches on, <code>-</code> switches off, <code>=</code> sets exactly.',
+ '<b>Which key.</b> <code>r</code>, <code>w</code> or <code>x</code>, or several: <code>g+rw</code>.',
+ '<b>File.</b>'])}
+${V.like(`<p>Digits are like replacing the whole lock; letters are like adding or removing one key. <code>chmod 600</code> rebuilds all nine switches. <code>chmod +x</code> flips one switch and leaves the rest alone.</p>`)}
+${V.steps([
+ ['You try to run the script. Bash refuses. <b>ls -l</b> shows why: there is no <b>x</b> anywhere, not even for you.',`<svg viewBox="0 0 420 176" role="img" aria-label="Permission denied, no x anywhere"><rect class="bx-dark" x="4" y="6" width="412" height="164" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px">$ ./deploy.sh</text><text class="t-term t-bad" x="16" y="66" style="font-size:15px">bash: ./deploy.sh: Permission denied</text><text class="t-term" x="16" y="96" style="font-size:15px">$ ls -l deploy.sh</text><text class="t-term" x="16" y="126" style="font-size:15px">-<tspan class="t-a">rw-</tspan><tspan class="t-info">r--</tspan><tspan class="t-ok">r--</tspan> you you 48 deploy.sh</text></svg>`],
+ ['<b>chmod +x</b> flips the x switch on. With no letter in front, it is added for all three sets, so 644 becomes 755.',`<svg viewBox="0 0 420 176" role="img" aria-label="chmod +x adds x for all three sets"><rect class="bx-dark" x="4" y="6" width="412" height="164" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px">$ chmod +x deploy.sh</text><text class="t-term" x="16" y="66" style="font-size:15px">$ ls -l deploy.sh</text><text class="t-term" x="16" y="96" style="font-size:15px">-<tspan class="t-a">rwx</tspan><tspan class="t-info">r-x</tspan><tspan class="t-ok">r-x</tspan> you you 48 deploy.sh</text></svg>`],
+ ['Run it again. This time Linux finds the x key in your set and lets the script start.',`<svg viewBox="0 0 420 176" role="img" aria-label="The script runs"><rect class="bx-dark" x="4" y="6" width="412" height="164" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px">$ ./deploy.sh</text><text class="t-term t-ok" x="16" y="66" style="font-size:15px">Deploying the app...</text><text class="t-term t-ok" x="16" y="96" style="font-size:15px">Done!</text></svg>`],
+ ['Now the secrets file. <b>chmod 600</b> sets all nine switches at once: 6 (rw-) for you, 0 for the group, 0 for others.',`<svg viewBox="0 0 420 176" role="img" aria-label="chmod 600 locks secrets.env to the owner"><rect class="bx-dark" x="4" y="6" width="412" height="164" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px">$ chmod 600 secrets.env</text><text class="t-term" x="16" y="66" style="font-size:15px">$ ls -l secrets.env</text><text class="t-term" x="16" y="96" style="font-size:15px">-<tspan class="t-a">rw-</tspan><tspan class="t-info">---</tspan><tspan class="t-ok">---</tspan> you you 23 secrets.env</text></svg>`]])}
+${V.rules(V.ok('./deploy.sh','Run a script in this folder with ./ in front'),V.no('deploy.sh','Without ./ the shell only looks in the standard program folders'),
+ V.ok('chmod +x then ./run','The x key is needed before a script will start'),V.no('sudo ./deploy.sh','sudo does not fix a missing x. It just runs things as root'))}
+${V.hook(`Digits replace the whole lock. Letters add or remove one key.`)}
+`)}
 
-<h4>How Linux decides which three letters apply to you</h4>
-<p>Linux does not add up all three groups. It picks <b>exactly one</b> set of three letters for you, and it checks in a fixed order:</p>
-<figure class="fig"><svg viewBox="0 0 520 250" role="img" aria-label="Decision flow: owner, then group, then others">
-<rect class="bx" x="150" y="10" width="220" height="40" rx="8"/><text class="t-b" x="260" y="35" text-anchor="middle">You try to use a file</text>
-<path class="ln" d="M260 50v18"/><polygon class="ah" points="254,66 266,66 260,74"/>
-<rect class="bx-a" x="130" y="76" width="260" height="40" rx="8"/><text class="t" x="260" y="101" text-anchor="middle">Are you the file's owner?</text>
-<path class="ln-a" d="M390 96h40"/><polygon class="ah-a" points="428,90 428,102 436,96"/>
-<rect class="bx-a" x="438" y="78" width="76" height="36" rx="6"/><text class="t-s" x="476" y="101" text-anchor="middle">owner set</text>
-<text class="t-s t-a" x="410" y="88" text-anchor="middle">yes</text>
-<path class="ln" d="M260 116v18"/><polygon class="ah" points="254,132 266,132 260,140"/><text class="t-s" x="272" y="132">no</text>
-<rect class="bx-ok" x="130" y="142" width="260" height="40" rx="8"/><text class="t" x="260" y="167" text-anchor="middle">Are you in the file's group?</text>
-<path class="ln-ok" d="M390 162h40"/><polygon class="ah-ok" points="428,156 428,168 436,162"/>
-<rect class="bx-ok" x="438" y="144" width="76" height="36" rx="6"/><text class="t-s" x="476" y="167" text-anchor="middle">group set</text>
-<text class="t-s t-ok" x="410" y="154" text-anchor="middle">yes</text>
-<path class="ln" d="M260 182v18"/><polygon class="ah" points="254,198 266,198 260,206"/><text class="t-s" x="272" y="198">no</text>
-<rect class="bx-info" x="130" y="208" width="260" height="36" rx="8"/><text class="t" x="260" y="231" text-anchor="middle">Use the "others" set</text>
-</svg><figcaption>Linux stops at the first question you answer "yes" to. As the owner, you get the owner's letters even if "others" has more.</figcaption></figure>
-<p>That last point matters: if a file is <code>---r--r--</code>, everyone else can read it but the owner cannot, because the owner only ever gets the first three letters. (Root skips this whole check.)</p>
+${V.card(4,'root and sudo','borrowing the master key',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="You hold your own keys. sudo lends you root's master key for one command, then takes it back">
+${V.ic('person',22,20,60,'ic-a')}<text class="t-b" x="52" y="104" text-anchor="middle" style="font-size:16px">you</text><text class="t" x="52" y="126" text-anchor="middle">your own keys</text>
+<rect class="bx-warn" x="132" y="34" width="156" height="58" rx="10"/><text class="t-m" x="210" y="70" text-anchor="middle" style="font-size:22px;font-weight:700">sudo</text>
+<path class="ln-a" d="M90 62H124"/><polygon class="ah-a" points="122,55 122,69 132,62"/>
+<path class="ln-a" d="M288 62H322"/><polygon class="ah-a" points="320,55 320,69 330,62"/>
+${V.ic('key',336,14,64,'ic-warn')}<text class="t-b" x="368" y="104" text-anchor="middle" style="font-size:16px">root</text><text class="t" x="368" y="126" text-anchor="middle">master key</text>
+<text class="t" x="210" y="160" text-anchor="middle" style="font-size:15px">one command, your password, written in the log</text>
+</svg><figcaption>root is the all-powerful admin account, and the permission gates do not stop it. sudo ("superuser do") lends you root's power for a single command, after you prove it is really you.</figcaption></figure>
+${V.like(`<p>A hotel. Guests have a card for their own room. The manager has a master key for every door. <code>sudo</code> is asking the manager to open one door for you: you show your ID (your password), they open it, and a note goes in the log.</p>`)}
+${V.why(`<p>Logging in as root all day is dangerous: one typo can wipe the system, and any program you run has total power. sudo lets you stay an ordinary user and borrow root's power only for the one command that needs it. This idea is called <b>least privilege</b>: hold only the keys the job needs.</p>`)}
+${V.anat([[1,'sudo'],' ',[2,'apt update']],['<b>sudo.</b> "Run the next command as root." Asks for your own password, then remembers it for a few minutes.','<b>The command.</b> Anything that changes the system: installing software, editing files in <code>/etc</code>, restarting services.'])}
+${V.steps([
+ ['<b>whoami</b> prints who Linux thinks you are. Right now: an ordinary user.',`<svg viewBox="0 0 420 150" role="img" aria-label="whoami prints you"><rect class="bx-dark" x="4" y="6" width="412" height="138" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px">$ whoami</text><text class="t-term t-a" x="16" y="66" style="font-size:15px">you</text></svg>`],
+ ['Updating the list of software packages writes into system folders that belong to root. As plain you, apt is refused.',`<svg viewBox="0 0 420 150" role="img" aria-label="apt update fails with permission denied"><rect class="bx-dark" x="4" y="6" width="412" height="138" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px">$ apt update</text><text class="t-term t-bad" x="16" y="66" style="font-size:15px">E: Could not open lock file</text><text class="t-term t-bad" x="16" y="96" style="font-size:15px">   /var/lib/apt/lists/lock</text><text class="t-term t-bad" x="16" y="126" style="font-size:15px">   (13: Permission denied)</text></svg>`],
+ ['Put <b>sudo</b> in front. It asks for <b>your</b> password (not root\'s), then runs just that one command as root.',`<svg viewBox="0 0 420 150" role="img" aria-label="sudo apt update asks for your password and works"><rect class="bx-dark" x="4" y="6" width="412" height="138" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px">$ sudo apt update</text><text class="t-term t-warn" x="16" y="66" style="font-size:15px">[sudo] password for you:</text><text class="t-term t-ok" x="16" y="96" style="font-size:15px">Reading package lists... Done</text></svg>`],
+ ['Proof: <b>sudo whoami</b> prints <b>root</b>. The very next command, without sudo, is plain you again.',`<svg viewBox="0 0 420 150" role="img" aria-label="sudo whoami prints root, whoami prints you"><rect class="bx-dark" x="4" y="6" width="412" height="138" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px">$ sudo whoami</text><text class="t-term t-warn" x="16" y="66" style="font-size:15px">root</text><text class="t-term" x="16" y="96" style="font-size:15px">$ whoami</text><text class="t-term t-a" x="16" y="126" style="font-size:15px">you</text></svg>`]])}
+${V.rules(V.ok('sudo apt update','System jobs: installing, updating, editing /etc'),V.no('sudo nano notes.txt','Your own files never need it, and the file may end up owned by root'),
+ V.no('sudo chmod -R 777 /','Unlocks the whole computer for everyone. A classic way to break a server'),V.ok('sudo !!','Repeats your last command with sudo in front'))}
+${V.hook(`Be yourself by default. Borrow root for one command. Hand the key straight back.`)}
+`)}
 
-<h4>Changing permissions with letters: <code>chmod u+x</code></h4>
-<p><code>chmod</code> means "change mode", and "mode" is Linux's word for the permission settings. The easiest way to use it is with letters, built from three parts: <b>who</b>, <b>add or remove</b>, and <b>which permission</b>.</p>
-<div class="tbl-wrap"><table><tr><th>Who</th><th>Action</th><th>Permission</th></tr>
-<tr><td><code>u</code> user (owner)<br><code>g</code> group<br><code>o</code> others<br><code>a</code> all three</td><td><code>+</code> add<br><code>-</code> remove<br><code>=</code> set exactly</td><td><code>r</code> read<br><code>w</code> write<br><code>x</code> execute</td></tr></table></div>
-<pre class="snip">chmod u+x deploy.sh     # owner may now run it
-chmod g-w report.txt    # group can no longer change it
-chmod o-r notes.txt     # others can no longer read it
-chmod +x deploy.sh      # no "who" means everyone: add x for all</pre>
-<p>In this lesson, <code>deploy.sh</code> starts without execute permission. Running <code>./deploy.sh</code> fails with <code>Permission denied</code>, and <code>chmod +x deploy.sh</code> fixes it. That error-then-fix is one of the most common things you will do on a real server.</p>
-
-<h4>Changing permissions with numbers: <code>chmod 755</code></h4>
-<p>You will see numbers like <code>755</code> and <code>600</code> everywhere, in tutorials, error messages and job interviews. They are a shorthand for all nine letters at once, and the trick behind them is simple once you see it.</p>
-<p>Think of each permission as a light switch that is either on or off. Each switch has a fixed value: <b>read is worth 4, write is worth 2, execute is worth 1</b>. To describe one set of three, add up the values of the switches that are on.</p>
-<figure class="fig"><svg viewBox="0 0 520 250" role="img" aria-label="Read is worth 4, write 2, execute 1; add the switches that are on">
-<g text-anchor="middle">
-<text class="t-b" x="150" y="28">r</text><text class="t-b" x="230" y="28">w</text><text class="t-b" x="310" y="28">x</text><text class="t-b" x="420" y="28">total</text>
-<text class="t-s" x="150" y="46">worth 4</text><text class="t-s" x="230" y="46">worth 2</text><text class="t-s" x="310" y="46">worth 1</text>
-</g>
-<line class="ln-d" x1="30" y1="58" x2="490" y2="58"/>
-<g text-anchor="start"><text class="t-m" x="40" y="91">rwx</text><text class="t-m" x="40" y="136">r-x</text><text class="t-m" x="40" y="181">rw-</text><text class="t-m" x="40" y="226">r--</text></g>
-<circle class="dot" cx="150" cy="86" r="11"/><circle class="dot" cx="230" cy="86" r="11"/><circle class="dot" cx="310" cy="86" r="11"/>
-<circle class="dot" cx="150" cy="131" r="11"/><circle class="bx" cx="230" cy="131" r="11"/><circle class="dot" cx="310" cy="131" r="11"/>
-<circle class="dot" cx="150" cy="176" r="11"/><circle class="dot" cx="230" cy="176" r="11"/><circle class="bx" cx="310" cy="176" r="11"/>
-<circle class="dot" cx="150" cy="221" r="11"/><circle class="bx" cx="230" cy="221" r="11"/><circle class="bx" cx="310" cy="221" r="11"/>
-<g text-anchor="middle"><text class="t" x="420" y="91">4+2+1 = <tspan class="t-b t-a">7</tspan></text><text class="t" x="420" y="136">4+0+1 = <tspan class="t-b t-a">5</tspan></text><text class="t" x="420" y="181">4+2+0 = <tspan class="t-b t-a">6</tspan></text><text class="t" x="420" y="226">4+0+0 = <tspan class="t-b t-a">4</tspan></text></g>
-</svg><figcaption>A filled circle is a switch that is on. Because the values are 4, 2 and 1, every combination adds up to a different number from 0 to 7, so a single digit can never be ambiguous.</figcaption></figure>
-<p>A full mode is three of those digits side by side: <b>owner, group, others</b>, always in that order. Let's decode the common ones step by step:</p>
-<ul>
-<li><code>755</code>: owner 7 = 4+2+1 = <code>rwx</code>; group 5 = 4+1 = <code>r-x</code>; others 5 = <code>r-x</code>. Result <code>rwxr-xr-x</code>. Use it for scripts and folders: everyone can use them, only you can change them.</li>
-<li><code>644</code>: owner 6 = 4+2 = <code>rw-</code>; group 4 = <code>r--</code>; others 4 = <code>r--</code>. Result <code>rw-r--r--</code>. The normal setting for ordinary files like web pages.</li>
-<li><code>600</code>: owner 6 = <code>rw-</code>; group 0 and others 0 = <code>---</code>. Result <code>rw-------</code>. Only you can touch it. Use it for passwords, <code>.env</code> files and SSH private keys.</li>
-<li><code>700</code>: <code>rwx------</code>. A private folder or script only you can use.</li>
-</ul>
-<p>Going the other way works too. To turn <code>rw-r-----</code> into a number, score each block: <code>rw-</code> = 4+2 = 6, <code>r--</code> = 4, <code>---</code> = 0, so the answer is <code>640</code>.</p>
-<div class="try"><b>Try it in your head</b>What number is <code>rwxr-----</code>? Owner rwx = 7, group r-- = 4, others --- = 0, so <code>740</code>. And what does <code>chmod 711</code> give others? 1 = execute only: they can run it but not read it.</div>
-<p>Letters or numbers? Use letters (<code>chmod +x</code>) to change one thing and leave the rest alone. Use numbers (<code>chmod 600</code>) to set the whole thing exactly, which is what you want for secrets.</p>
-
-<h4>Changing the owner: <code>chown</code></h4>
-<p>Sometimes the problem is not the letters but the owner. <code>chown alice report.txt</code> makes <code>alice</code> the owner, and <code>chown alice:webdev report.txt</code> sets the owner and the group in one go. Only root can give a file away, so in practice you write <code>sudo chown ...</code>.</p>
-
-<h4>Root, <code>sudo</code> and least privilege</h4>
-<p>Some jobs change the whole machine: installing software, editing system settings, restarting services. Those files belong to root, so a normal user gets <code>Permission denied</code>. That is the system protecting itself, not a bug.</p>
-<p><code>sudo</code> ("superuser do") runs <b>one command</b> as root, after checking that you are allowed to and usually asking for your password. In this lesson <code>apt update</code> fails, and <code>sudo apt update</code> works, because updating the package list writes to system folders.</p>
-<p>The habit professionals follow is called <b>least privilege</b>: give each person and program the smallest power it needs, and no more. In practice:</p>
-<ul>
-<li>Work as your normal user. Reach for <code>sudo</code> only for the one command that needs it.</li>
-<li>Give secrets <code>600</code> so no other user, and no other program running as another user, can read them.</li>
-<li>Never "fix" a permission problem by opening everything up.</li>
-</ul>
-<div class="mistake"><b>Common mistake</b><code>chmod 777</code> means read, write and execute for everyone on the machine. It makes an error go away, which is why it gets copied from forum answers, but it also means any program or user can change your file, including an attacker who breaks into any other service. Find out who actually needs access and give exactly that.</div>
-<div class="mistake"><b>Common mistake</b>Putting <code>sudo</code> in front of everything. Files you create with sudo belong to root, so later your normal user cannot edit them and you get new "Permission denied" errors. If you only needed sudo by accident, <code>sudo chown you file</code> gives the file back.</div>
-
-<h4>Reading a "Permission denied" error</h4>
-<p>When you hit the error, ask three questions in order:</p>
-<ol>
-<li><b>Who am I?</b> Run <code>whoami</code>.</li>
-<li><b>Who owns it, and what are its letters?</b> Run <code>ls -l file</code>, and <code>ls -ld folder</code> for the folder it lives in.</li>
-<li><b>Which permission is missing?</b> Running needs <code>x</code> on the file. Saving needs <code>w</code> on the file. Creating or deleting needs <code>w</code> on the folder. System changes need <code>sudo</code>.</li>
-</ol>
-<h4>Recap</h4>
-<ul>
-<li>Every file has an owner, a group and nine permission letters: owner, group, others, each with read, write and execute.</li>
-<li>Linux uses exactly one of the three sets: owner first, then group, then others. Root ignores the rules.</li>
-<li><code>chmod +x</code> makes something runnable. Numbers add r = 4, w = 2 and x = 1 per set, so <code>755</code> is <code>rwxr-xr-x</code> and <code>600</code> is <code>rw-------</code>.</li>
-<li>Use <code>sudo</code> for one command at a time, protect secrets with <code>600</code>, and never use <code>777</code>.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Decode <code>640</code>. <i>rw-r-----: owner reads and writes, group reads, others nothing.</i> 2. bob owns a file set to <code>---r--r--</code>. Can bob read it? <i>No. He matches the owner gate first, and the owner set is empty.</i> 3. Which number for a private SSH key? <i>600.</i></div>
 `);
 
 explain('l3',`
@@ -738,3 +756,4 @@ This private key will be ignored.</pre>
 <li>Private keys must be <code>chmod 600</code>, or SSH ignores them. Use <code>-i</code> to choose a specific key.</li>
 </ul>
 `);
+
