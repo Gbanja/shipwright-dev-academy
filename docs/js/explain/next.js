@@ -362,7 +362,7 @@ ${V.anat(['function List',[1,'&lt;T&gt;'],'({ items, render }: ',[2,'ListProps&l
  '<b>Items.</b> A list of T.',
  '<b>Render function.</b> Takes one T, returns something React can show. <code>React.ReactNode</code> means "anything renderable": JSX, text, a number or null.'])}
 ${V.steps([
- ['You write <b>&lt;List items={users} … /&gt;</b>. users is a User[], so TypeScript sets <b>T = User</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="T becomes User">
+ ['You pass <b>items={users}</b> to List. users is a User[], so TypeScript sets <b>T = User</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="T becomes User">
 ${CP(6,8,408,['&lt;List items={users}','      render={u =&gt; &lt;li&gt;{u.name}&lt;/li&gt;} /&gt;'],0,14,26)}
 <text class="t" x="10" y="110">T = <tspan class="t-ok" style="font-weight:700">User</tspan></text>
 <rect class="bx" x="230" y="90" width="180" height="70" rx="8"/><text class="t-s" x="242" y="112">output</text>
@@ -374,7 +374,7 @@ ${CP(6,8,408,['&lt;List items={users}','      render={u =&gt; &lt;li&gt;{u.name}
 </svg>`],
  ['Same again for every item. Write <b>u.nmae</b> by mistake and you get a red line, not a blank row.',`<svg viewBox="0 0 420 170" role="img" aria-label="render called for every item">
 ${CP(6,8,408,['&lt;List items={users}','      render={u =&gt; &lt;li&gt;{u.name}&lt;/li&gt;} /&gt;'],1,14,26)}
-<text class="t-bad" x="10" y="110" style="font-size:14px">u.nmae ✖ does not exist</text>
+<text class="t-bad" x="10" y="110" style="font-size:14px">u.nmae: Property 'nmae'</text><text class="t-bad" x="10" y="132" style="font-size:14px">does not exist on type</text><text class="t-bad" x="10" y="154" style="font-size:14px">'User'.</text>
 <rect class="bx-ok" x="230" y="90" width="180" height="70" rx="8"/><text class="t" x="242" y="114">• Ada</text><text class="t" x="242" y="134">• Linus</text><text class="t" x="242" y="154">• Grace</text>
 </svg>`]])}
 <p><b>Typed state.</b> <code>useState(0)</code> infers <code>number</code> by itself. When the starting value does not show the full type, pass it in angle brackets: <code>useState&lt;number&gt;(0)</code>, or <code>useState&lt;User | null&gt;(null)</code> for "nothing yet, a User later".</p>
@@ -398,5 +398,104 @@ ${V.hook(`Babel prints, tsc proofreads.`)}
 `)}
 
 <div class="try"><b>Try it in your head</b>1. How do you make a prop optional? <i>Put ? after its name: variant?.</i> 2. In <code>&lt;List items={[1, 2]} … /&gt;</code>, what is T? <i>number.</i> 3. Does the fast dev build stop on a type error? <i>No. It only strips types; tsc and your editor catch them.</i></div>
+`);
+
+/* n3 helpers: the app/ folder tree. hl = map of row index to box class; notes = map of row index to right-hand text. */
+const N3T=[['app/',0,'folder'],['layout.tsx',1,'file'],['page.tsx',1,'file'],['not-found.tsx',1,'file'],['about/',1,'folder'],['page.tsx',2,'file'],['blog/',1,'folder'],['[slug]/',2,'folder'],['page.tsx',3,'file']];
+const TREE=(y0,hl,notes,dim)=>N3T.map(([n,d,ic],i)=>{const y=y0+i*25,x=10+d*22;const c=hl&&hl[i];return (c?'<rect class="'+c+'" x="'+(x-4)+'" y="'+(y-2)+'" width="'+(n.length*9+34)+'" height="24" rx="5"/>':'')+V.ic(ic,x,y+1,20,ic==='folder'?'ic-warn':'ic-info')+'<text class="t-m'+(dim&&!c?' t-dim':'')+'" x="'+(x+24)+'" y="'+(y+17)+'" style="font-size:14px">'+n+'</text>'+(notes&&notes[i]?'<text class="t-m t-a" x="250" y="'+(y+17)+'" style="font-size:14px">'+notes[i]+'</text>':'')}).join('');
+const URLB=(u,cls)=>'<rect class="'+(cls||'bx')+'" x="6" y="6" width="408" height="34" rx="17"/>'+V.ic('globe',14,11,24,'ic-info')+'<text class="t-m" x="46" y="29" style="font-size:15px">'+u+'</text>';
+
+explain('n3',`
+<p>Every website is a set of addresses: <code>/</code>, <code>/about</code>, <code>/blog/my-first-post</code>. In Next.js you do not write a list of routes anywhere. You make folders, and the folders <i>are</i> the addresses.</p>
+
+${V.card(1,'Folders become URLs','the file tree is the map',`
+<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="The app folder tree with the URL each page file serves">
+${TREE(8,{2:'bx-ok',5:'bx-ok',8:'bx-ok'},{1:'wraps every page',2:'→ /',3:'→ 404 page',5:'→ /about',8:'→ /blog/anything'})}
+</svg><figcaption>Each folder inside app/ is one piece of the URL. A folder only becomes a real page when it contains a page.tsx file. Square brackets make a folder that matches anything.</figcaption></figure>
+${V.like(`<p>A block of flats. The URL is the address: building, then floor, then flat. Each folder is a door you walk through, and <code>page.tsx</code> is the room you end up in. A folder in square brackets is a door labelled "any flat number": whatever you ask for, it lets you in and tells the room which number you wanted.</p>`)}
+${V.why(`<p>Older apps kept a long routing file mapping each address to code, and it drifted out of date. Next.js 13 (2022) introduced the <b>App Router</b>, where the <code>app/</code> folder itself is the map. Look at the folders and you know every address the site has.</p>`)}
+${V.anat([[1,'app'],'/',[2,'blog'],'/',[3,'[slug]'],'/',[4,'page.tsx']],[
+ '<b>The app folder.</b> The root of every route. It stands for <code>/</code>.',
+ '<b>A static segment.</b> Matches exactly <code>/blog</code>.',
+ '<b>A dynamic segment.</b> The brackets match any value in that position and hand it to the page as <code>params.slug</code>.',
+ '<b>The page file.</b> Its default export is the component shown at this address. No page.tsx, no route.'])}
+<p><b>Watch Next.js find a page.</b> You type an address and it walks the folder tree, one segment at a time.</p>
+${V.steps([
+ ['You visit <b>/blog/hello</b>. Next.js splits the path into segments: <b>blog</b>, then <b>hello</b>.',`<svg viewBox="0 0 420 290" role="img" aria-label="URL /blog/hello split into two segments">
+${URLB('localhost:3000/blog/hello')}
+<rect class="bx-a" x="250" y="56" width="62" height="28" rx="6"/><text class="t-m" x="281" y="76" text-anchor="middle" style="font-size:14px">blog</text>
+<rect class="bx-a" x="320" y="56" width="70" height="28" rx="6"/><text class="t-m" x="355" y="76" text-anchor="middle" style="font-size:14px">hello</text>
+${TREE(56,{0:'bx-hl'},null,true)}
+</svg>`],
+ ['Segment one, <b>blog</b>: there is a folder with exactly that name, so it goes in.',`<svg viewBox="0 0 420 290" role="img" aria-label="blog matches the blog folder">
+${URLB('localhost:3000/blog/hello')}
+<rect class="bx-ok" x="250" y="56" width="62" height="28" rx="6"/><text class="t-m" x="281" y="76" text-anchor="middle" style="font-size:14px">blog</text>
+<rect class="bx" x="320" y="56" width="70" height="28" rx="6"/><text class="t-m" x="355" y="76" text-anchor="middle" style="font-size:14px">hello</text>
+${TREE(56,{0:'bx-ok',6:'bx-hl'},null,true)}
+</svg>`],
+ ['Segment two, <b>hello</b>: no folder has that name, but <b>[slug]</b> matches anything. Next.js remembers <b>slug = \'hello\'</b>.',`<svg viewBox="0 0 420 290" role="img" aria-label="hello matches the slug folder">
+${URLB('localhost:3000/blog/hello')}
+<rect class="bx-ok" x="250" y="56" width="62" height="28" rx="6"/><text class="t-m" x="281" y="76" text-anchor="middle" style="font-size:14px">blog</text>
+<rect class="bx-ok" x="320" y="56" width="70" height="28" rx="6"/><text class="t-m" x="355" y="76" text-anchor="middle" style="font-size:14px">hello</text>
+${TREE(56,{0:'bx-ok',6:'bx-ok',7:'bx-hl'},{7:"slug = 'hello'"},true)}
+</svg>`],
+ ['Inside is a <b>page.tsx</b>, so this is a real route. Next.js renders it, passing <b>params.slug</b>, and the page shows "Post: hello".',`<svg viewBox="0 0 420 290" role="img" aria-label="The slug page renders Post: hello">
+${URLB('localhost:3000/blog/hello','bx-ok')}
+${TREE(56,{0:'bx-ok',6:'bx-ok',7:'bx-ok',8:'bx-hl'},{7:"slug = 'hello'"},true)}
+<rect class="bx-ok" x="240" y="236" width="174" height="44" rx="8"/><text class="t-b" x="327" y="264" text-anchor="middle">Post: hello</text>
+</svg>`],
+ ['Now try <b>/nope</b>. No folder matches, so Next.js shows <b>not-found.tsx</b>, your custom 404 page.',`<svg viewBox="0 0 420 290" role="img" aria-label="/nope falls back to not-found.tsx">
+${URLB('localhost:3000/nope','bx-bad')}
+${TREE(56,{0:'bx-ok',3:'bx-hl'},null,true)}
+<rect class="bx-bad" x="240" y="236" width="174" height="44" rx="8"/><text class="t-b" x="327" y="264" text-anchor="middle">Page not found</text>
+</svg>`]])}
+${V.rules(V.rh('Rules: break one and the route does not exist'),
+ V.no('app/about/About.tsx','The file must be called page.tsx exactly'),V.ok('app/about/page.tsx','Serves /about'),
+ V.no('app/blog/{slug}/','Dynamic folders use square brackets, not braces'),V.ok('export default function Page()','The page must be the default export'),
+ V.rh('Conventions'),V.ok('app/contact-us/','Folder names are lowercase words joined by hyphens, because they appear in the URL'),
+ V.ok('const { slug } = await params','Next.js 15 and later: params is a Promise. This sandbox follows Next 14, where it is a plain object'))}
+${V.hook(`Folders are the address, <code>page.tsx</code> is the room, and <code>[brackets]</code> mean "any".`)}
+`)}
+
+${V.card(2,'Layouts and Link','picture frames that stay on the wall',`
+<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="A picture frame labelled layout.tsx with a nav bar and footer, holding a swappable picture labelled page.tsx">
+<rect class="bx-warn" x="6" y="6" width="408" height="198" rx="12"/><text class="t-s" x="20" y="28">app/layout.tsx</text>
+<rect class="bx" x="20" y="36" width="380" height="36" rx="6"/>${V.ic('house',30,42,24,'ic-a')}<text class="t-b t-a" x="62" y="60">Home</text><text class="t-b t-a" x="130" y="60">About</text><text class="t-s" x="250" y="60">nav: on every page</text>
+<rect class="bx-info" x="40" y="84" width="340" height="78" rx="8"/><text class="t-s" x="54" y="104">{children} = page.tsx</text><text class="t-b" x="210" y="140" text-anchor="middle" style="font-size:18px">About me</text>
+<text class="t-s" x="210" y="190" text-anchor="middle">footer: on every page</text>
+</svg><figcaption>A layout is a frame that wraps every page below its folder. When you move between pages, only the picture inside changes. The frame, with its navigation, stays put.</figcaption></figure>
+${V.like(`<p>A picture frame on the wall. To show a different photo you slide out the old one and slide in the new one. You do not take down the frame, repaint the wall and hang it again.</p>`)}
+${V.why(`<p>Almost every site repeats the same header, nav and footer. Copying them into each page is error-prone. A layout writes them once, and because the frame stays mounted between pages, things like a search box keep their state while you navigate.</p>`)}
+${V.anat(['export default function ',[1,'RootLayout'],'({ ',[2,'children'],' }) {\n  return (\n    ',[3,'&lt;html&gt;&lt;body&gt;'],'\n      &lt;nav&gt;',[4,'&lt;Link href="/about"&gt;'],'About&lt;/Link&gt;&lt;/nav&gt;\n      {children}\n    &lt;/body&gt;&lt;/html&gt;\n  );\n}'],[
+ '<b>The layout component</b>, in <code>app/layout.tsx</code>. The root layout wraps the entire site.',
+ '<b>children</b> is the hole in the frame: whichever page matches the URL is slotted in here.',
+ '<b>html and body.</b> Only the root layout writes these, and it must.',
+ '<b>Link</b>, imported from <code>next/link</code>. Like an <code>a</code> tag, but it swaps the page without a full reload.'])}
+${V.steps([
+ ['You are on <b>/</b>. The frame (nav and footer) comes from the layout. The picture is the home page.',`<svg viewBox="0 0 420 190" role="img" aria-label="Home page inside the layout frame">
+<rect class="bx-warn" x="6" y="6" width="408" height="176" rx="12"/>
+<rect class="bx" x="20" y="18" width="380" height="36" rx="6"/><text class="t-b t-a" x="36" y="42">Home</text><text class="t-b t-a" x="104" y="42">About</text>
+<rect class="bx-info" x="40" y="68" width="340" height="80" rx="8"/><text class="t-b" x="210" y="114" text-anchor="middle" style="font-size:18px">Welcome!</text>
+<text class="t-s" x="210" y="172" text-anchor="middle">footer</text>
+</svg>`],
+ ['You click the <b>About</b> Link. Next.js fetches only the new page and slides it into the frame. The frame does not flicker or reload.',`<svg viewBox="0 0 420 190" role="img" aria-label="Link swaps only the picture">
+<rect class="bx-warn" x="6" y="6" width="408" height="176" rx="12"/>
+<rect class="bx" x="20" y="18" width="380" height="36" rx="6"/><text class="t-b t-a" x="36" y="42">Home</text><rect class="bx-hl" x="98" y="24" width="60" height="24" rx="5"/><text class="t-b t-a" x="104" y="42">About</text>
+<rect class="bx-ok" x="40" y="68" width="340" height="80" rx="8"/><text class="t-b" x="210" y="114" text-anchor="middle" style="font-size:18px">About me</text>
+<text class="t-s" x="210" y="172" text-anchor="middle">footer</text>${V.ic('check',372,20,32,'ic-ok')}
+</svg>`],
+ ['With a plain <b>a</b> tag instead, the browser throws the whole page away and loads everything again: frame, picture, scripts. Slower, and any state in the frame is lost.',`<svg viewBox="0 0 420 190" role="img" aria-label="A plain a tag reloads everything">
+<rect class="bx-bad" x="6" y="6" width="408" height="176" rx="12" style="stroke-dasharray:6 5"/>
+<rect class="bx" x="20" y="18" width="380" height="36" rx="6" style="opacity:.35"/>
+<rect class="bx" x="40" y="68" width="340" height="80" rx="8" style="opacity:.35"/>${V.ic('repeat',186,82,48,'ic-bad')}
+<text class="t-bad" x="210" y="172" text-anchor="middle" style="font-size:14px">full page reload</text>
+</svg>`]])}
+${V.rules(V.no('&lt;a href="/about"&gt;','Works, but reloads the whole page'),V.ok('&lt;Link href="/about"&gt;','Import Link from next/link for links inside your site'),
+ V.no('A root layout with no &lt;html&gt;','The root layout must render html and body'),V.ok('app/blog/layout.tsx','A layout in a folder frames only the pages below it, inside the root frame'))}
+${V.build(`<ol><li>Make a folder for the new address with a <code>page.tsx</code> inside, exporting a component by default.</li><li>In the root layout, add a nav with two <code>Link</code>s above <code>{children}</code>.</li><li>Make a folder in square brackets under <code>blog/</code>, and show <code>params.slug</code> in its page.</li><li>Add <code>app/not-found.tsx</code>, then visit a made-up address in the URL bar to see it.</li></ol>`)}
+${V.hook(`The layout is the frame, the page is the picture, and Link swaps the picture, not the frame.`)}
+`)}
+
+<div class="try"><b>Try it in your head</b>1. Which file serves <code>/contact</code>? <i>app/contact/page.tsx.</i> 2. At <code>/blog/dune</code>, what is params.slug? <i>'dune'.</i> 3. Why use Link instead of a? <i>It swaps the page without reloading the whole site, so the layout stays.</i></div>
 `);
 }
