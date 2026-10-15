@@ -265,150 +265,198 @@ h1    { color: #6b3e26; }                     /* text colour   */
 `);
 
 explain('fb3',`
-<h4>From describing to doing</h4>
-<p>HTML describes content and CSS describes looks. Neither can <i>do</i> anything: they cannot add up a shopping basket, check a password is long enough, or respond when you click. For that you need a <b>programming language</b>, a way to give the computer step-by-step instructions. The one built into every web browser is <b>JavaScript</b>.</p>
-<p>A <b>program</b> is just a list of instructions, run from top to bottom, one line at a time. The editor in this lesson runs plain JavaScript, with no web page at all, so you can focus on the language. When you press Run, your code runs and anything you print appears under <b>Output</b>.</p>
-<p>Every program in the world, from a calculator to a video game, is built from the same five ideas: <b>variables</b> to remember things, <b>functions</b> to package up work, <b>decisions</b> to choose what to do, <b>loops</b> to repeat, and <b>objects</b> to group related facts. You will meet all five here.</p>
+<p>Every program ever written, from a calculator to Instagram, is built from the same five ideas. Learn them properly once and every language after this one is just new spelling.</p>
 
-<h4>Printing and comments</h4>
-<p><code>console.log(…)</code> prints whatever you put between the brackets to the Output. It is how you see what your program is doing:</p>
-<pre class="snip">// This line is a comment. JavaScript skips it.
-console.log('Hello!');      // prints: Hello!
-console.log(2 + 3);         // prints: 5
-console.log('Ada', 36);     // prints: Ada 36</pre>
-<p>Any text after two forward slashes is a <b>comment</b>, a note for humans. Use comments to explain why you did something.</p>
-<p>Notice the three kinds of value above. Text in quotes is called a <b>string</b> (a string of characters). Numbers like <code>36</code> or <code>3.5</code> are written without quotes. And there are two <b>booleans</b>, <code>true</code> and <code>false</code>, the answers to yes-or-no questions. Quotes matter: <code>'5'</code> is a piece of text that happens to look like a number, while <code>5</code> is a number you can do maths with.</p>
+${V.card(1,'Variables','boxes that remember',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Three labelled boxes on a shelf: score holds 15, name is sealed and holds Ada, isLoggedIn holds true">
+<path class="bx-a" d="M30 14H112L124 28 112 42H30Z"/><text class="t-m" x="74" y="33" text-anchor="middle">score</text>
+<path class="bx-a" d="M164 14H246L258 28 246 42H164Z"/><text class="t-m" x="208" y="33" text-anchor="middle">name</text>
+<path class="bx-a" d="M292 14H398L410 28 398 42H292Z"/><text class="t-m" x="348" y="33" text-anchor="middle">isLoggedIn</text>
+<path class="ln-d" d="M76 42V70M210 42V64M346 42V70"/>
+<rect class="bx-ok" x="22" y="64" width="108" height="14" rx="3" transform="rotate(-16 22 78)"/>
+<rect class="bx-ok" x="22" y="78" width="108" height="78" rx="6"/><text class="t-m" x="76" y="124" text-anchor="middle" style="font-size:22px">15</text>
+<rect class="bx-info" x="152" y="64" width="116" height="14" rx="3"/>
+<rect class="bx-info" x="156" y="78" width="108" height="78" rx="6"/><text class="t-m" x="210" y="124" text-anchor="middle" style="font-size:20px">'Ada'</text>
+${V.ic('lock',232,124,28,'ic-info')}
+<rect class="bx-ok" x="290" y="64" width="108" height="14" rx="3" transform="rotate(-16 290 78)"/>
+<rect class="bx-ok" x="290" y="78" width="108" height="78" rx="6"/><text class="t-m" x="344" y="124" text-anchor="middle" style="font-size:20px">true</text>
+<path class="ln" style="stroke-width:4" d="M8 158H412"/>
+<text class="t-s" x="76" y="182" text-anchor="middle">let: can refill</text>
+<text class="t-s" x="210" y="182" text-anchor="middle">const: sealed</text>
+<text class="t-s" x="344" y="182" text-anchor="middle">let: can refill</text>
+</svg><figcaption>Three variables. Each is a box with a name tag. The value is what is inside. let boxes have an open lid, so you can swap the contents. The const box is sealed once it is filled.</figcaption></figure>
+${V.like(`<p>A labelled storage box. The <b>label</b> is the variable's name, the <b>contents</b> are its value. Say the name, and the computer opens that box and hands you what's inside.</p>`)}
+${V.why(`<p>Programs constantly need to remember things: your score, your name, what is in your basket. Inside the computer, memory is billions of numbered slots with addresses like <code>0x7ffd3a10</code>. The first programmers had to remember those numbers by hand. Variables were invented so you can give a slot a human name and write <code>score</code> instead.</p>`)}
+${V.anat([[1,'let'],' ',[2,'score'],' ',[3,'='],' ',[4,'10'],[5,';']],[
+ '<b>Keyword.</b> <code>let</code> means "make a new box I may refill". <code>const</code> means "make a sealed box".',
+ '<b>Name.</b> The label on the box. You choose it, then use it later to get the value back.',
+ '<b>Assignment.</b> <code>=</code> means "put into", not "equals". Read it right to left: put 10 into score.',
+ '<b>Value.</b> What goes in the box: a number (<code>10</code>), text in quotes (<code>\'Ada\'</code>), <code>true</code> or <code>false</code>, a list, and more.',
+ '<b>Semicolon.</b> Ends the instruction, like a full stop ends a sentence.'])}
+<p><b>Watch the computer run it.</b> Press Next and follow the arrow down the code while the boxes change.</p>
+${V.steps([
+ ['Line 1 runs. The computer makes a new box, writes <b>score</b> on its tag and puts <b>10</b> inside.',`<svg viewBox="0 0 420 200" role="img" aria-label="Memory after line 1: score holds 10">
+<rect class="bx-dark" x="6" y="8" width="214" height="150" rx="8"/>
+<text class="t-a" x="14" y="44" style="font-size:15px">&#9654;</text>
+<text class="t-term" x="32" y="44" style="font-size:14px">let score = 10;</text>
+<text class="t-term t-dim" x="32" y="76" style="font-size:14px">score = score + 5;</text>
+<text class="t-term t-dim" x="32" y="108" style="font-size:14px">const name = 'Ada';</text>
+<text class="t-term t-dim" x="32" y="140" style="font-size:14px">name = 'Bob';</text>
+<text class="t-s" x="238" y="24">Memory</text>
+<text class="t-m" x="238" y="50">score</text><rect class="bx-ok" x="236" y="56" width="176" height="40" rx="6"/><text class="t-m" x="324" y="82" text-anchor="middle" style="font-size:19px">10</text>
+</svg>`],
+ ['Line 2. The right side is worked out first: it reads <b>score</b> (10) and adds 5. Then it puts the answer, <b>15</b>, back in the same box. The old 10 is gone for good.',`<svg viewBox="0 0 420 200" role="img" aria-label="Memory after line 2: score holds 15, old value 10 crossed out">
+<rect class="bx-dark" x="6" y="8" width="214" height="150" rx="8"/>
+<text class="t-term t-dim" x="32" y="44" style="font-size:14px">let score = 10;</text>
+<text class="t-a" x="14" y="76" style="font-size:15px">&#9654;</text>
+<text class="t-term" x="32" y="76" style="font-size:14px">score = score + 5;</text>
+<text class="t-term t-dim" x="32" y="108" style="font-size:14px">const name = 'Ada';</text>
+<text class="t-term t-dim" x="32" y="140" style="font-size:14px">name = 'Bob';</text>
+<text class="t-s" x="238" y="24">Memory</text>
+<text class="t-m" x="238" y="50">score</text><rect class="bx-ok" x="236" y="56" width="176" height="40" rx="6"/>
+<text class="t-m t-dim" x="290" y="82" text-anchor="middle" style="font-size:17px">10</text><path class="ln-x" d="M276 86 304 70"/>
+<text class="t-ok" x="318" y="82" style="font-size:15px">&#10140;</text><text class="t-m" x="360" y="82" text-anchor="middle" style="font-size:19px">15</text>
+<text class="t-s" x="238" y="120">10 + 5 = 15</text>
+</svg>`],
+ ['Line 3. <b>const</b> makes a sealed box called <b>name</b> holding the text <b>\'Ada\'</b>. Text always goes inside quotes.',`<svg viewBox="0 0 420 200" role="img" aria-label="Memory after line 3: score 15 and sealed box name holding Ada">
+<rect class="bx-dark" x="6" y="8" width="214" height="150" rx="8"/>
+<text class="t-term t-dim" x="32" y="44" style="font-size:14px">let score = 10;</text>
+<text class="t-term t-dim" x="32" y="76" style="font-size:14px">score = score + 5;</text>
+<text class="t-a" x="14" y="108" style="font-size:15px">&#9654;</text>
+<text class="t-term" x="32" y="108" style="font-size:14px">const name = 'Ada';</text>
+<text class="t-term t-dim" x="32" y="140" style="font-size:14px">name = 'Bob';</text>
+<text class="t-s" x="238" y="24">Memory</text>
+<text class="t-m" x="238" y="50">score</text><rect class="bx-ok" x="236" y="56" width="176" height="40" rx="6"/><text class="t-m" x="324" y="82" text-anchor="middle" style="font-size:19px">15</text>
+<text class="t-m" x="238" y="120">name</text><rect class="bx-info" x="236" y="126" width="176" height="40" rx="6"/><text class="t-m" x="310" y="152" text-anchor="middle" style="font-size:18px">'Ada'</text>
+${V.ic('lock',374,131,30,'ic-info')}
+</svg>`],
+ ['Line 4 tries to refill the sealed box. JavaScript refuses and stops with a <b>TypeError</b>. That is const protecting you from changing something by accident.',`<svg viewBox="0 0 420 200" role="img" aria-label="Line 4 fails: TypeError, assignment to constant variable">
+<rect class="bx-dark" x="6" y="8" width="214" height="150" rx="8"/>
+<text class="t-term t-dim" x="32" y="44" style="font-size:14px">let score = 10;</text>
+<text class="t-term t-dim" x="32" y="76" style="font-size:14px">score = score + 5;</text>
+<text class="t-term t-dim" x="32" y="108" style="font-size:14px">const name = 'Ada';</text>
+<text class="t-a" x="14" y="140" style="font-size:15px">&#9654;</text>
+<text class="t-term" x="32" y="140" style="font-size:14px">name = 'Bob';</text>
+<text class="t-s" x="238" y="24">Memory</text>
+<text class="t-m" x="238" y="50">score</text><rect class="bx-ok" x="236" y="56" width="176" height="40" rx="6"/><text class="t-m" x="324" y="82" text-anchor="middle" style="font-size:19px">15</text>
+<text class="t-m" x="238" y="120">name</text><rect class="bx-bad" x="236" y="126" width="176" height="40" rx="6"/><text class="t-m" x="310" y="152" text-anchor="middle" style="font-size:18px">'Ada'</text>
+${V.ic('cross',372,129,34,'ic-bad')}
+<text class="t-bad" x="8" y="190" style="font-size:14px">TypeError: Assignment to constant variable.</text>
+</svg>`]])}
+${V.rules(V.rh('Rules: break one and the code will not run'),
+ V.no('2ndPlace','A name cannot start with a digit'),V.ok('place2','Digits are fine after the first character'),
+ V.no('first name','No spaces: the computer sees two words'),V.no('user-age','A hyphen is read as minus: user minus age'),
+ V.no('let, if, class','Reserved words already mean something'),V.ok('score vs Score','Capitals matter: these are two different boxes'),
+ V.rh('Conventions: what professionals do so code reads easily'),
+ V.ok('totalPrice','camelCase: first word small, each next word starts with a capital'),V.no('tp, x, data2','Vague names: next week you will not know what they hold'),
+ V.ok('isLoggedIn','true/false values read like a yes/no question'),V.ok('const first','Use let only when the value really must change'))}
+${V.build(`<ol><li>Decide what to remember: the player's score.</li><li>Pick a clear name: <code>score</code>.</li><li>Will it change? Yes, so use <code>let</code>.</li><li>Create and fill it: <code>let score = 0;</code></li><li>Use it: <code>console.log(score);</code></li><li>Change it: <code>score = score + 10;</code></li></ol>`)}
+${V.hook(`Name it, fill it, use it. <code>const</code> is a sealed box, <code>let</code> is a refillable one, and <code>=</code> means "put into".`)}
+`)}
 
-<h4>Variables: labelled boxes</h4>
-<p>A <b>variable</b> is a name that points at a value, so you can use it later. Think of a box with a label stuck on the front.</p>
-<pre class="snip">const name = 'Ada';     // make a box called name, put 'Ada' in
-let score = 10;         // make a box called score, put 10 in
-score = score + 5;      // take what's in score, add 5, put it back
-console.log(name, score);   // prints: Ada 15</pre>
-<p>The single equals sign <code>=</code> means <b>"put this value in that box"</b>. It is not the maths question "are these equal?". So <code>score = score + 5</code> is read from right to left: work out <code>score + 5</code>, which is 15, then store 15 in <code>score</code>.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="A const box that cannot be refilled and a let box whose value changes from 10 to 15">
-<rect class="bx-info" x="20" y="40" width="160" height="70" rx="8"/>
-<rect class="bx-dark" x="40" y="22" width="120" height="30" rx="6"/><text class="t-term" x="100" y="43" text-anchor="middle">const name</text>
-<text class="t-m" x="100" y="90" text-anchor="middle" style="font-size:18px">'Ada'</text>
-<text class="t-b t-info" x="100" y="138" text-anchor="middle">sealed</text>
-<text class="t-s" x="100" y="158" text-anchor="middle">cannot be refilled</text>
-<rect class="bx-ok" x="230" y="40" width="170" height="70" rx="8"/>
-<rect class="bx-dark" x="255" y="22" width="120" height="30" rx="6"/><text class="t-term" x="315" y="43" text-anchor="middle">let score</text>
-<text class="t-m t-bad" x="280" y="90" text-anchor="middle" style="font-size:18px">10</text><path class="ln-a" d="M266 84h28"/>
-<path class="ln-ok" d="M300 84h24"/><polygon class="ah-ok" points="322,78 322,90 332,84"/>
-<text class="t-m t-ok" x="360" y="90" text-anchor="middle" style="font-size:18px">15</text>
-<text class="t-b t-ok" x="315" y="138" text-anchor="middle">refillable</text>
-<text class="t-s" x="315" y="158" text-anchor="middle">score = score + 5</text>
-<text class="t-s" x="210" y="190" text-anchor="middle">Both boxes hold one value at a time.</text>
-</svg><figcaption>A const box is sealed once it is filled: name always holds Ada. A let box can be emptied and refilled: score starts at 10 and, after score equals score plus 5, holds 15.</figcaption></figure>
-<p>There are two ways to make a variable:</p>
-<ul>
-<li><code>const</code> (constant) makes a box you can fill only once. Trying to put a new value in later is an error.</li>
-<li><code>let</code> makes a box you are allowed to refill.</li>
-</ul>
-<p>Use <code>const</code> by default. It protects you from changing something by accident. Reach for <code>let</code> only when the value really must change, like a running total. You may see <code>var</code> in old tutorials; it is an older way with confusing rules, so skip it.</p>
-<p>The <code>+</code> sign does two jobs. With numbers it adds: <code>2 + 3</code> is 5. With strings it <b>joins</b> them end to end: <code>'Hello, ' + name + '!'</code> becomes <code>Hello, Ada!</code>. Mind the spaces inside the quotes, because JavaScript will not add any for you. That is exactly the shape of the first task: make a <code>name</code> variable, then log a greeting built from it.</p>
+${V.card(2,'Functions','recipes you write once and use forever',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="4 goes into the double machine and 8 comes out">
+<circle class="bx-info" cx="50" cy="70" r="30"/><text class="t-m" x="50" y="78" text-anchor="middle" style="font-size:24px">4</text>
+<text class="t-s" x="50" y="124" text-anchor="middle">argument</text>
+<path class="ln-a" d="M84 70H140"/><polygon class="ah-a" points="138,63 138,77 150,70"/>
+<rect class="bx-a" x="152" y="16" width="116" height="108" rx="10"/>${V.ic('gear',184,26,52,'ic-a')}
+<text class="t-m" x="210" y="106" text-anchor="middle">double(n)</text>
+<text class="t-s" x="210" y="146" text-anchor="middle">return n * 2</text>
+<path class="ln-ok" d="M272 70H328"/><polygon class="ah-ok" points="326,63 326,77 338,70"/>
+<circle class="bx-ok" cx="370" cy="70" r="30"/><text class="t-m" x="370" y="78" text-anchor="middle" style="font-size:24px">8</text>
+<text class="t-s" x="370" y="124" text-anchor="middle">returned</text>
+</svg><figcaption>A function is a machine with a name. Something goes in (the argument 4), the same steps run inside, and a result comes out (8).</figcaption></figure>
+${V.like(`<p>A recipe card. The ingredients are the <b>inputs</b>, the method is the <b>body</b>, and the finished dish is the <b>return value</b>. You write the recipe once and cook it whenever you like.</p>`)}
+${V.why(`<p>Without functions you would copy the same lines everywhere, and fixing one bug would mean fixing every copy. A function gives a set of steps one name, so you write them once and simply call the name.</p>`)}
+${V.anat([[1,'function'],' ',[2,'double'],[3,'(n)'],' {\n  ',[4,'return'],' ',[5,'n * 2'],';\n}'],[
+ '<b>Keyword.</b> "I am defining a recipe." Nothing runs yet.',
+ '<b>Name.</b> Use a verb, because functions do things: <code>double</code>, <code>addTax</code>, <code>canVote</code>.',
+ '<b>Parameter.</b> An empty box, filled with whatever you pass in each time you call it.',
+ '<b>return.</b> Hands the answer back to whoever called the function, and stops it.',
+ '<b>The work.</b> What to do with the inputs.'])}
+${V.steps([['JavaScript reaches <b>double(4)</b>. It jumps into the function and puts <b>4</b> into the parameter box <b>n</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="Calling double with 4 fills n with 4"><text class="t-m" x="16" y="34" style="font-size:17px">const result = <tspan class="t-a" style="font-weight:700">double(4)</tspan>;</text><rect class="ln-d" x="16" y="60" width="388" height="96" rx="10"/><text class="t-s" x="30" y="82">inside double</text><text class="t-m" x="34" y="132" style="font-size:19px">n</text><rect class="bx-info" x="58" y="104" width="84" height="42" rx="6"/><text class="t-m" x="100" y="132" text-anchor="middle" style="font-size:19px">4</text><path class="ln-a" d="M262 42C262 76 128 66 104 98"/><polygon class="ah-a" points="97,94 109,94 103,104"/></svg>`],['Inside, it works out <b>n * 2</b>. n is 4, so the answer is <b>8</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="n times 2 is 8"><text class="t-m" x="16" y="34" style="font-size:17px">const result = double(4);</text><rect class="ln-d" x="16" y="60" width="388" height="96" rx="10"/><text class="t-s" x="30" y="82">inside double</text><text class="t-m" x="34" y="132" style="font-size:19px">n</text><rect class="bx-info" x="58" y="104" width="84" height="42" rx="6"/><text class="t-m" x="100" y="132" text-anchor="middle" style="font-size:19px">4</text><text class="t-m" x="176" y="132" style="font-size:19px">4 * 2 = <tspan class="t-ok" style="font-weight:700">8</tspan></text></svg>`],['<b>return</b> sends 8 back out. The call <b>double(4)</b> is replaced by its answer, as if you had written 8 there.',`<svg viewBox="0 0 420 170" role="img" aria-label="return 8 replaces the call"><text class="t-m" x="16" y="34" style="font-size:17px">const result = <tspan class="t-ok" style="font-weight:700">8</tspan>;</text><rect class="ln-d" x="16" y="60" width="388" height="96" rx="10"/><text class="t-s" x="30" y="82">inside double</text><text class="t-m" x="176" y="132" style="font-size:19px">return 8</text><path class="ln-ok" d="M222 110C222 72 186 62 168 44"/><polygon class="ah-ok" points="163,52 175,46 164,38"/></svg>`],['8 goes into the box <b>result</b>. The function is finished and its temporary box n is thrown away. Call it again with 21 and you get 42.',`<svg viewBox="0 0 420 170" role="img" aria-label="result holds 8"><text class="t-m" x="16" y="34" style="font-size:17px">const result = double(4);</text><text class="t-m" x="16" y="104" style="font-size:19px">result</text><rect class="bx-ok" x="94" y="78" width="96" height="42" rx="6"/><text class="t-m" x="142" y="106" text-anchor="middle" style="font-size:20px">8</text><text class="t" x="214" y="96">double(21) gives 42</text><text class="t" x="214" y="122">double(0) gives 0</text></svg>`]])}
+${V.rules(V.ok('double(4)','Parentheses make it run (a "call")'),V.no('double','Without () you only point at the recipe; nothing runs'),
+ V.ok('return n * 2;','return hands the answer back'),V.no('console.log(n * 2)','Printing is not returning: the caller gets undefined'))}
+${V.hook(`Ingredients in, dish out. Define once, call many times. No <code>return</code>, no answer.`)}
+`)}
 
-<h4>Functions: reusable recipes</h4>
-<p>Imagine you need to add up two numbers in fifty different places. Rather than repeat the work, you write it once as a <b>function</b>: a named recipe you can run whenever you like.</p>
-<pre class="snip">function double(n) {   // name: double. input: n
-  return n * 2;        // the answer to send back
-}
-const result = double(4);   // run it with n = 4
-console.log(result);        // prints: 8</pre>
-<p>Piece by piece:</p>
-<ul>
-<li><code>function double</code> gives the recipe a name.</li>
-<li><code>(n)</code> lists its <b>parameters</b>: the inputs, named placeholders that get a real value each time the function runs. A function can have several, separated by commas: <code>(a, b)</code>.</li>
-<li>The curly braces hold the <b>body</b>, the steps to follow.</li>
-<li><code>return</code> sends a value back to whoever asked, and stops the function there.</li>
-</ul>
-<p>Writing a function only defines the recipe. Nothing happens until you <b>call</b> it by writing its name with brackets and values: <code>double(4)</code>. The values you pass in are called <b>arguments</b>.</p>
-<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="Arguments 2 and 3 go into the add function as a and b, and 5 comes out">
-<rect class="bx-info" x="10" y="30" width="56" height="40" rx="6"/><text class="t-m" x="38" y="56" text-anchor="middle">2</text>
-<rect class="bx-info" x="10" y="90" width="56" height="40" rx="6"/><text class="t-m" x="38" y="116" text-anchor="middle">3</text>
-<path class="ln" d="M66 50h38M66 110h38"/><polygon class="ah" points="102,44 102,56 112,50"/><polygon class="ah" points="102,104 102,116 112,110"/>
-<rect class="bx-a" x="114" y="16" width="180" height="128" rx="10"/>
-<text class="t-b" x="204" y="42" text-anchor="middle">add(a, b)</text>
-<text class="t-m" x="204" y="76" text-anchor="middle">a is 2, b is 3</text>
-<text class="t-m" x="204" y="112" text-anchor="middle">return a + b</text>
-<path class="ln-ok" d="M294 80h44"/><polygon class="ah-ok" points="336,74 336,86 346,80"/>
-<rect class="bx-ok" x="348" y="58" width="60" height="44" rx="6"/><text class="t-m" x="378" y="86" text-anchor="middle" style="font-size:18px">5</text>
-<text class="t-s" x="38" y="160" text-anchor="middle">arguments</text><text class="t-s" x="378" y="128" text-anchor="middle">returned</text>
-</svg><figcaption>Calling add with 2 and 3. The arguments drop into the parameters a and b, the body adds them, and return sends 5 back out to whoever called the function.</figcaption></figure>
-<div class="mistake"><b>Common mistake</b>Using <code>console.log</code> instead of <code>return</code>. Printing shows a value on screen for you to look at, but the function still gives back nothing, which JavaScript calls <code>undefined</code>. The checker calls your functions and looks at what they <b>return</b>, so <code>add(2, 3)</code> must return 5, not just print it.</div>
+${V.card(3,'Decisions','if / else: a fork in the road',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="Fork: is temperature over 25? Yes: wear a t-shirt. No: bring a jacket">
+<polygon class="bx-warn" points="210,10 330,58 210,106 90,58"/>
+<text class="t-m" x="210" y="56" text-anchor="middle" style="font-size:14px">temperature</text><text class="t-m" x="210" y="76" text-anchor="middle" style="font-size:14px">&gt; 25 ?</text>
+<path class="ln-ok" d="M118 76 70 124"/><polygon class="ah-ok" points="64,116 76,124 64,130"/><text class="t-b t-ok" x="68" y="96">true</text>
+<path class="ln" d="M302 76 350 124"/><polygon class="ah" points="356,116 344,124 356,130"/><text class="t-b" x="328" y="96">false</text>
+<rect class="bx-ok" x="10" y="132" width="150" height="46" rx="8"/><text class="t" x="85" y="161" text-anchor="middle">Wear a t-shirt</text>
+<rect class="bx" x="260" y="132" width="150" height="46" rx="8"/><text class="t" x="335" y="161" text-anchor="middle">Bring a jacket</text>
+</svg><figcaption>The condition is a yes/no question. If it is true, the first block runs; if not, the else block runs. Never both.</figcaption></figure>
+${V.why(`<p>Real programs react to what happens: show an error if the password is wrong, give free delivery over £50. <code>if</code> is how code chooses.</p>`)}
+${V.anat([[1,'if'],' (',[2,'temperature &gt; 25'],') ',[3,'{ … }'],' ',[4,'else'],' ',[5,'{ … }']],[
+ '<b>if</b> starts the question.','<b>Condition.</b> Anything that ends up true or false.','<b>Runs when true.</b>','<b>else</b> means "otherwise". It is optional.','<b>Runs when false.</b>'])}
+${V.rules(V.ok('a === b','Is equal (three = signs)'),V.ok('a !== b','Is not equal'),V.ok('age &gt;= 18','At least 18: the 18 itself counts'),
+ V.no('if (age = 18)','One = PUTS 18 into age. Always use === to compare'),V.no('a == b','Two = signs bend the rules: "5" == 5 is true. Avoid it'))}
+${V.hook(`A question in brackets. True takes the first door, false takes <code>else</code>. <code>=</code> stores, <code>===</code> compares.`)}
+`)}
 
-<h4>Decisions: if and else</h4>
-<p>Programs often need to choose. <code>if</code> runs a block of code only when a condition is true, and <code>else</code> gives the alternative:</p>
-<pre class="snip">if (temperature &gt; 25) {
-  console.log('Wear a t-shirt');
-} else {
-  console.log('Bring a jacket');
+${V.card(4,'Arrays and loops','a row of lockers, visited one by one',`
+<figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="The array prices holds 4, 2 and 3.5 at positions 0, 1 and 2">
+<path class="bx-a" d="M14 12H102L114 26 102 40H14Z"/><text class="t-m" x="58" y="31" text-anchor="middle">prices</text><path class="ln-d" d="M58 40V58"/>
+<rect class="bx" x="58" y="58" width="100" height="56" rx="6"/><text class="t-m" x="108" y="93" text-anchor="middle" style="font-size:20px">4</text>
+<rect class="bx" x="160" y="58" width="100" height="56" rx="6"/><text class="t-m" x="210" y="93" text-anchor="middle" style="font-size:20px">2</text>
+<rect class="bx" x="262" y="58" width="100" height="56" rx="6"/><text class="t-m" x="312" y="93" text-anchor="middle" style="font-size:20px">3.5</text>
+<text class="t-b t-a" x="108" y="138" text-anchor="middle">[0]</text><text class="t-b t-a" x="210" y="138" text-anchor="middle">[1]</text><text class="t-b t-a" x="312" y="138" text-anchor="middle">[2]</text>
+</svg><figcaption>An array is one variable holding a numbered row of values. The numbers, called indexes, start at 0, so prices[0] is 4 and the last of three items is prices[2].</figcaption></figure>
+${V.like(`<p>A row of school lockers. The whole row has one name, and each locker has a number starting at 0. A <b>loop</b> is walking along the row, opening each locker in turn and doing the same job.</p>`)}
+${V.steps([
+ ['Before the loop: make a running total, <b>sum</b>, starting at 0.',`<svg viewBox="0 0 420 150" role="img" aria-label="sum starts at 0">
+<rect class="bx" x="20" y="14" width="110" height="46" rx="6"/><text class="t-m" x="75" y="44" text-anchor="middle">4</text>
+<rect class="bx" x="140" y="14" width="110" height="46" rx="6"/><text class="t-m" x="195" y="44" text-anchor="middle">2</text>
+<rect class="bx" x="260" y="14" width="110" height="46" rx="6"/><text class="t-m" x="315" y="44" text-anchor="middle">3.5</text>
+<text class="t-m" x="20" y="116">sum</text><rect class="bx-ok" x="64" y="92" width="100" height="38" rx="6"/><text class="t-m" x="114" y="118" text-anchor="middle" style="font-size:19px">0</text>
+</svg>`],
+ ['First trip: <b>price</b> is 4. sum becomes 0 + 4 = <b>4</b>.',`<svg viewBox="0 0 420 150" role="img" aria-label="price 4, sum 4">
+<rect class="bx-hl" x="20" y="14" width="110" height="46" rx="6"/><text class="t-m" x="75" y="44" text-anchor="middle">4</text>
+<rect class="bx" x="140" y="14" width="110" height="46" rx="6"/><text class="t-m" x="195" y="44" text-anchor="middle">2</text>
+<rect class="bx" x="260" y="14" width="110" height="46" rx="6"/><text class="t-m" x="315" y="44" text-anchor="middle">3.5</text>
+<text class="t-m" x="20" y="116">sum</text><rect class="bx-ok" x="64" y="92" width="100" height="38" rx="6"/><text class="t-m" x="114" y="118" text-anchor="middle" style="font-size:19px">4</text>
+<text class="t-s" x="190" y="116">0 + 4 = 4</text>
+</svg>`],
+ ['Second trip: <b>price</b> is 2. sum becomes 4 + 2 = <b>6</b>.',`<svg viewBox="0 0 420 150" role="img" aria-label="price 2, sum 6">
+<rect class="bx" x="20" y="14" width="110" height="46" rx="6"/><text class="t-m" x="75" y="44" text-anchor="middle">4</text>
+<rect class="bx-hl" x="140" y="14" width="110" height="46" rx="6"/><text class="t-m" x="195" y="44" text-anchor="middle">2</text>
+<rect class="bx" x="260" y="14" width="110" height="46" rx="6"/><text class="t-m" x="315" y="44" text-anchor="middle">3.5</text>
+<text class="t-m" x="20" y="116">sum</text><rect class="bx-ok" x="64" y="92" width="100" height="38" rx="6"/><text class="t-m" x="114" y="118" text-anchor="middle" style="font-size:19px">6</text>
+<text class="t-s" x="190" y="116">4 + 2 = 6</text>
+</svg>`],
+ ['Last trip: <b>price</b> is 3.5. sum becomes 6 + 3.5 = <b>9.5</b>. No lockers left, so the loop ends and the function returns 9.5.',`<svg viewBox="0 0 420 150" role="img" aria-label="price 3.5, sum 9.5">
+<rect class="bx" x="20" y="14" width="110" height="46" rx="6"/><text class="t-m" x="75" y="44" text-anchor="middle">4</text>
+<rect class="bx" x="140" y="14" width="110" height="46" rx="6"/><text class="t-m" x="195" y="44" text-anchor="middle">2</text>
+<rect class="bx-hl" x="260" y="14" width="110" height="46" rx="6"/><text class="t-m" x="315" y="44" text-anchor="middle">3.5</text>
+<text class="t-m" x="20" y="116">sum</text><rect class="bx-ok" x="64" y="92" width="100" height="38" rx="6"/><text class="t-m" x="114" y="118" text-anchor="middle" style="font-size:19px">9.5</text>
+<text class="t-s" x="190" y="116">6 + 3.5 = 9.5</text>
+</svg>`]])}
+<pre class="snip">let sum = 0;
+for (const price of prices) {   // visit each locker in turn
+  sum = sum + price;
 }</pre>
-<p>The condition in the round brackets must work out to <code>true</code> or <code>false</code>. You build conditions with <b>comparison operators</b>:</p>
-<div class="tbl-wrap"><table><tr><th>Write</th><th>Means</th><th>Example that is true</th></tr>
-<tr><td><code>&gt;</code> and <code>&lt;</code></td><td>greater than, less than</td><td><code>30 &gt; 25</code></td></tr>
-<tr><td><code>&gt;=</code> and <code>&lt;=</code></td><td>greater or equal, less or equal</td><td><code>18 &gt;= 18</code></td></tr>
-<tr><td><code>===</code></td><td>is exactly equal to</td><td><code>'Ada' === 'Ada'</code></td></tr>
-<tr><td><code>!==</code></td><td>is not equal to</td><td><code>3 !== 4</code></td></tr></table></div>
-<p>Always compare with three equals signs. One equals sign stores a value, as you saw. Two equals signs also compare, but they quietly convert types first, so <code>'5' == 5</code> is true, which hides bugs. Three equals signs check that the type matches too.</p>
-<p>The <code>canVote</code> task is a decision about a boundary: "18 or more". Read the words carefully and pick the matching operator. <code>age &gt; 18</code> would wrongly refuse an 18-year-old; that is why the checker tests exactly 18.</p>
-<div class="tip"><b>Tip</b>A comparison already <i>is</i> true or false, so <code>return age &gt;= 18;</code> does the same job as a full if/else that returns <code>true</code> or <code>false</code>. Write the long version first if it is clearer to you. Both are correct.</div>
+${V.rules(V.ok('prices[0]','The first item is at index 0'),V.no('prices[3]','One past the end: you get undefined'),
+ V.ok('prices.length','How many items there are (3)'),V.ok('for (const p of list)','Visits every item; no counting needed'))}
+${V.hook(`A row of lockers numbered from 0. A loop does the same job at every locker.`)}
+`)}
 
-<h4>Arrays and loops</h4>
-<p>An <b>array</b> is an ordered list of values in square brackets: <code>const prices = [1, 2, 3.5];</code>. A <b>loop</b> repeats a block of code. The friendliest loop is <code>for…of</code>, which means "for each item in this list, do the following":</p>
-<pre class="snip">const fruits = ['apple', 'banana', 'cherry'];
-for (const fruit of fruits) {   // fruit = each item in turn
-  console.log(fruit);
-}</pre>
-<p>That prints three lines. Each time round, <code>fruit</code> holds the next item. To add up a list, combine a loop with a <code>let</code> variable that starts at zero and grows: a <b>running total</b>, like a shop till.</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="Tracing a running total over the list 1, 2, 3.5: sum goes 0, 1, 3, 6.5">
-<g text-anchor="middle">
-<text class="t-b" x="70" y="24">step</text><text class="t-b" x="180" y="24">price</text><text class="t-b" x="320" y="24">sum after</text>
-<text class="t-s" x="70" y="56">start</text><text class="t-s" x="180" y="56">none yet</text>
-<rect class="bx" x="280" y="38" width="80" height="28" rx="5"/><text class="t-m" x="320" y="58">0</text>
-<text class="t" x="70" y="100">1st</text><text class="t-m t-info" x="180" y="100">1</text>
-<rect class="bx-ok" x="280" y="82" width="80" height="28" rx="5"/><text class="t-m" x="320" y="102">1</text>
-<text class="t" x="70" y="144">2nd</text><text class="t-m t-info" x="180" y="144">2</text>
-<rect class="bx-ok" x="280" y="126" width="80" height="28" rx="5"/><text class="t-m" x="320" y="146">3</text>
-<text class="t" x="70" y="188">3rd</text><text class="t-m t-info" x="180" y="188">3.5</text>
-<rect class="bx-a" x="280" y="170" width="80" height="28" rx="5"/><text class="t-m" x="320" y="190">6.5</text>
-</g>
-<path class="ln-d" d="M320 66v16M320 110v16M320 154v16"/>
-<text class="t-s" x="376" y="190">return</text>
-</svg><figcaption>Tracing the running total for the list 1, 2 and 3.5. The sum starts at 0. Each pass adds the current price: 0 plus 1 is 1, 1 plus 2 is 3, 3 plus 3.5 is 6.5. After the last item, the loop ends and 6.5 is returned.</figcaption></figure>
-<p>Notice two things the <code>total</code> task depends on. The total must start at 0 <b>before</b> the loop, or it would be reset every time round. And the <code>return</code> goes <b>after</b> the loop's closing brace, once every item has been added. An empty list never enters the loop at all, so it correctly returns 0.</p>
+${V.card(5,'Objects','values with labels, like an ID card',`
+<figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="An ID card object with name Ada and age 36">
+<rect class="bx-info" x="70" y="10" width="280" height="130" rx="12"/>${V.ic('person',92,38,64,'ic-info')}
+<text class="t-s" x="176" y="52">name</text><text class="t-m" x="240" y="52">'Ada'</text>
+<text class="t-s" x="176" y="88">age</text><text class="t-m" x="240" y="88">36</text>
+<text class="t-s" x="176" y="124">user.name gives 'Ada'</text>
+</svg><figcaption>An object stores related values under labels called keys. You ask for a value by its label, user.name, instead of remembering its position.</figcaption></figure>
+${V.anat([[1,'{'],' ',[2,'name'],[3,':'],' ',[4,"'Ada'"],[5,','],' age: 36 ',[1,'}']],[
+ '<b>Curly braces</b> wrap the whole object.','<b>Key.</b> The label.','<b>Colon</b> joins a key to its value.','<b>Value.</b> Anything: text, a number, even another object.','<b>Comma</b> separates one pair from the next.'])}
+<p>To put values inside text, use backticks and <code>\${ }</code>: <code>\`\${user.name} is \${user.age}\`</code> becomes <code>Ada is 36</code>. This is called a template string.</p>
+${V.hook(`Arrays find things by position. Objects find things by name.`)}
+`)}
 
-<h4>Objects and template strings</h4>
-<p>An <b>object</b> groups related facts about one thing, using curly braces and <code>key: value</code> pairs:</p>
-<pre class="snip">const user = { name: 'Ada', age: 36 };
-console.log(user.name);    // Ada  (read a value with a dot)
-console.log(user.age);     // 36</pre>
-<p>Each <b>key</b> is a label, and you read its value with a dot: <code>user.name</code>. A function can receive a whole object as one parameter and read its keys inside.</p>
-<p>Building sentences with <code>+</code> gets messy. A <b>template string</b> is cleaner. Write it with <b>backticks</b> (the key usually at the top left of the keyboard) instead of quotes, and anything inside <code>\${ }</code> is worked out and dropped in:</p>
-<pre class="snip">const city = 'London';
-console.log(\`I live in \${city}\`);   // I live in London</pre>
-<p>The <code>describe</code> task combines both ideas: read two keys from the object, place them into a template string, and return it. The dollar sign and braces only work inside backticks; inside ordinary quotes they are printed literally.</p>
-
-<h4>Reading errors</h4>
-<p>When something goes wrong, the Output shows a red error. Read it slowly: it usually names the problem exactly.</p>
-<ul>
-<li><code>SyntaxError</code>: the code is not valid JavaScript. Look for a missing bracket, brace or quote near the line it mentions.</li>
-<li><code>ReferenceError: x is not defined</code>: you used a name that does not exist, often a typo such as <code>Name</code> instead of <code>name</code>. Capital letters matter.</li>
-<li><code>TypeError: Assignment to constant variable</code>: you tried to refill a <code>const</code>. Use <code>let</code> if it really must change.</li>
-</ul>
-<div class="mistake"><b>Common mistake</b>Mismatched brackets. Every opening <code>(</code>, <code>{</code> and <code>[</code> needs its partner. Indent the inside of every pair of curly braces by two spaces, and a missing one becomes easy to spot.</div>
-<div class="try"><b>Try it in your head</b>What does this print? <code>let n = 3; n = n * 2; console.log(\`n is \${n}\`);</code> Answer: n is 6. The second line works out 3 times 2, which is 6, and stores it back in n. And what does <code>canVote(17)</code> return if the condition is <code>age &gt;= 18</code>? Answer: false, because 17 is not greater than or equal to 18.</div>
-
-<h4>Recap</h4>
-<ul>
-<li><code>console.log</code> prints values; comments start with two slashes. Strings go in quotes, numbers do not.</li>
-<li><code>const</code> makes a box you fill once, <code>let</code> one you can refill. A single <code>=</code> stores a value.</li>
-<li>A function takes parameters, runs its body and sends a result back with <code>return</code>. Calling it runs it.</li>
-<li><code>if</code> and <code>else</code> choose between paths; compare with <code>===</code>, <code>&gt;=</code> and friends.</li>
-<li><code>for…of</code> visits each item in an array; a running total starts at 0 before the loop.</li>
-<li>Objects group values under keys, read with a dot. Template strings in backticks drop values in with <code>\${ }</code>.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. After <code>let a = 3; a = a * 2;</code> what is in a? <i>6.</i> 2. What does <code>double(5)</code> give if double has no return? <i>undefined.</i> 3. In <code>['x','y','z']</code>, what is at index 1? <i>'y'.</i></div>
 `);
 
 explain('fb4',`

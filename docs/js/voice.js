@@ -27,6 +27,13 @@ function addBlock(el){const tag=el.tagName;
  if(el.matches('.tbl-wrap,table')){const rows=[...el.querySelectorAll('tr')];const head=rows[0]?[...rows[0].children].map(c=>clean(c.textContent)):[];
   rows.slice(1).forEach(r=>{const cells=[...r.children].map(textOf);add(r,cells.map((c,k)=>k===0||!head[k]?c:head[k]+': '+c).join('. '))});return}
  if(el.matches('.flow')){add(el,[...el.querySelectorAll('span')].map(s=>clean(s.textContent)).join(', then '));return}
+ if(el.matches('.cc')){[...el.children].forEach(addBlock);return}
+ if(el.matches('.cc-head')){const n=el.querySelector('.cc-n'),h=el.querySelector('h4'),sb=el.querySelector('.cc-sub');add(el,'Idea '+(n?n.textContent:'')+'. '+clean(h?h.textContent:'')+(sb&&sb.textContent?'. '+clean(sb.textContent):'.'));return}
+ if(el.matches('.strip')){const b=el.querySelector(':scope>div>b');const body=el.querySelector(':scope>div').cloneNode(true);const bb=body.querySelector(':scope>b');if(bb)bb.remove();const lists=[...body.querySelectorAll('li')];
+  if(lists.length){const intro=body.cloneNode(true);intro.querySelectorAll('ol,ul').forEach(x=>x.remove());add(el,(b?clean(b.textContent)+'. ':'')+textOf(intro));lists.forEach((li,k)=>add(el,(k+1)+'. '+textOf(li)))}else add(el,(b?clean(b.textContent)+'. ':'')+textOf(body));return}
+ if(el.matches('.anat')){const pre=el.querySelector('pre');add(el,cfg.code?'The code: '+speakCode(pre.textContent):'Look at the colour-coded code on screen.');el.querySelectorAll('ol li').forEach(li=>add(el,'Part '+li.dataset.n+'. '+textOf(li)));return}
+ if(el.matches('.rules')){[...el.children].forEach(r=>{if(r.matches('.rules-h'))add(el,textOf(r));else{const c=r.querySelector('code'),sp=r.querySelector('span');add(el,(r.matches('.r-ok')?'Do: ':'Don\'t: ')+(c?clean(c.textContent):'')+'. '+(sp?clean(sp.textContent):''))}});return}
+ if(el.matches('.vstep')){const fr=[...el.querySelectorAll(':scope>.st')];add(el,'An animation in '+fr.length+' steps.');fr.forEach((f,k)=>{const t=clean('Step '+(k+1)+'. '+(f.dataset.cap||'').replace(/<[^>]+>/g,''));if(t)chunks.push({el,text:t,frame:k})});return}
  if(el.matches('figure')){const c=el.querySelector('figcaption'),g=el.querySelector('svg');add(el,'Diagram. '+clean(c?c.textContent:(g&&g.getAttribute('aria-label'))||''));return}
  if(el.matches('.qref')){add(el,'Quick reference.');return}
  if(el.matches('.tip,.mistake,.analogy,.try')){const b=el.querySelector(':scope>b');add(el,(b?clean(b.textContent)+'. ':'Tip. ')+clean(el.textContent.slice(b?b.textContent.length:0)));return}
@@ -37,7 +44,7 @@ function build(){chunks=[];const sh=$('#sheet');if(!sh)return;
  const sub=sh.querySelector('.ladder-sub');if(sub)add(sub,textOf(sub));
  const pv=sh.querySelector('.preview-flag');if(pv)add(pv,textOf(pv));
  const plain=sh.querySelector('.plain');if(plain)add(plain,'In plain English. '+clean(plain.textContent.replace(/^In plain English/i,'')));
- const deep=sh.querySelector('.deep-body');if(deep&&deep.closest('details').open){add(deep,'Explained step by step.');[...deep.children].forEach(addBlock)}
+ const deep=sh.querySelector('.deep-body');if(deep&&deep.closest('details').open){add(deep,'Understand it.');[...deep.children].forEach(addBlock)}
  const con=sh.querySelector('.concept');if(con)[...con.children].forEach(addBlock);
  const steps=sh.querySelectorAll('.pstep');const reqs=sh.querySelectorAll('.reqs li');const tasks=sh.querySelectorAll('#tasks .task');
  if(steps.length){add(steps[0],'The steps.');steps.forEach((s,k)=>{const t=s.querySelector('.ptitle'),w=s.querySelector('.pwhy');add(s,'Step '+(k+1)+'. '+(t?clean(t.textContent):'')+(w?' '+clean(w.textContent):''))})}
@@ -48,7 +55,7 @@ function build(){chunks=[];const sh=$('#sheet');if(!sh)return;
 
 /* ---------- playback ---------- */
 function pickVoice(){if(!ok)return null;const vs=synth.getVoices();return vs.find(v=>v.name===cfg.voice)||vs.find(v=>/^en(-|_)?(GB|US)?/i.test(v.lang)&&v.default)||vs.find(v=>/^en/i.test(v.lang))||null}
-function mark(){document.querySelectorAll('.speaking').forEach(x=>x.classList.remove('speaking'));const c=chunks[i];if(c&&c.el&&document.contains(c.el)){c.el.classList.add('speaking');if(cfg.follow)c.el.scrollIntoView({block:'center',behavior:'smooth'})}}
+function mark(){document.querySelectorAll('.speaking').forEach(x=>x.classList.remove('speaking'));const c=chunks[i];if(c&&c.el&&document.contains(c.el)){c.el.classList.add('speaking');if(c.frame!=null&&c.el.__go)c.el.__go(c.frame);if(cfg.follow)c.el.scrollIntoView({block:'center',behavior:'smooth'})}}
 function speakFrom(n){if(!ok)return;const my=++token;synth.cancel();i=Math.max(0,Math.min(n,chunks.length-1));playing=true;lock(true);bar();
  const next=()=>{if(my!==token)return;if(i>=chunks.length){stop(true);return}mark();bar();const u=new SpeechSynthesisUtterance(chunks[i].text);const v=pickVoice();if(v){u.voice=v;u.lang=v.lang}else u.lang='en-US';u.rate=cfg.rate;
   u.onend=()=>{if(my!==token)return;i++;next()};u.onerror=e=>{if(my!==token||e.error==='interrupted'||e.error==='canceled')return;i++;next()};keep=[u];synth.speak(u)};
