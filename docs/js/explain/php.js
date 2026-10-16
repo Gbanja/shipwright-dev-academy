@@ -675,8 +675,8 @@ explain('h3',`
 
 ${V.card(1,'Composer installs packages','a shopping list and a receipt',`
 <figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="composer.json is a shopping list, a truck from Packagist delivers packages into the vendor folder, and composer.lock is the receipt with exact versions">
-${V.ic('list',10,20,60,'ic-info')}<text class="t-m" x="40" y="104" text-anchor="middle" style="font-size:14px">composer.json</text>
-<text class="t-s" x="40" y="124" text-anchor="middle">what you want</text>
+${V.ic('list',10,20,60,'ic-info')}<text class="t-m" x="60" y="104" text-anchor="middle" style="font-size:14px">composer.json</text>
+<text class="t-s" x="60" y="124" text-anchor="middle">what you want</text>
 ${V.ic('globe',176,8,40,'ic-a')}<text class="t-s" x="222" y="34">Packagist</text>
 ${V.ic('truck',150,50,70,'ic-a')}
 <path class="ln-a" d="M88 70H142"/><polygon class="ah-a" points="140,63 140,77 150,70"/>
@@ -768,7 +768,7 @@ ${V.steps([
  ['The file is loaded, the class now exists, and <b>new</b> builds the object. The script prints <b>Keyboard ($49.50)</b>.',`<svg viewBox="0 0 420 180" role="img" aria-label="The object is built and the script prints Keyboard 49.50">
 <rect class="bx-dark" x="10" y="10" width="400" height="60" rx="6"/>
 <text class="t-term t-dim" x="20" y="34" style="font-size:14px">use App\\Models\\Product;</text>
-<text class="t-a" x="10" y="58" style="font-size:12px">&#9654;</text><text class="t-term" x="20" y="58" style="font-size:14px">$p = new Product('Keyboard', 49.5);</text>
+<text class="t-a" x="6" y="58" style="font-size:13px">&#9654;</text><text class="t-term" x="20" y="58" style="font-size:14px">$p = new Product('Keyboard', 49.5);</text>
 <rect class="bx-ok" x="10" y="86" width="400" height="40" rx="6"/>${V.ic('check',18,92,28,'ic-ok')}<text class="t-m" x="56" y="112" style="font-size:15px">src/Models/Product.php loaded</text>
 <rect class="bx-dark" x="10" y="134" width="400" height="40" rx="6"/><text class="t-term" x="20" y="160" style="font-size:16px">Keyboard ($49.50)</text>
 </svg>`]])}
@@ -793,10 +793,10 @@ ${V.card(1,'PDO','one plug, many databases',`
 <rect class="bx-a" x="10" y="56" width="96" height="64" rx="8"/><text class="t-b" x="58" y="94" text-anchor="middle" style="font-size:18px">PHP</text>
 <path class="ln" style="stroke-width:3" d="M106 88H140"/>
 <rect class="bx-warn" x="140" y="50" width="100" height="76" rx="10"/>${V.ic('chip',166,56,48,'ic-warn')}<text class="t-b" x="190" y="118" text-anchor="middle">PDO</text>
-<path class="ln" style="stroke-width:3" d="M240 88 290 34M240 88H290M240 88 290 142"/>
-${V.ic('db',292,10,44,'ic-info')}<text class="t" x="342" y="38">MySQL</text>
-${V.ic('db',292,66,44,'ic-info')}<text class="t" x="342" y="94">PostgreSQL</text>
-${V.ic('db',292,122,44,'ic-info')}<text class="t" x="342" y="150">SQLite</text>
+<path class="ln" style="stroke-width:3" d="M240 88 270 34M240 88H270M240 88 270 142"/>
+${V.ic('db',272,10,44,'ic-info')}<text class="t" x="320" y="38">MySQL</text>
+${V.ic('db',272,66,44,'ic-info')}<text class="t" x="320" y="94">PostgreSQL</text>
+${V.ic('db',272,122,44,'ic-info')}<text class="t" x="320" y="150">SQLite</text>
 </svg><figcaption>PDO (PHP Data Objects) gives PHP one way of talking to many databases. Change one connection string and the rest of your code stays the same.</figcaption></figure>
 ${V.like(`<p>A travel adapter. Your charger has one plug; the adapter lets it fit the sockets of many countries. PDO is the adapter between your PHP and whichever database the project uses.</p>`)}
 ${V.why(`<p>PHP once had a different set of functions for every database, each with its own names and habits. Switching database meant rewriting everything. PDO arrived in PHP 5.1 (2005) with one shared API, and Laravel's database layer is built on top of it.</p>`)}

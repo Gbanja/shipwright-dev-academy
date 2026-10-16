@@ -469,7 +469,7 @@ ${V.card(2,'Three-way merge','two lines of work become one',`
 ${ed(40,60,250,110,'ln-ok')}${ed(40,160,250,110,'ln-ok')}${ed(250,110,400,110,'ln-ok')}
 ${V.ic('person',8,30,36,'ic-info')}${V.ic('person',8,130,36,'ic-p')}
 <text class="t" x="120" y="54" style="font-size:14px">navbar work</text><text class="t" x="120" y="176" style="font-size:14px">footer work</text>
-${cm(250,110,'M','bx-ok')}<text class="t-b" x="330" y="96">merge commit</text><text class="t" x="330" y="140" style="font-size:14px">two parents</text>
+${cm(250,110,'M','bx-ok')}<text class="t-b" x="282" y="96">merge commit</text><text class="t" x="282" y="140" style="font-size:14px">two parents</text>
 </svg><figcaption>When both branches have new commits, Git makes a new merge commit that joins them. It is the only kind of commit with two parents.</figcaption></figure>
 ${V.like(`<p>Two streams meeting to form a river. Both bring water. The point where they join is a new place on the map, the merge commit.</p>`)}
 ${V.why(`<p>Git finds the last commit both branches share, called the <b>merge base</b>. It compares each side with it and combines both sets of changes. Three snapshots are involved (base, yours, theirs), which is where the name comes from.</p>`)}

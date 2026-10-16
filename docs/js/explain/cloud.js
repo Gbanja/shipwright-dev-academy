@@ -346,7 +346,7 @@ explain('c5',`
 
 ${V.card(1,'The VPC','your own gated estate',`
 <figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="A VPC as a walled estate with one gate to the internet, a public street with the web server and a private street with the database">
-${V.ic('globe',2,76,44,'ic-p')}<text class="t" x="24" y="140" text-anchor="middle" style="font-size:14px">internet</text>
+${V.ic('globe',2,76,44,'ic-p')}<text class="t" x="33" y="140" text-anchor="middle" style="font-size:14px">internet</text>
 <rect class="bx" x="66" y="6" width="348" height="188" rx="12"/><text class="t-b" x="80" y="28">VPC 10.0.0.0/16</text>
 <rect class="bx-warn" x="54" y="80" width="26" height="40" rx="4"/>${V.ic('door',54,82,26,'ic-warn')}
 <rect class="bx-ok" x="92" y="40" width="310" height="68" rx="8"/><text class="t-b t-ok" x="104" y="62">public subnet</text><text class="t-m" x="104" y="86" style="font-size:14px">10.0.1.0/24</text>${V.ic('server',348,48,48,'ic-ok')}<text class="t" x="300" y="98" text-anchor="end" style="font-size:14px">web server</text>

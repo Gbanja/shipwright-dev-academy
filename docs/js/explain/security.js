@@ -397,11 +397,11 @@ explain('x4',`
 
 ${V.card(1,'Sessions','a wristband after the ticket check',`
 <figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="At a festival gate, a ticket is checked once and a wristband is given. The wristband gets you into each area">
-${V.ic('person',10,30,70,'ic-info')}<text class="t-s" x="45" y="126" text-anchor="middle">you</text>
+${V.ic('person',10,30,70,'ic-info')}<text class="t-s" x="45" y="112" text-anchor="middle">you</text>
 <rect class="bx-a" x="104" y="34" width="120" height="62" rx="8"/>${V.ic('card',112,42,44,'ic-a')}<text class="t-b" x="160" y="58">Ticket</text><text class="t-s" x="160" y="82">checked</text>
 <path class="ln-a" d="M228 65H262"/><polygon class="ah-a" points="260,58 260,72 272,65"/>
 <rect class="bx-ok" x="276" y="34" width="134" height="62" rx="31"/><text class="t-m" x="343" y="71" text-anchor="middle" style="font-size:17px">sid=7f3a</text>
-<text class="t-s" x="210" y="130" text-anchor="middle">Password checked once. The wristband does the rest.</text>
+<text class="t-s" x="210" y="138" text-anchor="middle">Password checked once. The wristband does the rest.</text>
 </svg><figcaption>A session: you prove who you are once, then a random ID in a cookie identifies you on each request.</figcaption></figure>
 ${V.like(`<p>At a festival, staff check your ticket once at the gate and put a wristband on you. After that, every stage just looks at the wristband. The session ID cookie is that wristband.</p>`)}
 ${V.why(`<p>The web's protocol, HTTP, forgets everything between requests. Without a way to remember you, you would type your password on every page. Cookies were invented in 1994 so a site could hand the browser a small note to send back each time.</p>`)}
