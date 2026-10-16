@@ -393,7 +393,7 @@ ${V.hook(`New rule? New red test. Then green, then tidy.`)}
 
 ${V.card(3,'Why it works','and when to use it',`
 <figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="Each test is a safety net under a trapeze artist">
-${V.ic('person',180,6,56,'ic-a')}<path class="ln" d="M120 20H300"/>
+${V.ic('person',180,6,56,'ic-a')}
 <path class="ln-ok" style="stroke-width:3" d="M40 110Q210 150 380 110"/><path class="ln-ok" d="M80 116V96M150 128V104M210 132V108M270 128V104M340 116V96"/>
 <text class="t-b t-ok" x="210" y="92" text-anchor="middle">a net of tests</text>
 </svg><figcaption>Every TDD loop adds one more strand to the safety net under your code.</figcaption></figure>
