@@ -63,7 +63,7 @@ const ICONS={
  container:'<rect class="f" x="4" y="13" width="40" height="24" rx="1"/><path d="M12 13V37M20 13V37M28 13V37M36 13V37"/>',
  branch:'<circle class="f" cx="14" cy="10" r="4"/><circle class="f" cx="14" cy="38" r="4"/><circle class="f" cx="34" cy="18" r="4"/><path d="M14 14V34M34 22C34 30 22 28 15 35"/>',
  chip:'<rect class="f" x="12" y="12" width="24" height="24" rx="2"/><path d="M18 6V12M24 6V12M30 6V12M18 36V42M24 36V42M30 36V42M6 18H12M6 24H12M6 30H12M36 18H42M36 24H42M36 30H42"/>',
- brain:'<path class="f" d="M24 9C21 6 15 6 13 10 8 10 6 15 8 19 4 22 5 29 9 31 8 36 13 40 17 38 19 42 24 42 24 38V9ZM24 9C27 6 33 6 35 10 40 10 42 15 40 19 44 22 43 29 39 31 40 36 35 40 31 38 29 42 24 42"/>',
+ brain:'<path class="f" d="M24 9C21 6 15 6 13 10 8 10 6 15 8 19 4 22 5 29 9 31 8 36 13 40 17 38 19 42 24 42 24 38V9ZM24 9C27 6 33 6 35 10 40 10 42 15 40 19 44 22 43 29 39 31 40 36 35 40 31 38 29 42 24 42 24 38"/>',
  arrow:'<path d="M6 24H40M30 14 40 24 30 34"/>'
 };
 (function(){if(typeof document==='undefined')return;const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('aria-hidden','true');s.setAttribute('style','position:absolute;width:0;height:0;overflow:hidden');

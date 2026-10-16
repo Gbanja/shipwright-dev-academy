@@ -768,7 +768,7 @@ ${V.steps([
  ['The file is loaded, the class now exists, and <b>new</b> builds the object. The script prints <b>Keyboard ($49.50)</b>.',`<svg viewBox="0 0 420 180" role="img" aria-label="The object is built and the script prints Keyboard 49.50">
 <rect class="bx-dark" x="10" y="10" width="400" height="60" rx="6"/>
 <text class="t-term t-dim" x="20" y="34" style="font-size:14px">use App\\Models\\Product;</text>
-<text class="t-a" x="6" y="58" style="font-size:13px">&#9654;</text><text class="t-term" x="20" y="58" style="font-size:14px">$p = new Product('Keyboard', 49.5);</text>
+<text class="t-a" x="13" y="58" style="font-size:13px">&#9654;</text><text class="t-term" x="28" y="58" style="font-size:14px">$p = new Product('Keyboard', 49.5);</text>
 <rect class="bx-ok" x="10" y="86" width="400" height="40" rx="6"/>${V.ic('check',18,92,28,'ic-ok')}<text class="t-m" x="56" y="112" style="font-size:15px">src/Models/Product.php loaded</text>
 <rect class="bx-dark" x="10" y="134" width="400" height="40" rx="6"/><text class="t-term" x="20" y="160" style="font-size:16px">Keyboard ($49.50)</text>
 </svg>`]])}
