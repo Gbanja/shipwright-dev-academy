@@ -202,196 +202,103 @@ ${V.hook(`<code>-e</code> settings, <code>-v</code> data, <code>--network</code>
 `);
 
 explain('d5',`
-<h4>Why Compose exists</h4>
-<p>At the end of the last lesson, running one database took a command with a network, an environment variable and a volume. A real app has several containers: your API, a database, maybe a cache. Each one needs its own long <code>docker run</code> command, in the right order, with matching names, every time anyone on the team starts the project. That is slow and easy to get wrong.</p>
-<p><b>Docker Compose</b> solves it by moving all those settings into one file, <code>compose.yaml</code>, kept in the project folder. The file describes <b>what</b> you want running: which containers, with which ports, settings, volumes and connections. Then one command, <code>docker compose up</code>, makes it so. Because the file lives in Git, everyone gets the same setup.</p>
+<p>A real app is a team of containers: your code, a database, maybe a cache. Starting each one by hand with long commands is a recipe for typos. Docker Compose writes the whole team down in one file and starts it with one command.</p>
 
-<h4>Reading YAML in two minutes</h4>
-<p>Compose files are written in <b>YAML</b>, a format designed to be easy for humans to read. You only need three rules:</p>
-<ul>
-<li><code>key: value</code> sets a value. The space after the colon is required.</li>
-<li><b>Indentation shows nesting.</b> Lines indented under a key belong to it. Use spaces, never tabs, and keep the same depth for items at the same level. Two spaces per level is the habit.</li>
-<li>A line starting with <code>- </code> is one item in a list.</li>
-</ul>
-<pre class="snip">services:            # a key whose value is everything indented below
-  db:                # one service, nested inside services
-    image: postgres:16
-    volumes:
-      - pgdata:/var/lib/postgresql/data   # a list with one item</pre>
+${V.card(1,'compose.yaml','the whole app in one file',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="One compose.yaml file describes the web and db services and the pgdata volume; one command starts them all"><rect class="bx-info" x="6" y="10" width="150" height="180" rx="8"/>${V.ic('file',14,20,32,'ic-info')}<text class="t-m" x="48" y="42" style="font-size:14px">compose.yaml</text><text class="t-m" x="20" y="80" style="font-size:14px">services:</text><text class="t-m t-a" x="34" y="104" style="font-size:14px;font-weight:700">web:</text><text class="t-m t-ok" x="34" y="128" style="font-size:14px;font-weight:700">db:</text><text class="t-m" x="20" y="156" style="font-size:14px">volumes:</text><text class="t-m t-warn" x="34" y="178" style="font-size:14px;font-weight:700">pgdata:</text><path class="ln-a" d="M156 100H188"/><polygon class="ah-a" points="186,93 186,107 196,100"/><text class="t-m t-a" x="176" y="90" text-anchor="middle" style="font-size:14px;font-weight:700">up</text><rect class="ln-d" x="196" y="10" width="218" height="180" rx="12"/><text class="t" x="206" y="32" style="font-size:14px">shop_default network</text><rect class="bx-a" x="210" y="46" width="90" height="70" rx="8"/>${V.ic('container',222,52,30,'ic-a')}<text class="t-m" x="255" y="104" text-anchor="middle" style="font-size:16px;font-weight:700">web</text><rect class="bx-ok" x="314" y="46" width="90" height="70" rx="8"/>${V.ic('db',326,52,30,'ic-ok')}<text class="t-m" x="359" y="104" text-anchor="middle" style="font-size:16px;font-weight:700">db</text><rect class="bx-warn" x="262" y="134" width="100" height="46" rx="8"/><text class="t-m" x="312" y="162.25" text-anchor="middle" style="font-size:15px;font-weight:700">pgdata</text><path class="ln-d" d="M359 116V134"/></svg><figcaption>Instead of typing long docker run commands, you describe the whole app once. <code>docker compose up</code> reads the file and creates the network, the volume and every container.</figcaption></figure>
+${V.like(`<p>Sheet music for an orchestra. Instead of shouting instructions at each player, the conductor hands out one score. Everyone reads it and plays together. <code>compose.yaml</code> is the score; each service is a player.</p>`)}
+${V.why(`<p>Teams kept writing shell scripts full of docker run commands. Compose (which grew out of a 2013 tool called Fig) replaced them with one readable file you can commit next to your code, so every developer starts exactly the same stack.</p>`)}
+${V.anat([[1,'services:'],'\n  ',[2,'web:'],'\n    build: .\n    ',[3,'ports:'],' ["3000:3000"]\n    ',[4,'environment:'],'\n      DATABASE_URL: postgres://...@db:5432/shop\n    ',[5,'depends_on:'],' [db]\n  ',[2,'db:'],'\n    ',[6,'image:'],' postgres:16'],[
+ '<b>services.</b> The list of containers that make up the app.',
+ '<b>Service name.</b> You choose it, and it becomes the hostname other services use.',
+ '<b>ports.</b> Same as <code>-p</code>: HOST:CONTAINER.',
+ '<b>environment.</b> Same as <code>-e</code>, one per line.',
+ '<b>depends_on.</b> Start db before web. It only sets the order; it doesn\'t wait until the database is ready.',
+ '<b>image or build.</b> Use a ready-made image, or <code>build: .</code> to build from your Dockerfile.'])}
+${V.rules(V.rh('Rules: YAML is strict about spaces'),
+ V.ok('two spaces per level','Indentation shows what belongs to what'),V.no('tabs','YAML refuses tab characters'),
+ V.ok('"3000:3000"','Quote port pairs so YAML can\'t misread them as numbers'))}
+${V.hook(`One file, one command, the whole band plays.`)}
+`)}
 
-<h4>The lesson's <code>compose.yaml</code>, piece by piece</h4>
-<p>Everything under <code>services</code> is one <b>service</b>: a container Compose will run, named by its key. This file has two, <code>web</code> and <code>db</code>. Nearly every setting matches a <code>docker run</code> option you already know:</p>
-<div class="tbl-wrap"><table><tr><th>In compose.yaml</th><th>Same as</th></tr>
-<tr><td><code>build: .</code></td><td><code>docker build .</code> using the Dockerfile in this folder</td></tr>
-<tr><td><code>image: postgres:16</code></td><td>The image name in <code>docker run</code></td></tr>
-<tr><td><code>ports: - "3000:3000"</code></td><td><code>-p 3000:3000</code></td></tr>
-<tr><td><code>environment:</code></td><td><code>-e KEY=value</code>, one per line</td></tr>
-<tr><td><code>volumes: - pgdata:/var/lib/...</code></td><td><code>-v pgdata:/var/lib/...</code></td></tr>
-<tr><td><code>depends_on: - db</code></td><td>Start <code>db</code> before <code>web</code></td></tr></table></div>
-<p>Two more details. The port is written in quotes, <code>"3000:3000"</code>, because YAML can misread some unquoted numbers containing colons; quoting ports is the safe habit. And the <code>volumes:</code> block at the very bottom, outside <code>services</code>, declares the named volume <code>pgdata</code> so Compose creates it for you.</p>
+${V.card(2,'up and down','start and stop the whole stack',`
+${V.anat([[1,'docker compose'],' ',[2,'up'],' ',[3,'-d']],[
+ '<b>docker compose.</b> Reads compose.yaml in this folder. (Old tutorials write <code>docker-compose</code> with a hyphen; that is the retired version 1.)',
+ '<b>up.</b> Create and start everything. Run it again after editing the file and it updates only what changed.',
+ '<b>-d.</b> Detached: in the background.'])}
+${V.steps([
+ ['<b>web</b> has <code>build: .</code>, so Compose first builds its image from the Dockerfile in this folder.',`<svg viewBox="0 0 420 236" role="img" aria-label="web image built"><rect class="bx-dark" x="4" y="6" width="412" height="40" rx="8"/><text class="t-term" x="16" y="32" style="font-size:15px">$ docker compose up -d</text><rect class="bx-hl" x="6" y="56" width="408" height="30" rx="8"/><text class="t-b" x="18" y="77" style="font-size:15px">image</text><text class="t-m" x="140" y="77" style="font-size:15px">built web</text><rect class="bx" x="6" y="92" width="408" height="30" rx="8"/><text class="t-b" x="18" y="113" style="font-size:15px">network</text><text class="t-m" x="140" y="113" style="font-size:15px"></text><rect class="bx" x="6" y="128" width="408" height="30" rx="8"/><text class="t-b" x="18" y="149" style="font-size:15px">volume</text><text class="t-m" x="140" y="149" style="font-size:15px"></text><rect class="bx" x="6" y="164" width="408" height="30" rx="8"/><text class="t-b" x="18" y="185" style="font-size:15px">db</text><text class="t-m" x="140" y="185" style="font-size:15px"></text><rect class="bx" x="6" y="200" width="408" height="30" rx="8"/><text class="t-b" x="18" y="221" style="font-size:15px">web</text><text class="t-m" x="140" y="221" style="font-size:15px"></text></svg>`],
+ ['Then it creates a private <b>network</b> for this app, named after the folder: shop_default.',`<svg viewBox="0 0 420 236" role="img" aria-label="Network created"><rect class="bx-dark" x="4" y="6" width="412" height="40" rx="8"/><text class="t-term" x="16" y="32" style="font-size:15px">$ docker compose up -d</text><rect class="bx-ok" x="6" y="56" width="408" height="30" rx="8"/><text class="t-b" x="18" y="77" style="font-size:15px">image</text><text class="t-m" x="140" y="77" style="font-size:15px">built web</text><rect class="bx-hl" x="6" y="92" width="408" height="30" rx="8"/><text class="t-b" x="18" y="113" style="font-size:15px">network</text><text class="t-m" x="140" y="113" style="font-size:15px">shop_default</text><rect class="bx" x="6" y="128" width="408" height="30" rx="8"/><text class="t-b" x="18" y="149" style="font-size:15px">volume</text><text class="t-m" x="140" y="149" style="font-size:15px"></text><rect class="bx" x="6" y="164" width="408" height="30" rx="8"/><text class="t-b" x="18" y="185" style="font-size:15px">db</text><text class="t-m" x="140" y="185" style="font-size:15px"></text><rect class="bx" x="6" y="200" width="408" height="30" rx="8"/><text class="t-b" x="18" y="221" style="font-size:15px">web</text><text class="t-m" x="140" y="221" style="font-size:15px"></text></svg>`],
+ ['Then the named <b>volume</b> for the database, also prefixed with the folder name.',`<svg viewBox="0 0 420 236" role="img" aria-label="Volume created"><rect class="bx-dark" x="4" y="6" width="412" height="40" rx="8"/><text class="t-term" x="16" y="32" style="font-size:15px">$ docker compose up -d</text><rect class="bx-ok" x="6" y="56" width="408" height="30" rx="8"/><text class="t-b" x="18" y="77" style="font-size:15px">image</text><text class="t-m" x="140" y="77" style="font-size:15px">built web</text><rect class="bx-ok" x="6" y="92" width="408" height="30" rx="8"/><text class="t-b" x="18" y="113" style="font-size:15px">network</text><text class="t-m" x="140" y="113" style="font-size:15px">shop_default</text><rect class="bx-hl" x="6" y="128" width="408" height="30" rx="8"/><text class="t-b" x="18" y="149" style="font-size:15px">volume</text><text class="t-m" x="140" y="149" style="font-size:15px">shop_pgdata</text><rect class="bx" x="6" y="164" width="408" height="30" rx="8"/><text class="t-b" x="18" y="185" style="font-size:15px">db</text><text class="t-m" x="140" y="185" style="font-size:15px"></text><rect class="bx" x="6" y="200" width="408" height="30" rx="8"/><text class="t-b" x="18" y="221" style="font-size:15px">web</text><text class="t-m" x="140" y="221" style="font-size:15px"></text></svg>`],
+ ['<b>db</b> starts first, because web <b>depends_on</b> it...',`<svg viewBox="0 0 420 236" role="img" aria-label="db started"><rect class="bx-dark" x="4" y="6" width="412" height="40" rx="8"/><text class="t-term" x="16" y="32" style="font-size:15px">$ docker compose up -d</text><rect class="bx-ok" x="6" y="56" width="408" height="30" rx="8"/><text class="t-b" x="18" y="77" style="font-size:15px">image</text><text class="t-m" x="140" y="77" style="font-size:15px">built web</text><rect class="bx-ok" x="6" y="92" width="408" height="30" rx="8"/><text class="t-b" x="18" y="113" style="font-size:15px">network</text><text class="t-m" x="140" y="113" style="font-size:15px">shop_default</text><rect class="bx-ok" x="6" y="128" width="408" height="30" rx="8"/><text class="t-b" x="18" y="149" style="font-size:15px">volume</text><text class="t-m" x="140" y="149" style="font-size:15px">shop_pgdata</text><rect class="bx-hl" x="6" y="164" width="408" height="30" rx="8"/><text class="t-b" x="18" y="185" style="font-size:15px">db</text><text class="t-m" x="140" y="185" style="font-size:15px">started</text><rect class="bx" x="6" y="200" width="408" height="30" rx="8"/><text class="t-b" x="18" y="221" style="font-size:15px">web</text><text class="t-m" x="140" y="221" style="font-size:15px"></text></svg>`],
+ ['...then <b>web</b>. One command, the whole app running in the background.',`<svg viewBox="0 0 420 236" role="img" aria-label="all started"><rect class="bx-dark" x="4" y="6" width="412" height="40" rx="8"/><text class="t-term" x="16" y="32" style="font-size:15px">$ docker compose up -d</text><rect class="bx-ok" x="6" y="56" width="408" height="30" rx="8"/><text class="t-b" x="18" y="77" style="font-size:15px">image</text><text class="t-m" x="140" y="77" style="font-size:15px">built web</text><rect class="bx-ok" x="6" y="92" width="408" height="30" rx="8"/><text class="t-b" x="18" y="113" style="font-size:15px">network</text><text class="t-m" x="140" y="113" style="font-size:15px">shop_default</text><rect class="bx-ok" x="6" y="128" width="408" height="30" rx="8"/><text class="t-b" x="18" y="149" style="font-size:15px">volume</text><text class="t-m" x="140" y="149" style="font-size:15px">shop_pgdata</text><rect class="bx-ok" x="6" y="164" width="408" height="30" rx="8"/><text class="t-b" x="18" y="185" style="font-size:15px">db</text><text class="t-m" x="140" y="185" style="font-size:15px">started</text><rect class="bx-ok" x="6" y="200" width="408" height="30" rx="8"/><text class="t-b" x="18" y="221" style="font-size:15px">web</text><text class="t-m" x="140" y="221" style="font-size:15px">started</text></svg>`],
+ ['<b>docker compose down</b> removes the containers and the network. The volume is kept, so the data survives. (<code>down -v</code> would delete it too.)',`<svg viewBox="0 0 420 236" role="img" aria-label="compose down keeps the volume"><rect class="bx-dark" x="4" y="6" width="412" height="40" rx="8"/><text class="t-term" x="16" y="32" style="font-size:15px">$ docker compose down</text><rect class="bx" x="6" y="56" width="408" height="30" rx="8"/><text class="t-b" x="18" y="77" style="font-size:15px">image</text><text class="t-m" x="140" y="77" style="font-size:15px">kept</text><rect class="bx-bad" x="6" y="92" width="408" height="30" rx="8"/><text class="t-b" x="18" y="113" style="font-size:15px">network</text><text class="t-m t-bad" x="140" y="113" style="font-size:15px">removed</text><rect class="bx-ok" x="6" y="128" width="408" height="30" rx="8"/><text class="t-b" x="18" y="149" style="font-size:15px">volume</text><text class="t-m" x="140" y="149" style="font-size:15px">kept</text><rect class="bx-bad" x="6" y="164" width="408" height="30" rx="8"/><text class="t-b" x="18" y="185" style="font-size:15px">db</text><text class="t-m t-bad" x="140" y="185" style="font-size:15px">removed</text><rect class="bx-bad" x="6" y="200" width="408" height="30" rx="8"/><text class="t-b" x="18" y="221" style="font-size:15px">web</text><text class="t-m t-bad" x="140" y="221" style="font-size:15px">removed</text></svg>`]])}
+${V.rules(V.ok('docker compose ps','The status of this app\'s containers'),V.ok('docker compose logs web','Logs of one service. Add -f to follow'),
+ V.no('docker compose down -v','Also deletes the volumes, and your data with them'))}
+${V.hook(`up builds the stage, down clears it, the volume stays in the wings.`)}
+`)}
 
-<h4>One command: <code>docker compose up -d</code></h4>
-<p>Run it in the folder that contains <code>compose.yaml</code>. Compose then does everything you did by hand in the last lesson:</p>
-<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="docker compose up reads compose.yaml and creates a network, a volume and two containers">
-<rect class="bx-info" x="140" y="10" width="140" height="36" rx="8"/><text class="t-m" x="210" y="34" text-anchor="middle">compose.yaml</text>
-<path class="ln" d="M210 46v22"/><polygon class="ah" points="204,66 216,66 210,74"/>
-<text class="t-s" x="222" y="62">up -d</text>
-<rect class="bx" x="10" y="78" width="400" height="120" rx="12"/>
-<text class="t-b" x="24" y="100">network: shop_default</text>
-<rect class="bx-ok" x="30" y="116" width="130" height="62" rx="8"/><text class="t-b" x="95" y="142" text-anchor="middle">web</text><text class="t-s" x="95" y="164" text-anchor="middle">built from .</text>
-<rect class="bx-a" x="260" y="116" width="130" height="62" rx="8"/><text class="t-b" x="325" y="142" text-anchor="middle">db</text><text class="t-s" x="325" y="164" text-anchor="middle">postgres:16</text>
-<path class="ln" d="M160 147h92"/><polygon class="ah" points="250,141 250,153 258,147"/>
-<text class="t-s" x="208" y="139" text-anchor="middle">by name</text>
-<rect class="bx-warn" x="260" y="208" width="130" height="34" rx="14"/><text class="t-s" x="325" y="230" text-anchor="middle">volume pgdata</text>
-<path class="ln-d" d="M325 178v30M95 178v26"/>
-<text class="t-s" x="95" y="220" text-anchor="middle">localhost:3000</text>
-<text class="t-s" x="95" y="238" text-anchor="middle">published to you</text>
-</svg><figcaption>docker compose up reads compose dot yaml and creates everything in it: a private network named after the folder, the web container built from the Dockerfile, the db container from the postgres image, and the pgdata volume mounted into db. Services on the network reach each other by service name.</figcaption></figure>
-<ol>
-<li>It builds the <code>web</code> image from the Dockerfile, because of <code>build: .</code>.</li>
-<li>It creates a network for the project, named after the folder: <code>shop_default</code>.</li>
-<li>It creates the <code>pgdata</code> volume (shown as <code>shop_pgdata</code>, with the project name in front).</li>
-<li>It starts <code>db</code>, then <code>web</code>, because web depends on db.</li>
-</ol>
-<p>Every service joins that network, and each one is reachable by its <b>service name</b>: the database is simply <code>db</code>. <code>-d</code> means detached, exactly as with <code>docker run</code>. The command is <code>docker compose</code>, with a space; you may still see the older separate tool written <code>docker-compose</code> in tutorials.</p>
+${V.card(3,'The localhost trap','talk to services by name',`
+${V.like(`<p>Every container is its own house. Saying "localhost" inside a container is like saying "my house". If the database lives next door, you have to use its address: its service name.</p>`)}
+${V.steps([
+ ['The app is told to find Postgres at <b>localhost:5432</b>. But inside a container, <b>localhost</b> means "this container". web looks inside itself, finds no database, and the connection is refused.',`<svg viewBox="0 0 420 206" role="img" aria-label="localhost points back into web itself"><rect class="bx-a" x="6" y="20" width="170" height="110" rx="8"/>${V.ic('container',16,28,34,'ic-a')}<text class="t-m" x="60" y="52" style="font-size:17px;font-weight:700">web</text><rect class="bx-ok" x="244" y="20" width="170" height="110" rx="8"/>${V.ic('db',254,28,34,'ic-ok')}<text class="t-m" x="298" y="52" style="font-size:17px;font-weight:700">db</text><text class="t-m" x="258" y="100" style="font-size:14px">:5432 open</text><text class="t-m t-bad" x="18" y="88" style="font-size:15px">localhost:5432</text><path class="ln-a" d="M120 100C150 140 40 150 60 106"/><polygon class="ah-a" points="52,110 62,98 68,112"/><rect class="bx-bad" x="6" y="148" width="408" height="44" rx="8"/><text class="t-m" x="210" y="176" text-anchor="middle" style="font-size:15px;font-weight:700">ECONNREFUSED 127.0.0.1:5432</text></svg>`],
+ ['Fix: use the <b>service name</b>. On the Compose network, the name <b>db</b> turns into the database container\'s address.',`<svg viewBox="0 0 420 206" role="img" aria-label="db resolves to the db container"><rect class="bx-a" x="6" y="20" width="170" height="110" rx="8"/>${V.ic('container',16,28,34,'ic-a')}<text class="t-m" x="60" y="52" style="font-size:17px;font-weight:700">web</text><rect class="bx-ok" x="244" y="20" width="170" height="110" rx="8"/>${V.ic('db',254,28,34,'ic-ok')}<text class="t-m" x="298" y="52" style="font-size:17px;font-weight:700">db</text><text class="t-m" x="258" y="100" style="font-size:14px">:5432 open</text><text class="t-m t-ok" x="18" y="88" style="font-size:15px">db:5432</text><path class="ln-ok" d="M176 75H236"/><polygon class="ah-ok" points="234,68 234,82 244,75"/><rect class="bx-info" x="6" y="148" width="408" height="44" rx="8"/><text class="t" x="210" y="176" text-anchor="middle" style="font-size:15px">Compose DNS: "db" is that container</text></svg>`],
+ ['After <code>docker compose up -d</code> again, web connects. Same code, one word changed in the settings.',`<svg viewBox="0 0 420 206" role="img" aria-label="web connects to Postgres"><rect class="bx-a" x="6" y="20" width="170" height="110" rx="8"/>${V.ic('container',16,28,34,'ic-a')}<text class="t-m" x="60" y="52" style="font-size:17px;font-weight:700">web</text><rect class="bx-ok" x="244" y="20" width="170" height="110" rx="8"/>${V.ic('db',254,28,34,'ic-ok')}<text class="t-m" x="298" y="52" style="font-size:17px;font-weight:700">db</text><text class="t-m" x="258" y="100" style="font-size:14px">:5432 open</text><text class="t-m t-ok" x="18" y="88" style="font-size:15px">db:5432</text><path class="ln-ok" d="M176 75H236"/><polygon class="ah-ok" points="234,68 234,82 244,75"/><rect class="bx-ok" x="6" y="148" width="408" height="44" rx="8"/><text class="t-m" x="210" y="176" text-anchor="middle" style="font-size:15px;font-weight:700">Connected to Postgres at db:5432</text></svg>`]])}
+${V.rules(V.no('@localhost:5432','Inside web, this is web itself'),V.ok('@db:5432','The service name, on the shared Compose network'),
+ V.ok('localhost:3000 from your laptop','Fine: on your own machine you reach the published port'))}
+${V.build(`<ol><li>Read the provided compose.yaml and spot the two services and the volume.</li><li>Start the stack in the background.</li><li>curl the API and read the connection error.</li><li>Change the database host in DATABASE_URL from localhost to the service name, then run up again.</li><li>curl again, check <code>docker compose ps</code>, then bring everything down.</li></ol>`)}
+${V.hook(`In a container, localhost is me. Everyone else has a name.`)}
+`)}
 
-<h4>The classic bug: <code>localhost</code> inside a container</h4>
-<p>The provided file has a bug that catches almost everyone once. Look at the database address the app is given:</p>
-<pre class="snip">DATABASE_URL: postgres://postgres:secret@localhost:5432/shop
-#                      user   :password@host     :port/database</pre>
-<p>A connection URL packs everything into one line: the kind of database, the user and password, the <b>host</b> (which machine), the port, and the database name. The host here is <code>localhost</code>. When you <code>curl localhost:3000</code>, the API answers with an error containing <code>ECONNREFUSED</code>, short for "connection refused": the app knocked on that address and port, and nothing was listening.</p>
-<p>Why? <code>localhost</code> always means "the machine I am running on". For a process inside a container, that machine is <b>its own container</b>. The <code>web</code> container has nothing on port 5432; Postgres lives in a different container, with a different localhost of its own.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Inside web, localhost loops back to web itself and fails; the name db reaches the database container">
-<rect class="bx-ok" x="10" y="20" width="170" height="130" rx="10"/><text class="t-b" x="95" y="44" text-anchor="middle">web container</text>
-<rect class="bx" x="30" y="60" width="130" height="34" rx="6"/><text class="t-s" x="95" y="82" text-anchor="middle">node app</text>
-<path class="ln-a" d="M95 94v14h-75v-31h2" fill="none"/><polygon class="ah-a" points="22,71 22,83 30,77"/>
-<text class="t-s t-bad" x="95" y="134" text-anchor="middle">localhost: refused</text>
-<rect class="bx-a" x="250" y="20" width="160" height="130" rx="10"/><text class="t-b" x="330" y="44" text-anchor="middle">db container</text>
-<rect class="bx" x="270" y="60" width="120" height="34" rx="6"/><text class="t-s" x="330" y="82" text-anchor="middle">postgres :5432</text>
-<path class="ln-ok" d="M160 77h102"/><polygon class="ah-ok" points="260,71 260,83 268,77"/>
-<text class="t-m t-ok" x="214" y="68" text-anchor="middle">db</text>
-<text class="t-s" x="210" y="184" text-anchor="middle">each container has its own localhost</text>
-</svg><figcaption>Inside the web container, localhost points back at the web container itself, where nothing listens on port 5432, so the connection is refused. Using the service name db sends the connection across the Compose network to the database container.</figcaption></figure>
-<p>The fix is to use the service name as the host: <code>@db:5432</code>. Edit the file, then run <code>docker compose up -d</code> again. Compose compares the file with what is running, sees that only <code>web</code>'s settings changed, and recreates just that container. The next <code>curl localhost:3000</code> connects. (On your own machine, <code>localhost:3000</code> is correct, because that request comes from your machine and reaches web through the published port.)</p>
-
-<h4>Everyday commands: <code>ps</code>, <code>logs</code>, <code>down</code></h4>
-<pre class="snip">docker compose ps          # this project's containers and their status
-docker compose logs web    # one service's logs (-f to follow)
-docker compose down        # stop and remove containers and network</pre>
-<p>These work on the project in the current folder, so you use service names like <code>web</code> rather than full container names. <code>down</code> removes the containers and the network but <b>keeps volumes</b>, so your database survives until next time. <code>docker compose down -v</code> also deletes the volumes, and with them all the data.</p>
-<div class="mistake"><b>Common mistake</b>Trusting <code>depends_on</code> to wait until the database is ready. It only controls start order: db's container is <i>started</i> first, but Postgres may need a few more seconds before it accepts connections. Real projects add a <code>healthcheck</code> to the db service and write <code>condition: service_healthy</code> under depends_on, or make the app retry its connection.</div>
-<div class="mistake"><b>Common mistake</b>Indenting with tabs, or by an uneven number of spaces. YAML then either refuses the file or, worse, silently attaches a setting to the wrong service. If Compose reports a parsing error, look at the indentation of the line it names and the line above.</div>
-<div class="try"><b>Try it in your head</b>You add a third service called <code>cache</code> using the <code>redis:7</code> image, which listens on port 6379. What address should <code>web</code> use for it, and does cache need a <code>ports</code> entry? <code>cache:6379</code>, the service name and its port. No <code>ports</code> entry is needed, because web reaches it over the project network; you would only publish it to connect from your own machine.</div>
-
-<h4>Recap</h4>
-<ul>
-<li><code>compose.yaml</code> describes a whole app: services with their image or build, ports, environment, volumes and dependencies.</li>
-<li><code>docker compose up -d</code> builds, creates a project network and volumes, and starts everything; run it again after edits to apply changes.</li>
-<li>Services reach each other by <b>service name</b>, such as <code>db:5432</code>.</li>
-<li>Inside a container, <code>localhost</code> means that container itself, never another service.</li>
-<li><code>docker compose ps</code>, <code>logs</code> and <code>down</code> manage the stack; <code>down</code> keeps volumes unless you add <code>-v</code>.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Which command stops and removes the whole stack? <i>docker compose down.</i> 2. web needs Postgres. Which host goes in its URL? <i>db, the service name.</i> 3. Does depends_on wait until the database accepts connections? <i>No, it only controls start order.</i></div>
 `);
 
 explain('d6',`
-<h4>Why a smaller image matters</h4>
-<p>Your site in <code>~/site</code> is built with <b>Vite</b>, a frontend build tool. To <b>build</b> it you need Node.js, npm and a folder full of packages. But the result of the build is just a handful of plain HTML, CSS and JavaScript files. To <b>serve</b> those files to visitors you only need them and a small web server.</p>
-<p>The current Dockerfile ignores that difference. It starts from <code>node:24</code>, copies everything, installs, builds, and then ships the lot: Node, npm, the source code, every package in <code>node_modules</code>, and the build output. That image weighs around a gigabyte. Shipping it costs you three ways:</p>
-<ul>
-<li><b>Speed:</b> every deploy uploads and downloads far more data than it needs.</li>
-<li><b>Storage:</b> every version you keep takes that space again in the registry and on servers.</li>
-<li><b>Security:</b> every program in the image is something that could have a vulnerability. Tools you do not ship cannot be attacked.</li>
-</ul>
-<p>A <b>multi-stage build</b> keeps the convenience of building inside Docker, but ships only the result.</p>
+<p>You have built an image; now it has to leave your laptop and reach a server. Two habits make that fast and safe: ship only what is needed, and give every release a clear name and version.</p>
 
-<h4>What <code>npm run build</code> produces</h4>
-<p><code>package.json</code> defines a script called <code>build</code> that runs <code>vite build</code>. Vite reads your source files, bundles and shrinks them, and writes the finished site into a folder called <code>dist</code> (short for distribution). Everything a browser needs is in <code>dist</code>; nothing else in the project is needed at run time. Remember that folder name: it is the only thing worth keeping.</p>
+${V.card(1,'Multi-stage builds','build in the workshop, ship from the shop',`
+<figure class="fig"><svg viewBox="0 0 420 206" role="img" aria-label="A big workshop image with Node and tools builds the site; only the finished dist folder is carried into a small nginx shop image"><rect class="bx-warn" x="6" y="10" width="180" height="130" rx="8"/><text class="t-b" x="16" y="32" style="font-size:15px">workshop: build</text>${V.ic('gear',18,44,40,'ic-warn')}${V.ic('terminal',64,44,40,'ic-warn')}${V.ic('box',110,44,40,'ic-warn')}<text class="t" x="16" y="118" style="font-size:14px">Node + npm</text><rect class="bx-ok" x="110" y="96" width="66" height="34" rx="8"/><text class="t-m" x="143" y="118.25" text-anchor="middle" style="font-size:15px;font-weight:700">dist</text><path class="ln-ok" d="M176 113H244"/><polygon class="ah-ok" points="242,106 242,120 252,113"/><text class="t-m t-ok" x="214" y="104" text-anchor="middle" style="font-size:14px">COPY</text><rect class="bx-ok" x="252" y="40" width="162" height="100" rx="8"/><text class="t-b" x="262" y="62" style="font-size:14px">shop: nginx:alpine</text>${V.ic('house',268,72,40,'ic-ok')}<rect class="bx-ok" x="318" y="84" width="66" height="34" rx="8"/><text class="t-m" x="351" y="106.25" text-anchor="middle" style="font-size:15px;font-weight:700">dist</text><rect class="bx-bad" x="6" y="156" width="300" height="18" rx="4"/><text class="t-m" x="312" y="170" style="font-size:14px">site:fat</text><rect class="bx-ok" x="6" y="182" width="16" height="18" rx="4"/><text class="t-m" x="30" y="196" style="font-size:14px">site:slim</text></svg><figcaption>The first stage is a workshop full of tools. The last stage is the shop: it receives only the finished goods (the dist folder). The bars show the difference in image size, over 1 GB against under 100 MB.</figcaption></figure>
+${V.like(`<p>A bakery. The kitchen has ovens, mixers and flour everywhere. The shop window only shows the finished cakes. Customers never need the ovens, so you don't put them in the window.</p>`)}
+${V.why(`<p>To build a frontend you need Node and hundreds of packages. To serve it you need only the output files and a web server. Shipping the tools wastes download time and space, and every extra program is one more thing an attacker could exploit.</p>`)}
+${V.anat([[1,'FROM node:24-alpine AS build'],'\nWORKDIR /app\nCOPY package*.json ./\nRUN npm install\nCOPY . .\n',[2,'RUN npm run build'],'\n\n',[3,'FROM nginx:alpine'],'\n',[4,'COPY --from=build'],' ',[5,'/app/dist'],' ',[6,'/usr/share/nginx/html']],[
+ '<b>Stage 1 with a name.</b> <code>AS build</code> lets a later stage refer to it.',
+ '<b>The build.</b> Creates the dist folder of finished files.',
+ '<b>Stage 2.</b> A second FROM starts fresh. The last stage is the image you get.',
+ '<b>--from=build.</b> Copy from the named stage instead of from your project folder.',
+ '<b>Source.</b> The path inside stage 1.',
+ '<b>Destination.</b> Where nginx looks for web pages.'])}
+${V.steps([
+ ['Stage 1 starts from a Node image and is named <b>build</b> with <b>AS build</b>. It has everything needed to compile the site.',`<svg viewBox="0 0 420 220" role="img" aria-label="Stage 1 starts from node"><rect class="bx-warn" x="6" y="8" width="196" height="150" rx="8"/><text class="t-b" x="16" y="30" style="font-size:15px">stage 1: build</text><text class="t-m" x="16" y="54" style="font-size:14px">node:24-alpine</text><rect class="bx-dark" x="6" y="170" width="408" height="40" rx="8"/><text class="t-term" x="16" y="196" style="font-size:15px">FROM node:24-alpine AS build</text></svg>`],
+ ['It installs packages and runs the build, producing a <b>dist/</b> folder: plain HTML, CSS and JavaScript.',`<svg viewBox="0 0 420 220" role="img" aria-label="npm run build makes dist"><rect class="bx-warn" x="6" y="8" width="196" height="150" rx="8"/><text class="t-b" x="16" y="30" style="font-size:15px">stage 1: build</text><text class="t-m" x="16" y="54" style="font-size:14px">node:24-alpine</text><text class="t-m" x="16" y="82" style="font-size:14px">node_modules/</text><text class="t-m" x="16" y="106" style="font-size:14px">src/</text><rect class="bx-ok" x="16" y="116" width="80" height="32" rx="8"/><text class="t-m" x="56" y="137.25" text-anchor="middle" style="font-size:15px;font-weight:700">dist/</text><rect class="bx-dark" x="6" y="170" width="408" height="40" rx="8"/><text class="t-term" x="16" y="196" style="font-size:15px">RUN npm install &amp;&amp; npm run build</text></svg>`],
+ ['A second <b>FROM</b> starts a brand-new, tiny image: nginx on Alpine. It knows nothing about stage 1.',`<svg viewBox="0 0 420 220" role="img" aria-label="Stage 2 starts from nginx alpine"><rect class="bx-warn" x="6" y="8" width="196" height="150" rx="8"/><text class="t-b" x="16" y="30" style="font-size:15px">stage 1: build</text><text class="t-m" x="16" y="54" style="font-size:14px">node:24-alpine</text><text class="t-m" x="16" y="82" style="font-size:14px">node_modules/</text><text class="t-m" x="16" y="106" style="font-size:14px">src/</text><rect class="bx-ok" x="16" y="116" width="80" height="32" rx="8"/><text class="t-m" x="56" y="137.25" text-anchor="middle" style="font-size:15px;font-weight:700">dist/</text><rect class="bx" x="218" y="8" width="196" height="150" rx="8"/><text class="t-b" x="228" y="30" style="font-size:15px">stage 2: ship</text><text class="t-m" x="228" y="54" style="font-size:14px">nginx:alpine</text><text class="t-m" x="228" y="82" style="font-size:14px">/usr/share/</text><text class="t-m" x="228" y="102" style="font-size:14px">nginx/html</text><rect class="bx-dark" x="6" y="170" width="408" height="40" rx="8"/><text class="t-term" x="16" y="196" style="font-size:15px">FROM nginx:alpine</text></svg>`],
+ ['<b>COPY --from=build</b> reaches back into stage 1 and copies just the dist folder into nginx\'s web folder.',`<svg viewBox="0 0 420 220" role="img" aria-label="dist is copied into stage 2"><rect class="bx-warn" x="6" y="8" width="196" height="150" rx="8"/><text class="t-b" x="16" y="30" style="font-size:15px">stage 1: build</text><text class="t-m" x="16" y="54" style="font-size:14px">node:24-alpine</text><text class="t-m" x="16" y="82" style="font-size:14px">node_modules/</text><text class="t-m" x="16" y="106" style="font-size:14px">src/</text><rect class="bx-ok" x="16" y="116" width="80" height="32" rx="8"/><text class="t-m" x="56" y="137.25" text-anchor="middle" style="font-size:15px;font-weight:700">dist/</text><rect class="bx-ok" x="218" y="8" width="196" height="150" rx="8"/><text class="t-b" x="228" y="30" style="font-size:15px">stage 2: ship</text><text class="t-m" x="228" y="54" style="font-size:14px">nginx:alpine</text><text class="t-m" x="228" y="82" style="font-size:14px">/usr/share/</text><text class="t-m" x="228" y="102" style="font-size:14px">nginx/html</text><rect class="bx-ok" x="316" y="116" width="80" height="32" rx="8"/><text class="t-m" x="356" y="137.25" text-anchor="middle" style="font-size:15px;font-weight:700">dist/</text><path class="ln-ok" d="M96 132H308"/><polygon class="ah-ok" points="306,125 306,139 316,132"/><rect class="bx-dark" x="6" y="170" width="408" height="40" rx="8"/><text class="t-term" x="16" y="196" style="font-size:15px">COPY --from=build /app/dist ...</text></svg>`],
+ ['Only the <b>last</b> stage becomes the image. Node, npm and node_modules stay behind in the workshop.',`<svg viewBox="0 0 420 220" role="img" aria-label="Only stage 2 is kept"><rect class="ln-d" x="6" y="8" width="196" height="150" rx="8"/><text class="t-b t-dim" x="104" y="90" text-anchor="middle" style="font-size:16px">thrown away</text><rect class="bx-ok" x="218" y="8" width="196" height="150" rx="8"/><text class="t-b" x="228" y="30" style="font-size:15px">stage 2: ship</text><text class="t-m" x="228" y="54" style="font-size:14px">nginx:alpine</text><text class="t-m" x="228" y="82" style="font-size:14px">/usr/share/</text><text class="t-m" x="228" y="102" style="font-size:14px">nginx/html</text><rect class="bx-ok" x="316" y="116" width="80" height="32" rx="8"/><text class="t-m" x="356" y="137.25" text-anchor="middle" style="font-size:15px;font-weight:700">dist/</text><rect class="bx-dark" x="6" y="170" width="408" height="40" rx="8"/><text class="t-term" x="16" y="196" style="font-size:15px">image = stage 2 only: small</text></svg>`]])}
+${V.rules(V.ok('AS build','Name your stages; --from=0 also works but is harder to read'),V.no('COPY --from=build . .','Copying everything brings node_modules along and undoes the point'),
+ V.ok('docker images','Compare the SIZE column of site:fat and site:slim'))}
+${V.hook(`Build fat, ship thin.`)}
+`)}
 
-<h4>Multi-stage builds: build in one place, ship from another</h4>
-<p>A multi-stage Dockerfile simply has more than one <code>FROM</code>. Each <code>FROM</code> starts a new, empty <b>stage</b> on a new base image. You can name a stage with <code>AS</code>, and a later stage can copy files out of an earlier one with <code>COPY --from=name</code>. Only the <b>last</b> stage becomes the image you tag and ship; earlier stages are scaffolding that gets left behind.</p>
-<pre class="snip">FROM node:24-alpine AS build      # stage 1, named "build"
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build                 # creates /app/dist
+${V.card(2,'Registries and tags','give every release a name and a number',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="Your laptop pushes you/site:1.0 to a registry, which keeps versions 1.0 and 1.1; a server pulls the version it needs"><rect class="bx-a" x="6" y="40" width="100" height="96" rx="8"/>${V.ic('laptop',26,48,60,'ic-a')}<text class="t" x="56" y="126" text-anchor="middle" style="font-size:14px">laptop</text><path class="ln-a" d="M106 70H142"/><polygon class="ah-a" points="140,63 140,77 150,70"/><text class="t-m t-a" x="128" y="60" text-anchor="middle" style="font-size:14px">push</text><rect class="bx-info" x="150" y="10" width="120" height="150" rx="8"/>${V.ic('cloud',186,14,48,'ic-info')}<text class="t-b" x="210" y="80" text-anchor="middle" style="font-size:14px">registry</text><rect class="bx-ok" x="155" y="92" width="110" height="26" rx="8"/><text class="t-m" x="210" y="109.9" text-anchor="middle" style="font-size:14px">you/site:1.0</text><rect class="bx" x="155" y="124" width="110" height="26" rx="8"/><text class="t-m" x="210" y="141.9" text-anchor="middle" style="font-size:14px">you/site:1.1</text><path class="ln-ok" d="M270 105H306"/><polygon class="ah-ok" points="304,98 304,112 314,105"/><text class="t-m t-ok" x="292" y="95" text-anchor="middle" style="font-size:14px">pull</text><rect class="bx-ok" x="314" y="40" width="100" height="96" rx="8"/>${V.ic('server',334,48,60,'ic-ok')}<text class="t" x="364" y="126" text-anchor="middle" style="font-size:14px">server</text></svg><figcaption>A registry is a shared shelf of images. You push a version up once; any server or CI pipeline pulls exactly that version down.</figcaption></figure>
+${V.like(`<p>A library catalogue. The registry is the library, your username is your shelf, the repository is the book title and the tag is the edition. "you/site, edition 1.0" always means the same book.</p>`)}
+${V.anat([[1,'docker.io/'],[2,'you'],'/',[3,'site'],':',[4,'1.0']],[
+ '<b>Registry.</b> Where the image lives. Docker Hub (docker.io) is the default, so you can leave it out. Others include ghcr.io for GitHub.',
+ '<b>Namespace.</b> Your username or organisation. Pushing needs it: you can\'t push to the official library.',
+ '<b>Repository.</b> The image name. Lower case.',
+ '<b>Tag.</b> The version. Change it for every release.'])}
+${V.steps([
+ ['Log in to the registry once. Docker remembers the login.',`<svg viewBox="0 0 420 156" role="img" aria-label="docker login succeeds"><rect class="bx-dark" x="4" y="6" width="412" height="144" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px;white-space:pre">$ docker login</text><text class="t-term" x="16" y="66" style="font-size:15px;white-space:pre">Username: you</text><text class="t-term" x="16" y="96" style="font-size:15px;white-space:pre">Password:</text><text class="t-term t-ok" x="16" y="126" style="font-size:15px;white-space:pre">Login Succeeded</text></svg>`],
+ ['<b>docker tag</b> adds a second name to the same image. Nothing is copied: both names show the same IMAGE ID.',`<svg viewBox="0 0 420 186" role="img" aria-label="docker tag adds a name, same ID"><rect class="bx-dark" x="4" y="6" width="412" height="174" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px;white-space:pre">$ docker tag site:slim you/site:1.0</text><text class="t-term" x="16" y="66" style="font-size:15px;white-space:pre">$ docker images</text><text class="t-term" x="16" y="96" style="font-size:15px;white-space:pre">REPOSITORY  TAG   IMAGE ID</text><text class="t-term" x="16" y="126" style="font-size:15px;white-space:pre">site        slim  4c1e9a2b7d10</text><text class="t-term t-ok" x="16" y="156" style="font-size:15px;white-space:pre">you/site    1.0   4c1e9a2b7d10</text></svg>`],
+ ['<b>docker push</b> uploads the layers to your account. Layers the registry already has (like nginx\'s) are skipped.',`<svg viewBox="0 0 420 156" role="img" aria-label="docker push uploads the image"><rect class="bx-dark" x="4" y="6" width="412" height="144" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px;white-space:pre">$ docker push you/site:1.0</text><text class="t-term t-dim" x="16" y="66" style="font-size:15px;white-space:pre">... Mounted from library/nginx</text><text class="t-term t-ok" x="16" y="96" style="font-size:15px;white-space:pre">... Pushed</text><text class="t-term t-ok" x="16" y="126" style="font-size:15px;white-space:pre">1.0: digest: sha256:9b0f... size: 1570</text></svg>`],
+ ['Now any server can run exactly this version with one line. That is how deployments get the image.',`<svg viewBox="0 0 420 156" role="img" aria-label="a server pulls the image"><rect class="bx-dark" x="4" y="6" width="412" height="144" rx="8"/><text class="t-term t-a" x="16" y="36" style="font-size:14px;white-space:pre">deploy@web1:~$ docker pull you/site:1.0</text><text class="t-term t-ok" x="16" y="66" style="font-size:14px;white-space:pre">Status: Downloaded newer image for</text><text class="t-term t-ok" x="16" y="96" style="font-size:14px;white-space:pre">  you/site:1.0</text></svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.no('docker push site:slim','No username: "requested access to the resource is denied"'),V.ok('docker push you/site:1.0','Namespace, name and tag'),
+ V.no('COPY .env into an image','Anyone who pulls the image gets your secrets'),
+ V.rh('Conventions'),V.ok(':1.0, :1.1, :1.2','A new tag per release, so you can roll back'),V.no(':latest in production','You can\'t tell which version is actually running'))}
+${V.build(`<ol><li>Build the existing single-stage Dockerfile as <code>site:fat</code>.</li><li>Rewrite it as two stages: Node builds, nginx:alpine ships the dist folder.</li><li>Build it as <code>site:slim</code> and compare sizes.</li><li>Run the slim image with port 8080 published and curl it.</li><li>Log in, tag it with your username and a version, and push it.</li></ol>`)}
+${V.hook(`registry/user/name:tag. Log in, tag, push. Never ship <code>:latest</code> alone.`)}
+`)}
 
-FROM nginx:alpine                 # stage 2: a fresh, small start
-COPY --from=build /app/dist /usr/share/nginx/html</pre>
-<p>The first stage is the Dockerfile you already know, with the same caching-friendly order from the Dockerfile lesson. The second stage starts again from <code>nginx:alpine</code>, the nginx web server on Alpine Linux, and copies in one thing: the <code>dist</code> folder from the build stage. <code>/usr/share/nginx/html</code> is the folder the nginx image serves files from by default.</p>
-<p>Notice there is no <code>CMD</code> in the final stage. An image inherits settings from its base, and <code>nginx:alpine</code> already has a <code>CMD</code> that starts nginx on port 80.</p>
-<figure class="fig"><svg viewBox="0 0 420 270" role="img" aria-label="The build stage holds Node, packages and source; only the dist folder is copied into the small nginx stage">
-<rect class="bx" x="10" y="10" width="180" height="200" rx="10"/>
-<text class="t-b" x="100" y="34" text-anchor="middle">stage 1: build</text>
-<rect class="bx-bad" x="24" y="48" width="152" height="30" rx="6"/><text class="t-s" x="100" y="68" text-anchor="middle">Node.js and npm</text>
-<rect class="bx-bad" x="24" y="84" width="152" height="30" rx="6"/><text class="t-s" x="100" y="104" text-anchor="middle">node_modules</text>
-<rect class="bx-bad" x="24" y="120" width="152" height="30" rx="6"/><text class="t-s" x="100" y="140" text-anchor="middle">source code</text>
-<rect class="bx-ok" x="24" y="160" width="152" height="34" rx="6"/><text class="t-m" x="100" y="182" text-anchor="middle">/app/dist</text>
-<rect class="bx-a" x="230" y="60" width="180" height="150" rx="10"/>
-<text class="t-b" x="320" y="84" text-anchor="middle">stage 2: ships</text>
-<rect class="bx" x="244" y="100" width="152" height="30" rx="6"/><text class="t-s" x="320" y="120" text-anchor="middle">nginx:alpine</text>
-<rect class="bx-ok" x="244" y="160" width="152" height="34" rx="6"/><text class="t-s" x="320" y="182" text-anchor="middle">site files only</text>
-<path class="ln-ok" d="M176 177h60"/><polygon class="ah-ok" points="234,171 234,183 242,177"/>
-<text class="t-s t-ok" x="209" y="234" text-anchor="middle">COPY --from=build</text>
-<text class="t-s t-bad" x="100" y="258" text-anchor="middle">left behind</text>
-<text class="t-s t-ok" x="320" y="258" text-anchor="middle">the final image</text>
-</svg><figcaption>The build stage contains Node, npm, all the packages and the source code, and produces the dist folder. COPY dash dash from equals build carries only dist into the second stage, which starts from the small nginx image. Everything else stays behind and is not shipped.</figcaption></figure>
-
-<h4>Worked example: fat versus slim</h4>
-<p>The lesson has you build both versions and compare them:</p>
-<pre class="snip">docker build -t site:fat .     # the original Dockerfile
-# rewrite the Dockerfile as two stages, then:
-docker build -t site:slim .
-docker images                  # compare the SIZE column</pre>
-<p>Here the tag after the colon is used as a label for the variant: <code>site:fat</code> and <code>site:slim</code> are two images in the same repository. The slim one is a few tens of megabytes; the fat one is many times larger. Then run the slim one and check it serves the site. nginx listens on port 80 inside, so publish it as usual:</p>
-<pre class="snip">docker run -d -p 8080:80 --name site site:slim
-curl localhost:8080</pre>
-
-<h4>Image names, and what a tag really is</h4>
-<p>To share an image you push it to a <b>registry</b>, and the image's name says exactly where it goes. A full name has up to four parts:</p>
-<figure class="fig"><svg viewBox="0 0 420 172" role="img" aria-label="The parts of an image name: registry, user, repository and tag">
-<rect class="bx-dark" x="10" y="12" width="400" height="46" rx="6"/>
-<text class="t-term" x="210" y="41" text-anchor="middle" style="font-size:18px">docker.io/you/site:1.0</text>
-<path class="ln" d="M134 60v20M209 60v52M257 60v20M305 60v52"/>
-<g text-anchor="middle">
-<text class="t" x="124" y="98">registry</text>
-<text class="t" x="209" y="130">your user</text>
-<text class="t" x="262" y="98">repository</text>
-<text class="t-b t-a" x="305" y="130">tag</text>
-</g>
-<text class="t-s" x="210" y="164" text-anchor="middle">docker.io is the default, so you can leave it out</text>
-</svg><figcaption>An image name is the registry, your user name, the repository and the tag. docker dot io is Docker Hub and is assumed when you leave it out, so you slash site colon 1 point 0 means the same thing.</figcaption></figure>
-<p>Official images like <code>nginx</code> have no user part because they live in Docker Hub's special <code>library</code> collection. Your own images must start with your Docker Hub user name, because that is the space you are allowed to push into.</p>
-<p><code>docker tag site:slim you/site:1.0</code> does not copy anything. It adds a second name that points at the <b>same</b> image; in <code>docker images</code> both rows show the same <code>IMAGE ID</code>. Think of it as a second label on the same box.</p>
-
-<h4>Logging in and pushing</h4>
-<p>Pushing needs an account and a login. <code>docker login</code> asks for your Docker Hub user name and password (for real accounts, Docker recommends a <b>personal access token</b> instead of your password). Then <code>docker push you/site:1.0</code> uploads the image.</p>
-<figure class="fig"><svg viewBox="0 0 420 130" role="img" aria-label="You push the image to Docker Hub, and a server pulls the same tagged image">
-<rect class="bx-info" x="10" y="30" width="110" height="50" rx="8"/><text class="t-b" x="65" y="60" text-anchor="middle">laptop or CI</text>
-<path class="ln-a" d="M120 55h40"/><polygon class="ah-a" points="158,49 158,61 166,55"/><text class="t-s" x="141" y="45" text-anchor="middle">push</text>
-<rect class="bx-a" x="168" y="30" width="96" height="50" rx="8"/><text class="t-b" x="216" y="60" text-anchor="middle">registry</text>
-<path class="ln-ok" d="M264 55h40"/><polygon class="ah-ok" points="302,49 302,61 310,55"/><text class="t-s" x="285" y="45" text-anchor="middle">pull</text>
-<rect class="bx-ok" x="312" y="30" width="98" height="50" rx="8"/><text class="t-b" x="361" y="60" text-anchor="middle">servers</text>
-<text class="t-m" x="216" y="112" text-anchor="middle">you/site:1.0</text>
-</svg><figcaption>You or your CI pipeline push a tagged image to the registry once. Every server that needs it then pulls exactly the same image by its name and tag.</figcaption></figure>
-<p>Like a pull, a push works layer by layer, and any layer the registry already has (such as the nginx base layers) is skipped. On a server, <code>docker pull you/site:1.0</code> fetches exactly that image. The Deploy track builds on exactly this.</p>
-<div class="mistake"><b>Common mistake</b>Relying on <code>latest</code>. It is not magic and does not mean "newest": it is just the tag Docker uses when you do not give one, and it can point at different images on different days. In production, tag every release with a version, <code>1.0</code>, <code>1.1</code>, and deploy that exact tag. Then you always know what is running, and rolling back means running the previous tag.</div>
-
-<h4>Reading the errors you might hit</h4>
-<ul>
-<li><code>denied: requested access to the resource is denied</code>: you are not logged in, or the name does not start with your own user name.</li>
-<li><code>An image does not exist locally with the tag</code>: you tried to push a name you have not created yet. Run <code>docker tag</code> first.</li>
-<li>A failed <code>COPY --from=build</code> with <code>not found</code>: the build stage wrote its output somewhere else. Some tools use <code>build</code> instead of <code>dist</code>; check what <code>npm run build</code> actually creates.</li>
-</ul>
-<div class="try"><b>Try it in your head</b>You fix a typo, rebuild as <code>site:slim</code>, and want to release it. What do you run? <code>docker tag site:slim you/site:1.1</code> and then <code>docker push you/site:1.1</code>. A new version number, not a reused one, so <code>1.0</code> still means the old release if you need to roll back.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Building needs heavy tools; serving does not. Shipping the build tools makes images large, slow and riskier.</li>
-<li>A multi-stage build has several <code>FROM</code> lines. <code>AS build</code> names a stage; <code>COPY --from=build</code> takes only the output into the last stage, which is what ships.</li>
-<li>The final stage here is <code>nginx:alpine</code> serving <code>/usr/share/nginx/html</code> on port 80.</li>
-<li>Image names are <code>registry/user/repository:tag</code>; <code>docker tag</code> adds a name to an existing image.</li>
-<li><code>docker login</code>, then <code>docker push you/site:1.0</code>. Tag real versions instead of relying on <code>latest</code>.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. In a multi-stage build, which stage becomes the image? <i>The last one.</i> 2. Does <code>docker tag</code> make a copy? <i>No, it adds another name for the same image.</i> 3. Why version tags instead of :latest? <i>You always know what runs, and you can roll back.</i></div>
 `);
 

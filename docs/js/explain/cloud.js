@@ -450,7 +450,7 @@ ${V.card(4,'State','Terraform\'s memory',`
 <rect class="bx-dark" x="6" y="10" width="140" height="120" rx="8"/><text class="t-term" x="18" y="34" style="font-size:14px">your code</text><text class="t-term" x="18" y="74" style="font-size:14px">assets</text><text class="t-term" x="18" y="108" style="font-size:14px">web</text>
 <rect class="bx-warn" x="160" y="10" width="100" height="120" rx="8"/>${V.ic('book',186,24,48,'ic-warn')}<text class="t-b" x="210" y="100" text-anchor="middle">state</text>
 <path class="ln-d" d="M90 70H160M90 104H160M260 70H274M260 104H274"/>
-<rect class="bx-info" x="274" y="10" width="140" height="120" rx="8"/><text class="t-b t-info" x="286" y="34">AWS</text><text class="t-m" x="286" y="74" style="font-size:14px">you-portfolio..</text><text class="t-m" x="286" y="108" style="font-size:14px">i-05a8c1e3..</text>
+<rect class="bx-info" x="274" y="10" width="140" height="120" rx="8"/><text class="t-b t-info" x="286" y="34">AWS</text><text class="t-m" x="286" y="74" style="font-size:14px">you-portf…</text><text class="t-m" x="286" y="108" style="font-size:14px">i-05a8c1…</text>
 <text class="t-s" x="210" y="152" text-anchor="middle" style="font-size:14px">which name in code is which real thing</text>
 </svg><figcaption>The state file is Terraform's notebook: it links each address in your code to the real resource it created.</figcaption></figure>
 ${V.like(`<p>A cloakroom's ticket book. Lose it, and the attendant no longer knows which coat belongs to which ticket.</p>`)}

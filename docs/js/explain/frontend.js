@@ -1406,228 +1406,260 @@ ${V.hook(`Tailwind is the spice rack, shadcn is the recipe you keep. A variant p
 `);
 
 explain('f5',`
-<h4>When useState is not enough</h4>
-<p>In the React lesson, each piece of state lived inside one component: the Counter owned its count. That is the right default. Keep state as close as possible to where it is used.</p>
-<p>But real apps have data that many distant components need. Picture a shop. The "Add to cart" button sits deep inside a product page. The cart badge showing "Cart: 3" sits in the header at the top. They are far apart in the component tree, yet they share one number.</p>
-<p>With only <code>useState</code>, the number has to live in a component above both of them, usually App. Then App passes it down as props through every layer in between, even layers that do not care about it. That is called <b>prop drilling</b>, and it makes components cluttered and hard to move around.</p>
-<figure class="fig"><svg viewBox="0 0 420 265" role="img" aria-label="Prop drilling on the left threads the cart through every layer; a store on the right is read directly by the two components that need it">
-<text class="t-b" x="100" y="20" text-anchor="middle">prop drilling</text>
-<g text-anchor="middle">
-<rect class="bx-a" x="60" y="32" width="80" height="30" rx="6"/><text class="t-m" x="100" y="52">App</text>
-<rect class="bx" x="10" y="92" width="80" height="30" rx="6"/><text class="t-m" x="50" y="112">Header</text>
-<rect class="bx" x="110" y="92" width="80" height="30" rx="6"/><text class="t-m" x="150" y="112">Page</text>
-<rect class="bx-ok" x="10" y="152" width="80" height="30" rx="6"/><text class="t-m" x="50" y="172">Badge</text>
-<rect class="bx" x="110" y="152" width="80" height="30" rx="6"/><text class="t-m" x="150" y="172">Product</text>
-<rect class="bx-ok" x="110" y="212" width="80" height="30" rx="6"/><text class="t-m" x="150" y="232">AddBtn</text>
-</g>
-<path class="ln-a" d="M90 62l-36 30M110 62l36 30M50 122v30M150 122v30M150 182v30"/>
-<path class="ln-d" d="M210 20v240"/>
-<text class="t-b" x="315" y="20" text-anchor="middle">shared store</text>
-<g text-anchor="middle">
-<rect class="bx-warn" x="265" y="32" width="100" height="40" rx="8"/><text class="t-b" x="315" y="57">useCart</text>
-<rect class="bx-ok" x="230" y="200" width="80" height="30" rx="6"/><text class="t-m" x="270" y="220">Badge</text>
-<rect class="bx-ok" x="325" y="200" width="85" height="30" rx="6"/><text class="t-m" x="367" y="220">AddBtn</text>
-</g>
-<path class="ln-ok" d="M290 72L272 192M340 72l26 120"/>
-<polygon class="ah-ok" points="266,190 278,192 271,200"/><polygon class="ah-ok" points="360,191 372,189 368,199"/>
-<text class="t-s" x="315" y="256" text-anchor="middle">read directly, no middlemen</text>
-</svg><figcaption>On the left, the cart lives in App and is passed down as props through Header, Page and Product, which do not use it, just to reach the Badge and the Add button. On the right, the cart lives in a store, and only the two components that need it read from it directly.</figcaption></figure>
-<p>A <b>store</b> solves this. It is a piece of state that lives outside the component tree, and any component can read from it or change it directly. This lesson covers the two most common store libraries, Zustand and Redux Toolkit, and then a third tool for a different kind of data altogether.</p>
+<p>As apps grow, the hardest bugs are about data: a basket badge that shows the wrong number, a product list that is out of date. The fix starts with knowing which <b>kind</b> of state you are holding.</p>
 
-<h4>Two kinds of state</h4>
-<p>Before choosing a tool, sort your data into two piles. This is the single most useful idea in this lesson.</p>
-<div class="tbl-wrap"><table><tr><th></th><th>Client state</th><th>Server state</th></tr>
-<tr><td>Examples</td><td>Is the menu open? What is in the cart? Light or dark theme?</td><td>The product list, the user's orders, comments</td></tr>
-<tr><td>Who owns it</td><td>The browser. It is the only copy.</td><td>The server. You only hold a copy, which can go out of date.</td></tr>
-<tr><td>Hard parts</td><td>Sharing it between components</td><td>Loading, errors, caching, keeping it fresh</td></tr>
-<tr><td>Tool</td><td><code>useState</code>, then Zustand or Redux Toolkit</td><td>TanStack Query</td></tr></table></div>
-<p>Mixing them up is a classic mistake: people copy API data into a global store, then write piles of code to track loading flags and decide when to fetch again. Server state has its own tool, which you will meet below.</p>
+${V.card(1,'Client state vs server state','your notebook vs the library timetable',`
+<figure class="fig"><svg viewBox="0 0 420 175" role="img" aria-label="Client state is your own notebook in the browser. Server state is a copy of something that really lives on the server and can go out of date">
+${V.ic('laptop',50,8,64,'ic-a')}${V.ic('list',104,30,40,'ic-a')}
+<text class="t-b" x="100" y="98" text-anchor="middle">Client state</text>
+<text class="t-s" x="100" y="120" text-anchor="middle">lives in the browser</text>
+<text class="t-s" x="100" y="140" text-anchor="middle">cart count, open menu,</text><text class="t-s" x="100" y="158" text-anchor="middle">dark mode</text>
+<path class="ln-d" d="M210 10V165"/>
+${V.ic('server',236,8,64,'ic-info')}${V.ic('book',300,18,44,'ic-info')}${V.ic('clock',350,30,36,'ic-warn')}
+<text class="t-b" x="316" y="98" text-anchor="middle">Server state</text>
+<text class="t-s" x="316" y="120" text-anchor="middle">the real copy is on the server</text>
+<text class="t-s" x="316" y="140" text-anchor="middle">products, users, orders:</text><text class="t-s" x="316" y="158" text-anchor="middle">yours can go out of date</text>
+</svg><figcaption>Client state belongs to the browser. Server state is only borrowed: the server owns it, and your copy can go stale.</figcaption></figure>
+${V.like(`<p>Your own notebook versus a photo of the bus timetable. Your notebook only changes when you write in it. The timetable can change at the bus station without you knowing, so your photo might be out of date.</p>`)}
+${V.why(`<p>Early React apps put everything in one big global store, including server data. Teams wrote endless code for loading flags, errors and refreshing. Splitting the two kinds, with a small store for client state and a caching tool for server state, removed most of that code.</p>`)}
+${V.rules(V.rh('Where should this state live?'),
+ V.ok('useState','First choice: only one component needs it'),V.ok('lift it up','Two siblings need it: move it to their parent'),
+ V.ok('Zustand / Redux Toolkit','Many distant components share client state'),V.ok('TanStack Query','Anything fetched from a server'),
+ V.no('passing props through 5 layers','Called prop drilling: middle components carry data they never use'))}
+${V.hook(`Mine or borrowed? Mine goes in state or a store. Borrowed goes in a query cache.`)}
+`)}
 
-<h4>Zustand: a small shared store</h4>
-<p><b>Zustand</b> (German for "state") makes a store in a few lines:</p>
-<pre class="snip">import { create } from 'zustand';
+${V.card(2,'A Zustand store','a shared noticeboard',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="A store above the component tree. CartBadge and AddButton are far apart in the tree but both connect directly to the store">
+<rect class="bx-warn" x="150" y="8" width="120" height="50" rx="8"/><text class="t-m" x="210" y="30" text-anchor="middle">useCart</text><text class="t-s" x="210" y="50" text-anchor="middle">items: 0, add()</text>
+<rect class="bx-info" x="175" y="76" width="70" height="28" rx="6"/><text class="t-m" x="210" y="95" text-anchor="middle" style="font-size:14px">App</text>
+<path class="ln" d="M210 104V112H95V120M210 112H325V120M95 148V164M325 148V164"/>
+<rect class="bx" x="40" y="120" width="110" height="28" rx="6"/><text class="t-m" x="95" y="139" text-anchor="middle" style="font-size:14px">Header</text>
+<rect class="bx" x="270" y="120" width="110" height="28" rx="6"/><text class="t-m" x="325" y="139" text-anchor="middle" style="font-size:14px">Shop</text>
+<rect class="bx-ok" x="40" y="164" width="110" height="28" rx="6"/><text class="t-m" x="95" y="183" text-anchor="middle" style="font-size:14px">CartBadge</text>
+<rect class="bx-a" x="270" y="164" width="110" height="28" rx="6"/><text class="t-m" x="325" y="183" text-anchor="middle" style="font-size:14px">AddButton</text>
+<path class="ln-a" d="M150 33H16V178H40M270 33H404V178H380"/>
+</svg><figcaption>CartBadge and AddButton sit in different branches. Instead of passing props through Header, App and Shop, both connect straight to the store.</figcaption></figure>
+${V.like(`<p>A noticeboard in the school corridor. Anyone can read it, and anyone with permission can pin up a change. Nobody has to pass a note from class to class.</p>`)}
+${V.anat(['const useCart = ',[1,'create'],'((',[2,'set'],') =&gt; ({\n  ',[3,'items: 0'],',\n  ',[4,'add: () =&gt; set((s) =&gt; ({ items: s.items + 1 }))'],',\n}));'],[
+ '<b>create.</b> Makes the store and gives you back a hook, <code>useCart</code>.',
+ '<b>set.</b> The only way to change the store. It merges in what you return.',
+ '<b>Data.</b> The starting values.',
+ '<b>An action.</b> A function that changes data. <code>s</code> is the current state, so the new count is based on the old one.'])}
+<p><b>Watch one click update a component on the other side of the app.</b></p>
+${V.steps([
+ ['The store holds <b>items: 0</b>. CartBadge has subscribed to items, so it shows "Cart: 0".',`<svg viewBox="0 0 420 170" role="img" aria-label="Store items 0, badge shows 0">
+<rect class="bx-warn" x="140" y="10" width="140" height="50" rx="8"/><text class="t-m" x="210" y="41" text-anchor="middle">items: 0</text>
+<rect class="bx" x="10" y="110" width="124" height="44" rx="8"/><text class="t" x="72" y="137" text-anchor="middle">Cart: 0</text>
+<rect class="bx" x="148" y="110" width="124" height="44" rx="8"/><text class="t" x="210" y="137" text-anchor="middle">Add to cart</text>
+<rect class="bx" x="286" y="110" width="124" height="44" rx="8"/><text class="t" x="348" y="137" text-anchor="middle">Products</text>
+<path class="ln-d" d="M180 60 72 110M210 60V110"/>
+</svg>`],
+ ['You click <b>Add to cart</b>. It calls <b>add()</b>, which calls set. The store now holds <b>items: 1</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="Add calls set, store becomes 1">
+<rect class="bx-hl" x="140" y="10" width="140" height="50" rx="8"/><text class="t-m" x="210" y="41" text-anchor="middle">items: 1</text>
+<rect class="bx" x="10" y="110" width="124" height="44" rx="8"/><text class="t" x="72" y="137" text-anchor="middle">Cart: 0</text>
+<rect class="bx-a" x="148" y="110" width="124" height="44" rx="8"/><text class="t" x="210" y="137" text-anchor="middle">Add to cart</text>
+<rect class="bx" x="286" y="110" width="124" height="44" rx="8"/><text class="t" x="348" y="137" text-anchor="middle">Products</text>
+<path class="ln-d" d="M180 60 72 110"/><path class="ln-a" d="M210 108V70"/><polygon class="ah-a" points="203,72 217,72 210,61"/>
+<text class="t-m t-a" x="220" y="92" style="font-size:14px">add()</text>
+</svg>`],
+ ['The store tells its subscribers. CartBadge selected <b>items</b>, which changed, so only it re-renders: "Cart: 1". Products never subscribed, so it is left alone.',`<svg viewBox="0 0 420 170" role="img" aria-label="Only the badge re-renders">
+<rect class="bx-warn" x="140" y="10" width="140" height="50" rx="8"/><text class="t-m" x="210" y="41" text-anchor="middle">items: 1</text>
+<rect class="bx-ok" x="10" y="110" width="124" height="44" rx="8"/><text class="t-b t-ok" x="72" y="137" text-anchor="middle">Cart: 1</text>
+<rect class="bx" x="148" y="110" width="124" height="44" rx="8"/><text class="t" x="210" y="137" text-anchor="middle">Add to cart</text>
+<rect class="bx" x="286" y="110" width="124" height="44" rx="8"/><text class="t t-dim" x="348" y="137" text-anchor="middle">Products</text>
+<path class="ln-a" d="M180 60 76 104"/><polygon class="ah-a" points="70,98 82,108 72,110"/>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('useCart((s) =&gt; s.items)','Select just what you need: re-render only when it changes'),V.no('useCart()','Selects everything: re-renders on any change'),
+ V.no('s.items++ inside set','Never change state in place; return a new value'),V.ok('set((s) =&gt; ({ items: s.items + 1 }))','New value from the old one'),
+ V.rh('Conventions'),
+ V.ok('Redux Toolkit','Same idea with more structure (slices, actions, devtools). Common in big company codebases: learn to read it'))}
+${V.hook(`One noticeboard, many readers. Select only what you read; change it only with set.`)}
+`)}
 
-const useCart = create((set) =&gt; ({
-  items: 0,                                         // the data
-  add: () =&gt; set((state) =&gt; ({ items: state.items + 1 })),  // an action
-}));</pre>
-<p>Step by step:</p>
-<ol>
-<li><code>create</code> builds the store and gives you back a hook. By convention its name starts with <code>use</code>, so <code>useCart</code>.</li>
-<li>You pass <code>create</code> a function that receives <code>set</code>, Zustand's tool for changing the store, and returns the starting contents: an object.</li>
-<li>That object holds both data (<code>items: 0</code>) and <b>actions</b>, functions that change the data (<code>add</code>).</li>
-<li>Inside <code>add</code>, <code>set</code> is given an <b>updater function</b>. It receives the current state and returns only the keys that change. Zustand merges that into the store, so <code>add</code> stays as it was.</li>
-</ol>
-<p>Notice the round brackets in <code>({ items: … })</code>. An arrow function that should return an object needs them, because a bare curly brace after the arrow would be read as the start of a function body.</p>
-<p>Now any component, anywhere, can use the store:</p>
-<pre class="snip">function CartBadge() {
-  const items = useCart((s) =&gt; s.items);   // pick one value
-  return &lt;p id="badge"&gt;Cart: {items}&lt;/p&gt;;
-}</pre>
-<p>The function <code>(s) =&gt; s.items</code> is a <b>selector</b>: it picks the part of the store this component cares about. Zustand re-renders the component only when that selected value changes. An <code>AddButton</code> selects <code>s.add</code> and calls it from <code>onClick</code>. Click the button, the store changes, the badge re-renders. Neither component knows the other exists.</p>
+${V.card(3,'TanStack Query','a smart cache for server data',`
+<figure class="fig"><svg viewBox="0 0 420 165" role="img" aria-label="A component asks the query cache for products. The cache answers from its shelf, and fetches from the server when needed">
+<rect class="bx-a" x="10" y="40" width="110" height="60" rx="8"/><text class="t-m" x="65" y="76" text-anchor="middle" style="font-size:14px">Products</text>
+<path class="ln-a" d="M124 70H150"/><polygon class="ah-a" points="148,63 148,77 160,70"/>
+<rect class="bx-warn" x="164" y="18" width="110" height="104" rx="8"/>${V.ic('jar',195,26,48,'ic-warn')}<text class="t-m" x="219" y="96" text-anchor="middle" style="font-size:14px">['products']</text><text class="t-s" x="219" y="114" text-anchor="middle">cache</text>
+<path class="ln-d" d="M278 70H304"/><polygon class="ah" points="302,63 302,77 314,70"/>
+${V.ic('server',330,34,70,'ic-info')}
+<text class="t-s" x="210" y="152" text-anchor="middle">ask the cache by key; it fetches only when it needs to</text>
+</svg><figcaption>Components never fetch server data directly. They ask the cache for a key. The cache decides whether to use what it has, fetch it, or refresh it in the background.</figcaption></figure>
+${V.like(`<p>A school librarian. You ask for "the products book". If it is on the shelf, you get it at once. If it might be old, the librarian quietly orders a fresh copy while you read. Two pupils asking at the same time trigger only one order.</p>`)}
+${V.anat(['const { ',[1,'data, isLoading, error'],' } = useQuery({\n  ',[2,"queryKey: ['products']"],',\n  ',[3,"queryFn: () =&gt; fetch('/api/products').then((r) =&gt; r.json())"],',\n});'],[
+ '<b>What you get back.</b> The data (once it arrives), whether it is loading the first time, and any error.',
+ '<b>The key.</b> The label on the shelf. Same key, same cached data, anywhere in the app.',
+ '<b>The fetcher.</b> A function that returns a Promise of the data. The cache calls it when it needs to.'])}
+${V.steps([
+ ['First visit. Nothing on the shelf under the key <b>products</b>, so isLoading is true and the cache calls queryFn.',`<svg viewBox="0 0 420 165" role="img" aria-label="Empty cache, loading">
+<rect class="bx" x="10" y="14" width="190" height="136" rx="8"/><text class="t" x="24" y="48">Loading...</text>
+<rect class="bx-warn" x="220" y="14" width="190" height="136" rx="8"/><text class="t-m" x="232" y="40" style="font-size:14px">['products']</text>
+<text class="t-s" x="232" y="70">empty</text>${V.ic('clock',232,86,34,'ic-warn')}<text class="t-s" x="274" y="108">fetching...</text>
+</svg>`],
+ ['The data arrives. It is stored under the key, isLoading turns false, and the list renders.',`<svg viewBox="0 0 420 165" role="img" aria-label="Data cached and shown">
+<rect class="bx" x="10" y="14" width="190" height="136" rx="8"/>
+<text class="t" x="24" y="48">Keyboard: $49</text><text class="t" x="24" y="76">Mouse: $19</text><text class="t" x="24" y="104">Monitor: $189</text>
+<rect class="bx-warn" x="220" y="14" width="190" height="136" rx="8"/><text class="t-m" x="232" y="40" style="font-size:14px">['products']</text>
+${V.ic('check',232,56,34,'ic-ok')}<text class="t-s" x="274" y="78">3 items, cached</text>
+</svg>`],
+ ['Another screen asks for the same key later. It gets the cached list <b>instantly</b>, and the cache refreshes it quietly in the background in case it changed.',`<svg viewBox="0 0 420 165" role="img" aria-label="Instant from cache, background refresh">
+<rect class="bx-ok" x="10" y="14" width="190" height="136" rx="8"/>
+<text class="t" x="24" y="48">Keyboard: $49</text><text class="t" x="24" y="76">Mouse: $19</text><text class="t" x="24" y="104">Monitor: $189</text>
+<rect class="bx-warn" x="220" y="14" width="190" height="136" rx="8"/><text class="t-m" x="232" y="40" style="font-size:14px">['products']</text>
+${V.ic('repeat',232,56,34,'ic-info')}<text class="t-s" x="274" y="70">refreshing in</text><text class="t-s" x="274" y="88">the background</text>
+</svg>`],
+ ['If fetching fails, the cache retries a few times, then sets <b>error</b>. Your component shows a friendly message instead of crashing.',`<svg viewBox="0 0 420 165" role="img" aria-label="Error state">
+<rect class="bx-bad" x="10" y="14" width="190" height="136" rx="8"/><text class="t" x="24" y="48">Something went</text><text class="t" x="24" y="70">wrong</text>
+<rect class="bx-warn" x="220" y="14" width="190" height="136" rx="8"/><text class="t-m" x="232" y="40" style="font-size:14px">['products']</text>
+${V.ic('cross',232,56,34,'ic-bad')}<text class="t-s" x="274" y="70">failed after</text><text class="t-s" x="274" y="88">retrying</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('&lt;QueryClientProvider client={queryClient}&gt;','Wrap the app once, or useQuery has no cache to use'),
+ V.ok("queryKey: ['product', id]",'Put every input in the key, so each id gets its own shelf'),
+ V.no('fetch without checking res.ok','fetch does not throw on 404; throw yourself so Query sees an error'),
+ V.rh('Conventions'),
+ V.no('copying query data into useState','Two copies drift apart. Read from the query')
+ )}
+${V.build(`<ol><li>Create a store with <code>create</code>: a number starting at 0 and an action that adds one using <code>set</code>.</li><li>Make a badge component that selects the number, and a button component that selects the action.</li><li>Create a <code>QueryClient</code> and wrap the app in <code>QueryClientProvider</code>.</li><li>In a Products component, call <code>useQuery</code> with a key and a fetcher for <code>/api/products</code>.</li><li>Return a loading message while loading, then map the data to li elements with keys.</li></ol>`)}
+${V.hook(`Client state on the noticeboard, server state with the librarian. Never keep two copies.`)}
+`)}
 
-<h4>Redux Toolkit: the same job with more structure</h4>
-<p><b>Redux</b> is the older, very widely used store library, and <b>Redux Toolkit</b> is the modern, official way to write it. You will meet it in many company codebases, so you need to be able to read it, even though this lesson's tasks use Zustand.</p>
-<pre class="snip">const cartSlice = createSlice({
-  name: 'cart',
-  initialState: { items: 0 },
-  reducers: {
-    add: (state) =&gt; { state.items += 1; },
-  },
-});
-// in a component:
-dispatch(cartSlice.actions.add());</pre>
-<p>The ideas map closely onto Zustand. A <b>slice</b> is one section of the store, with its starting state and its <b>reducers</b>, the functions that say how state changes. Components do not call those directly: they <b>dispatch</b> an <b>action</b>, a small object describing what happened, and Redux runs the matching reducer. The reducer looks like it changes state directly; Redux Toolkit uses a library called Immer to turn that into a safe, fresh copy behind the scenes.</p>
-<p>That extra ceremony buys you a strict, predictable pattern and excellent developer tools that record every action, so you can replay how the state got where it is. Large teams like that. For most apps, Zustand's lighter approach is enough. Reach for the simplest tool first.</p>
-
-<h4>Server state and TanStack Query</h4>
-<p>Fetching a list sounds simple: call <code>fetch</code> in an effect and put the result in state. In practice you also need a loading message, an error message, a way to avoid fetching the same list twice when two components need it, a cache so going back to a page is instant, and a way to refresh data that may have changed on the server. Writing all of that for every request is a lot of fiddly code.</p>
-<p><b>TanStack Query</b> (formerly React Query) does it for you:</p>
-<pre class="snip">const { data, isLoading, error } = useQuery({
-  queryKey: ['products'],
-  queryFn: () =&gt; fetch('/api/products').then((r) =&gt; r.json()),
-});</pre>
-<ul>
-<li><code>queryFn</code> is how to get the data. It must return a promise. <code>.then(fn)</code> is another way to wait for a promise, instead of <code>await</code>: "when the response arrives, run this function on it". Returning <code>r.json()</code> from it gives you the parsed array.</li>
-<li><code>queryKey</code> is the data's name in the cache. Any component asking for <code>['products']</code> shares the same cached copy and the same request.</li>
-<li>The hook returns an object; you destructure <code>data</code>, <code>isLoading</code> (true while the first load is in progress) and <code>error</code> (set if it failed).</li>
-</ul>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Query lifecycle: loading, then success with fresh data, cached and stale, then a background refetch">
-<g text-anchor="middle">
-<rect class="bx-warn" x="10" y="20" width="110" height="50" rx="8"/><text class="t-b" x="65" y="42">loading</text><text class="t-s" x="65" y="60">isLoading true</text>
-<rect class="bx-ok" x="155" y="20" width="110" height="50" rx="8"/><text class="t-b" x="210" y="42">success</text><text class="t-s" x="210" y="60">data is ready</text>
-<rect class="bx-info" x="300" y="20" width="110" height="50" rx="8"/><text class="t-b" x="355" y="42">cached</text><text class="t-s" x="355" y="60">later: stale</text>
-<rect class="bx-bad" x="10" y="130" width="110" height="50" rx="8"/><text class="t-b" x="65" y="152">error</text><text class="t-s" x="65" y="170">error is set</text>
-<rect class="bx" x="230" y="130" width="180" height="50" rx="8"/><text class="t-b" x="320" y="152">background refetch</text><text class="t-s" x="320" y="170">old data stays on screen</text>
-</g>
-<path class="ln" d="M120 45h26"/><polygon class="ah" points="144,39 144,51 154,45"/>
-<path class="ln" d="M265 45h26"/><polygon class="ah" points="289,39 289,51 299,45"/>
-<path class="ln-a" d="M65 70v50"/><polygon class="ah-a" points="59,118 71,118 65,128"/>
-<path class="ln" d="M355 70v50"/><polygon class="ah" points="349,118 361,118 355,128"/>
-<path class="ln-ok" d="M260 130l-40 -50"/><polygon class="ah-ok" points="214,86 224,79 215,72"/>
-<text class="t-s" x="410" y="104" text-anchor="end">e.g. window focus</text>
-</svg><figcaption>The life of a query. It starts loading. It either fails, setting error, or succeeds with data. The data is cached and, after a while, marked stale. A trigger such as returning to the browser tab fetches it again in the background while the old data stays on screen, then swaps in the fresh copy.</figcaption></figure>
-<p>A component using it follows a simple shape: if loading, return a loading message; if error, return an error message; otherwise map <code>data</code> to list items with keys. In TanStack Query version 5 you will also see <code>isPending</code>, which is closely related; both work for a first load.</p>
-<p>One setup step: the cache has to live somewhere. You create one <code>QueryClient</code> outside your components and wrap the app in <code>&lt;QueryClientProvider client={queryClient}&gt;</code>. Any component inside that wrapper can call <code>useQuery</code>.</p>
-<div class="mistake"><b>Common mistake</b>Forgetting the provider. <code>useQuery</code> outside a <code>QueryClientProvider</code> throws an error saying no QueryClient is set. Wrap everything that App returns, and create the client once, outside App, so it is not recreated on every render.</div>
-<div class="mistake"><b>Common mistake</b>Using <code>data</code> before it exists. On the first render <code>data</code> is <code>undefined</code>, so <code>data.map</code> crashes with "Cannot read properties of undefined". Handle the loading state first and return early.</div>
-
-<h4>Putting the tasks together</h4>
-<ol>
-<li>Create the <code>useCart</code> store with <code>items</code> and <code>add</code>. Write <code>CartBadge</code>, rendering a paragraph with id <code>badge</code>, and <code>AddButton</code>, a button labelled "Add to cart". Render both in App.</li>
-<li>Write <code>Products</code> with <code>useQuery</code> for <code>/api/products</code>, a loading message, and one <code>li</code> per product. This preview's pretend API answers that address with three products.</li>
-<li>Wrap App's content in the provider.</li>
-</ol>
-<div class="try"><b>Try it in your head</b>Two components on the same page both call <code>useQuery</code> with the key <code>['products']</code>. How many network requests are made? One: they share the cache entry, and the second simply reads the same result. And is "the search box is open" client or server state? Client state: only the browser knows it, so a <code>useState</code> or a store is the right home.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Keep state local first. When distant components share it, use a store instead of drilling props through every layer.</li>
-<li>Zustand: <code>create((set) =&gt; ({ … }))</code> makes a hook; components pick values with selectors and re-render only when those change.</li>
-<li>Redux Toolkit does the same with slices, reducers and dispatched actions, adding structure and devtools for large teams.</li>
-<li>Server data is a cached copy: let TanStack Query fetch, cache, share and refresh it.</li>
-<li><code>useQuery({ queryKey, queryFn })</code> gives <code>data</code>, <code>isLoading</code> and <code>error</code>, inside a <code>QueryClientProvider</code>.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Whether a menu is open: client or server state? <i>Client.</i> 2. Two components call useQuery with the same key at once. How many requests? <i>One: they share it.</i> 3. Why select <code>(s) =&gt; s.items</code> instead of the whole store? <i>So the component re-renders only when items changes.</i></div>
 `);
 
 explain('f6',`
-<h4>Why forms deserve their own tools</h4>
-<p>Forms are how users talk to your app: signing up, logging in, checking out, posting a comment. They look simple, a few boxes and a button, but every form has to answer the same awkward questions. What did the user type? Is it valid? Which message goes under which box? When should errors appear? What happens on submit?</p>
-<p>You could answer them by hand with <code>useState</code>: one piece of state per field, an <code>onChange</code> on every input, a pile of <code>if</code> statements for the checks, and more state for the error messages. For two fields that is tolerable. For a twenty-field checkout it becomes hundreds of lines of repetitive, easy-to-break code, and every keystroke re-renders the whole form.</p>
-<p>The modern pairing splits the job in two. <b>React Hook Form</b> manages the form: it collects values, tracks errors and handles submission. <b>Zod</b> describes what valid data looks like and checks it. A small adapter called a <b>resolver</b> connects them.</p>
+<p>Sign-up, checkout, contact forms: forms are where users give you data, and where most bugs and frustration hide. Two tools make them reliable: Zod checks the data, React Hook Form runs the form.</p>
 
-<h4>Zod: describe the shape once</h4>
-<p>A <b>schema</b> is a description of what valid data looks like. With Zod you build one from small pieces:</p>
-<pre class="snip">import { z } from 'zod';
+${V.card(1,'Zod schemas','a bouncer with a checklist',`
+<figure class="fig"><svg viewBox="0 0 420 175" role="img" aria-label="Form data goes past a shield, the schema. The email fails with a message, the password passes">
+<rect class="bx" x="10" y="20" width="130" height="110" rx="8"/>
+<text class="t-s" x="22" y="44">email</text><text class="t-m" x="22" y="66" style="font-size:14px">'ada@'</text>
+<text class="t-s" x="22" y="94">password</text><text class="t-m" x="22" y="116" style="font-size:14px">'longenough'</text>
+<path class="ln-a" d="M144 75H156"/><polygon class="ah-a" points="154,68 154,82 166,75"/>
+${V.ic('shield',168,42,60,'ic-a')}<text class="t-s" x="198" y="126" text-anchor="middle">schema</text>
+<path class="ln-a" d="M230 75H240"/><polygon class="ah-a" points="238,68 238,82 250,75"/>
+${V.ic('cross',254,26,30,'ic-bad')}<text class="t t-bad" x="290" y="48">email</text><text class="t-s" x="254" y="74">"Please enter an email"</text>
+${V.ic('check',254,90,30,'ic-ok')}<text class="t t-ok" x="290" y="112">password</text>
+<text class="t-s" x="210" y="164" text-anchor="middle">every field checked, every failure explained</text>
+</svg><figcaption>A schema describes what valid data looks like. Zod checks real data against it and lists every problem, with the message you chose.</figcaption></figure>
+${V.like(`<p>A bouncer with a checklist at the door: "must have a ticket", "must be 18". Anyone who does not fit is turned away, and the bouncer says exactly why.</p>`)}
+${V.why(`<p>Data typed by users, or sent by other programs, can be anything at all. TypeScript types vanish when the code runs, so they cannot check it. <b>Zod</b> (2020) lets you write the expected shape once and check real data at run time, in the browser and on the server.</p>`)}
+${V.anat([[1,'z.object'],'({\n  email: ',[2,'z.string()'],[3,".email('Please enter an email')"],',\n  password: z.string()',[4,".min(8, 'Too short')"],',\n});'],[
+ '<b>An object</b> with these fields.',
+ '<b>A type check.</b> It must be text.',
+ '<b>A rule</b>, plus the message the user will see when it fails.',
+ '<b>Another rule.</b> At least 8 characters. Rules chain one after another.'])}
+${V.steps([
+ ['<b>safeParse</b> checks the data. First, email: is it a string? Yes. Is it an email address? <b>ada@</b> has nothing after the @, so no.',`<svg viewBox="0 0 420 170" role="img" aria-label="Email fails the email rule">
+<rect class="bx-dark" x="6" y="8" width="408" height="36" rx="6"/><text class="t-term" x="16" y="31" style="font-size:14px">safeParse({ email: 'ada@', password: 'short' })</text>
+<rect class="bx-bad" x="10" y="58" width="400" height="36" rx="6"/><text class="t-m" x="22" y="81" style="font-size:14px">email</text><text class="t t-bad" x="120" y="81">not an email</text>
+<rect class="bx" x="10" y="102" width="400" height="36" rx="6"/><text class="t-m t-dim" x="22" y="125" style="font-size:14px">password</text>
+</svg>`],
+ ['Zod does not stop at the first problem. Password: a string, yes. At least 8 characters? <b>short</b> has 5, so no.',`<svg viewBox="0 0 420 170" role="img" aria-label="Password fails min 8">
+<rect class="bx-dark" x="6" y="8" width="408" height="36" rx="6"/><text class="t-term" x="16" y="31" style="font-size:14px">safeParse({ email: 'ada@', password: 'short' })</text>
+<rect class="bx-bad" x="10" y="58" width="400" height="36" rx="6"/><text class="t-m" x="22" y="81" style="font-size:14px">email</text><text class="t t-bad" x="120" y="81">not an email</text>
+<rect class="bx-bad" x="10" y="102" width="400" height="36" rx="6"/><text class="t-m" x="22" y="125" style="font-size:14px">password</text><text class="t t-bad" x="120" y="125">5 &lt; 8 characters</text>
+</svg>`],
+ ['The result: <b>success: false</b> and a list of issues. Each issue has a <b>path</b> (which field) and your <b>message</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="Result with two issues">
+<rect class="bx-bad" x="10" y="10" width="400" height="150" rx="8"/>
+<text class="t-m" x="22" y="38" style="font-size:14px">success: false</text>
+<text class="t-m" x="22" y="68" style="font-size:14px">issues:</text>
+<text class="t-m" x="40" y="96" style="font-size:14px">path: ['email']</text><text class="t" x="220" y="96">Please enter an email</text>
+<text class="t-m" x="40" y="126" style="font-size:14px">path: ['password']</text><text class="t" x="220" y="126">Too short</text>
+</svg>`],
+ ['With good data, <b>success: true</b> and <b>data</b> holds the checked values, safe to use.',`<svg viewBox="0 0 420 170" role="img" aria-label="Valid data passes">
+<rect class="bx-ok" x="10" y="10" width="400" height="150" rx="8"/>
+<text class="t-m" x="22" y="38" style="font-size:14px">success: true</text>
+<text class="t-m" x="22" y="68" style="font-size:14px">data:</text>
+<text class="t-m" x="40" y="96" style="font-size:14px">email: 'ada@example.com'</text>
+<text class="t-m" x="40" y="126" style="font-size:14px">password: 'longenough'</text>
+${V.ic('check',360,20,36,'ic-ok')}
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('schema.safeParse(data)','Returns success or a list of issues'),V.ok('schema.parse(data)','Throws an error instead: wrap it in try/catch'),
+ V.no('.min(8) on a number field','On a number, min means the smallest value, not length'),
+ V.rh('Conventions'),
+ V.ok("z.email()",'Zod 4 also offers this shorter form; z.string().email() still works'),
+ V.ok('messages for humans','"Use at least 8 characters", not "invalid"'))}
+${V.hook(`Describe it once, check it anywhere. Every failure comes with a path and a message.`)}
+`)}
 
-const schema = z.object({
-  email: z.string().email('Enter a valid email'),
-  password: z.string().min(8, 'Use at least 8 characters'),
-});</pre>
-<p>Read it aloud and it is almost English: "an object, whose email is a string that is a valid email address, and whose password is a string with a minimum length of 8". Each rule can take a message as its last argument, which becomes the error text the user sees.</p>
-<p>Chaining like <code>z.string().email()</code> works because each method returns a new schema with one more rule added. Zod version 4 also offers a shorter <code>z.email()</code>; the chained form used here still works.</p>
-<p>To check data against a schema, call <code>safeParse</code>:</p>
-<pre class="snip">schema.safeParse({ email: 'nope', password: 'short' });
-// { success: false, error: { issues: [
-//     { path: ['email'], message: 'Enter a valid email', ... },
-//     { path: ['password'], message: 'Use at least 8 characters', ... } ] } }</pre>
-<p>It never crashes. It returns an object whose <code>success</code> is <code>true</code> with the clean <code>data</code>, or <code>false</code> with a list of <b>issues</b>. Each issue says which field failed, in <code>path</code>, and why, in <code>message</code>. (There is also <code>parse</code>, which throws an error instead of returning one.)</p>
+${V.card(2,'React Hook Form','collect, check, submit',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="Each input is registered by name with the form, which collects all values on submit">
+<text class="t-s" x="10" y="28">Email</text><rect class="bx" x="10" y="36" width="200" height="34" rx="6"/><text class="t" x="20" y="58">ada@example.com</text>
+<text class="t-s" x="10" y="94">Password</text><rect class="bx" x="10" y="102" width="200" height="34" rx="6"/><text class="t" x="20" y="124">&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;&#8226;</text>
+<path class="ln-a" d="M214 53H270M214 119H270"/><text class="t-m t-a" x="220" y="44" style="font-size:13px">register</text>
+${V.ic('list',282,40,80,'ic-ok')}<text class="t-b" x="322" y="146" text-anchor="middle">useForm</text>
+</svg><figcaption>register connects each input to the form by name. The form reads every value when you submit, instead of tracking each keystroke.</figcaption></figure>
+${V.like(`<p>An exam invigilator. They do not read over your shoulder at every word you write. They collect every answer sheet at the end and mark them all at once. That is why typing in a React Hook Form does not re-render the whole form.</p>`)}
+${V.anat(['&lt;input ',[1,'{...'],[2,'register'],'(',[3,"'email'"],')',[1,'}'],' /&gt;'],[
+ '<b>Spread.</b> Copies the props register returns (name, onChange, onBlur, ref) onto the input.',
+ '<b>register.</b> "Form, keep track of this input."',
+ '<b>The field name.</b> Must match the key in your schema.'])}
+<p><b>Watch a submit</b>, first with bad data, then good.</p>
+${V.steps([
+ ['You click <b>Sign up</b>. <b>handleSubmit</b> stops the browser reloading the page and collects every registered value.',`<svg viewBox="0 0 420 180" role="img" aria-label="handleSubmit collects values">
+<rect class="bx" x="10" y="14" width="200" height="34" rx="6"/><text class="t" x="20" y="36">not-an-email</text>
+<rect class="bx" x="10" y="76" width="200" height="34" rx="6"/><text class="t" x="20" y="98">short</text>
+<rect class="bx-hl" x="10" y="136" width="120" height="36" rx="8"/><text class="t-b" x="70" y="159" text-anchor="middle">Sign up</text>
+<text class="t-b t-a" x="232" y="40">1. collect</text><text class="t-s t-dim" x="232" y="70">2. check</text><text class="t-s t-dim" x="232" y="100">3. errors or submit</text>
+</svg>`],
+ ['The <b>resolver</b> hands the values to your Zod schema. Both fields fail.',`<svg viewBox="0 0 420 180" role="img" aria-label="Resolver runs the schema">
+<rect class="bx-bad" x="10" y="14" width="200" height="34" rx="6"/><text class="t" x="20" y="36">not-an-email</text>
+<rect class="bx-bad" x="10" y="76" width="200" height="34" rx="6"/><text class="t" x="20" y="98">short</text>
+<rect class="bx" x="10" y="136" width="120" height="36" rx="8"/><text class="t-b" x="70" y="159" text-anchor="middle">Sign up</text>
+<text class="t-s t-dim" x="232" y="40">1. collect</text><text class="t-b t-a" x="232" y="70">2. check</text><text class="t-s t-dim" x="232" y="100">3. errors or submit</text>
+${V.ic('shield',232,116,40,'ic-a')}
+</svg>`],
+ ['The issues land in <b>formState.errors</b>. Each field shows its message, and your submit function is <b>not</b> called.',`<svg viewBox="0 0 420 180" role="img" aria-label="Errors shown under the fields">
+<rect class="bx-bad" x="10" y="14" width="200" height="34" rx="6"/><text class="t" x="20" y="36">not-an-email</text>
+<text class="t-s t-bad" x="10" y="66">Please enter an email</text>
+<rect class="bx-bad" x="10" y="76" width="200" height="34" rx="6"/><text class="t" x="20" y="98">short</text>
+<text class="t-s t-bad" x="10" y="128">Too short</text>
+<rect class="bx" x="10" y="136" width="120" height="36" rx="8"/><text class="t-b" x="70" y="159" text-anchor="middle">Sign up</text>
+<text class="t-s t-dim" x="232" y="40">1. collect</text><text class="t-s t-dim" x="232" y="70">2. check</text><text class="t-b t-bad" x="232" y="100">3. show errors</text>
+</svg>`],
+ ['Fix the fields and submit again. The schema passes, so handleSubmit calls <b>your function</b> with the clean data.',`<svg viewBox="0 0 420 180" role="img" aria-label="Valid: your function runs">
+<rect class="bx-ok" x="10" y="14" width="200" height="34" rx="6"/><text class="t" x="20" y="36">ada@example.com</text>
+<rect class="bx-ok" x="10" y="76" width="200" height="34" rx="6"/><text class="t" x="20" y="98">longenough123</text>
+<rect class="bx" x="10" y="136" width="120" height="36" rx="8"/><text class="t-b" x="70" y="159" text-anchor="middle">Sign up</text>
+<text class="t-s t-dim" x="232" y="40">1. collect</text><text class="t-s t-dim" x="232" y="70">2. check</text><text class="t-b t-ok" x="232" y="100">3. onValid(data)</text>
+<text class="t" x="232" y="140">Welcome, ada@...!</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok("useForm({ resolver: zodResolver(schema) })",'Connects the schema to the form'),V.ok('handleSubmit(onValid)','Wrap your function; it only runs when the data is valid'),
+ V.no("&lt;input register('email')&gt;",'Needs the spread inside braces: {...register("email")}'),
+ V.ok('errors.email &amp;&amp; ...','Only render the message when there is an error'),
+ V.rh('Conventions'),
+ V.ok('import { zodResolver } from "@hookform/resolvers/zod"','The usual source of the resolver in real projects'))}
+${V.hook(`Register every field, check on submit, show errors or call your function.`)}
+`)}
 
-<h4>React Hook Form: register, handleSubmit, errors</h4>
-<p>The <code>useForm</code> hook gives you a toolkit. You destructure the three parts you need:</p>
-<pre class="snip">const { register, handleSubmit, formState: { errors } } =
-  useForm({ resolver: zodResolver(schema) });</pre>
-<p>That line uses <b>nested destructuring</b>: take <code>formState</code> out of the result, then take <code>errors</code> out of <code>formState</code>.</p>
-<p><b>register</b> connects one input to the form:</p>
-<pre class="snip">&lt;input {...register('email')} /&gt;</pre>
-<p><code>register('email')</code> returns an object of props: the field's <code>name</code>, an <code>onChange</code> and an <code>onBlur</code> handler, and a <code>ref</code>, React's way of holding a direct reference to the real DOM element. The <code>{...}</code> <b>spread</b> syntax copies every one of those props onto the input. You do not write them yourself.</p>
-<p>Because React Hook Form reads values straight from the DOM elements through those refs, typing does not have to update React state on every key. Inputs that keep their own value like this are called <b>uncontrolled</b>. The result is less code and fewer re-renders.</p>
-<p><b>handleSubmit</b> wraps your submit function:</p>
-<pre class="snip">&lt;form onSubmit={handleSubmit(onValid)}&gt;</pre>
-<p>When the form is submitted, <code>handleSubmit</code> first stops the browser's default behaviour, which would reload the whole page. Then it collects all values and validates them. Only if everything passes does it call your <code>onValid</code> function with the clean data. If anything fails, it fills <code>errors</code> instead, and your function never runs.</p>
-<figure class="fig"><svg viewBox="0 0 420 270" role="img" aria-label="Submit flow: values go through handleSubmit and the resolver to Zod; either errors are shown or onValid runs">
-<rect class="bx-info" x="130" y="10" width="160" height="40" rx="8"/><text class="t-b" x="210" y="35" text-anchor="middle">click Sign up</text>
-<path class="ln" d="M210 50v14"/><polygon class="ah" points="204,62 216,62 210,70"/>
-<rect class="bx-a" x="110" y="72" width="200" height="40" rx="8"/><text class="t-m" x="210" y="97" text-anchor="middle">handleSubmit</text>
-<path class="ln" d="M210 112v14"/><polygon class="ah" points="204,124 216,124 210,132"/>
-<rect class="bx-warn" x="90" y="134" width="240" height="40" rx="8"/><text class="t" x="210" y="159" text-anchor="middle">resolver: Zod safeParse</text>
-<path class="ln-a" d="M150 174l-50 36"/><polygon class="ah-a" points="96,202 106,210 94,214"/>
-<path class="ln-ok" d="M270 174l50 36"/><polygon class="ah-ok" points="314,210 326,206 324,216"/>
-<rect class="bx-bad" x="10" y="214" width="180" height="48" rx="8"/><text class="t-b" x="100" y="236" text-anchor="middle">invalid</text><text class="t-s" x="100" y="254" text-anchor="middle">errors filled, shown</text>
-<rect class="bx-ok" x="230" y="214" width="180" height="48" rx="8"/><text class="t-b" x="320" y="236" text-anchor="middle">valid</text><text class="t-s" x="320" y="254" text-anchor="middle">onValid(data) runs</text>
-</svg><figcaption>What happens on submit. handleSubmit stops the page reload and passes the values to the resolver, which runs Zod's safeParse. If anything is invalid, the errors object is filled and messages appear under the fields. If everything is valid, your onValid function runs with the clean data.</figcaption></figure>
+${V.card(3,'Safe and accessible','check twice, speak up',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A person uses the form, which checks the data. An attacker's script skips the form and goes straight to the server, so the server must check too">
+${V.ic('person',10,10,50,'ic-info')}
+<path class="ln-a" d="M64 36H110"/><polygon class="ah-a" points="108,29 108,43 120,36"/>
+<rect class="bx" x="122" y="14" width="110" height="46" rx="8"/><text class="t-b" x="177" y="42" text-anchor="middle">form</text>
+<path class="ln-a" d="M236 36H300"/><polygon class="ah-a" points="298,29 298,43 310,36"/>
+${V.ic('server',316,8,64,'ic-ok')}${V.ic('shield',370,60,36,'ic-ok')}
+${V.ic('robot',10,100,50,'ic-bad')}
+<path class="ln-a" d="M64 124H330V82"/><polygon class="ah-a" points="323,84 337,84 330,74"/>
+<text class="t-s t-bad" x="150" y="146" text-anchor="middle">a script skips the form</text>
+<text class="t-s t-ok" x="374" y="116" text-anchor="middle">check again</text>
+</svg><figcaption>Browser checks are for the user's comfort. Anyone can skip the form and send data straight to your server, so the server must run the same schema.</figcaption></figure>
+${V.like(`<p>A sign on a shop door saying "no dogs" is helpful. But a guard inside is what actually keeps dogs out. The form's checks are the sign; the server's checks are the guard.</p>`)}
+${V.rules(V.rh('Rules'),
+ V.no('trusting browser validation','Anyone can call your API directly'),V.ok('same schema on the server','Write it once, check it in both places'),
+ V.ok('&lt;label&gt;Email &lt;input ...&gt;&lt;/label&gt;','A label tells screen readers what the box is for'),V.ok('&lt;p role="alert"&gt;','Error messages are read aloud as they appear'),
+ V.rh('Conventions'),
+ V.ok('type="submit" on the button','Enter key and click both submit'))}
+${V.build(`<ol><li>Write a Zod object schema with an email rule and a minimum-length password rule, each with a friendly message.</li><li>Call <code>useForm</code> with a resolver built from that schema.</li><li>Register two labelled inputs with names matching the schema keys.</li><li>Under each, render the error message in a <code>p</code> with <code>role="alert"</code> when there is one.</li><li>Pass your success function to <code>handleSubmit</code> on the form, and show a welcome message with the email.</li></ol>`)}
+${V.hook(`Browser checks are a kindness, server checks are the lock.`)}
+`)}
 
-<h4>The resolver: the bridge between them</h4>
-<p>React Hook Form and Zod do not know about each other. A <b>resolver</b> is a function React Hook Form calls with the form's values; it must return either the valid values, or an <code>errors</code> object keyed by field name. In a real project you import a ready-made one, <code>zodResolver</code>, from the package <code>@hookform/resolvers/zod</code>. This sandbox does not have that package, so you write its core yourself. It is shorter than you might fear:</p>
-<pre class="snip">const zodResolver = (schema) =&gt; async (values) =&gt; {
-  const result = schema.safeParse(values);
-  if (result.success) return { values: result.data, errors: {} };
-  // otherwise: build errors from result.error.issues
-};</pre>
-<p>Note the double arrow. <code>zodResolver(schema)</code> is a function that <b>returns another function</b>, the resolver itself, which remembers <code>schema</code> through a closure, the idea from the DOM lesson. For the failure case, loop over <code>result.error.issues</code> with <code>for…of</code>. For each issue, the field name is <code>issue.path[0]</code>, the first entry of its path, and you store <code>{ message: issue.message }</code> under that name. Return <code>{ values: {}, errors }</code> at the end.</p>
-
-<h4>Showing errors, accessibly</h4>
-<pre class="snip">{errors.email &amp;&amp; &lt;p role="alert"&gt;{errors.email.message}&lt;/p&gt;}</pre>
-<p>This is a common JSX pattern for "show this only if". The <code>&amp;&amp;</code> operator means "and". If <code>errors.email</code> does not exist, the expression stops there and React renders nothing. If it does exist, the result is the paragraph, so it appears.</p>
-<p>Two small accessibility habits make a big difference:</p>
-<ul>
-<li>Wrap each input in a <code>&lt;label&gt;</code> with visible text. Clicking the label focuses the input, and a screen reader announces "Email, edit text" instead of just "edit text".</li>
-<li>Give error messages <code>role="alert"</code>. A screen reader then reads the message out the moment it appears, so a blind user knows the submit failed and why.</li>
-</ul>
-<p>For the password field, add <code>type="password"</code> so the characters are hidden. The button should have <code>type="submit"</code>; a button inside a form submits it by default, but being explicit avoids surprises.</p>
-<div class="mistake"><b>Common mistake</b>Writing <code>onSubmit={onValid}</code> without <code>handleSubmit</code>. The browser then performs its old-fashioned submit and reloads the page, wiping everything, and no validation runs. Always pass your function <i>through</i> <code>handleSubmit</code>.</div>
-<div class="mistake"><b>Common mistake</b>A field that never validates because its name differs. <code>register('Email')</code> with a schema key <code>email</code> do not match: names are case-sensitive and must be identical in the schema, in <code>register</code> and in <code>errors.email</code>.</div>
-
-<h4>Validate on the server too</h4>
-<p>Everything above runs in the user's browser, and the user controls their browser completely. They can switch JavaScript off, edit your code in the developer tools, or skip your page entirely and send a request straight to your API with a command-line tool. Browser validation is a convenience for honest users: instant feedback, fewer mistakes. It is <b>not security</b>.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Two paths to the API: through the form with browser validation, and a direct request that skips it; only server validation catches both">
-<rect class="bx-info" x="10" y="20" width="110" height="44" rx="8"/><text class="t-b" x="65" y="47" text-anchor="middle">your form</text>
-<rect class="bx-ok" x="150" y="20" width="110" height="44" rx="8"/><text class="t-s" x="205" y="40" text-anchor="middle">browser</text><text class="t-s" x="205" y="56" text-anchor="middle">validation</text>
-<rect class="bx-bad" x="10" y="130" width="110" height="44" rx="8"/><text class="t-b" x="65" y="157" text-anchor="middle">attacker</text>
-<rect class="bx-a" x="300" y="64" width="110" height="64" rx="8"/><text class="t-b" x="355" y="90" text-anchor="middle">server</text><text class="t-s" x="355" y="110" text-anchor="middle">validates again</text>
-<path class="ln" d="M120 42h22"/><polygon class="ah" points="140,36 140,48 150,42"/>
-<path class="ln-ok" d="M260 42l32 26"/><polygon class="ah-ok" points="286,72 296,64 298,76"/>
-<path class="ln-a" d="M120 152h120l52 -28"/><polygon class="ah-a" points="286,118 296,130 300,118"/>
-<text class="t-s t-a" x="190" y="144" text-anchor="middle">skips the form</text>
-</svg><figcaption>Two ways data reaches your server. Honest users come through your form, where browser validation helps them. An attacker can send a request directly and skip the form. Only validation on the server catches both, so the server must always check again.</figcaption></figure>
-<p>The server must check every request again. A nice benefit of Zod is that the very same schema can run on a Node.js server, so the rules are written once and stay in sync.</p>
-
-<h4>The tasks</h4>
-<ol>
-<li>Write the schema with both messages exactly as the task states.</li>
-<li>Write the resolver, set up <code>useForm</code> with it, register an email input and a password input, and show each field's message under it.</li>
-<li>Keep a <code>welcome</code> value in <code>useState</code> (the starter does not import it, so add <code>import { useState } from 'react';</code>), and in your valid-submit function set it to the submitted email, then show "Welcome, " followed by that email.</li>
-</ol>
-<div class="try"><b>Try it in your head</b>The user types <code>ada@example.com</code> and the password <code>abc</code>, then submits. What appears? The email passes, the password fails the minimum length, so "Use at least 8 characters" appears under the password and the welcome function does not run. What would <code>issue.path[0]</code> be for that failure? The string <code>'password'</code>.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Zod describes valid data once with a schema; <code>safeParse</code> returns success with data, or a list of issues with paths and messages.</li>
-<li>React Hook Form: <code>register</code> connects inputs, <code>handleSubmit</code> validates and stops the page reload, <code>formState.errors</code> holds messages.</li>
-<li>A resolver bridges the two by turning Zod's issues into an errors object keyed by field name.</li>
-<li>Use labels and <code>role="alert"</code> so everyone can use and understand your form.</li>
-<li>Browser validation is for user experience; always validate again on the server, ideally with the same schema.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. What does <code>safeParse</code> return for bad data? <i>success: false and a list of issues.</i> 2. Does typing in a React Hook Form re-render the whole form on each key? <i>No: it reads the values when needed.</i> 3. Your form validates in the browser. Skip server checks? <i>No. Anyone can call the API directly.</i></div>
 `);
 
 explain('f8',`
