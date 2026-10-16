@@ -1235,7 +1235,6 @@ ${V.hook(`Types are the bouncer: wrong type, 422, and the chef never sees it.`)}
 ${V.card(3,'Query parameters and running it','the extras after the ?',`
 <figure class="fig"><svg viewBox="0 0 420 140" role="img" aria-label="The address /search?q=key&amp;max_price=50 split into path, q and max_price, matching the function parameters">
 <text class="t-m" x="10" y="34" style="font-size:17px">/search<tspan class="t-a">?q=key</tspan><tspan class="t-info">&amp;max_price=50</tspan></text>
-<text class="t-a" x="80" y="60" style="font-size:14px">q</text><text class="t-info" x="190" y="60" style="font-size:14px">max_price</text>
 <rect class="bx" x="6" y="70" width="408" height="62" rx="8"/>
 <text class="t-m" x="16" y="96" style="font-size:14px">def search(<tspan class="t-a">q: str = ""</tspan>,</text>
 <text class="t-m t-info" x="110" y="120" style="font-size:14px">max_price: float = 1000):</text>
@@ -1356,15 +1355,15 @@ ${V.hook(`Middle is easy, edges are where bugs live.`)}
 `)}
 
 ${V.card(4,'Fixtures','ready-made test ingredients',`
-<figure class="fig"><svg viewBox="0 0 420 218" role="img" aria-label="fixture step 4">
+<figure class="fig"><svg viewBox="0 0 420 218" role="img" aria-label="A cart fixture handed to the test that names it">
 <rect class="bx-info" x="6" y="8" width="408" height="62" rx="8"/>
 <text class="t-m t-a" x="16" y="32" style="font-size:14px">@pytest.fixture</text>
 <text class="t-m" x="16" y="56" style="font-size:14px">def <tspan class="t-b">cart</tspan>(): return [...]</text>
-<rect class="bx-hl" x="6" y="150" width="408" height="62" rx="8"/>
+<rect class="bx-ok" x="6" y="150" width="408" height="62" rx="8"/>
 <text class="t-m" x="16" y="174" style="font-size:14px">def test_cart_total(<tspan class="t-a">cart</tspan>):</text>
 <text class="t-m" x="40" y="198" style="font-size:14px">assert cart_total(cart) == 25.5</text>
 <path class="ln-a" d="M120 148V80"/><polygon class="ah-a" points="113,82 127,82 120,72"/>
-<text class="t" x="132" y="104" style="font-size:14px">pytest finds the fixture</text><text class="t" x="132" y="122" style="font-size:14px">with the same name</text>
+<text class="t" x="132" y="104" style="font-size:14px">finds the fixture</text><text class="t" x="132" y="122" style="font-size:14px">named cart</text>
 <rect class="bx-ok" x="286" y="80" width="128" height="60" rx="8"/>${V.ic('list',294,88,26,'ic-ok')}<text class="t-m" x="326" y="106" style="font-size:14px">2 items</text><text class="t" x="350" y="130" text-anchor="middle" style="font-size:14px">fresh copy</text>
 <path class="ln-ok" d="M350 142V148"/><polygon class="ah-ok" points="343,144 357,144 350,152"/>
 <text class="t-b t-ok" x="404" y="198" text-anchor="end" style="font-size:16px">&#10003;</text>
@@ -1388,7 +1387,7 @@ ${V.steps([
 <text class="t-m" x="16" y="174" style="font-size:14px">def test_cart_total(<tspan class="t-a">cart</tspan>):</text>
 <text class="t-m" x="40" y="198" style="font-size:14px">assert cart_total(cart) == 25.5</text>
 <path class="ln-a" d="M120 148V80"/><polygon class="ah-a" points="113,82 127,82 120,72"/>
-<text class="t" x="132" y="104" style="font-size:14px">pytest finds the fixture</text><text class="t" x="132" y="122" style="font-size:14px">with the same name</text>
+<text class="t" x="132" y="104" style="font-size:14px">finds the fixture</text><text class="t" x="132" y="122" style="font-size:14px">named cart</text>
 </svg>`],
  ['It calls the fixture, which builds a fresh cart list.',`<svg viewBox="0 0 420 218" role="img" aria-label="fixture step 3">
 <rect class="bx-hl" x="6" y="8" width="408" height="62" rx="8"/>
@@ -1398,7 +1397,7 @@ ${V.steps([
 <text class="t-m" x="16" y="174" style="font-size:14px">def test_cart_total(<tspan class="t-a">cart</tspan>):</text>
 <text class="t-m" x="40" y="198" style="font-size:14px">assert cart_total(cart) == 25.5</text>
 <path class="ln-a" d="M120 148V80"/><polygon class="ah-a" points="113,82 127,82 120,72"/>
-<text class="t" x="132" y="104" style="font-size:14px">pytest finds the fixture</text><text class="t" x="132" y="122" style="font-size:14px">with the same name</text>
+<text class="t" x="132" y="104" style="font-size:14px">finds the fixture</text><text class="t" x="132" y="122" style="font-size:14px">named cart</text>
 <rect class="bx-ok" x="286" y="80" width="128" height="60" rx="8"/>${V.ic('list',294,88,26,'ic-ok')}<text class="t-m" x="326" y="106" style="font-size:14px">2 items</text><text class="t" x="350" y="130" text-anchor="middle" style="font-size:14px">fresh copy</text>
 </svg>`],
  ['It passes that list into the test as <b>cart</b>, and the assert runs. Pass.',`<svg viewBox="0 0 420 218" role="img" aria-label="fixture step 4">
@@ -1409,7 +1408,7 @@ ${V.steps([
 <text class="t-m" x="16" y="174" style="font-size:14px">def test_cart_total(<tspan class="t-a">cart</tspan>):</text>
 <text class="t-m" x="40" y="198" style="font-size:14px">assert cart_total(cart) == 25.5</text>
 <path class="ln-a" d="M120 148V80"/><polygon class="ah-a" points="113,82 127,82 120,72"/>
-<text class="t" x="132" y="104" style="font-size:14px">pytest finds the fixture</text><text class="t" x="132" y="122" style="font-size:14px">with the same name</text>
+<text class="t" x="132" y="104" style="font-size:14px">finds the fixture</text><text class="t" x="132" y="122" style="font-size:14px">named cart</text>
 <rect class="bx-ok" x="286" y="80" width="128" height="60" rx="8"/>${V.ic('list',294,88,26,'ic-ok')}<text class="t-m" x="326" y="106" style="font-size:14px">2 items</text><text class="t" x="350" y="130" text-anchor="middle" style="font-size:14px">fresh copy</text>
 <path class="ln-ok" d="M350 142V148"/><polygon class="ah-ok" points="343,144 357,144 350,152"/>
 <text class="t-b t-ok" x="404" y="198" text-anchor="end" style="font-size:16px">&#10003;</text>
@@ -1424,106 +1423,251 @@ ${V.hook(`Name it in the brackets and pytest brings it to the table.`)}
 `);
 
 explain('y6',`
-<h4>Why write scripts for chores</h4>
-<p>Some computer jobs are boring, repetitive and easy to get wrong by hand: sorting a messy downloads folder, renaming a hundred photos, turning a weekly spreadsheet into a report. A <b>script</b> is a short program that does a chore like that for you. Write it once, and the job takes one command forever after. It can even run on a schedule while you sleep.</p>
-<p>This lesson's chore: a <code>downloads/</code> folder with eight files of mixed types, all dumped in one place. Your script sorts them into sub-folders by type and writes a <code>report.txt</code> saying what it did. You already have the building blocks: loops, dicts, functions, and opening files with <code>with</code>. The new pieces are two modules for working with the file system.</p>
-<figure class="fig"><svg viewBox="0 0 420 300" role="img" aria-label="A flat downloads folder of eight files becomes four sub-folders">
-<text class="t-b" x="20" y="22">before</text><text class="t-b" x="222" y="22">after</text>
-<rect class="bx-warn" x="10" y="32" width="170" height="196" rx="8"/>
-<text class="t-m" x="22" y="56">downloads/</text>
-<text class="t-s" x="34" y="78">IMG_2041.jpg</text><text class="t-s" x="34" y="96">IMG_2042.JPG</text><text class="t-s" x="34" y="114">photo.png</text><text class="t-s" x="34" y="132">report-q3.pdf</text><text class="t-s" x="34" y="150">budget.xlsx</text><text class="t-s" x="34" y="168">notes.txt</text><text class="t-s" x="34" y="186">song.mp3</text><text class="t-s" x="34" y="204">setup.zip</text>
-<path class="ln-a" d="M180 130h22"/><polygon class="ah-a" points="200,124 200,136 208,130"/>
-<rect class="bx-ok" x="210" y="32" width="200" height="262" rx="8"/>
-<text class="t-m" x="222" y="56">downloads/</text>
-<text class="t-b t-ok" x="230" y="80">images/</text>
-<text class="t-s" x="246" y="98">IMG_2041.jpg</text><text class="t-s" x="246" y="116">IMG_2042.JPG</text><text class="t-s" x="246" y="134">photo.png</text>
-<text class="t-b t-ok" x="230" y="158">documents/</text>
-<text class="t-s" x="246" y="176">report-q3.pdf</text><text class="t-s" x="246" y="194">budget.xlsx</text><text class="t-s" x="246" y="212">notes.txt</text>
-<text class="t-b t-ok" x="230" y="236">audio/</text><text class="t-s" x="300" y="236">song.mp3</text>
-<text class="t-b t-ok" x="230" y="264">other/</text><text class="t-s" x="300" y="264">setup.zip</text>
-</svg><figcaption>Before, all eight files sit loose in downloads. After the script, three images, three documents, one audio file and one other file each live in their own sub-folder, and a report records the counts.</figcaption></figure>
+<p>Renaming 500 photos, tidying a messy Downloads folder, building a weekly report: jobs that take a person an afternoon take a script a second. This is where Python pays you back for everything you have learned, and it is how many developers first become indispensable at work.</p>
 
-<h4>The tools: <code>os</code>, <code>os.path</code> and <code>shutil</code></h4>
-<p>Python's <code>os</code> module talks to the operating system: listing folders, making folders, checking what a path is. Inside it, <code>os.path</code> works with <b>paths</b>, the text addresses of files like <code>downloads/notes.txt</code>. The <code>shutil</code> module ("shell utilities") does bigger file operations like moving and copying.</p>
-<div class="tbl-wrap"><table><tr><th>Call</th><th>Does</th></tr>
-<tr><td><code>os.listdir("downloads")</code></td><td>Returns a list of the <b>names</b> inside the folder, files and folders alike.</td></tr>
-<tr><td><code>os.path.join("downloads", "a.pdf")</code></td><td>Glues path parts with the right separator: <code>downloads/a.pdf</code>.</td></tr>
-<tr><td><code>os.path.isdir(path)</code></td><td>True if the path is a folder.</td></tr>
-<tr><td><code>os.path.splitext(name)</code></td><td>Splits off the extension: a pair of the base name and the extension.</td></tr>
-<tr><td><code>os.makedirs(path, exist_ok=True)</code></td><td>Creates a folder, and any missing parent folders.</td></tr>
-<tr><td><code>shutil.move(src, dst)</code></td><td>Moves a file from one path to another.</td></tr></table></div>
-<p>Two of these hide traps worth understanding.</p>
-<p><code>os.listdir</code> returns bare names like <code>"notes.txt"</code>, not full paths. To do anything with the file, you must join the folder back on: <code>os.path.join("downloads", name)</code>. Also, the order of the names is not guaranteed, so never rely on it.</p>
-<p>Why <code>os.path.join</code> instead of just writing <code>"downloads/" + name</code>? Windows separates folders with a backslash and Linux and macOS use a forward slash. <code>join</code> uses the right one for the computer the script runs on, so the same script works everywhere.</p>
+${V.card(1,'Sorting files','a post room for your folders',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="A pile of mixed files in downloads is sorted by extension into images, documents, audio and other folders">
+<rect class="bx-warn" x="6" y="20" width="140" height="150" rx="10"/>${V.ic('folder',16,28,32,'ic-warn')}<text class="t-m" x="54" y="50" style="font-size:14px">downloads/</text>
+<text class="t-m" x="18" y="82" style="font-size:14px">IMG_2041.jpg</text><text class="t-m" x="18" y="104" style="font-size:14px">report-q3.pdf</text>
+<text class="t-m" x="18" y="126" style="font-size:14px">song.mp3</text><text class="t-m" x="18" y="148" style="font-size:14px">setup.zip ...</text>
+<path class="ln-a" d="M150 95H186"/><polygon class="ah-a" points="184,88 184,102 196,95"/>
+${V.ic('robot',150,40,40,'ic-a')}
+<rect class="bx-ok" x="204" y="8" width="210" height="38" rx="6"/>${V.ic('folder',212,13,28,'ic-info')}<text class="t-m" x="248" y="33" style="font-size:14px">images/</text><text class="t" x="404" y="33" text-anchor="end" style="font-size:14px">.jpg .png</text>
+<rect class="bx-ok" x="204" y="52" width="210" height="38" rx="6"/>${V.ic('folder',212,57,28,'ic-info')}<text class="t-m" x="248" y="77" style="font-size:14px">documents/</text><text class="t" x="404" y="77" text-anchor="end" style="font-size:14px">.pdf .txt</text>
+<rect class="bx-ok" x="204" y="96" width="210" height="38" rx="6"/>${V.ic('folder',212,101,28,'ic-info')}<text class="t-m" x="248" y="121" style="font-size:14px">audio/</text><text class="t" x="404" y="121" text-anchor="end" style="font-size:14px">.mp3 .wav</text>
+<rect class="bx" x="204" y="140" width="210" height="38" rx="6"/>${V.ic('folder',212,145,28,'ic-t')}<text class="t-m" x="248" y="165" style="font-size:14px">other/</text><text class="t" x="404" y="165" text-anchor="end" style="font-size:14px">the rest</text>
+</svg><figcaption>The script reads each file name, looks at the ending after the last dot (the extension) and moves the file into the matching folder.</figcaption></figure>
+${V.like(`<p>A school post room. Letters arrive in one big pile. Someone reads each envelope and drops it into the right pigeonhole. Anything without a pigeonhole goes in "other". Your script is that person, but it never gets bored.</p>`)}
+${V.why(`<p>Computers were invented to do repetitive work, and file chores are the most common repetitive work there is. Python's standard library ships with <code>os</code> (talk to the operating system) and <code>shutil</code> ("shell utilities": copy, move), so you need nothing extra to install.</p>`)}
+${V.anat([[1,'os.path'],'.',[2,'splitext'],'(',[3,'"IMG_2042.JPG"'],')',[4,'[1]'],[5,'.lower()']],[
+ '<b>os.path</b>: tools for working with file paths.',
+ '<b>splitext</b> ("split extension") cuts at the last dot: <code>("IMG_2042", ".JPG")</code>.',
+ '<b>The file name.</b>',
+ '<b>[1]</b> takes the second part, the extension.',
+ '<b>.lower()</b> makes ".JPG" and ".jpg" the same.'])}
+<p><b>Watch the script sort the folder.</b></p>
+${V.steps([
+ ['<b>os.listdir("downloads")</b> gives a list of the 8 names inside. The script will visit each one with a for loop.',`<svg viewBox="0 0 420 230" role="img" aria-label="sorting step 1">
+<text class="t-b" x="8" y="20">downloads/</text>
+<text class="t-m" x="10" y="44" style="font-size:14px">IMG_2041.jpg</text>
+<text class="t-m" x="10" y="67" style="font-size:14px">IMG_2042.JPG</text>
+<text class="t-m" x="10" y="90" style="font-size:14px">photo.png</text>
+<text class="t-m" x="10" y="113" style="font-size:14px">report-q3.pdf</text>
+<text class="t-m" x="10" y="136" style="font-size:14px">budget.xlsx</text>
+<text class="t-m" x="10" y="159" style="font-size:14px">notes.txt</text>
+<text class="t-m" x="10" y="182" style="font-size:14px">song.mp3</text>
+<text class="t-m" x="10" y="205" style="font-size:14px">setup.zip</text>
+<text class="t-m t-a" x="198" y="96" text-anchor="middle" style="font-size:14px">os.listdir</text>
+<path class="ln-a" d="M160 108H238"/><polygon class="ah-a" points="236,101 236,115 248,108"/>
+<text class="t" x="198" y="134" text-anchor="middle" style="font-size:14px">8 names</text>
+<rect class="ln-d" x="252" y="10" width="162" height="42" rx="6"/>
+${V.ic('folder',260,17,28,'ic-t')}
+<text class="t-m t-dim" x="294" y="37" style="font-size:14px">images/</text>
+<rect class="ln-d" x="252" y="60" width="162" height="42" rx="6"/>
+${V.ic('folder',260,67,28,'ic-t')}
+<text class="t-m t-dim" x="294" y="87" style="font-size:14px">documents/</text>
+<rect class="ln-d" x="252" y="110" width="162" height="42" rx="6"/>
+${V.ic('folder',260,117,28,'ic-t')}
+<text class="t-m t-dim" x="294" y="137" style="font-size:14px">audio/</text>
+<rect class="ln-d" x="252" y="160" width="162" height="42" rx="6"/>
+${V.ic('folder',260,167,28,'ic-t')}
+<text class="t-m t-dim" x="294" y="187" style="font-size:14px">other/</text>
+</svg>`],
+ ['IMG_2041.jpg ends in ".jpg", which means images. <b>os.makedirs</b> creates images/, then <b>shutil.move</b> moves the file in.',`<svg viewBox="0 0 420 230" role="img" aria-label="sorting step 2">
+<text class="t-b" x="8" y="20">downloads/</text>
+<text class="t-m t-a" x="10" y="44" style="font-size:14px">IMG_2041.jpg</text>
+<text class="t-m" x="10" y="67" style="font-size:14px">IMG_2042.JPG</text>
+<text class="t-m" x="10" y="90" style="font-size:14px">photo.png</text>
+<text class="t-m" x="10" y="113" style="font-size:14px">report-q3.pdf</text>
+<text class="t-m" x="10" y="136" style="font-size:14px">budget.xlsx</text>
+<text class="t-m" x="10" y="159" style="font-size:14px">notes.txt</text>
+<text class="t-m" x="10" y="182" style="font-size:14px">song.mp3</text>
+<text class="t-m" x="10" y="205" style="font-size:14px">setup.zip</text>
+<text class="t-m t-a" x="198" y="96" text-anchor="middle" style="font-size:14px">".jpg"</text>
+<path class="ln-a" d="M160 108H238"/><polygon class="ah-a" points="236,101 236,115 248,108"/>
+<text class="t" x="198" y="134" text-anchor="middle" style="font-size:14px">images</text>
+<rect class="bx-hl" x="252" y="10" width="162" height="42" rx="6"/>
+${V.ic('folder',260,17,28,'ic-info')}
+<text class="t-m" x="294" y="37" style="font-size:14px">images/</text>
+<text class="t-b" x="404" y="38" text-anchor="end" style="font-size:17px">1</text>
+<rect class="ln-d" x="252" y="60" width="162" height="42" rx="6"/>
+${V.ic('folder',260,67,28,'ic-t')}
+<text class="t-m t-dim" x="294" y="87" style="font-size:14px">documents/</text>
+<rect class="ln-d" x="252" y="110" width="162" height="42" rx="6"/>
+${V.ic('folder',260,117,28,'ic-t')}
+<text class="t-m t-dim" x="294" y="137" style="font-size:14px">audio/</text>
+<rect class="ln-d" x="252" y="160" width="162" height="42" rx="6"/>
+${V.ic('folder',260,167,28,'ic-t')}
+<text class="t-m t-dim" x="294" y="187" style="font-size:14px">other/</text>
+</svg>`],
+ ['IMG_2042.JPG ends in ".JPG". After <b>.lower()</b> it is ".jpg", so it also goes to images. Without lower() it would land in other.',`<svg viewBox="0 0 420 230" role="img" aria-label="sorting step 3">
+<text class="t-b" x="8" y="20">downloads/</text>
+<text class="t-m t-dim" x="10" y="44" style="font-size:14px">IMG_2041.jpg</text>
+<path class="ln-x" d="M8 39H111"/>
+<text class="t-m t-a" x="10" y="67" style="font-size:14px">IMG_2042.JPG</text>
+<text class="t-m" x="10" y="90" style="font-size:14px">photo.png</text>
+<text class="t-m" x="10" y="113" style="font-size:14px">report-q3.pdf</text>
+<text class="t-m" x="10" y="136" style="font-size:14px">budget.xlsx</text>
+<text class="t-m" x="10" y="159" style="font-size:14px">notes.txt</text>
+<text class="t-m" x="10" y="182" style="font-size:14px">song.mp3</text>
+<text class="t-m" x="10" y="205" style="font-size:14px">setup.zip</text>
+<text class="t-m t-a" x="198" y="96" text-anchor="middle" style="font-size:14px">".JPG"</text>
+<path class="ln-a" d="M160 108H238"/><polygon class="ah-a" points="236,101 236,115 248,108"/>
+<text class="t" x="198" y="134" text-anchor="middle" style="font-size:14px">.lower()</text>
+<rect class="bx-hl" x="252" y="10" width="162" height="42" rx="6"/>
+${V.ic('folder',260,17,28,'ic-info')}
+<text class="t-m" x="294" y="37" style="font-size:14px">images/</text>
+<text class="t-b" x="404" y="38" text-anchor="end" style="font-size:17px">2</text>
+<rect class="ln-d" x="252" y="60" width="162" height="42" rx="6"/>
+${V.ic('folder',260,67,28,'ic-t')}
+<text class="t-m t-dim" x="294" y="87" style="font-size:14px">documents/</text>
+<rect class="ln-d" x="252" y="110" width="162" height="42" rx="6"/>
+${V.ic('folder',260,117,28,'ic-t')}
+<text class="t-m t-dim" x="294" y="137" style="font-size:14px">audio/</text>
+<rect class="ln-d" x="252" y="160" width="162" height="42" rx="6"/>
+${V.ic('folder',260,167,28,'ic-t')}
+<text class="t-m t-dim" x="294" y="187" style="font-size:14px">other/</text>
+</svg>`],
+ ['The loop carries on: photo.png to images; the pdf, xlsx and txt files to documents.',`<svg viewBox="0 0 420 230" role="img" aria-label="sorting step 4">
+<text class="t-b" x="8" y="20">downloads/</text>
+<text class="t-m t-dim" x="10" y="44" style="font-size:14px">IMG_2041.jpg</text>
+<path class="ln-x" d="M8 39H111"/>
+<text class="t-m t-dim" x="10" y="67" style="font-size:14px">IMG_2042.JPG</text>
+<path class="ln-x" d="M8 62H111"/>
+<text class="t-m t-dim" x="10" y="90" style="font-size:14px">photo.png</text>
+<path class="ln-x" d="M8 85H86"/>
+<text class="t-m t-a" x="10" y="113" style="font-size:14px">report-q3.pdf</text>
+<text class="t-m t-a" x="10" y="136" style="font-size:14px">budget.xlsx</text>
+<text class="t-m t-a" x="10" y="159" style="font-size:14px">notes.txt</text>
+<text class="t-m" x="10" y="182" style="font-size:14px">song.mp3</text>
+<text class="t-m" x="10" y="205" style="font-size:14px">setup.zip</text>
+<text class="t-m t-a" x="198" y="96" text-anchor="middle" style="font-size:14px">.pdf .xlsx</text>
+<path class="ln-a" d="M160 108H238"/><polygon class="ah-a" points="236,101 236,115 248,108"/>
+<text class="t" x="198" y="134" text-anchor="middle" style="font-size:14px">documents</text>
+<rect class="bx-ok" x="252" y="10" width="162" height="42" rx="6"/>
+${V.ic('folder',260,17,28,'ic-info')}
+<text class="t-m" x="294" y="37" style="font-size:14px">images/</text>
+<text class="t-b" x="404" y="38" text-anchor="end" style="font-size:17px">3</text>
+<rect class="bx-hl" x="252" y="60" width="162" height="42" rx="6"/>
+${V.ic('folder',260,67,28,'ic-info')}
+<text class="t-m" x="294" y="87" style="font-size:14px">documents/</text>
+<text class="t-b" x="404" y="88" text-anchor="end" style="font-size:17px">3</text>
+<rect class="ln-d" x="252" y="110" width="162" height="42" rx="6"/>
+${V.ic('folder',260,117,28,'ic-t')}
+<text class="t-m t-dim" x="294" y="137" style="font-size:14px">audio/</text>
+<rect class="ln-d" x="252" y="160" width="162" height="42" rx="6"/>
+${V.ic('folder',260,167,28,'ic-t')}
+<text class="t-m t-dim" x="294" y="187" style="font-size:14px">other/</text>
+</svg>`],
+ ['song.mp3 goes to audio. ".zip" is not in any list, so <b>.get(ext, "other")</b> sends it to other. The pile is empty.',`<svg viewBox="0 0 420 230" role="img" aria-label="sorting step 5">
+<text class="t-b" x="8" y="20">downloads/</text>
+<text class="t-m t-dim" x="10" y="44" style="font-size:14px">IMG_2041.jpg</text>
+<path class="ln-x" d="M8 39H111"/>
+<text class="t-m t-dim" x="10" y="67" style="font-size:14px">IMG_2042.JPG</text>
+<path class="ln-x" d="M8 62H111"/>
+<text class="t-m t-dim" x="10" y="90" style="font-size:14px">photo.png</text>
+<path class="ln-x" d="M8 85H86"/>
+<text class="t-m t-dim" x="10" y="113" style="font-size:14px">report-q3.pdf</text>
+<path class="ln-x" d="M8 108H119"/>
+<text class="t-m t-dim" x="10" y="136" style="font-size:14px">budget.xlsx</text>
+<path class="ln-x" d="M8 131H102"/>
+<text class="t-m t-dim" x="10" y="159" style="font-size:14px">notes.txt</text>
+<path class="ln-x" d="M8 154H86"/>
+<text class="t-m t-a" x="10" y="182" style="font-size:14px">song.mp3</text>
+<text class="t-m t-a" x="10" y="205" style="font-size:14px">setup.zip</text>
+<text class="t-m t-a" x="198" y="96" text-anchor="middle" style="font-size:14px">.mp3 .zip</text>
+<path class="ln-a" d="M160 108H238"/><polygon class="ah-a" points="236,101 236,115 248,108"/>
+<text class="t" x="198" y="134" text-anchor="middle" style="font-size:14px">audio, other</text>
+<rect class="bx-ok" x="252" y="10" width="162" height="42" rx="6"/>
+${V.ic('folder',260,17,28,'ic-info')}
+<text class="t-m" x="294" y="37" style="font-size:14px">images/</text>
+<text class="t-b" x="404" y="38" text-anchor="end" style="font-size:17px">3</text>
+<rect class="bx-ok" x="252" y="60" width="162" height="42" rx="6"/>
+${V.ic('folder',260,67,28,'ic-info')}
+<text class="t-m" x="294" y="87" style="font-size:14px">documents/</text>
+<text class="t-b" x="404" y="88" text-anchor="end" style="font-size:17px">3</text>
+<rect class="bx-hl" x="252" y="110" width="162" height="42" rx="6"/>
+${V.ic('folder',260,117,28,'ic-info')}
+<text class="t-m" x="294" y="137" style="font-size:14px">audio/</text>
+<text class="t-b" x="404" y="138" text-anchor="end" style="font-size:17px">1</text>
+<rect class="bx-hl" x="252" y="160" width="162" height="42" rx="6"/>
+${V.ic('folder',260,167,28,'ic-info')}
+<text class="t-m" x="294" y="187" style="font-size:14px">other/</text>
+<text class="t-b" x="404" y="188" text-anchor="end" style="font-size:17px">1</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('os.path.join("downloads", name)','Builds paths with the right slash on every system'),V.no('"downloads" + "/" + name','Breaks on some systems and is easy to get wrong'),
+ V.ok('ext.lower()','Compare extensions in one case'),V.ok('CATEGORIES.get(ext, "other")','A dict lookup with a default beats a long if/elif chain'),
+ V.rh('Conventions'),V.ok('CATEGORIES = {".jpg": "images", ...}','Settings at the top, in ALL_CAPS, easy to change'))}
+${V.hook(`List it, split it, lower it, move it.`)}
+`)}
 
-<h4>Finding a file's type from its extension</h4>
-<p>The <b>extension</b> is the part of a file name after the last dot, like <code>.pdf</code>. It is how we decide where each file belongs. Walk one awkward name through the steps:</p>
-<figure class="fig"><svg viewBox="0 0 420 268" role="img" aria-label="IMG_2042.JPG is split, the extension taken, lowered, and looked up to give images">
-<rect class="bx" x="110" y="10" width="200" height="34" rx="6"/><text class="t-m" x="210" y="32" text-anchor="middle">"IMG_2042.JPG"</text>
-<path class="ln" d="M210 44v14"/><polygon class="ah" points="204,56 216,56 210,64"/><text class="t-s" x="222" y="58">splitext</text>
-<rect class="bx" x="70" y="66" width="280" height="34" rx="6"/><text class="t-m" x="210" y="88" text-anchor="middle">("IMG_2042", ".JPG")</text>
-<path class="ln" d="M210 100v14"/><polygon class="ah" points="204,112 216,112 210,120"/><text class="t-s" x="222" y="114">take item [1]</text>
-<rect class="bx-warn" x="150" y="122" width="120" height="34" rx="6"/><text class="t-m" x="210" y="144" text-anchor="middle">".JPG"</text>
-<path class="ln-a" d="M210 156v14"/><polygon class="ah-a" points="204,168 216,168 210,176"/><text class="t-s t-a" x="222" y="170">.lower()</text>
-<rect class="bx-a" x="150" y="178" width="120" height="34" rx="6"/><text class="t-m" x="210" y="200" text-anchor="middle">".jpg"</text>
-<path class="ln-ok" d="M270 195h40"/><polygon class="ah-ok" points="308,189 308,201 316,195"/><text class="t-s" x="292" y="226" text-anchor="middle">look up</text>
-<rect class="bx-ok" x="318" y="178" width="92" height="34" rx="6"/><text class="t-m" x="364" y="200" text-anchor="middle">images</text>
-<text class="t-s" x="210" y="256" text-anchor="middle">Without .lower(), ".JPG" would not match ".jpg".</text>
-</svg><figcaption>splitext splits the name into the base and the extension. Index 1 picks the extension, .JPG. Lowering it gives .jpg, which is found in the images list. Without lowering, the capital letters would not match and the photo would land in other.</figcaption></figure>
-<p><code>splitext</code> splits at the <b>last</b> dot, so <code>"archive.tar.gz"</code> gives <code>".gz"</code>, and a name with no dot gives an empty extension <code>""</code>. Both are fine here: they simply land in <code>other</code>.</p>
-<p>To map extensions to folders, a dict of lists keeps all the rules in one readable place, and a function hides the details:</p>
-<pre class="snip">CATEGORIES = {
-    "images": [".jpg", ".jpeg", ".png", ".gif"],
-    "documents": [".pdf", ".docx", ".xlsx", ".txt"],
-    "audio": [".mp3", ".wav"],
-}
-# category_for(filename): get the lowered extension, loop over
-# CATEGORIES.items(), return the folder whose list contains it,
-# and return "other" if none does.</pre>
-<p>Writing a constant like <code>CATEGORIES</code> in capitals is a Python convention meaning "this is a setting, don't change it while running". Adding a new type later is a one-line edit, not a new <code>elif</code>.</p>
+${V.card(2,'Safe to run twice','idempotent scripts and reports',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A light switch: pressing twice turns the light off again. A lift button: pressing twice still takes you to floor 3">
+<rect class="bx-bad" x="6" y="10" width="198" height="150" rx="10"/>${V.ic('bulb',30,24,44,'ic-warn')}<text class="t-b" x="86" y="44">toggle</text><text class="t" x="86" y="66" style="font-size:14px">press: on</text><text class="t" x="86" y="88" style="font-size:14px">press again: off</text>
+<text class="t-b t-bad" x="105" y="140" text-anchor="middle">not idempotent</text>
+<rect class="bx-ok" x="216" y="10" width="198" height="150" rx="10"/>${V.ic('arrow',240,24,44,'ic-ok')}<text class="t-b" x="296" y="44">lift: 3</text><text class="t" x="296" y="66" style="font-size:14px">press: floor 3</text><text class="t" x="296" y="88" style="font-size:14px">again: floor 3</text>
+<text class="t-b t-ok" x="315" y="140" text-anchor="middle">idempotent</text>
+</svg><figcaption>Idempotent (say "eye-dem-POH-tent") means "doing it again changes nothing more". Scheduled scripts must be like the lift button, because one day they will run twice.</figcaption></figure>
+${V.why(`<p>Automation runs when nobody is watching: every night, on a timer. Networks drop and jobs get restarted, so a script will run twice sooner or later. If a second run does damage, you find out from an angry colleague. Idempotent scripts make re-runs boring, which is exactly what you want.</p>`)}
+${V.anat([[1,'os.makedirs'],'(',[2,'"downloads/images"'],', ',[3,'exist_ok=True'],')'],[
+ '<b>makedirs</b> creates a folder, plus any missing parent folders.',
+ '<b>The path</b> to create.',
+ '<b>exist_ok=True</b>: "if it is already there, that is fine". Without it, the second run crashes with FileExistsError.'])}
+<p><b>Watch the second run.</b> The folder is already tidy. What could go wrong?</p>
+${V.steps([
+ ['Second run. <b>os.listdir</b> now returns the 4 folders the first run made, and no loose files.',`<svg viewBox="0 0 420 200" role="img" aria-label="second run step 1">
+<text class="t-b" x="8" y="20">downloads/ (second run)</text>
+<rect class="bx" x="6" y="34" width="160" height="34" rx="6"/>${V.ic('folder',12,38,26,'ic-info')}<text class="t-m" x="44" y="57" style="font-size:14px">images/</text>
+<rect class="bx" x="6" y="74" width="160" height="34" rx="6"/>${V.ic('folder',12,78,26,'ic-info')}<text class="t-m" x="44" y="97" style="font-size:14px">documents/</text>
+<rect class="bx" x="6" y="114" width="160" height="34" rx="6"/>${V.ic('folder',12,118,26,'ic-info')}<text class="t-m" x="44" y="137" style="font-size:14px">audio/</text>
+<rect class="bx" x="6" y="154" width="160" height="34" rx="6"/>${V.ic('folder',12,158,26,'ic-info')}<text class="t-m" x="44" y="177" style="font-size:14px">other/</text>
+<text class="t" x="186" y="60" style="font-size:14px">os.listdir now returns</text><text class="t" x="186" y="80" style="font-size:14px">4 folders, no files</text>
+</svg>`],
+ ['A careless script treats "images" like a file. It has no extension, so it counts as other, and the whole images folder gets moved inside other/.',`<svg viewBox="0 0 420 200" role="img" aria-label="second run step 2">
+<text class="t-b" x="8" y="20">downloads/ (second run)</text>
+<rect class="bx-bad" x="6" y="34" width="160" height="34" rx="6"/>${V.ic('folder',12,38,26,'ic-info')}<text class="t-m" x="44" y="57" style="font-size:14px">images/</text>
+<rect class="bx" x="6" y="74" width="160" height="34" rx="6"/>${V.ic('folder',12,78,26,'ic-info')}<text class="t-m" x="44" y="97" style="font-size:14px">documents/</text>
+<rect class="bx" x="6" y="114" width="160" height="34" rx="6"/>${V.ic('folder',12,118,26,'ic-info')}<text class="t-m" x="44" y="137" style="font-size:14px">audio/</text>
+<rect class="bx" x="6" y="154" width="160" height="34" rx="6"/>${V.ic('folder',12,158,26,'ic-info')}<text class="t-m" x="44" y="177" style="font-size:14px">other/</text>
+<text class="t-m t-bad" x="186" y="60" style="font-size:14px">"images" has no extension</text>
+<text class="t" x="186" y="84" style="font-size:14px">so it counts as "other"...</text>
+<text class="t-m t-bad" x="186" y="112" style="font-size:14px">move(images, other/)</text>
+${V.ic('cross',186,124,30,'ic-bad')}
+<text class="t-b t-bad" x="222" y="146" style="font-size:14px">your photos vanish</text>
+</svg>`],
+ ['The fix: <b>os.path.isfile</b> checks that a path is a file. Folders are skipped with <b>continue</b>, which jumps to the next item. Nothing moves.',`<svg viewBox="0 0 420 200" role="img" aria-label="second run step 3">
+<text class="t-b" x="8" y="20">downloads/ (second run)</text>
+<rect class="bx-hl" x="6" y="34" width="160" height="34" rx="6"/>${V.ic('folder',12,38,26,'ic-info')}<text class="t-m" x="44" y="57" style="font-size:14px">images/</text>
+<rect class="bx-hl" x="6" y="74" width="160" height="34" rx="6"/>${V.ic('folder',12,78,26,'ic-info')}<text class="t-m" x="44" y="97" style="font-size:14px">documents/</text>
+<rect class="bx-hl" x="6" y="114" width="160" height="34" rx="6"/>${V.ic('folder',12,118,26,'ic-info')}<text class="t-m" x="44" y="137" style="font-size:14px">audio/</text>
+<rect class="bx-hl" x="6" y="154" width="160" height="34" rx="6"/>${V.ic('folder',12,158,26,'ic-info')}<text class="t-m" x="44" y="177" style="font-size:14px">other/</text>
+<text class="t-m t-ok" x="186" y="60" style="font-size:14px">if not os.path.isfile(p):</text>
+<text class="t-m t-ok" x="214" y="82" style="font-size:14px">continue</text>
+${V.ic('check',186,98,30,'ic-ok')}
+<text class="t-b t-ok" x="222" y="120" style="font-size:14px">folders skipped</text>
+</svg>`],
+ ['Finally the script counts the files in each folder and writes <b>report.txt</b>. Same folder, same report, however many times it runs.',`<svg viewBox="0 0 420 200" role="img" aria-label="second run step 4">
+<text class="t-b" x="8" y="20">downloads/ (second run)</text>
+<rect class="bx" x="6" y="34" width="160" height="34" rx="6"/>${V.ic('folder',12,38,26,'ic-info')}<text class="t-m" x="44" y="57" style="font-size:14px">images/</text>
+<rect class="bx" x="6" y="74" width="160" height="34" rx="6"/>${V.ic('folder',12,78,26,'ic-info')}<text class="t-m" x="44" y="97" style="font-size:14px">documents/</text>
+<rect class="bx" x="6" y="114" width="160" height="34" rx="6"/>${V.ic('folder',12,118,26,'ic-info')}<text class="t-m" x="44" y="137" style="font-size:14px">audio/</text>
+<rect class="bx" x="6" y="154" width="160" height="34" rx="6"/>${V.ic('folder',12,158,26,'ic-info')}<text class="t-m" x="44" y="177" style="font-size:14px">other/</text>
+<rect class="bx-info" x="186" y="34" width="228" height="154" rx="8"/>${V.ic('file',194,42,28,'ic-info')}
+<text class="t-m" x="228" y="62" style="font-size:14px">report.txt</text>
+<text class="t-m" x="200" y="94" style="font-size:14px">audio: 1</text>
+<text class="t-m" x="200" y="118" style="font-size:14px">documents: 3</text>
+<text class="t-m" x="200" y="142" style="font-size:14px">images: 3</text>
+<text class="t-m" x="200" y="166" style="font-size:14px">other: 1</text>
+</svg>`]])}
+${V.rules(V.rh('Rules for scripts you can trust'),
+ V.ok('exist_ok=True','Creating a folder twice is not an error'),V.ok('if not os.path.isfile(p): continue','Only move things that are files'),
+ V.no('os.remove(...) on a first try','Never delete until a dry run proves it is right'),
+ V.rh('Conventions'),V.ok('--dry-run','Print what would happen without doing it'),V.ok('write a report or log','Say what changed, so a human can check'),
+ V.ok('test on a copy','Try destructive scripts on a copied folder first'))}
+${V.build(`<ol><li>Write <code>category_for(filename)</code>: splitext, lower(), then a dict lookup with "other" as the default.</li><li>Loop over <code>os.listdir("downloads")</code>, skipping anything that is not a file.</li><li>For each file: <code>os.makedirs(..., exist_ok=True)</code>, then <code>shutil.move</code>.</li><li>Count the files in each folder and write <code>folder: count</code> lines to report.txt.</li><li>Run it twice. The second run should change nothing and still succeed.</li></ol>`)}
+${V.hook(`Good scripts are lift buttons, not light switches: press twice, same result.`)}
+`)}
 
-<h4>Moving the files</h4>
-<p>The main loop goes through every name, skips anything that is already a folder, works out the category, makes sure the target folder exists, and moves the file:</p>
-<pre class="snip">for name in os.listdir(folder):
-    path = os.path.join(folder, name)
-    if os.path.isdir(path):
-        continue                      # skip folders: go to the next name
-    target = category_for(name)
-    os.makedirs(os.path.join(folder, target), exist_ok=True)
-    shutil.move(path, os.path.join(folder, target, name))</pre>
-<p><code>continue</code> means "stop this round of the loop now and start the next one". It keeps the rest of the loop body un-nested and easy to read.</p>
-<p><code>exist_ok=True</code> matters a lot. Without it, <code>os.makedirs</code> raises <code>FileExistsError</code> the second time it is asked to create <code>images/</code>, which happens as soon as there is a second image. With it, an existing folder is quietly accepted.</p>
-<p>To build the report, count as you go with the dict counting idiom from the lists and dicts lesson: <code>moved[target] = moved.get(target, 0) + 1</code>. Then write one line per folder, using <code>sorted(moved.items())</code> so the report is in a stable alphabetical order rather than whatever order the files happened to be listed in.</p>
-
-<h4>Idempotent: safe to run twice</h4>
-<p>A script is <b>idempotent</b> when running it a second time does no extra harm: the result is the same as running it once. This is the most important property of any script that might run on a schedule, be run by a colleague, or be re-run after a crash halfway through.</p>
-<div class="tbl-wrap"><table><tr><th></th><th>First run</th><th>Second run</th></tr>
-<tr><td>What <code>listdir</code> sees</td><td>8 loose files</td><td>4 folders, no loose files</td></tr>
-<tr><td>Without the <code>isdir</code> check</td><td>Works</td><td>Tries to move the folder <code>images</code> into <code>other/</code></td></tr>
-<tr><td>Without <code>exist_ok=True</code></td><td>Crashes on the second image</td><td>Crashes straight away</td></tr>
-<tr><td>Written carefully</td><td>Moves 8 files</td><td>Moves nothing, no errors</td></tr></table></div>
-<p>On the second run the summary is empty, so the report honestly says nothing was moved. That is correct behaviour: the job was already done.</p>
-<div class="mistake"><b>Common mistake</b>Forgetting that folders show up in <code>os.listdir</code> too. After the first run, <code>images</code> has no extension, so <code>category_for</code> says "other", and without the <code>isdir</code> check your script moves your sorted folders into <code>other/</code>. Always decide explicitly what to do with folders.</div>
-<div class="mistake"><b>Common mistake</b>Testing a destructive script on real files first. Moving and deleting can't be undone with Ctrl+Z. Try it on a copy, and consider a <b>dry run</b> mode that only prints what it <i>would</i> do. Also note that if a file with the same name already exists in the target folder, <code>shutil.move</code> may silently replace it on Linux and macOS.</div>
-
-<h4>Writing a useful report</h4>
-<p>Scripts that run unattended must leave a trace, otherwise nobody knows what happened. Write the report with mode <code>"w"</code> so each run replaces the last one, and include the date so readers know when it ran:</p>
-<pre class="snip">from datetime import date
-
-with open("report.txt", "w") as f:
-    f.write(f"Organized on {date.today()}\\n")
-    # then one line per folder, e.g. "images: 3\\n"</pre>
-<p><code>f.write</code> does not add line breaks for you, so end each line with <code>\\n</code>. The report lives outside <code>downloads/</code>, so the script never tries to sort its own report.</p>
-<div class="tip"><b>Tip</b>Modern Python code often uses the <code>pathlib</code> module instead, where paths are objects: <code>Path("downloads") / name</code> joins paths and <code>path.suffix</code> gives the extension. It does the same jobs; <code>os</code> and <code>shutil</code> are what this lesson's checks expect, and you will see both styles in real projects.</div>
-
-<div class="try"><b>Try it in your head</b>Which folder does <code>"Holiday.PNG"</code> go to? The extension is <code>.PNG</code>, lowered to <code>.png</code>, which is in the images list: <code>images</code>. And <code>"Makefile"</code>? There is no dot, so the extension is empty and it goes to <code>other</code>.</div>
-
-<h4>Recap</h4>
-<ul>
-<li><code>os.listdir(folder)</code> gives bare names, including folders; rebuild full paths with <code>os.path.join</code>.</li>
-<li><code>os.path.splitext(name)[1].lower()</code> gets a lower-case extension, so <code>.JPG</code> and <code>.jpg</code> match.</li>
-<li><code>os.makedirs(path, exist_ok=True)</code> creates folders without failing if they exist; <code>shutil.move(src, dst)</code> moves files.</li>
-<li>Idempotent scripts are safe to run twice: skip work already done and never crash on things that already exist.</li>
-<li>Always write a report of what changed, with a date, and test destructive scripts on copies or with a dry run first.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. What does <code>os.path.splitext("song.MP3")[1].lower()</code> give? <i>".mp3".</i> 2. What happens on the second run without <code>exist_ok=True</code>? <i>FileExistsError: the folder is already there.</i> 3. What makes a script safe to schedule? <i>Being idempotent and writing a report of what it changed.</i></div>
 `);

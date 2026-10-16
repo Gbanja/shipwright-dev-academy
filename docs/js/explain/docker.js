@@ -42,289 +42,163 @@ ${V.hook(`A VM is a house; a container is a flat sharing the same foundations.`)
 `);
 
 explain('d2',`
-<h4>From hello-world to a real server</h4>
-<p>hello-world printed a message and stopped. Most containers you will run do the opposite: they start a <b>server</b>, a program that runs forever, waiting for requests. In this lesson you run <b>nginx</b> (said "engine-x"), one of the most popular web servers in the world, without installing it on your machine at all. You will download its image, start it in the background, reach it from your machine, read what it logs, and clean up.</p>
-<p>Along the way you meet the one idea that confuses almost everyone at first: <b>ports</b>, and how a container's ports connect to your machine's.</p>
+<p>Time to run a real web server in one line. To use it you need three ideas: where images come from, how a container's door (its port) connects to your machine, and how to stop and tidy up afterwards.</p>
 
-<h4>Pulling images, and what a tag is</h4>
-<p><code>docker pull nginx</code> downloads the nginx image from Docker Hub to your machine. Every image name has two parts, <code>name:tag</code>. The <b>tag</b> picks a version, such as <code>nginx:1.27</code> or <code>postgres:16</code>. If you leave the tag off, Docker assumes <code>latest</code>, so <code>nginx</code> really means <code>nginx:latest</code>.</p>
-<p>While it downloads you will see several lines finish one by one. An image is made of <b>layers</b>, stacked sets of files, and Docker fetches each one separately. Layers that you already have from another image are reused instead of downloaded again. You will build your own layers in the next lesson.</p>
-<p><code>docker images</code> lists the images stored on your machine:</p>
-<pre class="snip">REPOSITORY    TAG      IMAGE ID       CREATED       SIZE
-nginx         latest   a1b2c3d4e5f6   2 weeks ago   192MB
-hello-world   latest   d2c94e258dcb   1 year ago    13.3kB</pre>
-<p><code>IMAGE ID</code> is a unique fingerprint of the image's contents, and <code>CREATED</code> is when the image was built, not when you downloaded it.</p>
+${V.card(1,'Pulling images','download once, run many times',`
+<figure class="fig"><svg viewBox="0 0 420 196" role="img" aria-label="Docker Hub holds many images with tags. docker pull copies nginx:latest onto your machine"><rect class="bx-info" x="6" y="8" width="200" height="180" rx="8"/>${V.ic('cloud',16,14,40,'ic-info')}<text class="t-b" x="64" y="40" style="font-size:15px">Docker Hub</text><rect class="bx-a" x="16" y="58" width="180" height="34" rx="8"/><text class="t-m" x="106" y="80.25" text-anchor="middle" style="font-size:15px">nginx:latest</text><rect class="bx" x="16" y="100" width="180" height="34" rx="8"/><text class="t-m" x="106" y="122.25" text-anchor="middle" style="font-size:15px">nginx:alpine</text><rect class="bx" x="16" y="142" width="180" height="34" rx="8"/><text class="t-m" x="106" y="164.25" text-anchor="middle" style="font-size:15px">postgres:16</text><path class="ln-a" d="M206 75H254"/><polygon class="ah-a" points="252,68 252,82 262,75"/><text class="t-m t-a" x="234" y="64" text-anchor="middle" style="font-size:14px;font-weight:700">pull</text><rect class="bx" x="262" y="8" width="152" height="180" rx="8"/>${V.ic('laptop',306,14,64,'ic-a')}<text class="t-b" x="338" y="98" text-anchor="middle" style="font-size:14px">your images</text><rect class="bx-ok" x="272" y="112" width="132" height="34" rx="8"/><text class="t-m" x="338" y="133.9" text-anchor="middle" style="font-size:14px">nginx:latest</text><text class="t" x="338" y="172" text-anchor="middle" style="font-size:14px">188 MB, kept</text></svg><figcaption>An image lives in a <b>registry</b> such as Docker Hub. <code>docker pull</code> downloads a copy; <code>docker images</code> lists what you have. After that, starting containers needs no internet.</figcaption></figure>
+${V.like(`<p>An app store. Docker Hub is the store, an image is the app, and <code>docker pull</code> is pressing "download". Tags are like version numbers on the download button.</p>`)}
+${V.anat([[1,'docker pull'],' ',[2,'nginx'],[3,':'],[4,'latest']],[
+ '<b>docker pull.</b> Download an image from a registry.',
+ '<b>Repository.</b> The image\'s name. Official images like <code>nginx</code> and <code>postgres</code> need no username.',
+ '<b>Colon.</b> Separates the name from the tag.',
+ '<b>Tag.</b> Which version. Leave it out and you get <code>latest</code>, which just means "the default tag", not always the newest.'])}
+${V.rules(V.ok('postgres:16','Pin a version so it can\'t change under you'),V.ok('nginx:alpine','Variant tags: alpine builds are much smaller'),V.ok('docker images','List the images you have'))}
+${V.hook(`name:tag. No tag means <code>:latest</code>.`)}
+`)}
 
-<h4>Running in the background: <code>-d</code> and <code>--name</code></h4>
-<p><code>docker run</code> does two things in one: it <b>creates</b> a new container from an image and <b>starts</b> it. (It also pulls the image first if you do not have it.) Two options make it much nicer for servers:</p>
-<ul>
-<li><code>-d</code> means <b>detached</b>. Without it, the container is attached to your terminal: you see its output, and pressing Ctrl+C stops it. With <code>-d</code>, it runs in the background, Docker prints the new container's long ID, and you get your prompt back.</li>
-<li><code>--name web</code> gives the container a name you choose. Every later command can then say <code>web</code> instead of a random name or a long ID.</li>
-</ul>
-<p>Option order matters in one way: options for Docker go <b>before</b> the image name. Anything after the image name is passed to the program inside the container instead.</p>
+${V.card(2,'Running with ports','a street door into the container',`
+<figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="Your machine is a block of flats. Port 8080 on the street door leads to flat 80 inside the container"><rect class="bx" x="6" y="10" width="408" height="130" rx="8"/>${V.ic('house',16,20,48,'ic-info')}<text class="t-b" x="72" y="48" style="font-size:15px">your machine</text><rect class="bx-warn" x="6" y="70" width="70" height="46" rx="8"/><text class="t-m" x="41" y="98.95" text-anchor="middle" style="font-size:17px;font-weight:700">8080</text><path class="ln-a" d="M76 93H192"/><polygon class="ah-a" points="190,86 190,100 200,93"/><text class="t-m t-a" x="138" y="84" text-anchor="middle" style="font-size:14px">-p 8080:80</text><rect class="bx-a" x="200" y="52" width="204" height="78" rx="8"/>${V.ic('door',210,62,40,'ic-a')}<rect class="bx-ok" x="254" y="70" width="50" height="40" rx="8"/><text class="t-m" x="279" y="95.95" text-anchor="middle" style="font-size:17px;font-weight:700">80</text><text class="t-m" x="356" y="96" text-anchor="middle" style="font-size:17px;font-weight:700">nginx</text></svg><figcaption>A container is a flat with no door to the street. <code>-p 8080:80</code> fits a street door numbered 8080 that leads straight to the flat's door 80. Left side = your machine, right side = the container.</figcaption></figure>
+${V.why(`<p>Containers are isolated on purpose: nothing outside can reach them unless you say so. Publishing a port is you saying so, one door at a time, which keeps everything else safely shut.</p>`)}
+${V.anat([[1,'docker run'],' ',[2,'-d'],' ',[3,'-p 8080'],[4,':80'],' ',[5,'--name web'],' ',[6,'nginx']],[
+ '<b>docker run.</b> Create and start a container.',
+ '<b>-d (detached).</b> Run in the background and give your terminal back.',
+ '<b>Host port.</b> The door on YOUR machine. Always on the left.',
+ '<b>Container port.</b> The door inside the container that the app listens on. nginx uses 80.',
+ '<b>--name.</b> A name you choose, so you don\'t have to use a random one.',
+ '<b>Image.</b> Always last, after all the options.'])}
+<p><b>Follow one request</b> from curl to nginx and back.</p>
+${V.steps([
+ ['You ask your own machine for <b>localhost:8080</b>. The request arrives at port 8080, a numbered door on your computer.',`<svg viewBox="0 0 420 210" role="img" aria-label="The request reaches port 8080 on your machine"><rect class="bx-a" x="4" y="40" width="100" height="96" rx="8"/>${V.ic('laptop',24,48,60,'ic-a')}<text class="t-m" x="54" y="126" text-anchor="middle" style="font-size:15px">curl</text><rect class="bx" x="128" y="8" width="288" height="162" rx="8"/><text class="t-b" x="140" y="30" style="font-size:14px">your machine</text><rect class="bx-hl" x="120" y="66" width="58" height="44" rx="8"/><text class="t-m" x="149" y="93.25" text-anchor="middle" style="font-size:15px;font-weight:700">8080</text><rect class="bx" x="236" y="40" width="170" height="120" rx="8"/>${V.ic('container',246,46,34,'ic-a')}<text class="t-b" x="288" y="68" style="font-size:14px">container</text><rect class="bx-ok" x="226" y="88" width="48" height="40" rx="8"/><text class="t-m" x="250" y="113.25" text-anchor="middle" style="font-size:15px;font-weight:700">80</text><text class="t-m" x="340" y="116" text-anchor="middle" style="font-size:17px;font-weight:700">nginx</text><path class="ln-a" d="M104 88H112"/><polygon class="ah-a" points="110,81 110,95 120,88"/><text class="t-b t-a" x="210" y="198" text-anchor="middle" style="font-size:16px">request arrives at port 8080</text></svg>`],
+ ['Because you ran with <b>-p 8080:80</b>, Docker watches door 8080 and passes everything through to door <b>80</b> inside the container.',`<svg viewBox="0 0 420 210" role="img" aria-label="Docker forwards port 8080 to container port 80"><rect class="bx-a" x="4" y="40" width="100" height="96" rx="8"/>${V.ic('laptop',24,48,60,'ic-a')}<text class="t-m" x="54" y="126" text-anchor="middle" style="font-size:15px">curl</text><rect class="bx" x="128" y="8" width="288" height="162" rx="8"/><text class="t-b" x="140" y="30" style="font-size:14px">your machine</text><rect class="bx-hl" x="120" y="66" width="58" height="44" rx="8"/><text class="t-m" x="149" y="93.25" text-anchor="middle" style="font-size:15px;font-weight:700">8080</text><rect class="bx-a" x="236" y="40" width="170" height="120" rx="8"/>${V.ic('container',246,46,34,'ic-a')}<text class="t-b" x="288" y="68" style="font-size:14px">container</text><rect class="bx-hl" x="226" y="88" width="48" height="40" rx="8"/><text class="t-m" x="250" y="113.25" text-anchor="middle" style="font-size:15px;font-weight:700">80</text><text class="t-m" x="340" y="116" text-anchor="middle" style="font-size:17px;font-weight:700">nginx</text><path class="ln-a" d="M178 88H218"/><polygon class="ah-a" points="216,81 216,95 226,88"/><text class="t-m t-a" x="202" y="152" text-anchor="middle" style="font-size:15px;font-weight:700">-p</text><text class="t-b t-a" x="210" y="198" text-anchor="middle" style="font-size:16px">Docker forwards 8080 to 80</text></svg>`],
+ ['nginx, listening on port 80 inside its container, receives the request and builds the reply.',`<svg viewBox="0 0 420 210" role="img" aria-label="nginx inside the container answers"><rect class="bx-a" x="4" y="40" width="100" height="96" rx="8"/>${V.ic('laptop',24,48,60,'ic-a')}<text class="t-m" x="54" y="126" text-anchor="middle" style="font-size:15px">curl</text><rect class="bx" x="128" y="8" width="288" height="162" rx="8"/><text class="t-b" x="140" y="30" style="font-size:14px">your machine</text><rect class="bx-ok" x="120" y="66" width="58" height="44" rx="8"/><text class="t-m" x="149" y="93.25" text-anchor="middle" style="font-size:15px;font-weight:700">8080</text><rect class="bx-a" x="236" y="40" width="170" height="120" rx="8"/>${V.ic('container',246,46,34,'ic-a')}<text class="t-b" x="288" y="68" style="font-size:14px">container</text><rect class="bx-hl" x="226" y="88" width="48" height="40" rx="8"/><text class="t-m" x="250" y="113.25" text-anchor="middle" style="font-size:15px;font-weight:700">80</text><text class="t-m" x="340" y="116" text-anchor="middle" style="font-size:17px;font-weight:700">nginx</text><circle class="dot-ok" cx="340" cy="138" r="7"/><text class="t-b t-a" x="210" y="198" text-anchor="middle" style="font-size:16px">nginx builds the page</text></svg>`],
+ ['The reply travels back the same way, and curl prints the nginx welcome page.',`<svg viewBox="0 0 420 210" role="img" aria-label="The reply returns to curl"><rect class="bx-a" x="4" y="40" width="100" height="96" rx="8"/>${V.ic('laptop',24,48,60,'ic-a')}<text class="t-m" x="54" y="126" text-anchor="middle" style="font-size:15px">curl</text><rect class="bx" x="128" y="8" width="288" height="162" rx="8"/><text class="t-b" x="140" y="30" style="font-size:14px">your machine</text><rect class="bx-ok" x="120" y="66" width="58" height="44" rx="8"/><text class="t-m" x="149" y="93.25" text-anchor="middle" style="font-size:15px;font-weight:700">8080</text><rect class="bx-a" x="236" y="40" width="170" height="120" rx="8"/>${V.ic('container',246,46,34,'ic-a')}<text class="t-b" x="288" y="68" style="font-size:14px">container</text><rect class="bx-ok" x="226" y="88" width="48" height="40" rx="8"/><text class="t-m" x="250" y="113.25" text-anchor="middle" style="font-size:15px;font-weight:700">80</text><text class="t-m" x="340" y="116" text-anchor="middle" style="font-size:17px;font-weight:700">nginx</text><path class="ln-ok" d="M226 140H112"/><polygon class="ah-ok" points="114,133 114,147 104,140"/><text class="t-b t-ok" x="210" y="198" text-anchor="middle" style="font-size:16px">Welcome to nginx!</text></svg>`],
+ ['Without <b>-p</b>, nothing is waiting at 8080. The container is sealed off, so curl gets "connection refused" even though nginx is running fine.',`<svg viewBox="0 0 420 210" role="img" aria-label="Without -p the connection is refused"><rect class="bx-a" x="4" y="40" width="100" height="96" rx="8"/>${V.ic('laptop',24,48,60,'ic-a')}<text class="t-m" x="54" y="126" text-anchor="middle" style="font-size:15px">curl</text><rect class="bx" x="128" y="8" width="288" height="162" rx="8"/><text class="t-b" x="140" y="30" style="font-size:14px">your machine</text><rect class="bx-bad" x="120" y="66" width="58" height="44" rx="8"/><text class="t-m" x="149" y="93.25" text-anchor="middle" style="font-size:15px;font-weight:700">8080</text><rect class="bx" x="236" y="40" width="170" height="120" rx="8"/>${V.ic('container',246,46,34,'ic-a')}<text class="t-b" x="288" y="68" style="font-size:14px">container</text><rect class="bx-ok" x="226" y="88" width="48" height="40" rx="8"/><text class="t-m" x="250" y="113.25" text-anchor="middle" style="font-size:15px;font-weight:700">80</text><text class="t-m" x="340" y="116" text-anchor="middle" style="font-size:17px;font-weight:700">nginx</text><text class="t-b t-bad" x="210" y="198" text-anchor="middle" style="font-size:16px">Connection refused: no -p</text><path class="ln" d="M104 88H112"/><polygon class="ah" points="110,81 110,95 120,88"/></svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('-p 8080:80','HOST:CONTAINER. Read it as "my 8080 goes to its 80"'),V.no('-p 80:8080','Backwards: nginx is not listening on 8080 inside'),
+ V.no('docker run nginx -d','Options after the image name are passed to the app, not to Docker'),
+ V.no('port is already allocated','Something already uses that host port. Pick another, like 8081'))}
+${V.hook(`Left is my machine, right is the container. <code>-p</code> is the street door.`)}
+`)}
 
-<h4>Ports: the numbered doors of a computer</h4>
-<p>One computer can run many servers at once: a web server, a database, an app. When a request arrives over the network, how does the computer know which program should get it? Each server program <b>listens</b> on a numbered <b>port</b>, from 1 to 65535, and every request is addressed to a port as well as to a machine. Some numbers are conventions: web servers use port 80 (and 443 for HTTPS), PostgreSQL uses 5432, and development servers often use 3000. Only one program can listen on a given port at a time.</p>
-<p>Now the twist. Each container gets its <b>own private network</b>, with its own set of ports. nginx inside the container listens on port 80, but that is the container's port 80, not your machine's. From outside, nothing can reach it, which is a good default for safety.</p>
-<p>To let traffic in, you <b>publish</b> a port with <code>-p HOST:CONTAINER</code>. <code>-p 8080:80</code> tells Docker: "whenever something arrives at port 8080 on my machine, forward it to port 80 inside this container".</p>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="A request to localhost port 8080 is forwarded by Docker to port 80 inside the container">
-<rect class="bx" x="10" y="20" width="400" height="150" rx="12"/>
-<text class="t-b" x="24" y="44">your machine</text>
-<rect class="bx-info" x="24" y="72" width="110" height="50" rx="8"/><text class="t" x="79" y="94" text-anchor="middle">browser</text><text class="t-s" x="79" y="112" text-anchor="middle">or curl</text>
-<path class="ln-a" d="M134 97h44"/><polygon class="ah-a" points="176,91 176,103 184,97"/>
-<rect class="bx-a" x="186" y="78" width="56" height="38" rx="6"/><text class="t-m" x="214" y="102" text-anchor="middle">8080</text>
-<rect class="bx-ok" x="262" y="56" width="136" height="100" rx="10"/>
-<text class="t-s" x="330" y="76" text-anchor="middle">container "web"</text>
-<rect class="bx" x="274" y="84" width="40" height="30" rx="6"/><text class="t-m" x="294" y="104" text-anchor="middle">80</text>
-<text class="t-b" x="356" y="104" text-anchor="middle">nginx</text>
-<path class="ln-a" d="M242 97h24"/><polygon class="ah-a" points="266,91 266,103 274,97"/>
-<path class="ln-ok" d="M314 99h14"/>
-<text class="t-s" x="330" y="142" text-anchor="middle">own network</text>
-<text class="t-m t-a" x="210" y="198" text-anchor="middle">-p 8080:80</text>
-</svg><figcaption>Your browser or curl talks to port 8080 on your own machine. Because of dash p 8080 colon 80, Docker forwards that traffic to port 80 inside the container, where nginx is listening. Without the dash p, the container's port 80 is unreachable from outside.</figcaption></figure>
-<p>Read the flag left to right as "outside, then inside": the left number is always <b>your machine</b>. The two numbers do not have to differ, and <code>-p 80:80</code> is common on servers. Choosing a different host port lets you run several containers that all use port 80 inside: one on 8080, one on 8081, and so on.</p>
-<p>Putting it together:</p>
-<pre class="snip">docker run -d -p 8080:80 --name web nginx
-curl localhost:8080       # localhost = this machine</pre>
-<p>curl prints nginx's welcome page, an HTML document containing <code>Welcome to nginx!</code>. In <code>docker ps</code>, the <code>PORTS</code> column now shows something like <code>0.0.0.0:8080-&gt;80/tcp</code>: port 8080 on every network address of your machine, forwarded to port 80 in the container. (TCP is the type of network connection web traffic uses.)</p>
+${V.card(3,'Life of a container','run, look, stop, remove',`
+${V.like(`<p>Hiring a van. You pick it up (run), check the dashboard (logs), park it with the engine off (stop), and return it (rm). The van company (the image) still has the model for next time.</p>`)}
+${V.steps([
+ ['<b>docker run -d</b> starts web in the background and prints its long ID. <b>docker ps</b> shows it <b>Up</b>.',`<svg viewBox="0 0 420 186" role="img" aria-label="web is up"><rect class="bx-dark" x="4" y="6" width="412" height="174" rx="8"/><text class="t-term" x="16" y="36" style="font-size:14px;white-space:pre">$ docker run -d -p 8080:80 --name web nginx</text><text class="t-term t-dim" x="16" y="66" style="font-size:14px;white-space:pre">3f9c1e7a52b0...</text><text class="t-term" x="16" y="96" style="font-size:14px;white-space:pre">$ docker ps</text><text class="t-term" x="16" y="126" style="font-size:14px;white-space:pre">NAMES  STATUS         PORTS</text><text class="t-term t-ok" x="16" y="156" style="font-size:14px;white-space:pre">web    Up 5 seconds   0.0.0.0:8080-&gt;80/tcp</text></svg>`],
+ ['<b>docker logs web</b> shows what nginx has printed, including the request you just made.',`<svg viewBox="0 0 420 156" role="img" aria-label="docker logs shows the request"><rect class="bx-dark" x="4" y="6" width="412" height="144" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px;white-space:pre">$ docker logs web</text><text class="t-term t-ok" x="16" y="66" style="font-size:15px;white-space:pre">172.17.0.1 - - "GET / HTTP/1.1" 200</text><text class="t-term t-dim" x="16" y="96" style="font-size:15px;white-space:pre">(one line per request)</text></svg>`],
+ ['<b>docker stop web</b> asks nginx to shut down. The container still exists, just <b>Exited</b>. You could start it again.',`<svg viewBox="0 0 420 156" role="img" aria-label="web has exited"><rect class="bx-dark" x="4" y="6" width="412" height="144" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px;white-space:pre">$ docker stop web</text><text class="t-term" x="16" y="66" style="font-size:15px;white-space:pre">$ docker ps -a</text><text class="t-term" x="16" y="96" style="font-size:15px;white-space:pre">NAMES  STATUS</text><text class="t-term t-warn" x="16" y="126" style="font-size:15px;white-space:pre">web    Exited (0) 2 seconds ago</text></svg>`],
+ ['<b>docker rm web</b> deletes the stopped container. Now the name web is free to use again. The nginx image is still on your machine.',`<svg viewBox="0 0 420 156" role="img" aria-label="web is removed"><rect class="bx-dark" x="4" y="6" width="412" height="144" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px;white-space:pre">$ docker rm web</text><text class="t-term" x="16" y="66" style="font-size:15px;white-space:pre">$ docker ps -a</text><text class="t-term" x="16" y="96" style="font-size:15px;white-space:pre">NAMES  STATUS</text><text class="t-term t-dim" x="16" y="126" style="font-size:15px;white-space:pre">(empty)</text></svg>`]])}
+${V.rules(V.no('docker rm web (while running)','Refused. Stop it first, or use docker rm -f web'),V.no('--name web (twice)','"name already in use": remove the old one first'),
+ V.ok('docker logs -f web','Follow the logs live, like tail -f'))}
+${V.build(`<ol><li>Pull the nginx image and list your images.</li><li>Run it in the background, named, with your port 8080 published to its port 80.</li><li>Ask for the page with <code>curl localhost:8080</code>.</li><li>Read the container's logs.</li><li>Stop it, then remove it.</li></ol>`)}
+${V.hook(`run, ps, logs, stop, rm: start it, see it, hear it, park it, return it.`)}
+`)}
 
-<h4>Reading a container's logs</h4>
-<p>A detached container's output does not appear in your terminal, but Docker records it. Anything the main process prints is captured, and <code>docker logs web</code> shows it. The official nginx image prints a line for every request it serves, so after your curl you will see your own request there: the address it came from, the time, <code>"GET / HTTP/1.1"</code> and the status <code>200</code>, just like the access log you searched in the Linux track.</p>
-<pre class="snip">docker logs web             # everything so far
-docker logs --tail 20 web   # just the last 20 lines
-docker logs -f web          # follow new lines; Ctrl+C to stop</pre>
-<p>Pressing Ctrl+C after <code>-f</code> only stops you watching. The container keeps running.</p>
-
-<h4>The container life cycle: stop, start, remove</h4>
-<figure class="fig"><svg viewBox="0 0 420 176" role="img" aria-label="Container life cycle: run creates a running container, stop makes it exited, start runs it again, rm deletes it">
-<rect class="bx-a" x="10" y="20" width="90" height="44" rx="8"/><text class="t-b t-a" x="55" y="47" text-anchor="middle">image</text>
-<path class="ln" d="M100 42h34"/><polygon class="ah" points="132,36 132,48 140,42"/><text class="t-s" x="118" y="32" text-anchor="middle">run</text>
-<rect class="bx-ok" x="142" y="20" width="110" height="44" rx="8"/><text class="t-b t-ok" x="197" y="47" text-anchor="middle">running</text>
-<path class="ln" d="M252 34h66"/><polygon class="ah" points="316,28 316,40 324,34"/><text class="t-s" x="288" y="26" text-anchor="middle">stop</text>
-<path class="ln" d="M326 54h-66"/><polygon class="ah" points="262,48 262,60 254,54"/><text class="t-s" x="292" y="76" text-anchor="middle">start</text>
-<rect class="bx-warn" x="326" y="20" width="84" height="44" rx="8"/><text class="t-b t-warn" x="368" y="47" text-anchor="middle">exited</text>
-<path class="ln" d="M368 64v52"/><polygon class="ah" points="362,114 374,114 368,122"/><text class="t-s" x="386" y="96">rm</text>
-<rect class="bx-bad" x="310" y="124" width="100" height="40" rx="8"/><text class="t-b t-bad" x="360" y="149" text-anchor="middle">removed</text>
-<text class="t-s" x="55" y="96" text-anchor="middle">stays on</text><text class="t-s" x="55" y="113" text-anchor="middle">disk after rm</text>
-<path class="ln-d" d="M197 64v80h105" fill="none"/><polygon class="ah" points="300,138 300,150 308,144"/>
-<text class="t-s" x="250" y="136" text-anchor="middle">rm -f</text>
-</svg><figcaption>docker run turns an image into a running container. docker stop moves it to exited, and docker start brings the same container back. docker rm deletes an exited container for good, and rm dash f stops and deletes a running one in one step. The image itself is untouched and stays on disk.</figcaption></figure>
-<ul>
-<li><code>docker stop web</code> asks the main process to shut down. It sends SIGTERM, the polite signal from the processes lesson, waits up to 10 seconds, and then sends SIGKILL if the process is still running.</li>
-<li><code>docker start web</code> starts the same stopped container again, with the same settings.</li>
-<li><code>docker rm web</code> deletes a stopped container, including any files created inside it. <code>docker rm -f web</code> forces it: stop and remove in one step.</li>
-<li>Removing a container never removes its image. <code>docker rmi nginx</code> deletes the image, once no container uses it.</li>
-</ul>
-
-<h4>Reading the errors you will hit</h4>
-<ul>
-<li><code>Conflict. The container name "/web" is already in use</code>: names must be unique, and a container named web still exists, even if it is stopped. Check <code>docker ps -a</code>, then <code>docker rm web</code> or pick another name.</li>
-<li><code>Bind for 0.0.0.0:8080 failed: port is already allocated</code>: something on your machine, often another container, already uses host port 8080. Choose another left-hand number.</li>
-<li><code>You cannot remove a running container</code>: stop it first, or use <code>rm -f</code>.</li>
-<li><code>curl: (7) Failed to connect to localhost port 8080</code>: nothing is published on that port. Check the <code>PORTS</code> column in <code>docker ps</code>; you probably forgot <code>-p</code>.</li>
-</ul>
-<div class="mistake"><b>Common mistake</b>Writing the port mapping backwards, as <code>-p 80:8080</code>. That publishes your machine's port 80 to port 8080 inside the container, where nothing is listening, so requests fail. Remember: host first, container second.</div>
-<div class="try"><b>Try it in your head</b>You run <code>docker run -d -p 5000:80 --name site nginx</code>. Which address shows the page? <code>localhost:5000</code>, because the left number is your machine. Now you want a second nginx at the same time: you need a new name and a different host port, such as <code>-p 5001:80 --name site2</code>. Inside, both still use port 80, and that is fine because each container has its own network.</div>
-
-<h4>Recap</h4>
-<ul>
-<li><code>docker pull name:tag</code> downloads an image; no tag means <code>latest</code>. <code>docker images</code> lists them.</li>
-<li><code>docker run -d --name web nginx</code> creates and starts a container in the background with a friendly name.</li>
-<li>Containers have their own ports. <code>-p HOST:CONTAINER</code> publishes one, so <code>-p 8080:80</code> makes <code>localhost:8080</code> reach nginx's port 80.</li>
-<li><code>docker logs</code> shows what the container printed; add <code>-f</code> to follow.</li>
-<li><code>docker stop</code>, <code>start</code> and <code>rm</code> manage the life cycle; removing a container keeps the image.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. <code>-p 5000:80</code>: which address in your browser? <i>localhost:5000.</i> 2. Can you remove a running container with plain <code>docker rm</code>? <i>No: stop it first or add -f.</i> 3. What tag does <code>docker pull redis</code> fetch? <i>latest.</i></div>
 `);
 
 explain('d3',`
-<h4>Why write your own image</h4>
-<p>So far you have run images that other people built, like nginx. To ship <b>your</b> app you need your own image: one that contains Node.js, your app's packages and your code, and knows how to start it. You could set that up by hand inside a container, but nobody could repeat it exactly, and you would forget the steps by next month.</p>
-<p>Instead you write a <b>Dockerfile</b>: a plain text file, saved next to your code, that lists the steps to build the image, in order. Anyone with the file and the code gets exactly the same image, every time. Because it is just text, it also lives in Git with the rest of your project.</p>
-<p>The lesson's folder, <code>~/hello-api</code>, holds a tiny Express app: <code>package.json</code> lists its one dependency, and <code>server.js</code> answers "Hello from Docker" on port 3000.</p>
+<p>Pulling other people's images is useful; packaging <b>your own</b> app is the real superpower. A Dockerfile is a short recipe, and once you have one, anyone can build and run your app with two commands.</p>
 
-<h4>The Dockerfile, line by line</h4>
-<pre class="snip">FROM node:24-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-EXPOSE 3000
-CMD ["node", "server.js"]</pre>
-<p>Each line is one <b>instruction</b>: an uppercase keyword, then its arguments. Read it top to bottom, like a recipe.</p>
-<ol>
-<li><code>FROM node:24-alpine</code> picks the <b>base image</b> to start from. You never build from nothing. This one already contains Node.js 24 on <b>Alpine Linux</b>, a tiny Linux distribution designed for containers, which keeps the image small. Every Dockerfile starts with <code>FROM</code>.</li>
-<li><code>WORKDIR /app</code> sets the working folder inside the image, creating it if needed. It is <code>cd</code> for the rest of the Dockerfile: later relative paths, and the final command, all happen in <code>/app</code>.</li>
-<li><code>COPY package*.json ./</code> copies files from your project into the image. The <code>*</code> wildcard matches both <code>package.json</code> and <code>package-lock.json</code> if it exists, and <code>./</code> means "into the working folder", <code>/app</code>.</li>
-<li><code>RUN npm install</code> runs a command <b>while the image is being built</b>, and saves the result into the image. Here it downloads Express into <code>/app/node_modules</code>.</li>
-<li><code>COPY . .</code> copies everything else: from <code>.</code>, your project folder, to <code>.</code>, the working folder in the image.</li>
-<li><code>EXPOSE 3000</code> records that the app listens on port 3000. It is <b>documentation only</b>: it does not publish anything. You still need <code>-p</code> when you run it.</li>
-<li><code>CMD ["node", "server.js"]</code> is the command a container runs <b>when it starts</b>. It becomes the container's main process.</li>
-</ol>
-<p>The square-bracket form of <code>CMD</code> is called the <b>exec form</b>: a list of words in double quotes, separated by commas. Docker runs <code>node</code> directly, with no shell in between, so signals such as the SIGTERM sent by <code>docker stop</code> reach your app. A Dockerfile has only one <code>CMD</code>; if you write two, the last one wins.</p>
+${V.card(1,'The Dockerfile','a recipe, one instruction per line',`
+<figure class="fig"><svg viewBox="0 0 420 236" role="img" aria-label="An image is a stack of layers, one per instruction, with node:24-alpine at the bottom and your code on top"><rect class="bx-a" x="20" y="196" width="300" height="32" rx="8"/><text class="t-m" x="170" y="217.25" text-anchor="middle" style="font-size:15px">FROM node:24-alpine</text><rect class="bx-ok" x="26" y="158" width="288" height="32" rx="8"/><text class="t-m" x="170" y="179.25" text-anchor="middle" style="font-size:15px">WORKDIR /app</text><rect class="bx-ok" x="32" y="120" width="276" height="32" rx="8"/><text class="t-m" x="170" y="141.25" text-anchor="middle" style="font-size:15px">COPY package*.json ./</text><rect class="bx-ok" x="38" y="82" width="264" height="32" rx="8"/><text class="t-m" x="170" y="103.25" text-anchor="middle" style="font-size:15px">RUN npm install</text><rect class="bx-warn" x="44" y="44" width="252" height="32" rx="8"/><text class="t-m" x="170" y="65.25" text-anchor="middle" style="font-size:15px">COPY . .</text><text class="t t-a" x="340" y="214" style="font-size:14px">base</text><text class="t t-ok" x="340" y="100" style="font-size:14px">deps</text><text class="t t-warn" x="340" y="62" style="font-size:14px">your code</text><text class="t-m" x="10" y="22" style="font-size:15px">CMD ["node","server.js"]</text><text class="t t-a" x="410" y="22" text-anchor="end" style="font-size:14px">start note</text></svg><figcaption>Each instruction adds one layer on top of the last, like a stack of trays. The bottom is a ready-made <b>base image</b>; your code goes on top. CMD adds no files: it just records what to run at start.</figcaption></figure>
+${V.like(`<p>Building a sandwich in layers. Bread first (the base image), then butter (a working folder), then the filling (your packages), then the topping (your code). The written recipe card is the Dockerfile.</p>`)}
+${V.why(`<p>Typing install steps by hand on every server is slow and easy to get wrong. A Dockerfile writes them down once, in a file that lives next to your code, so the image is rebuilt exactly the same way every time.</p>`)}
+${V.anat([[1,'FROM'],' node:24-alpine\n',[2,'WORKDIR'],' /app\n',[3,'COPY'],' package*.json ./\n',[4,'RUN'],' npm install\n',[3,'COPY'],' . .\n',[5,'EXPOSE'],' 3000\n',[6,'CMD'],' ["node", "server.js"]'],[
+ '<b>FROM.</b> The base image to start from: Node 24 on Alpine, a tiny Linux. Always the first line.',
+ '<b>WORKDIR.</b> The folder inside the image where everything happens. Created if missing.',
+ '<b>COPY.</b> Copy files from your project (left) into the image (right). <code>package*.json</code> matches package.json and package-lock.json.',
+ '<b>RUN.</b> Run a command <b>while building</b>, and save the result as a layer.',
+ '<b>EXPOSE.</b> A note saying which port the app uses. It does not publish it; that is still <code>-p</code>.',
+ '<b>CMD.</b> The command to run <b>when a container starts</b>.'])}
+${V.rules(V.rh('Rules'),
+ V.ok('CMD ["node", "server.js"]','JSON form: double quotes, commas, square brackets'),V.no("CMD ['node', 'server.js']",'Single quotes aren\'t valid JSON, so Docker treats it as a plain shell string'),
+ V.no('RUN node server.js','RUN happens at build time. The server would start and the build would never finish'),
+ V.rh('Conventions'),V.ok('.dockerignore','List node_modules and .env in it so they are never copied in'),V.ok('-alpine, -slim','Small base images build and download faster'))}
+${V.hook(`RUN is for building, CMD is for starting.`)}
+`)}
 
-<h4>Build time and run time</h4>
-<p>The most important distinction in a Dockerfile is <b>when</b> each line happens. Everything except <code>CMD</code> happens once, at <b>build time</b>, when you create the image. <code>CMD</code> happens every time a container starts, at <b>run time</b>.</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="docker build turns a Dockerfile and project files into an image; docker run starts the CMD in a container">
-<rect class="bx-info" x="10" y="20" width="110" height="60" rx="8"/><text class="t-b" x="65" y="45" text-anchor="middle">Dockerfile</text><text class="t-s" x="65" y="66" text-anchor="middle">+ your files</text>
-<path class="ln" d="M120 50h32"/><polygon class="ah" points="150,44 150,56 158,50"/>
-<rect class="bx-a" x="160" y="20" width="100" height="60" rx="8"/><text class="t-b t-a" x="210" y="56" text-anchor="middle">image</text>
-<path class="ln-ok" d="M260 50h32"/><polygon class="ah-ok" points="290,44 290,56 298,50"/>
-<rect class="bx-ok" x="300" y="20" width="110" height="60" rx="8"/><text class="t-b t-ok" x="355" y="56" text-anchor="middle">container</text>
-<text class="t-m" x="139" y="104" text-anchor="middle">build</text><text class="t-m" x="279" y="104" text-anchor="middle">run</text>
-<line class="ln-d" x1="10" y1="122" x2="410" y2="122"/>
-<text class="t-b" x="110" y="150" text-anchor="middle">build time, once</text>
-<text class="t-s" x="110" y="172" text-anchor="middle">FROM, WORKDIR, COPY, RUN</text>
-<text class="t-s" x="110" y="192" text-anchor="middle">npm install happens here</text>
-<text class="t-b" x="320" y="150" text-anchor="middle">run time, every start</text>
-<text class="t-s" x="320" y="172" text-anchor="middle">CMD</text>
-<text class="t-s" x="320" y="192" text-anchor="middle">node server.js runs here</text>
-</svg><figcaption>docker build reads the Dockerfile and your files once, and produces an image with everything already installed. docker run starts a container from that image, and only then runs the CMD, node server dot js. A RUN line happens at build time, a CMD at run time.</figcaption></figure>
-<p>That is why installing packages goes in <code>RUN</code>: you want it done once and baked into the image, not repeated on every start. And it is why the server goes in <code>CMD</code>: a server that started during the build would just block the build forever.</p>
+${V.card(2,'Building and the layer cache','why the order of lines matters',`
+${V.anat([[1,'docker build'],' ',[2,'-t hello-api'],' ',[3,'.']],[
+ '<b>docker build.</b> Read a Dockerfile and produce an image.',
+ '<b>-t (tag).</b> The name for the new image. Lower case only.',
+ '<b>Build context.</b> The folder whose files COPY can see. The dot means "this folder". Easy to forget!'])}
+<p><b>Watch the cache work.</b> Blue layers are reused, yellow ones are rebuilt.</p>
+${V.steps([
+ ['First build. Docker runs each instruction in order and saves the result as a layer. <b>RUN npm install</b> is the slow one: it downloads every package.',`<svg viewBox="0 0 420 236" role="img" aria-label="First build in progress"><text class="t-b" x="10" y="24" style="font-size:15px">docker build -t hello-api .</text><text class="t-m t-a" x="410" y="24" text-anchor="end" style="font-size:15px;font-weight:700">...</text><rect class="bx-ok" x="6" y="40" width="290" height="32" rx="8"/><text class="t-m" x="16" y="62" style="font-size:15px">FROM node:24-alpine</text><text class="t-b t-ok" x="306" y="62" style="font-size:15px">built</text><rect class="bx-ok" x="6" y="78" width="290" height="32" rx="8"/><text class="t-m" x="16" y="100" style="font-size:15px">WORKDIR /app</text><text class="t-b t-ok" x="306" y="100" style="font-size:15px">built</text><rect class="bx-ok" x="6" y="116" width="290" height="32" rx="8"/><text class="t-m" x="16" y="138" style="font-size:15px">COPY package*.json ./</text><text class="t-b t-ok" x="306" y="138" style="font-size:15px">built</text><rect class="bx-hl" x="6" y="154" width="290" height="32" rx="8"/><text class="t-m" x="16" y="176" style="font-size:15px">RUN npm install</text><text class="t-b" x="306" y="176" style="font-size:15px">running...</text><rect class="bx" x="6" y="192" width="290" height="32" rx="8"/><text class="t-m t-dim" x="16" y="214" style="font-size:15px">COPY . .</text><text class="t-b" x="306" y="214" style="font-size:15px"></text></svg>`],
+ ['All five layers built and stacked into the image <b>hello-api</b>.',`<svg viewBox="0 0 420 236" role="img" aria-label="First build done"><text class="t-b" x="10" y="24" style="font-size:15px">docker build -t hello-api .</text><text class="t-m t-a" x="410" y="24" text-anchor="end" style="font-size:15px;font-weight:700">45 s</text><rect class="bx-ok" x="6" y="40" width="290" height="32" rx="8"/><text class="t-m" x="16" y="62" style="font-size:15px">FROM node:24-alpine</text><text class="t-b t-ok" x="306" y="62" style="font-size:15px">built</text><rect class="bx-ok" x="6" y="78" width="290" height="32" rx="8"/><text class="t-m" x="16" y="100" style="font-size:15px">WORKDIR /app</text><text class="t-b t-ok" x="306" y="100" style="font-size:15px">built</text><rect class="bx-ok" x="6" y="116" width="290" height="32" rx="8"/><text class="t-m" x="16" y="138" style="font-size:15px">COPY package*.json ./</text><text class="t-b t-ok" x="306" y="138" style="font-size:15px">built</text><rect class="bx-ok" x="6" y="154" width="290" height="32" rx="8"/><text class="t-m" x="16" y="176" style="font-size:15px">RUN npm install</text><text class="t-b t-ok" x="306" y="176" style="font-size:15px">built</text><rect class="bx-ok" x="6" y="192" width="290" height="32" rx="8"/><text class="t-m" x="16" y="214" style="font-size:15px">COPY . .</text><text class="t-b t-ok" x="306" y="214" style="font-size:15px">built</text></svg>`],
+ ['You change one line in <b>server.js</b> and build again. Docker checks each layer\'s inputs. The first four didn\'t change, so they are reused: <b>CACHED</b>. Only COPY . . (your code) is redone.',`<svg viewBox="0 0 420 236" role="img" aria-label="Rebuild reuses four cached layers"><text class="t-b" x="10" y="24" style="font-size:15px">after editing server.js</text><text class="t-m t-a" x="410" y="24" text-anchor="end" style="font-size:15px;font-weight:700">2 s</text><rect class="bx-info" x="6" y="40" width="290" height="32" rx="8"/><text class="t-m" x="16" y="62" style="font-size:15px">FROM node:24-alpine</text><text class="t-b t-info" x="306" y="62" style="font-size:15px">CACHED</text><rect class="bx-info" x="6" y="78" width="290" height="32" rx="8"/><text class="t-m" x="16" y="100" style="font-size:15px">WORKDIR /app</text><text class="t-b t-info" x="306" y="100" style="font-size:15px">CACHED</text><rect class="bx-info" x="6" y="116" width="290" height="32" rx="8"/><text class="t-m" x="16" y="138" style="font-size:15px">COPY package*.json ./</text><text class="t-b t-info" x="306" y="138" style="font-size:15px">CACHED</text><rect class="bx-info" x="6" y="154" width="290" height="32" rx="8"/><text class="t-m" x="16" y="176" style="font-size:15px">RUN npm install</text><text class="t-b t-info" x="306" y="176" style="font-size:15px">CACHED</text><rect class="bx-warn" x="6" y="192" width="290" height="32" rx="8"/><text class="t-m" x="16" y="214" style="font-size:15px">COPY . .</text><text class="t-b t-warn" x="306" y="214" style="font-size:15px">rebuilt</text></svg>`],
+ ['Why the order matters: if <b>COPY . .</b> came before <b>npm install</b>, every code edit would change that layer, and every layer after it, including the slow install, would rebuild too.',`<svg viewBox="0 0 420 236" role="img" aria-label="With COPY . . first, every edit reruns npm install"><text class="t-b t-bad" x="10" y="24" style="font-size:15px">bad order</text><text class="t-m t-bad" x="410" y="24" text-anchor="end" style="font-size:15px;font-weight:700">45 s</text><rect class="bx-info" x="6" y="40" width="290" height="32" rx="8"/><text class="t-m" x="151" y="61.25" text-anchor="middle" style="font-size:15px">FROM node:24-alpine</text><text class="t-b t-info" x="306" y="62" style="font-size:15px">CACHED</text><rect class="bx-info" x="6" y="78" width="290" height="32" rx="8"/><text class="t-m" x="151" y="99.25" text-anchor="middle" style="font-size:15px">WORKDIR /app</text><text class="t-b t-info" x="306" y="100" style="font-size:15px">CACHED</text><rect class="bx-warn" x="6" y="116" width="290" height="32" rx="8"/><text class="t-m" x="151" y="137.25" text-anchor="middle" style="font-size:15px">COPY . .</text><text class="t-b t-warn" x="306" y="138" style="font-size:15px">changed</text><rect class="bx-bad" x="6" y="154" width="290" height="32" rx="8"/><text class="t-m" x="151" y="175.25" text-anchor="middle" style="font-size:15px">RUN npm install</text><text class="t-b t-bad" x="306" y="176" style="font-size:15px">rebuilt!</text><rect class="bx" x="6" y="192" width="290" height="32" rx="8"/><text class="t-m" x="151" y="213.25" text-anchor="middle" style="font-size:15px">...</text><text class="t-b" x="306" y="214" style="font-size:15px"></text></svg>`]])}
+${V.like(`<p>Re-doing homework. If only the last question changed, you copy your earlier answers and redo just that one. But Docker is strict: once one layer changes, every layer above it must be redone too.</p>`)}
+${V.rules(V.ok('COPY package*.json, RUN npm install, then COPY . .','Things that change rarely go first'),V.no('docker build -t hello-api','Missing the final dot: "requires 1 argument"'))}
+${V.hook(`Slow and stable at the bottom, fast-changing code at the top.`)}
+`)}
 
-<h4>Building and running: <code>docker build -t hello-api .</code></h4>
-<p>Two parts of the build command matter:</p>
-<ul>
-<li><code>-t hello-api</code> <b>tags</b> the image with a name, so you can run it by name. With no <code>:tag</code>, it becomes <code>hello-api:latest</code>.</li>
-<li>The final <code>.</code> is the <b>build context</b>: the folder whose files Docker may use. <code>COPY</code> can only see files inside it. Here it is the current folder, <code>~/hello-api</code>.</li>
-</ul>
-<p>Docker prints a numbered line for each step and finishes with the image name. Then you run it exactly as you ran nginx, using the app's port on both sides:</p>
-<pre class="snip">docker build -t hello-api .
-docker run -d -p 3000:3000 --name api hello-api
-curl localhost:3000        # Hello from Docker</pre>
-<p>Inside the container, <code>server.js</code> listens on port 3000; <code>-p 3000:3000</code> publishes it as port 3000 on your machine.</p>
+${V.card(3,'From Dockerfile to running app','build, run, curl',`
+${V.steps([
+ ['<b>docker build</b> turns the Dockerfile into an image. <b>-t</b> gives it a name; the final <b>.</b> says "the files are in this folder".',`<svg viewBox="0 0 420 156" role="img" aria-label="docker build names the image hello-api"><rect class="bx-dark" x="4" y="6" width="412" height="144" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px;white-space:pre">$ docker build -t hello-api .</text><text class="t-term t-ok" x="16" y="66" style="font-size:15px;white-space:pre"> => [5/5] COPY . .</text><text class="t-term t-ok" x="16" y="96" style="font-size:15px;white-space:pre"> => naming to hello-api</text></svg>`],
+ ['Start a container from your own image, exactly as you did with nginx.',`<svg viewBox="0 0 420 156" role="img" aria-label="docker run starts the api container"><rect class="bx-dark" x="4" y="6" width="412" height="144" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px;white-space:pre">$ docker run -d -p 3000:3000 \\</text><text class="t-term" x="16" y="66" style="font-size:15px;white-space:pre">    --name api hello-api</text><text class="t-term t-dim" x="16" y="96" style="font-size:15px;white-space:pre">8b21c0f4e9d3...</text></svg>`],
+ ['CMD runs <b>node server.js</b> inside the container, and the app answers on port 3000.',`<svg viewBox="0 0 420 150" role="img" aria-label="curl gets Hello from Docker"><rect class="bx-dark" x="4" y="6" width="412" height="138" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px;white-space:pre">$ curl localhost:3000</text><text class="t-term t-ok" x="16" y="66" style="font-size:15px;white-space:pre">Hello from Docker</text></svg>`]])}
+${V.build(`<ol><li>Open a new Dockerfile in nano.</li><li>Start FROM a Node 24 Alpine image and set WORKDIR to /app.</li><li>Copy only the package files, run npm install, then copy everything else.</li><li>EXPOSE 3000 and set CMD to start server.js.</li><li>Build it with a name and the dot, run it with port 3000 published, and curl it.</li><li>Edit the message in server.js, rebuild, and spot the CACHED lines.</li></ol>`)}
+${V.hook(`Dockerfile, build, run: recipe, cake tin, cake.`)}
+`)}
 
-<h4>Layers and the build cache</h4>
-<p>Each instruction that changes files, <code>FROM</code>, <code>COPY</code>, <code>RUN</code> and <code>WORKDIR</code>, produces a <b>layer</b>: the set of files that step added or changed. The image is those layers stacked up. <code>EXPOSE</code> and <code>CMD</code> only record settings.</p>
-<p>Docker keeps every layer it builds in a <b>cache</b>. On the next build, for each step it asks: "is this step's input exactly the same as last time?" For a <code>RUN</code>, the input is the command text. For a <code>COPY</code>, it is also the contents of the files being copied. If the input is unchanged, Docker reuses the stored layer and prints <code>CACHED</code>, which takes no time. The rule that makes order matter is this: <b>once one step has to rebuild, every step after it rebuilds too</b>, because each layer sits on top of the one before.</p>
-<figure class="fig"><svg viewBox="0 0 420 260" role="img" aria-label="After editing server.js, the good order reuses the npm install layer; the bad order reinstalls">
-<text class="t-b t-ok" x="105" y="18" text-anchor="middle">good order</text>
-<text class="t-b t-bad" x="315" y="18" text-anchor="middle">bad order</text>
-<g text-anchor="middle">
-<rect class="bx-ok" x="10" y="30" width="190" height="32" rx="6"/><text class="t-s" x="105" y="51">FROM: cached</text>
-<rect class="bx-ok" x="10" y="68" width="190" height="32" rx="6"/><text class="t-s" x="105" y="89">WORKDIR: cached</text>
-<rect class="bx-ok" x="10" y="106" width="190" height="32" rx="6"/><text class="t-s" x="105" y="127">COPY package: cached</text>
-<rect class="bx-ok" x="10" y="144" width="190" height="32" rx="6"/><text class="t-s" x="105" y="165">npm install: cached</text>
-<rect class="bx-warn" x="10" y="182" width="190" height="32" rx="6"/><text class="t-s" x="105" y="203">COPY . . : rebuilt</text>
-<rect class="bx-ok" x="220" y="30" width="190" height="32" rx="6"/><text class="t-s" x="315" y="51">FROM: cached</text>
-<rect class="bx-ok" x="220" y="68" width="190" height="32" rx="6"/><text class="t-s" x="315" y="89">WORKDIR: cached</text>
-<rect class="bx-warn" x="220" y="106" width="190" height="32" rx="6"/><text class="t-s" x="315" y="127">COPY . . : rebuilt</text>
-<rect class="bx-bad" x="220" y="144" width="190" height="32" rx="6"/><text class="t-s" x="315" y="165">npm install: rebuilt</text>
-<text class="t-s t-ok" x="105" y="242">about a second</text>
-<text class="t-s t-bad" x="315" y="242">reinstalls every package</text>
-</g>
-</svg><figcaption>You edited server dot js and rebuilt. In the good order, the package files have not changed, so npm install is reused from the cache and only the final copy reruns. In the bad order, the code is copied before npm install, so the changed file forces npm install to run again from scratch.</figcaption></figure>
-<p>That is the whole reason for copying <code>package*.json</code> on its own first. Your dependencies change rarely; your code changes all the time. Putting the slow, rarely changing step first means everyday edits only rerun the fast final copy. In the lesson's last task you edit the message in <code>server.js</code>, rebuild, and should see <code>CACHED</code> next to the early steps.</p>
-<div class="tip"><b>Tip</b>Add a <code>.dockerignore</code> file listing <code>node_modules</code> (and things like <code>.git</code> and <code>.env</code>). It works like <code>.gitignore</code>: those paths are left out of the build context, so <code>COPY . .</code> cannot overwrite the packages installed inside the image, or leak secrets into it.</div>
-
-<h4>Reading build and run errors</h4>
-<ul>
-<li><code>"docker build" requires exactly 1 argument</code>: you forgot the final dot.</li>
-<li>A <code>COPY</code> step failing with <code>not found</code>: the file is not in the build context. Check the name, the folder you ran the build from, and <code>.dockerignore</code>.</li>
-<li>A <code>RUN</code> step failing: its command returned an error, for example npm could not install a package. The build stops there, and the lines just above the error explain why.</li>
-<li>The container shows <code>Exited (1)</code> straight after <code>docker run</code>: the app crashed on start. <code>docker logs api</code> shows its error, such as a missing file in <code>CMD</code>.</li>
-</ul>
-<div class="mistake"><b>Common mistake</b>Rebuilding and expecting the running container to change. A container is made from the image as it was when the container was created. After a rebuild, remove the old container (<code>docker rm -f api</code>) and run a new one from the new image.</div>
-<div class="try"><b>Try it in your head</b>You add a new package to <code>package.json</code> and rebuild. Which steps are cached? <code>FROM</code> and <code>WORKDIR</code> are. <code>COPY package*.json ./</code> now has different input, so it rebuilds, and so does everything after it: <code>npm install</code> and <code>COPY . .</code>. That is correct behaviour: new dependencies really do need installing.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>A Dockerfile is a recipe: <code>FROM</code> a base, <code>WORKDIR</code>, <code>COPY</code> files in, <code>RUN</code> build steps, <code>EXPOSE</code> to document the port, and <code>CMD</code> to start the app.</li>
-<li><code>RUN</code> happens once at build time; <code>CMD</code> runs every time a container starts.</li>
-<li><code>docker build -t name .</code> builds an image from the current folder, the build context.</li>
-<li>Each step is a cached layer; once a step changes, every later step rebuilds.</li>
-<li>Copy <code>package*.json</code> and install before <code>COPY . .</code>, so code edits do not trigger a reinstall.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Which instruction runs at container start? <i>CMD.</i> 2. You edit server.js. Does npm install rerun? <i>No, if the package files are copied and installed before COPY . .</i> 3. What does the final dot in docker build mean? <i>Use this folder as the build context.</i></div>
 `);
 
 explain('d4',`
-<h4>Three things every real container needs</h4>
-<p>The containers so far were simple: start, serve a page, get thrown away. A real app, and especially a database, needs three more things:</p>
-<ol>
-<li><b>Configuration.</b> The same image must run on your laptop and in production with different passwords and settings, without rebuilding.</li>
-<li><b>Data that survives.</b> You will delete and replace containers constantly, for new versions or new settings. The data must not disappear with them.</li>
-<li><b>A way to talk to each other.</b> Your app container has to find the database container.</li>
-</ol>
-<p>Docker's answers are <b>environment variables</b>, <b>volumes</b> and <b>networks</b>. You will use all three to run PostgreSQL, the database you met in the SQL track.</p>
+<p>Containers are meant to be thrown away and replaced. That raises three questions every real app must answer: where do the settings come from, where does the data live, and how do containers talk to each other?</p>
 
-<h4>Configuration: environment variables with <code>-e</code></h4>
-<p>An <b>environment variable</b> is a named setting handed to a program when it starts, like <code>PORT=3000</code>. You have seen them in <code>.env</code> files; in Node.js a program reads them with <code>process.env.PORT</code>. They are the standard way to configure containers, because the image stays generic and each place that runs it supplies its own values.</p>
-<p><code>-e KEY=value</code> sets one for a container. You can repeat it as many times as you need:</p>
-<pre class="snip">docker run -d --name db -e POSTGRES_PASSWORD=secret postgres:16</pre>
-<p>The official Postgres image reads <code>POSTGRES_PASSWORD</code> the first time it starts, and uses it as the password of the main database user, called <code>postgres</code>. Which variables an image understands is listed on its page on Docker Hub.</p>
-<p>The settings are fixed when the container is created. To change one, you remove the container and run a new one with the new value.</p>
+${V.card(1,'Environment variables','settings from outside the image',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="One postgres image runs as three containers, each given different environment variables for laptop, test and production"><rect class="bx-info" x="125" y="6" width="170" height="58" rx="8"/>${V.ic('jar',135,12,44,'ic-info')}<text class="t-m" x="186" y="42" style="font-size:15px">postgres:16</text><path class="ln-a" d="M210 64V80H70V96M210 80V96M210 80H350V96"/><rect class="bx-ok" x="6" y="96" width="130" height="84" rx="8"/>${V.ic('container',14,102,30,'ic-ok')}<text class="t-b" x="50" y="122" style="font-size:14px">laptop</text><text class="t-m" x="16" y="148" style="font-size:14px">PASSWORD=</text><text class="t-m t-a" x="16" y="170" style="font-size:14px">secret</text><rect class="bx-ok" x="145" y="96" width="130" height="84" rx="8"/>${V.ic('container',153,102,30,'ic-ok')}<text class="t-b" x="189" y="122" style="font-size:14px">test</text><text class="t-m" x="155" y="148" style="font-size:14px">PASSWORD=</text><text class="t-m t-a" x="155" y="170" style="font-size:14px">t3st!</text><rect class="bx-ok" x="284" y="96" width="130" height="84" rx="8"/>${V.ic('container',292,102,30,'ic-ok')}<text class="t-b" x="328" y="122" style="font-size:14px">production</text><text class="t-m" x="294" y="148" style="font-size:14px">PASSWORD=</text><text class="t-m t-a" x="294" y="170" style="font-size:14px">long+random</text></svg><figcaption>The image stays the same everywhere. Each container gets its own settings from <b>environment variables</b> passed with <code>-e</code>, so one image serves your laptop, testing and the real site.</figcaption></figure>
+${V.like(`<p>A hotel room key card. Every card is the same kind of card, but each is programmed with a different room number at the desk. The image is the blank card; <code>-e</code> programs it.</p>`)}
+${V.why(`<p>If settings like passwords were baked into the image, you would need a different image for each place, and your secrets would travel with it. Passing them in at start keeps one image for everywhere.</p>`)}
+${V.anat([[1,'-e'],' ',[2,'POSTGRES_PASSWORD'],[3,'='],[4,'secret']],[
+ '<b>-e (environment).</b> Set one variable. Repeat <code>-e</code> for more.',
+ '<b>Name.</b> Each image documents which names it reads. Capitals by convention.',
+ '<b>Equals.</b> No spaces around it.',
+ '<b>Value.</b> Quote it if it has spaces or symbols.'])}
+<p><b>A classic first mistake</b>, made on purpose so you learn to read logs.</p>
+${V.steps([
+ ['Start Postgres without a password. <b>docker run</b> prints an ID and seems fine...',`<svg viewBox="0 0 420 150" role="img" aria-label="db seems to start"><rect class="bx-dark" x="4" y="6" width="412" height="138" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px;white-space:pre">$ docker run -d --name db postgres:16</text><text class="t-term t-dim" x="16" y="66" style="font-size:15px;white-space:pre">a71d02c95e3f...</text></svg>`],
+ ['...but <b>docker ps -a</b> shows it already stopped with exit code <b>1</b>, meaning an error.',`<svg viewBox="0 0 420 150" role="img" aria-label="db exited with code 1"><rect class="bx-dark" x="4" y="6" width="412" height="138" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px;white-space:pre">$ docker ps -a</text><text class="t-term" x="16" y="66" style="font-size:15px;white-space:pre">NAMES  STATUS</text><text class="t-term t-bad" x="16" y="96" style="font-size:15px;white-space:pre">db     Exited (1) 3 seconds ago</text></svg>`],
+ ['<b>docker logs db</b> shows the program\'s last words. It even tells you the fix.',`<svg viewBox="0 0 420 186" role="img" aria-label="logs explain the missing password"><rect class="bx-dark" x="4" y="6" width="412" height="174" rx="8"/><text class="t-term" x="16" y="36" style="font-size:15px;white-space:pre">$ docker logs db</text><text class="t-term t-bad" x="16" y="66" style="font-size:15px;white-space:pre">Error: Database is uninitialized and</text><text class="t-term t-bad" x="16" y="96" style="font-size:15px;white-space:pre">superuser password is not specified.</text><text class="t-term t-warn" x="16" y="126" style="font-size:15px;white-space:pre">You must specify POSTGRES_PASSWORD</text><text class="t-term t-warn" x="16" y="156" style="font-size:15px;white-space:pre">to a non-empty value...</text></svg>`]])}
+${V.rules(V.ok('docker logs NAME','The first thing to run when a container won\'t stay up'),V.no('-e POSTGRES_PASSWORD = secret','No spaces around ='),
+ V.no('ENV PASSWORD=... in a Dockerfile','Secrets baked into an image leak with it'))}
+${V.hook(`Same image everywhere; settings come in through <code>-e</code>.`)}
+`)}
 
-<h4>A failure on purpose: reading the logs</h4>
-<p>The lesson first asks you to start Postgres <b>without</b> a password. <code>docker run</code> prints a container ID and looks fine. But <code>docker ps</code> shows nothing, and <code>docker ps -a</code> shows the container as <code>Exited (1)</code>: the main process stopped with an error. This is when you ask the container what happened:</p>
-<pre class="snip">$ docker logs db
-Error: Database is uninitialized and superuser password
-is not specified.
-You must specify POSTGRES_PASSWORD to a non-empty value...</pre>
-<p>The image refuses to create a database nobody could log in to safely, and it tells you exactly which setting is missing. Before you start it properly, remove the failed container with <code>docker rm db</code>; otherwise the name <code>db</code> is still taken.</p>
+${V.card(2,'Volumes','data that outlives the container',`
+${V.like(`<p>A hotel room and a storage locker. The room (container) is cleaned out when you check out. The locker (volume) belongs to you and stays put, ready for your next stay.</p>`)}
+${V.anat([[1,'-v'],' ',[2,'pgdata'],[3,':'],[4,'/var/lib/postgresql/data']],[
+ '<b>-v (volume).</b> Attach storage to the container.',
+ '<b>Volume name.</b> Docker creates it if it doesn\'t exist yet (or make it first with <code>docker volume create pgdata</code>).',
+ '<b>Colon.</b> Outside on the left, inside on the right, just like <code>-p</code>.',
+ '<b>Path inside.</b> Where the app writes its data. For Postgres it is this exact folder.'])}
+${V.steps([
+ ['Run Postgres with <b>-v pgdata:/var/lib/postgresql/data</b>. The folder where Postgres keeps its files is now really stored in the volume <b>pgdata</b>, outside the container.',`<svg viewBox="0 0 420 210" role="img" aria-label="The container folder is connected to the pgdata volume"><rect class="bx-ok" x="6" y="20" width="220" height="120" rx="8"/>${V.ic('container',16,28,36,'ic-ok')}<text class="t-b" x="60" y="50" style="font-size:14px">db (container 1)</text><text class="t-m" x="18" y="80" style="font-size:14px">/var/lib/</text><text class="t-m" x="18" y="100" style="font-size:14px">postgresql/data</text><path class="ln" d="M166 92H272"/><polygon class="ah" points="270,85 270,99 280,92"/><rect class="bx-warn" x="280" y="20" width="134" height="120" rx="8"/>${V.ic('db',300,28,44,'ic-warn')}<text class="t-m" x="347" y="94" text-anchor="middle" style="font-size:16px;font-weight:700">pgdata</text><rect class="bx-dark" x="6" y="154" width="408" height="44" rx="8"/><text class="t-term" x="16" y="182" style="font-size:15px">-v pgdata:/var/lib/postgresql/data</text></svg>`],
+ ['You create a <b>users</b> table. Postgres writes it into its data folder, which means into the volume.',`<svg viewBox="0 0 420 210" role="img" aria-label="The users table is stored in the volume"><rect class="bx-ok" x="6" y="20" width="220" height="120" rx="8"/>${V.ic('container',16,28,36,'ic-ok')}<text class="t-b" x="60" y="50" style="font-size:14px">db (container 1)</text><text class="t-m" x="18" y="80" style="font-size:14px">/var/lib/</text><text class="t-m" x="18" y="100" style="font-size:14px">postgresql/data</text><path class="ln-a" d="M166 92H272"/><polygon class="ah-a" points="270,85 270,99 280,92"/><rect class="bx-warn" x="280" y="20" width="134" height="120" rx="8"/>${V.ic('db',300,28,44,'ic-warn')}<text class="t-m" x="347" y="94" text-anchor="middle" style="font-size:16px;font-weight:700">pgdata</text><rect class="bx-ok" x="292" y="104" width="110" height="28" rx="8"/><text class="t" x="347" y="122.9" text-anchor="middle" style="font-size:14px">users table</text><rect class="bx-dark" x="6" y="154" width="408" height="44" rx="8"/><text class="t-term" x="16" y="182" style="font-size:15px">psql: CREATE TABLE users ...</text></svg>`],
+ ['<b>docker rm -f db</b> deletes the container and everything inside it. But the volume was never inside it, so <b>pgdata</b> and the table survive.',`<svg viewBox="0 0 420 210" role="img" aria-label="The container is gone, the volume remains"><rect class="ln-d" x="6" y="20" width="220" height="120" rx="8"/>${V.ic('cross',90,50,48,'ic-bad')}<text class="t t-bad" x="116" y="124" text-anchor="middle" style="font-size:15px">removed</text><rect class="bx-warn" x="280" y="20" width="134" height="120" rx="8"/>${V.ic('db',300,28,44,'ic-warn')}<text class="t-m" x="347" y="94" text-anchor="middle" style="font-size:16px;font-weight:700">pgdata</text><rect class="bx-ok" x="292" y="104" width="110" height="28" rx="8"/><text class="t" x="347" y="122.9" text-anchor="middle" style="font-size:14px">users table</text><rect class="bx-dark" x="6" y="154" width="408" height="44" rx="8"/><text class="t-term" x="16" y="182" style="font-size:15px">$ docker rm -f db</text></svg>`],
+ ['Start a new container on the same volume. Postgres finds existing data and says <b>Skipping initialization</b>. Your table is back.',`<svg viewBox="0 0 420 210" role="img" aria-label="A new container uses the same volume and finds the data"><rect class="bx-ok" x="6" y="20" width="220" height="120" rx="8"/>${V.ic('container',16,28,36,'ic-ok')}<text class="t-b" x="60" y="50" style="font-size:14px">db (container 2)</text><text class="t-m" x="18" y="80" style="font-size:14px">/var/lib/</text><text class="t-m" x="18" y="100" style="font-size:14px">postgresql/data</text><path class="ln-a" d="M166 92H272"/><polygon class="ah-a" points="270,85 270,99 280,92"/><rect class="bx-warn" x="280" y="20" width="134" height="120" rx="8"/>${V.ic('db',300,28,44,'ic-warn')}<text class="t-m" x="347" y="94" text-anchor="middle" style="font-size:16px;font-weight:700">pgdata</text><rect class="bx-ok" x="292" y="104" width="110" height="28" rx="8"/><text class="t" x="347" y="122.9" text-anchor="middle" style="font-size:14px">users table</text><rect class="bx-dark" x="6" y="154" width="408" height="44" rx="8"/><text class="t-term" x="16" y="182" style="font-size:15px">Skipping initialization: data found</text></svg>`]])}
+${V.rules(V.ok('docker volume ls','List your volumes'),V.no('database without -v','Remove the container and every row is gone for good'),
+ V.no('docker volume rm pgdata','Deletes the data itself. Only when you really mean it'))}
+${V.hook(`Containers are rooms; volumes are lockers. Lock your data in the locker.`)}
+`)}
 
-<h4>Data that survives: volumes</h4>
-<p>Every container has its own writable layer on top of its image. Postgres saves its tables there by default, in <code>/var/lib/postgresql/data</code>. But that layer belongs to the container: <code>docker rm</code> deletes it, and every row of data with it.</p>
-<p>A <b>volume</b> is storage that Docker manages separately from any container. You create it once, then <b>mount</b> it into a container at a path, so that whatever the container writes to that path really goes into the volume. When the container is removed, the volume stays. Mount the same volume into a new container and the data is right there.</p>
-<pre class="snip">docker volume create pgdata
--v pgdata:/var/lib/postgresql/data   # volume name : path inside</pre>
-<p>The <code>-v</code> option reads like <code>-p</code>: the left side is outside (the volume called <code>pgdata</code>), the right side is inside the container (the folder where Postgres 16 keeps its files). The right-hand path depends on the image, so check its documentation.</p>
-<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="The first db container is removed, a second one mounts the same pgdata volume and finds the data">
-<rect class="bx-bad" x="10" y="16" width="160" height="56" rx="8"/><text class="t-b" x="90" y="40" text-anchor="middle">db, first</text><text class="t-s t-bad" x="90" y="60" text-anchor="middle">removed with rm -f</text>
-<rect class="bx-ok" x="250" y="16" width="160" height="56" rx="8"/><text class="t-b" x="330" y="40" text-anchor="middle">db, second</text><text class="t-s t-ok" x="330" y="60" text-anchor="middle">new container</text>
-<path class="ln" d="M170 44h72"/><polygon class="ah" points="240,38 240,50 248,44"/><text class="t-s" x="208" y="36" text-anchor="middle">later</text>
-<path class="ln-d" d="M90 72v50h80"/><path class="ln-ok" d="M330 72v50h-80"/>
-<rect class="bx-a" x="140" y="110" width="140" height="56" rx="10"/><text class="t-b t-a" x="210" y="134" text-anchor="middle">pgdata</text><text class="t-s" x="210" y="154" text-anchor="middle">volume</text>
-<text class="t-s" x="210" y="192" text-anchor="middle">the users table lives here, not in either container</text>
-<text class="t-s" x="210" y="214" text-anchor="middle">mounted at /var/lib/postgresql/data</text>
-</svg><figcaption>The first database container writes its data into the pgdata volume. When that container is removed, the volume stays. A brand new container mounts the same volume and finds all the data waiting, so nothing is lost.</figcaption></figure>
-<p>There is a second kind of mount you will see often: a <b>bind mount</b>, such as <code>-v ./site:/usr/share/nginx/html</code>, which mounts a folder from your own machine instead of a Docker-managed volume. It is handy in development for live-editing files. For database data, named volumes are the usual choice.</p>
+${V.card(3,'Networks and exec','talking by name, and stepping inside',`
+<figure class="fig"><svg viewBox="0 0 420 176" role="img" aria-label="On the network appnet, the api container reaches the database simply by the name db"><rect class="ln-d" x="6" y="8" width="408" height="160" rx="16"/><text class="t-b t-a" x="20" y="32" style="font-size:15px">network: appnet</text><rect class="bx-a" x="24" y="56" width="140" height="90" rx="8"/>${V.ic('container',34,64,36,'ic-a')}<text class="t-m" x="94" y="130" text-anchor="middle" style="font-size:17px;font-weight:700">api</text><rect class="bx-ok" x="256" y="56" width="140" height="90" rx="8"/>${V.ic('db',266,64,36,'ic-ok')}<text class="t-m" x="326" y="130" text-anchor="middle" style="font-size:17px;font-weight:700">db</text><path class="ln-a" d="M164 100H248"/><polygon class="ah-a" points="246,93 246,107 256,100"/><text class="t-m t-a" x="210" y="90" text-anchor="middle" style="font-size:15px;font-weight:700">db:5432</text></svg><figcaption>Containers on the same user-made network can find each other by <b>container name</b>. Docker runs a tiny phone book (DNS) that turns the name <code>db</code> into the right address.</figcaption></figure>
+${V.why(`<p>Container IP addresses change every time a container is recreated, so typing them would break constantly. Names don't change. Docker's own default network can't look up names, which is why you create your own with <code>docker network create</code> and join it with <code>--network</code>.</p>`)}
+${V.anat([[1,'docker exec'],' ',[2,'-it'],' ',[3,'db'],' ',[4,'psql -U postgres']],[
+ '<b>docker exec.</b> Run an extra command inside a container that is already running.',
+ '<b>-it.</b> Interactive with a terminal, so you can type into it.',
+ '<b>Container.</b> Which one.',
+ '<b>Command.</b> Here the Postgres shell, logged in as the user postgres. Type <code>\\q</code> to leave.'])}
+${V.rules(V.ok('--network appnet','Put every container that must talk on the same network'),V.ok('db:5432','Reach a container by its name and its inside port'),
+ V.no('localhost:5432','From inside a container, localhost is that container itself'))}
+${V.build(`<ol><li>Create a network and a volume.</li><li>Start Postgres with no password, see it exit, and read why in its logs.</li><li>Remove it and start it again with a password, the network and the volume.</li><li>Open psql inside it with <code>docker exec -it</code>.</li><li>Force-remove the container, start a fresh one on the same volume, and check the logs for "Skipping initialization".</li></ol>`)}
+${V.hook(`<code>-e</code> settings, <code>-v</code> data, <code>--network</code> friends.`)}
+`)}
 
-<h4>Talking to each other: networks</h4>
-<p>As you saw with ports, each container has its own network. To let containers reach each other, you put them on the same <b>user-defined network</b>, one that you create yourself:</p>
-<pre class="snip">docker network create appnet
-docker run ... --network appnet --name db ... postgres:16</pre>
-<p>A user-defined network comes with a built-in phone book (DNS, the system that turns names into addresses). Any container on <code>appnet</code> can reach this database simply as <code>db</code>, on its normal port: <code>db:5432</code>. The name is the container's <code>--name</code>. Docker's default network, used when you give no <code>--network</code>, does not offer this lookup by name, which is why you create your own.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="On the appnet network, the api container reaches the db container at db:5432; only published ports are reachable from your machine">
-<rect class="bx-info" x="10" y="14" width="400" height="120" rx="12"/>
-<text class="t-b t-info" x="24" y="36">network: appnet</text>
-<rect class="bx-ok" x="30" y="54" width="120" height="56" rx="8"/><text class="t-b" x="90" y="78" text-anchor="middle">api</text><text class="t-s" x="90" y="98" text-anchor="middle">your app</text>
-<rect class="bx-a" x="270" y="54" width="120" height="56" rx="8"/><text class="t-b" x="330" y="78" text-anchor="middle">db</text><text class="t-s" x="330" y="98" text-anchor="middle">postgres :5432</text>
-<path class="ln-ok" d="M150 82h112"/><polygon class="ah-ok" points="260,76 260,88 268,82"/>
-<text class="t-m t-ok" x="208" y="74" text-anchor="middle">db:5432</text>
-<text class="t-s" x="210" y="162" text-anchor="middle">containers on one network find each other by name</text>
-<text class="t-s" x="210" y="184" text-anchor="middle">no -p needed for container to container traffic</text>
-</svg><figcaption>Both containers are on the appnet network. The app reaches the database by its container name, db, on port 5432. Publishing with dash p is only needed when your own machine must reach a container, not for containers talking to each other.</figcaption></figure>
-
-<h4>Getting inside: <code>docker exec</code></h4>
-<p><code>docker exec</code> runs an extra command inside a container that is already running. It does not start a new container; it adds a process to an existing one.</p>
-<pre class="snip">docker exec -it db psql -U postgres   # Postgres's command-line client
-docker exec -it db sh                 # a plain shell inside db</pre>
-<p><code>-i</code> (interactive) keeps the input open so you can type, and <code>-t</code> gives you a proper terminal; together, <code>-it</code>, they are what you want for anything you type into. <code>psql -U postgres</code> opens Postgres's own command line as the user <code>postgres</code>. Type <code>\\q</code> to leave it. In the sandbox, connecting also creates a <code>users</code> table in the volume, so you have something to keep.</p>
-
-<h4>Worked example: proving the data survives</h4>
-<p>Here is the full, correct command. The backslash at the end of a line lets one command continue on the next line, so it is easier to read:</p>
-<pre class="snip">docker run -d --name db \\
-  --network appnet \\
-  -e POSTGRES_PASSWORD=secret \\
-  -v pgdata:/var/lib/postgresql/data \\
-  postgres:16</pre>
-<ul>
-<li><code>--network appnet</code>: other containers on appnet can reach it as <code>db</code>.</li>
-<li><code>-e POSTGRES_PASSWORD=secret</code>: the configuration it was missing.</li>
-<li><code>-v pgdata:/var/lib/postgresql/data</code>: the data lives in the volume, not the container.</li>
-</ul>
-<p>Now the test. <code>docker rm -f db</code> destroys the container. Run the exact same command again, then <code>docker logs db</code>. On its very first start, Postgres had to create a new database. This time the logs say <code>PostgreSQL Database directory appears to contain a database; Skipping initialization</code>. That line is your proof: the new container found the old data in the volume.</p>
-<div class="mistake"><b>Common mistake</b>Forgetting <code>-v</code> on a database container. Everything works perfectly until the first time you remove the container to upgrade it, and then every table is gone. Decide where the data lives before you put anything in it.</div>
-<div class="mistake"><b>Common mistake</b>Thinking volumes are permanent no matter what. <code>docker volume rm pgdata</code> and <code>docker volume prune</code> really do delete the data, and <code>docker rm -v</code> also removes a container's unnamed volumes. Read twice before running anything that deletes volumes.</div>
-<div class="try"><b>Try it in your head</b>You start a second container, <code>api</code>, on <code>appnet</code>. What host name should its database setting use, and does <code>db</code> need <code>-p 5432:5432</code>? The host is <code>db</code>, the container's name, on port 5432. No <code>-p</code> is needed, because both containers are on the same network; you would only publish the port if a program on your own machine had to connect.</div>
-
-<h4>Recap</h4>
-<ul>
-<li><code>-e KEY=value</code> configures a container at creation; the image stays generic.</li>
-<li>When a container will not stay up, <code>docker ps -a</code> shows the exit code and <code>docker logs NAME</code> shows why.</li>
-<li>A container's own files vanish on <code>docker rm</code>. A volume, mounted with <code>-v name:/path</code>, keeps data across containers.</li>
-<li>Containers on the same user-defined network (<code>--network</code>) reach each other by container name, such as <code>db:5432</code>.</li>
-<li><code>docker exec -it NAME command</code> runs a command inside a running container.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. You <code>docker rm</code> a database container that used <code>-v</code>. Is the data gone? <i>No, it is in the volume.</i> 2. A container keeps exiting. First command? <i>docker logs NAME.</i> 3. How does the api reach Postgres on appnet? <i>By its name: db:5432.</i></div>
 `);
 
 explain('d5',`

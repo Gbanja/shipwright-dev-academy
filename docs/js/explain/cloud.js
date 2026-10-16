@@ -253,4 +253,215 @@ ${V.hook(`Files in buckets, rows in RDS, and neither on the open internet.`)}
 <div class="try"><b>Try it in your head</b>1. Why can <code>aws s3 mb s3://photos</code> fail on a brand-new account? <i>Bucket names are global, and it is taken.</i> 2. How long is <code>--expires-in 600</code>? <i>10 minutes.</i> 3. Where should the production database live? <i>In a private network, reachable only by your app.</i></div>
 `);
 
+const iamF=(act,step,a,b,dec,label)=>{
+ const row=(y,n,q,st,on)=>`<rect class="${on?'bx-hl':'bx'}" x="8" y="${y}" width="404" height="38" rx="6"/><text class="t-b" x="20" y="${y+25}">${n}</text><text class="t" x="44" y="${y+25}" style="font-size:14px">${q}</text>`+(st?`<text class="t-b ${st[1]}" x="400" y="${y+25}" text-anchor="end">${st[0]}</text>`:'');
+ return `<svg viewBox="0 0 420 206" role="img" aria-label="${label}">
+${V.ic('robot',8,4,40,'ic-info')}<text class="t-m" x="56" y="22" style="font-size:14px">deploy-bot wants</text><text class="t-m t-a" x="56" y="42" style="font-size:14px;font-weight:700">${act}</text>
+${row(56,'1','Any Deny that matches?',a,step===1)}
+${row(102,'2','Any Allow that matches?',b,step===2)}
+<rect class="${dec==='ALLOWED'?'bx-ok':dec?'bx-bad':'bx'}" x="8" y="152" width="404" height="46" rx="8"/>${dec?V.ic(dec==='ALLOWED'?'check':'cross',18,159,32,dec==='ALLOWED'?'ic-ok':'ic-bad'):''}
+<text class="t-b ${dec==='ALLOWED'?'t-ok':dec?'t-bad':'t-dim'}" x="60" y="181">${dec||'decision...'}</text>
+</svg>`};
+
+explain('c4',`
+<p>One leaked password can hand a stranger your whole cloud account. IAM is how you make sure every person and every program can do exactly its job, and nothing more.</p>
+
+${V.card(1,'Identities','who is asking?',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="Three kinds of identity: a user for one person or program, a group for many people, a role worn temporarily by a service">
+<rect class="bx-info" x="6" y="6" width="130" height="158" rx="10"/>${V.ic('person',41,16,60,'ic-info')}<text class="t-b" x="71" y="100" text-anchor="middle">user</text><text class="t" x="71" y="126" text-anchor="middle" style="font-size:14px">one person</text><text class="t" x="71" y="146" text-anchor="middle" style="font-size:14px">or program</text>
+<rect class="bx-a" x="145" y="6" width="130" height="158" rx="10"/>${V.ic('people',180,16,60,'ic-a')}<text class="t-b" x="210" y="100" text-anchor="middle">group</text><text class="t" x="210" y="126" text-anchor="middle" style="font-size:14px">same rules</text><text class="t" x="210" y="146" text-anchor="middle" style="font-size:14px">for many</text>
+<rect class="bx-ok" x="284" y="6" width="130" height="158" rx="10"/>${V.ic('card',319,16,60,'ic-ok')}<text class="t-b" x="349" y="100" text-anchor="middle">role</text><text class="t" x="349" y="126" text-anchor="middle" style="font-size:14px">a badge worn</text><text class="t" x="349" y="146" text-anchor="middle" style="font-size:14px">for a while</text>
+</svg><figcaption>IAM (Identity and Access Management) knows three kinds of identity. Permissions, written as policies, are attached to them.</figcaption></figure>
+${V.like(`<p>School keycards. A student's card opens the library but not the staff room. A visitor gets a badge at reception that stops working at 5pm.</p>`)}
+${V.why(`<p>In the early days, teams shared one all-powerful login. If it leaked, everything was exposed, and you could not tell who did what. IAM, added to AWS in 2010, gives every person and program its own identity with its own limits.</p>`)}
+${V.anat([[1,'aws iam'],' ',[2,'create-user'],' ',[3,'--user-name deploy-bot']],[
+ '<b>Service.</b> IAM, for identities and permissions.',
+ '<b>Operation.</b> Make a new user. A new user can do nothing at all until you attach a policy.',
+ '<b>Name.</b> Say what it is for: <code>deploy-bot</code>, not <code>user2</code>.'])}
+${V.rules(V.rh('Conventions'),V.ok('one user per person','Never share a login: you lose track of who did what'),V.ok('policies on groups','Give the "developers" group its rules, then add people to it'),V.ok('roles for programs','Servers and CI wear a role instead of holding a password'))}
+${V.hook(`Every person and every program gets its own card.`)}
+`)}
+
+${V.card(2,'Policies','the rules on the card',`
+${V.like(`<p>A guest list at a door: names that may come in, and which rooms they may enter. Not on the list? You are not getting in.</p>`)}
+${V.anat([[1,'"Effect": "Allow"'],',\n',[2,'"Action": ["s3:PutObject", "s3:GetObject"]'],',\n',[3,'"Resource": "arn:aws:s3:::you-portfolio-assets-2026/*"']],[
+ '<b>Effect.</b> Allow or Deny.',
+ '<b>Action.</b> Which operations, as <code>service:Operation</code>.',
+ '<b>Resource.</b> Which things, by ARN (Amazon Resource Name). <code>/*</code> means every object in the bucket.'])}
+<p>These three lines sit inside a <code>Statement</code>, under <code>"Version": "2012-10-17"</code>. <b>Watch AWS check a request</b> against them:</p>
+${V.steps([
+ ['deploy-bot asks to upload logo.png. AWS gathers every policy attached to it.',iamF('s3:PutObject  bucket/logo.png',0,null,null,'','A request arrives')],
+ ['First question: does any policy <b>Deny</b> this? An explicit Deny beats everything. There is none.',iamF('s3:PutObject  bucket/logo.png',1,['none','t-ok'],null,'','No deny')],
+ ['Second question: does any policy <b>Allow</b> it? Yes: the action s3:PutObject and the resource bucket/* both match.',iamF('s3:PutObject  bucket/logo.png',2,['none','t-ok'],['yes','t-ok'],'','Allow matches')],
+ ['So the request is <b>allowed</b>.',iamF('s3:PutObject  bucket/logo.png',0,['none','t-ok'],['yes','t-ok'],'ALLOWED','Allowed')],
+ ['Now it asks for s3:DeleteBucket. No Deny, but no Allow either. Anything not allowed is <b>denied</b> by default.',iamF('s3:DeleteBucket  bucket',0,['none','t-ok'],['no','t-bad'],'DENIED (nothing allows it)','Implicitly denied')]])}
+${V.rules(V.rh('Rules'),V.ok('"Version": "2012-10-17"','The policy language version. Copy it exactly; it is not today\'s date'),
+ V.ok('bucket/*','Objects inside the bucket: needed for PutObject and GetObject'),V.no('"Action": "s3:*"','Every S3 action, including deleting buckets'),
+ V.no('"Resource": "*"','Every resource in the account'))}
+${V.hook(`Deny beats Allow, and silence means no.`)}
+`)}
+
+${V.card(3,'Least privilege','the smallest keyring that does the job',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="A master key opens every door; a single key opens one. If the master key leaks, everything is exposed">
+<rect class="bx-bad" x="6" y="6" width="200" height="148" rx="10"/>${V.ic('key',20,16,48,'ic-bad')}<text class="t-b t-bad" x="76" y="40">Administrator</text><text class="t-b t-bad" x="76" y="60">Access</text>
+${V.ic('door',22,82,36,'ic-bad')}${V.ic('door',66,82,36,'ic-bad')}${V.ic('door',110,82,36,'ic-bad')}${V.ic('door',154,82,36,'ic-bad')}<text class="t" x="106" y="144" text-anchor="middle" style="font-size:14px">leak = lose everything</text>
+<rect class="bx-ok" x="214" y="6" width="200" height="148" rx="10"/>${V.ic('key',228,16,48,'ic-ok')}<text class="t-b t-ok" x="284" y="40">PutObject</text><text class="t-b t-ok" x="284" y="60">one bucket</text>
+${V.ic('door',230,82,36,'ic-ok')}${V.ic('lock',274,82,36,'ic-info')}${V.ic('lock',318,82,36,'ic-info')}${V.ic('lock',362,82,36,'ic-info')}<text class="t" x="314" y="144" text-anchor="middle" style="font-size:14px">leak = one bucket</text>
+</svg><figcaption>Least privilege: give each identity only what its job needs. If its keys leak, the damage, called the blast radius, stays small.</figcaption></figure>
+${V.like(`<p>Giving the dog walker your front door key, not the keys to your car, safe and office too.</p>`)}
+${V.anat([[1,'aws iam simulate-principal-policy'],' ',[2,'--policy-source-arn ...user/deploy-bot'],' ',[3,'--action-names s3:PutObject s3:DeleteBucket']],[
+ '<b>Simulate.</b> Ask "would this be allowed?" without actually doing it.',
+ '<b>Who.</b> The identity to test, by ARN.',
+ '<b>What.</b> The actions to try. Expect <code>allowed</code> and <code>implicitDeny</code>.'])}
+${V.rules(V.rh('Rules'),V.no('AdministratorAccess on CI','If CI\'s keys leak, the attacker owns your account'),V.ok('roles for machines','EC2, Lambda and GitHub Actions (via OIDC) get temporary credentials that expire on their own'),
+ V.no('access keys in code','Long-lived keys get leaked. Rotate any you must keep'))}
+${V.build(`<ol><li><code>aws iam create-user --user-name deploy-bot</code></li><li>Write <code>policy.json</code>: Allow PutObject and GetObject on the bucket's <code>/*</code> only.</li><li><code>aws iam create-policy --policy-name portfolio-uploads --policy-document file://policy.json</code></li><li><code>aws iam attach-user-policy</code> with the policy's ARN.</li><li>Simulate PutObject (allowed) and DeleteBucket (denied).</li></ol>`)}
+${V.hook(`Smallest keyring, smallest blast radius. Machines wear roles, not keys.`)}
+`)}
+
+<div class="try"><b>Try it in your head</b>1. A policy allows s3:PutObject only. Can the user delete the bucket? <i>No: nothing allows it, so it is denied.</i> 2. One policy allows an action and another denies it. Result? <i>Denied: an explicit Deny always wins.</i> 3. How should GitHub Actions get AWS access? <i>An IAM role via OIDC, with temporary credentials.</i></div>
+`);
+
+const sgF=(who,ip,port,hit,ok,label)=>`<svg viewBox="0 0 420 190" role="img" aria-label="${label}">
+${V.ic(who==='bot'?'bug':who==='you'?'laptop':'globe',8,24,56,who==='bot'?'ic-bad':'ic-p')}<text class="t-m" x="36" y="102" text-anchor="middle" style="font-size:14px">${ip}</text>
+<path class="${ok?'ln-ok':'ln'}" style="stroke-width:3" d="M72 52H142"/><polygon class="${ok?'ah-ok':'ah'}" points="140,45 140,59 152,52"/>
+<rect class="bx-dark" x="80" y="62" width="58" height="26" rx="5"/><text class="t-term" x="109" y="81" text-anchor="middle" style="font-size:14px">${port}</text>
+${ok?'':V.ic('cross',94,30,26,'ic-bad')}
+<rect class="${ok?'bx-ok':'bx'}" x="156" y="14" width="96" height="104" rx="8"/>${V.ic('server',180,22,48,'ic-info')}<text class="t" x="204" y="92" text-anchor="middle" style="font-size:14px">web</text><text class="t" x="204" y="110" text-anchor="middle" style="font-size:14px">server</text>
+<rect class="bx-info" x="262" y="14" width="150" height="104" rx="8"/>${V.ic('shield',270,20,26,'ic-info')}<text class="t-b" x="302" y="39">web-sg</text>
+${hit===0?'<rect class="bx-hl" x="268" y="48" width="138" height="28" rx="5"/>':''}${hit===1?'<rect class="bx-hl" x="268" y="80" width="138" height="28" rx="5"/>':''}
+<text class="t-m" x="274" y="67" style="font-size:14px">443 ← anyone</text><text class="t-m" x="274" y="99" style="font-size:14px">22 ← 198.51…/32</text>
+<rect class="${ok?'bx-ok':'bx-bad'}" x="8" y="132" width="404" height="50" rx="8"/><text class="t-b ${ok?'t-ok':'t-bad'}" x="20" y="163">${ok?'Allowed in':'Blocked: no rule lets it in'}</text>
+</svg>`;
+const vpcF=(k,cmd,label)=>`<svg viewBox="0 0 420 200" role="img" aria-label="${label}">
+<rect class="bx-dark" x="8" y="4" width="404" height="32" rx="8"/><text class="t-term" x="18" y="26" style="font-size:14px">$ ${cmd}</text>
+<rect class="${k>=0?'bx-info':'ln-d'}" x="8" y="46" width="404" height="148" rx="10"/><text class="t-b t-info" x="20" y="68">VPC 10.0.0.0/16</text>
+${k>=1?`<rect class="${k===1?'bx-hl':'bx-ok'}" x="22" y="78" width="376" height="106" rx="8"/><text class="t-m" x="34" y="100" style="font-size:14px">subnet 10.0.1.0/24</text>`:''}
+${k>=2?`<rect class="${k===2?'bx-hl':'bx'}" x="196" y="88" width="190" height="88" rx="8"/>${V.ic('shield',204,94,30,'ic-a')}<text class="t-b" x="240" y="114">web-sg</text><text class="t-m" x="206" y="140" style="font-size:14px">443 ← anyone</text><text class="t-m" x="206" y="164" style="font-size:14px">22 ← your IP</text>`:''}
+${k>=3?`${V.ic('server',60,108,60,'ic-ok')}<path class="ln-ok" style="stroke-width:3" d="M124 138H192"/><text class="t" x="90" y="182" text-anchor="middle" style="font-size:14px">instance</text>`:''}
+</svg>`;
+
+explain('c5',`
+<p>When you put a server in the cloud, who can reach it? By default, maybe the whole internet. A VPC and its security groups let you decide exactly which doors exist and who may knock.</p>
+
+${V.card(1,'The VPC','your own gated estate',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="A VPC as a walled estate with one gate to the internet, a public street with the web server and a private street with the database">
+${V.ic('globe',2,76,44,'ic-p')}<text class="t" x="24" y="140" text-anchor="middle" style="font-size:14px">internet</text>
+<rect class="bx" x="66" y="6" width="348" height="188" rx="12"/><text class="t-b" x="80" y="28">VPC 10.0.0.0/16</text>
+<rect class="bx-warn" x="54" y="80" width="26" height="40" rx="4"/>${V.ic('door',54,82,26,'ic-warn')}
+<rect class="bx-ok" x="92" y="40" width="310" height="68" rx="8"/><text class="t-b t-ok" x="104" y="62">public subnet</text><text class="t-m" x="104" y="86" style="font-size:14px">10.0.1.0/24</text>${V.ic('server',348,48,48,'ic-ok')}<text class="t" x="300" y="98" text-anchor="end" style="font-size:14px">web server</text>
+<rect class="bx-info" x="92" y="118" width="310" height="68" rx="8"/><text class="t-b t-info" x="104" y="140">private subnet</text><text class="t-m" x="104" y="164" style="font-size:14px">10.0.2.0/24</text>${V.ic('db',348,126,48,'ic-info')}${V.ic('lock',306,140,26,'ic-info')}
+</svg><figcaption>A VPC (virtual private cloud) is your own private network in AWS. Subnets are streets inside it: public ones face the gate, private ones cannot be reached from outside at all.</figcaption></figure>
+${V.like(`<p>A gated housing estate. One gate to the road. Shops near the gate where visitors are welcome (the public subnet), homes deep inside where only residents go (the private subnet).</p>`)}
+${V.why(`<p>The first cloud servers all sat on one big shared network. Since 2009, a VPC gives every customer a walled-off network with its own address range, so your database is not one mistake away from the internet.</p>`)}
+${V.anat([[1,'10.0.0.0'],[2,'/16']],[
+ '<b>Starting address.</b> The first address of the range. Private ranges start with 10., 172.16 to 172.31, or 192.168.',
+ '<b>Prefix length.</b> How many of the 32 bits are fixed. The more fixed, the smaller the range.'])}
+${V.rules(V.rh('CIDR sizes'),V.ok('/16','65,536 addresses: a whole VPC'),V.ok('/24','256 addresses: one subnet (AWS keeps 5)'),V.ok('/32','Exactly one address, like your own IP'),
+ V.rh('Rules'),V.ok('10.0.1.0/24 inside 10.0.0.0/16','A subnet must fit inside its VPC'),V.no('two subnets both 10.0.1.0/24','Subnets in a VPC cannot overlap'))}
+${V.hook(`VPC is the estate, subnets are streets, the internet comes in through one gate.`)}
+`)}
+
+${V.card(2,'Security groups','a door guard on every server',`
+${V.like(`<p>A guard at each front door with a short list: "deliveries for door 443 from anyone; door 22 only for the owner". Anyone not on the list is turned away, and people inside can always open the door to leave.</p>`)}
+${V.why(`<p>Bots scan every public address on the internet for open ports, all day. A security group is a firewall attached to each resource, so even inside your VPC every server only accepts what you listed.</p>`)}
+${V.anat([[1,'authorize-security-group-ingress'],' ',[2,'--protocol tcp'],' ',[3,'--port 443'],' ',[4,'--cidr 0.0.0.0/0']],[
+ '<b>Add an inbound rule.</b> Ingress means traffic coming in.',
+ '<b>Protocol.</b> Web traffic and SSH both use TCP.',
+ '<b>Port.</b> Which door.',
+ '<b>From where.</b> <code>0.0.0.0/0</code> means anyone; <code>198.51.100.7/32</code> means one address.'])}
+${V.steps([
+ ['A visitor requests your site on port 443. The first rule matches: <b>allowed</b>. The reply goes back out by itself, because security groups remember allowed connections (they are <b>stateful</b>).',sgF('web','visitor','443',0,1,'HTTPS from anyone allowed')],
+ ['You SSH in from your home IP, 198.51.100.7. The second rule matches: allowed.',sgF('you','your IP','22',1,1,'SSH from your IP allowed')],
+ ['A bot tries port 22 from another address. No rule matches that address: <b>blocked</b>.',sgF('bot','a bot','22',-1,0,'SSH from a bot blocked')],
+ ['Someone tries the database port 5432. There is no rule for it at all, so it is blocked. Security groups only have Allow rules; everything else is refused.',sgF('web','anyone','5432',-1,0,'Port 5432 blocked')]])}
+${V.rules(V.rh('Rules'),V.no('--port 22 --cidr 0.0.0.0/0','SSH open to the world: bots start guessing in minutes'),V.ok('--port 22 --cidr 198.51.100.7/32','SSH from your IP only, or use Session Manager with no port open'),
+ V.ok('database SG: 5432 from app SG','Let the database accept only your app servers\' security group'))}
+${V.hook(`A guard with a guest list: not listed, not getting in.`)}
+`)}
+
+${V.card(3,'Build the estate','four commands, in order',`
+${V.steps([
+ ['Create the VPC with its address range. You get an ID like vpc-05a8c1e3f7b9d2468.',vpcF(0,'aws ec2 create-vpc --cidr-block 10.0.0.0/16','VPC created')],
+ ['Carve out a subnet. Its range must sit inside the VPC\'s range.',vpcF(1,'aws ec2 create-subnet ... 10.0.1.0/24','Subnet created')],
+ ['Create the security group web-sg in the VPC, then add the two rules: 443 from anyone, 22 from your IP.',vpcF(2,'aws ec2 authorize-security-group-ingress ...','Security group with rules')],
+ ['Launch the server into the subnet, guarded by web-sg.',vpcF(3,'aws ec2 run-instances ... --subnet-id ...','Instance launched')]])}
+${V.rules(V.ok('--vpc-id, --subnet-id, --group-id','Each command uses the ID the one before printed'),V.ok('private subnet for the database','Only reachable from inside the estate'))}
+${V.hook(`Estate, street, guard, house.`)}
+`)}
+
+<div class="try"><b>Try it in your head</b>1. How many addresses does /24 cover? <i>256.</i> 2. SSH should be open to whom? <i>Only your IP (/32), or nobody if you use Session Manager.</i> 3. Where does the database go? <i>A private subnet, accepting 5432 only from the app's security group.</i></div>
+`);
+
+const tfF=(code,state,cloud,out,label)=>{
+ const col=(x,title,cls,items)=>`<rect class="${cls}" x="${x}" y="8" width="128" height="134" rx="8"/><text class="t-b${cls==='bx-dark'?' t-term':''}" x="${x+12}" y="30" style="font-size:14px">${title}</text>`+items;
+ return `<svg viewBox="0 0 420 212" role="img" aria-label="${label}">
+${col(8,'main.tf','bx-dark',code.map(([t,c],i)=>`<text class="t-term ${c||''}" x="20" y="${60+i*26}" style="font-size:14px">${t}</text>`).join(''))}
+${col(146,'state','bx',state.length?state.map(([t,c],i)=>`<text class="t-m ${c||''}" x="158" y="${60+i*26}" style="font-size:14px">${t}</text>`).join(''):'<text class="t t-dim" x="158" y="62" style="font-size:14px">empty</text>')}
+${col(284,'AWS','bx-info',cloud.map(([ic,c],i)=>V.ic(ic,296+i*58,54,48,c)).join('')+(cloud.length?'':'<text class="t t-dim" x="296" y="62" style="font-size:14px">nothing</text>'))}
+<rect class="bx-dark" x="8" y="150" width="404" height="56" rx="8"/>${out.map(([t,c],i)=>`<text class="t-term ${c||''}" x="18" y="${172+i*24}" style="font-size:14px">${t}</text>`).join('')}
+</svg>`};
+
+explain('c6',`
+<p>Clicking around a cloud console works once. But can you click it exactly the same way next month, for a second environment, after a teammate changed something? Infrastructure as code means your servers and buckets are described in files, reviewed and rebuilt at will.</p>
+
+${V.card(1,'Infrastructure as code','a blueprint instead of memory',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="A main.tf blueprint goes to Terraform, which builds a bucket and a server in AWS">
+<rect class="bx-dark" x="6" y="12" width="132" height="120" rx="8"/><text class="t-term" x="18" y="38" style="font-size:14px">main.tf</text>
+<text class="t-term t-dim" x="18" y="70" style="font-size:14px">bucket</text><text class="t-term t-dim" x="18" y="98" style="font-size:14px">server</text>
+<path class="ln-a" style="stroke-width:3" d="M142 72H160"/><polygon class="ah-a" points="158,65 158,79 170,72"/>
+${V.ic('robot',176,30,64,'ic-a')}<text class="t-b" x="208" y="118" text-anchor="middle">Terraform</text>
+<path class="ln-ok" style="stroke-width:3" d="M246 72H264"/><polygon class="ah-ok" points="262,65 262,79 274,72"/>
+<rect class="bx-info" x="280" y="12" width="134" height="120" rx="8"/><text class="t-b t-info" x="292" y="36">AWS</text>${V.ic('folder',290,52,52,'ic-ok')}${V.ic('server',350,52,52,'ic-ok')}
+<text class="t-s" x="210" y="154" text-anchor="middle" style="font-size:14px">same file, same result, every time</text>
+</svg><figcaption>You describe what you want in files. Terraform works out the steps and builds it. Running it again builds nothing new, because it is already there.</figcaption></figure>
+${V.like(`<p>LEGO instructions versus building from memory. With the booklet, anyone can build the same castle, spot a missing page, and build a second copy for a friend.</p>`)}
+${V.why(`<p>Hand-built infrastructure drifts: nobody remembers which box was ticked, and staging slowly stops matching production. HashiCorp released Terraform in 2014 so infrastructure could live in Git, be reviewed in pull requests and be rebuilt on demand. OpenTofu is an open-source copy with the same commands.</p>`)}
+${V.hook(`Write it down once; build it the same way forever.`)}
+`)}
+
+${V.card(2,'Writing a resource','the shape of a .tf file',`
+${V.anat([[1,'resource'],' ',[2,'"aws_s3_bucket"'],' ',[3,'"assets"'],' {\n  ',[4,'bucket'],' = ',[5,'"you-portfolio-assets-tf-2026"'],'\n}'],[
+ '<b>Block type.</b> <code>resource</code> means "a thing that should exist". Other blocks: <code>provider</code>, <code>terraform</code>.',
+ '<b>Resource type.</b> Which kind of thing, from the AWS provider.',
+ '<b>Local name.</b> Terraform\'s nickname, used only inside your code. Together they form the address <code>aws_s3_bucket.assets</code>.',
+ '<b>Argument.</b> A setting of that resource.',
+ '<b>Value.</b> Here the real bucket name in AWS, which must be globally unique.'])}
+${V.rules(V.rh('Rules'),V.ok('provider "aws" { region = "us-east-1" }','Tell Terraform which cloud and which region'),
+ V.no('bucket = you-portfolio','Text values need double quotes'),V.ok('"assets" vs the bucket name','The local name is for your code; the bucket name is what AWS sees'),
+ V.rh('Conventions'),V.ok('version = "~&gt; 5.0"','Pin the provider so an upgrade cannot surprise you'),V.ok('snake_case local names','<code>web</code>, <code>assets</code>, <code>main_db</code>'))}
+${V.hook(`resource "type" "nickname" { settings }.`)}
+`)}
+
+${V.card(3,'Plan, then apply','see the changes before they happen',`
+${V.like(`<p>An architect showing you the plans before the builders arrive. You read them, say yes, and only then does anyone pick up a shovel.</p>`)}
+${V.steps([
+ ['<code>terraform init</code> downloads the AWS provider, the plug-in that knows how to talk to AWS.',tfF([['bucket']],[],[],[['$ terraform init'],['Terraform has been successfully initialized!','t-ok']],'Init')],
+ ['<code>terraform plan</code> compares your files with the state (what it built before). The bucket is missing, so the plan says <b>+ create</b>. Nothing is built yet.',tfF([['+ bucket','t-ok']],[],[],[['+ aws_s3_bucket.assets','t-ok'],['Plan: 1 to add, 0 to change, 0 to destroy.']],'Plan')],
+ ['<code>terraform apply</code> shows the plan again and waits for you to type <b>yes</b>. Then it creates the bucket and records it in the state.',tfF([['bucket']],[['assets']],[['folder','ic-ok']],[['Enter a value: yes'],['Apply complete! Resources: 1 added.','t-ok']],'Apply')],
+ ['You add an <code>aws_instance</code> called web. The plan only adds the server: the bucket already matches, so it is left alone.',tfF([['bucket'],['+ instance','t-ok']],[['assets']],[['folder','ic-ok']],[['+ aws_instance.web','t-ok'],['Plan: 1 to add, 0 to change, 0 to destroy.']],'Second plan')],
+ ['After apply, both exist. <code>terraform destroy</code> plans <b>- destroy</b> for everything, you type yes, and the bill stops.',tfF([['bucket'],['instance']],[],[],[['- aws_instance.web  - aws_s3_bucket.assets','t-bad'],['Destroy complete! Resources: 2 destroyed.']],'Destroy')]])}
+${V.rules(V.rh('Read the symbols'),V.ok('+','Will be created'),V.ok('~','Will be changed in place'),V.no('-','Will be destroyed: read twice'),V.no('-/+','Destroyed and rebuilt: data on it can be lost'))}
+${V.hook(`Plan is the preview, apply is the button. Never press the button without reading the preview.`)}
+`)}
+
+${V.card(4,'State','Terraform\'s memory',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="The state file links each address in your code to a real resource ID in AWS">
+<rect class="bx-dark" x="6" y="10" width="140" height="120" rx="8"/><text class="t-term" x="18" y="34" style="font-size:14px">your code</text><text class="t-term" x="18" y="74" style="font-size:14px">assets</text><text class="t-term" x="18" y="108" style="font-size:14px">web</text>
+<rect class="bx-warn" x="160" y="10" width="100" height="120" rx="8"/>${V.ic('book',186,24,48,'ic-warn')}<text class="t-b" x="210" y="100" text-anchor="middle">state</text>
+<path class="ln-d" d="M90 70H160M90 104H160M260 70H274M260 104H274"/>
+<rect class="bx-info" x="274" y="10" width="140" height="120" rx="8"/><text class="t-b t-info" x="286" y="34">AWS</text><text class="t-m" x="286" y="74" style="font-size:14px">you-portfolio..</text><text class="t-m" x="286" y="108" style="font-size:14px">i-05a8c1e3..</text>
+<text class="t-s" x="210" y="152" text-anchor="middle" style="font-size:14px">which name in code is which real thing</text>
+</svg><figcaption>The state file is Terraform's notebook: it links each address in your code to the real resource it created.</figcaption></figure>
+${V.like(`<p>A cloakroom's ticket book. Lose it, and the attendant no longer knows which coat belongs to which ticket.</p>`)}
+${V.rules(V.rh('Rules'),V.ok('commit the .tf files and .terraform.lock.hcl','Code and pinned provider versions belong in Git'),
+ V.no('commit terraform.tfstate','It can contain secrets, and two copies will disagree'),V.no('edit the state by hand','Use terraform commands, like terraform state list'),
+ V.rh('Conventions'),V.ok('remote state with locking','An S3 backend (with its lock file) or HCP Terraform, so two people cannot apply at once'))}
+${V.build(`<ol><li>Write <code>main.tf</code> with the provider and an S3 bucket.</li><li><code>terraform init</code>, then <code>terraform plan</code>.</li><li><code>terraform apply</code> and type yes.</li><li>Add an <code>aws_instance</code> named web; plan, apply, then <code>terraform state list</code>.</li><li><code>terraform destroy</code> and type yes.</li></ol>`)}
+${V.hook(`Code says what you want, state says what you have, plan shows the difference.`)}
+`)}
+
+<div class="try"><b>Try it in your head</b>1. Which command shows changes without making them? <i>terraform plan.</i> 2. A plan line starts with <code>-/+</code>. Worried? <i>Yes: it will destroy and rebuild that resource.</i> 3. Should <code>terraform.tfstate</code> go in Git? <i>No: keep it in a remote, locked backend.</i></div>
+`);
+
 }

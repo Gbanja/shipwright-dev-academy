@@ -1081,241 +1081,328 @@ ${V.hook(`Order, wait, unwrap: <code>await fetch</code>, then <code>await res.js
 `);
 
 explain('f3',`
-<h4>The problem React solves</h4>
-<p>In the last lesson you built a task list by hand: find the list, create an element, set its text, append it, attach a listener, remember to remove it later. For one list that is fine. For a real app with a basket, a menu, notifications and a hundred buttons, all those hand-made changes pile up. Sooner or later the screen and your data disagree: the basket badge says 3 but the list shows 2.</p>
-<p><b>React</b>, a JavaScript library made by Meta and the most widely used way to build web interfaces, takes a different approach. You stop giving step-by-step DOM instructions. Instead you describe <b>what the screen should look like for the current data</b>, and React works out which DOM changes are needed to get there. When the data changes, you describe the screen again, and React updates only what is different.</p>
-<p>People sum this up as <b>UI = f(state)</b>: the user interface is a function of the state. Same data in, same screen out.</p>
+<p>Instagram, Netflix and Airbnb all build their screens with React. Four ideas run the whole thing: components, props, state and effects. Learn these and you can read almost any React app.</p>
 
-<h4>Components and JSX</h4>
-<p>A React app is built from <b>components</b>: small, reusable pieces of interface, like LEGO bricks. A component is simply a JavaScript function that returns what to show:</p>
-<pre class="snip">function Greeting() {
-  return &lt;h2&gt;Hello there&lt;/h2&gt;;
-}
+${V.card(1,'Components and JSX','LEGO bricks for screens',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="LEGO bricks: the App brick holds a Counter brick and a TodoList brick, and the TodoList holds three small item bricks">
+<rect class="bx-info" x="40" y="22" width="26" height="8" rx="2"/><rect class="bx-info" x="354" y="22" width="26" height="8" rx="2"/>
+<rect class="bx-info" x="10" y="30" width="400" height="152" rx="8"/><text class="t-m" x="24" y="54">&lt;App /&gt;</text>
+<rect class="bx-a" x="48" y="64" width="22" height="8" rx="2"/><rect class="bx-a" x="150" y="64" width="22" height="8" rx="2"/>
+<rect class="bx-a" x="30" y="72" width="160" height="92" rx="7"/><text class="t-m" x="110" y="123" text-anchor="middle" style="font-size:14px">&lt;Counter /&gt;</text>
+<rect class="bx-ok" x="238" y="64" width="22" height="8" rx="2"/><rect class="bx-ok" x="350" y="64" width="22" height="8" rx="2"/>
+<rect class="bx-ok" x="220" y="72" width="170" height="92" rx="7"/><text class="t-m" x="305" y="100" text-anchor="middle" style="font-size:14px">&lt;TodoList /&gt;</text>
+<rect class="bx" x="236" y="120" width="42" height="28" rx="4"/><rect class="bx" x="288" y="120" width="42" height="28" rx="4"/><rect class="bx" x="340" y="120" width="42" height="28" rx="4"/>
+<text class="t-s" x="257" y="139" text-anchor="middle">li</text><text class="t-s" x="309" y="139" text-anchor="middle">li</text><text class="t-s" x="361" y="139" text-anchor="middle">li</text>
+</svg><figcaption>A React app is a tree of components. Each one is a brick you build once and snap into place, as many times as you like.</figcaption></figure>
+${V.like(`<p>LEGO. You make a small brick, like a button or a list item, then snap bricks together into bigger ones, like a sidebar or a page. Need ten buttons? Use the same brick ten times.</p>`)}
+${V.why(`<p>Facebook released React in 2013. Before that, apps changed the page by hand ("find this element, change its text"), and as apps grew, the screen and the data drifted out of step. React lets you describe what the screen <b>should</b> look like for the current data, and it does the updating.</p>`)}
+${V.anat([[1,'function'],' ',[2,'Greeting'],[3,'({ name })'],' {\n  ',[4,'return &lt;h1&gt;Hello '],[5,'{name}'],[4,'&lt;/h1&gt;'],';\n}'],[
+ '<b>A component is a function.</b> A plain JavaScript function.',
+ '<b>Name with a capital letter.</b> That is how React tells <code>&lt;Greeting /&gt;</code> apart from HTML like <code>&lt;h1&gt;</code>.',
+ '<b>Props.</b> Its inputs, unpacked from one object.',
+ '<b>JSX.</b> HTML-like syntax inside JavaScript. It returns what to show.',
+ '<b>Curly braces.</b> Drop any JavaScript value into the JSX.'])}
+${V.rules(V.rh('Rules'),
+ V.no('function counter()','Lowercase is treated as an HTML tag'),V.ok('&lt;Counter /&gt;','Self-close tags with no children'),
+ V.no('class="card"','In JSX it is className'),V.ok('return &lt;&gt;...&lt;/&gt;','Return one root; a fragment wraps several'),
+ V.rh('Conventions'),
+ V.ok('one component per job','Small bricks are easy to reuse and test'))}
+${V.hook(`A component is a function with a capital letter that returns JSX. Bricks snap into bricks.`)}
+`)}
 
-// use it like a tag, anywhere:
-&lt;Greeting /&gt;</pre>
-<p>That HTML-looking code inside JavaScript is <b>JSX</b>. It is not really HTML: a build tool translates each tag into a JavaScript function call that describes an element. A few rules follow from that:</p>
-<ul>
-<li>Component names start with a <b>capital letter</b>. <code>&lt;Counter /&gt;</code> is your component; <code>&lt;button&gt;</code> is a normal HTML element.</li>
-<li>Curly braces <code>{ }</code> switch back to JavaScript inside JSX: <code>&lt;p&gt;You have {count} items&lt;/p&gt;</code> drops in the value of <code>count</code>.</li>
-<li>A component returns <b>one</b> outer element. Wrap siblings in a parent such as <code>&lt;main&gt;</code>.</li>
-<li>Every tag must be closed. Tags with nothing inside close themselves with a slash: <code>&lt;Counter /&gt;</code>.</li>
-<li>Because <code>class</code> is a reserved word in JavaScript, the HTML attribute is written <code>className</code>.</li>
-</ul>
-<p>In the starter code, <code>App</code> is the top component, and <code>export default</code> marks it as the one the preview should show. App uses <code>&lt;Counter /&gt;</code>, so components form a tree, just like the DOM.</p>
+${V.card(2,'Props and lists','data flows down',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="App passes items down to TodoList, which turns each item into an li">
+<rect class="bx-info" x="130" y="8" width="160" height="40" rx="8"/><text class="t-m" x="210" y="33" text-anchor="middle">App</text>
+<path class="ln-a" d="M210 48V82"/><polygon class="ah-a" points="203,80 217,80 210,92"/>
+<text class="t-m t-a" x="222" y="72" style="font-size:14px">items={todos}</text>
+<rect class="bx-ok" x="130" y="92" width="160" height="36" rx="8"/><text class="t-m" x="210" y="115" text-anchor="middle">TodoList</text>
+<path class="ln" d="M210 128V136H70V144M210 136V144M210 136H350V144"/>
+<rect class="bx" x="10" y="144" width="120" height="30" rx="5"/><text class="t" x="70" y="164" text-anchor="middle">Learn JSX</text>
+<rect class="bx" x="150" y="144" width="120" height="30" rx="5"/><text class="t" x="210" y="164" text-anchor="middle">Learn props</text>
+<rect class="bx" x="290" y="144" width="120" height="30" rx="5"/><text class="t" x="350" y="164" text-anchor="middle">Learn state</text>
+</svg><figcaption>Props travel one way: from parent to child. The child uses map to turn each item into an li.</figcaption></figure>
+${V.like(`<p>A parent packs a lunchbox and hands it to the child. The child can use what is inside, but cannot change what the parent packed. Props are the lunchbox: <b>read-only</b>.</p>`)}
+${V.anat(['{',[1,'items'],'.',[2,'map'],'(',[3,'(item) =&gt;'],' ',[4,'&lt;li key={item.id}&gt;'],[5,'{item.text}'],'&lt;/li&gt;)}'],[
+ '<b>The array</b>, received as a prop.',
+ '<b>map.</b> Makes a new array by running a function on each item.',
+ '<b>The function.</b> Gets one item at a time.',
+ '<b>key.</b> A stable, unique id so React can tell items apart.',
+ '<b>The text</b> to show for this item.'])}
+<p><b>Why keys matter:</b> watch React update a list when a new item is added at the top.</p>
+${V.steps([
+ ['Three items, each with a key: 1, 2 and 3.',`<svg viewBox="0 0 420 175" role="img" aria-label="Three items with keys 1, 2, 3">
+<text class="t-b" x="10" y="22">On screen</text>
+<rect class="bx" x="10" y="34" width="190" height="30" rx="5"/><text class="t-m t-a" x="20" y="54" style="font-size:14px">1</text><text class="t" x="44" y="54">Learn JSX</text>
+<rect class="bx" x="10" y="70" width="190" height="30" rx="5"/><text class="t-m t-a" x="20" y="90" style="font-size:14px">2</text><text class="t" x="44" y="90">Learn props</text>
+<rect class="bx" x="10" y="106" width="190" height="30" rx="5"/><text class="t-m t-a" x="20" y="126" style="font-size:14px">3</text><text class="t" x="44" y="126">Learn state</text>
+</svg>`],
+ ['A new item with key 4 is added at the top. React matches by key: 1, 2 and 3 are unchanged, so it only <b>inserts one</b> new li.',`<svg viewBox="0 0 420 175" role="img" aria-label="With keys: only the new item is inserted">
+<text class="t-b" x="10" y="22">On screen</text>
+<rect class="bx-hl" x="10" y="34" width="190" height="30" rx="5"/><text class="t-m t-a" x="20" y="54" style="font-size:14px">4</text><text class="t" x="44" y="54">Learn hooks</text>
+<rect class="bx" x="10" y="70" width="190" height="30" rx="5"/><text class="t-m t-a" x="20" y="90" style="font-size:14px">1</text><text class="t" x="44" y="90">Learn JSX</text>
+<rect class="bx" x="10" y="106" width="190" height="30" rx="5"/><text class="t-m t-a" x="20" y="126" style="font-size:14px">2</text><text class="t" x="44" y="126">Learn props</text>
+<rect class="bx" x="10" y="142" width="190" height="30" rx="5"/><text class="t-m t-a" x="20" y="162" style="font-size:14px">3</text><text class="t" x="44" y="162">Learn state</text>
+${V.ic('check',230,40,36,'ic-ok')}<text class="t-b t-ok" x="274" y="64">1 insert</text><text class="t-s" x="230" y="100">the rest are untouched</text>
+</svg>`],
+ ['Without stable keys React matches by <b>position</b>: every row looks changed, so it rewrites them all. Worse, anything typed into a row can end up beside the wrong item.',`<svg viewBox="0 0 420 175" role="img" aria-label="Without keys: every row is rewritten">
+<text class="t-b" x="10" y="22">On screen</text>
+<rect class="bx-bad" x="10" y="34" width="190" height="30" rx="5"/><text class="t" x="44" y="54">Learn hooks</text>
+<rect class="bx-bad" x="10" y="70" width="190" height="30" rx="5"/><text class="t" x="44" y="90">Learn JSX</text>
+<rect class="bx-bad" x="10" y="106" width="190" height="30" rx="5"/><text class="t" x="44" y="126">Learn props</text>
+<rect class="bx-bad" x="10" y="142" width="190" height="30" rx="5"/><text class="t" x="44" y="162">Learn state</text>
+${V.ic('cross',230,40,36,'ic-bad')}<text class="t-b t-bad" x="274" y="64">4 rewrites</text><text class="t-s" x="230" y="100">position 0 changed, 1 changed...</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('key={item.id}','Stable and unique among siblings'),V.no('key={Math.random()}','A new key every render: React rebuilds every row'),
+ V.no('props.items.push(x)','Props are read-only: never change them'),V.ok('&lt;TodoList items={todos} /&gt;','Pass JavaScript values in curly braces'),
+ V.rh('Conventions'),
+ V.no('key={index}','Breaks when items are added, removed or reordered'))}
+${V.hook(`Props flow down like a lunchbox: use it, do not change it. Every list item needs a stable key.`)}
+`)}
 
-<h4>Props: passing data down</h4>
-<p>A component on its own always shows the same thing. <b>Props</b> (short for properties) let the parent pass in data, just like attributes on an HTML tag:</p>
-<pre class="snip">&lt;TodoList items={todos} /&gt;          // parent passes the todos array
+${V.card(3,'State','memory that redraws the screen',`
+<figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="State count 2 goes into the Counter function, which produces the screen: Clicked 2 times">
+<rect class="bx-warn" x="10" y="36" width="110" height="64" rx="8"/><text class="t-s" x="65" y="58" text-anchor="middle">state</text><text class="t-m" x="65" y="84" text-anchor="middle">count: 2</text>
+<path class="ln-a" d="M124 68H144"/><polygon class="ah-a" points="142,61 142,75 154,68"/>
+<rect class="bx-a" x="158" y="36" width="110" height="64" rx="8"/>${V.ic('gear',195,42,36,'ic-a')}<text class="t-m" x="213" y="94" text-anchor="middle" style="font-size:14px">Counter()</text>
+<path class="ln-a" d="M272 68H292"/><polygon class="ah-a" points="290,61 290,75 302,68"/>
+<rect class="bx" x="306" y="36" width="104" height="64" rx="8"/><text class="t" x="358" y="64" text-anchor="middle">Clicked</text><text class="t" x="358" y="86" text-anchor="middle">2 times</text>
+<text class="t-b" x="210" y="134" text-anchor="middle">screen = component(state)</text>
+</svg><figcaption>The screen is the result of running your component with the current state. Change the state and React runs it again.</figcaption></figure>
+${V.like(`<p>A scoreboard operator. You do not repaint the scoreboard yourself; you tell the operator "the score is now 2" and they update the board. <code>setCount</code> is you telling the operator.</p>`)}
+${V.why(`<p>A normal variable is forgotten every time the function runs again, and React has no idea it changed. <code>useState</code> gives the component memory that survives between runs, plus a setter that tells React "redraw please".</p>`)}
+${V.anat(['const [',[1,'count'],', ',[2,'setCount'],'] = ',[3,'useState'],'(',[4,'0'],');'],[
+ '<b>The current value</b> for this render.',
+ '<b>The setter.</b> Call it with a new value to change state and trigger a re-render.',
+ '<b>useState.</b> A hook: a special function that gives a component a feature. Hooks start with <code>use</code>.',
+ '<b>Starting value.</b> Used only on the very first render.'])}
+${V.steps([
+ ['First render. useState hands out <b>0</b>. React runs Counter and shows "Clicked 0 times".',`<svg viewBox="0 0 420 170" role="img" aria-label="First render shows 0">
+<rect class="bx-warn" x="10" y="20" width="110" height="64" rx="8"/><text class="t-s" x="65" y="42" text-anchor="middle">state</text><text class="t-m" x="65" y="68" text-anchor="middle">count: 0</text>
+<rect class="bx-a" x="158" y="20" width="110" height="64" rx="8"/><text class="t-m" x="213" y="58" text-anchor="middle" style="font-size:14px">Counter()</text>
+<rect class="bx" x="306" y="20" width="104" height="64" rx="8"/><text class="t" x="358" y="48" text-anchor="middle">Clicked</text><text class="t" x="358" y="70" text-anchor="middle">0 times</text>
+<path class="ln" d="M124 52H154M272 52H302"/>
+<text class="t" x="10" y="130">render 1</text>
+</svg>`],
+ ['You click. The handler calls <b>setCount(count + 1)</b>: it asks React to store 1. The screen has not changed yet.',`<svg viewBox="0 0 420 170" role="img" aria-label="Click calls setCount with 1">
+<rect class="bx-hl" x="10" y="20" width="110" height="64" rx="8"/><text class="t-s" x="65" y="42" text-anchor="middle">state</text><text class="t-m" x="65" y="68" text-anchor="middle">count: 1</text>
+<rect class="bx-a" x="158" y="20" width="110" height="64" rx="8"/><text class="t-m" x="213" y="58" text-anchor="middle" style="font-size:14px">Counter()</text>
+<rect class="bx" x="306" y="20" width="104" height="64" rx="8"/><text class="t" x="358" y="48" text-anchor="middle">Clicked</text><text class="t" x="358" y="70" text-anchor="middle">0 times</text>
+<path class="ln" d="M124 52H154M272 52H302"/>
+<text class="t-m t-a" x="10" y="130">setCount(0 + 1)</text>
+</svg>`],
+ ['React runs <b>Counter</b> again. This time useState hands out <b>1</b>, so the JSX says "Clicked 1 times".',`<svg viewBox="0 0 420 170" role="img" aria-label="Re-render with 1">
+<rect class="bx-warn" x="10" y="20" width="110" height="64" rx="8"/><text class="t-s" x="65" y="42" text-anchor="middle">state</text><text class="t-m" x="65" y="68" text-anchor="middle">count: 1</text>
+<rect class="bx-hl" x="158" y="20" width="110" height="64" rx="8"/><text class="t-m" x="213" y="58" text-anchor="middle" style="font-size:14px">Counter()</text>
+<rect class="bx" x="306" y="20" width="104" height="64" rx="8"/><text class="t" x="358" y="48" text-anchor="middle">Clicked</text><text class="t" x="358" y="70" text-anchor="middle">0 times</text>
+<path class="ln-a" d="M124 52H154"/><path class="ln" d="M272 52H302"/>
+<text class="t" x="10" y="130">render 2: new JSX</text>
+</svg>`],
+ ['React compares the new JSX with the old, finds that only one number differs, and changes just that text on the page.',`<svg viewBox="0 0 420 170" role="img" aria-label="Only the number is updated on screen">
+<rect class="bx-warn" x="10" y="20" width="110" height="64" rx="8"/><text class="t-s" x="65" y="42" text-anchor="middle">state</text><text class="t-m" x="65" y="68" text-anchor="middle">count: 1</text>
+<rect class="bx-a" x="158" y="20" width="110" height="64" rx="8"/><text class="t-m" x="213" y="58" text-anchor="middle" style="font-size:14px">Counter()</text>
+<rect class="bx-ok" x="306" y="20" width="104" height="64" rx="8"/><text class="t" x="358" y="48" text-anchor="middle">Clicked</text><text class="t-b t-ok" x="358" y="70" text-anchor="middle">1 times</text>
+<path class="ln" d="M124 52H154"/><path class="ln-a" d="M272 52H302"/>
+<text class="t" x="10" y="130">only the "1" changed in the DOM</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.no('count = count + 1','React does not know, so nothing redraws'),V.ok('setCount(count + 1)','Store the new value and re-render'),
+ V.no('onClick={setCount(1)}','Runs during render: an endless loop'),V.ok('onClick={() =&gt; setCount(1)}','Runs when clicked'),
+ V.rh('Conventions'),
+ V.ok('[thing, setThing]','Name the setter "set" plus the value name'))}
+${V.hook(`Change state, never the screen. Set it and React redraws.`)}
+`)}
 
-function TodoList({ items }) {      // child receives it
-  // items is now the array
-}</pre>
-<p>React gathers all the attributes into one object and passes it as the function's single argument. The curly braces in <code>({ items })</code> are <b>destructuring</b>: they unpack the <code>items</code> key from that object into a variable of the same name. You can give a default, too: <code>({ step = 1 })</code> uses 1 when the parent passes nothing.</p>
-<p>Props are <b>read-only</b>. A child never changes its props. Data flows one way: down the tree. When a child needs to tell its parent something, the parent passes down a function as a prop and the child calls it. That is how events travel up.</p>
-<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="Component tree: App passes items down to TodoList; Counter owns its own count state; events flow up through callback props">
-<rect class="bx-a" x="150" y="10" width="120" height="40" rx="8"/><text class="t-b" x="210" y="35" text-anchor="middle">App</text>
-<path class="ln-ok" d="M170 50v40"/><polygon class="ah-ok" points="164,88 176,88 170,98"/>
-<path class="ln-ok" d="M250 50v40"/><polygon class="ah-ok" points="244,88 256,88 250,98"/>
-<rect class="bx-info" x="20" y="100" width="170" height="70" rx="8"/>
-<text class="t-b" x="105" y="126" text-anchor="middle">Counter</text>
-<text class="t-s" x="105" y="148" text-anchor="middle">owns state: count</text>
-<rect class="bx-info" x="230" y="100" width="170" height="70" rx="8"/>
-<text class="t-b" x="315" y="126" text-anchor="middle">TodoList</text>
-<text class="t-s" x="315" y="148" text-anchor="middle">gets props: items</text>
-<text class="t-s t-ok" x="100" y="78" text-anchor="middle">props down</text>
-<text class="t-s t-ok" x="320" y="78" text-anchor="middle">items={todos}</text>
-<path class="ln" d="M315 170v20M265 190h100M265 190v10M315 190v10M365 190v10"/>
-<g text-anchor="middle">
-<rect class="bx" x="245" y="200" width="40" height="28" rx="5"/><text class="t-m" x="265" y="219">li</text>
-<rect class="bx" x="295" y="200" width="40" height="28" rx="5"/><text class="t-m" x="315" y="219">li</text>
-<rect class="bx" x="345" y="200" width="40" height="28" rx="5"/><text class="t-m" x="365" y="219">li</text>
-</g>
-<path class="ln-a" d="M405 100V30H282"/><polygon class="ah-a" points="282,24 282,36 272,30"/>
-<text class="t-s t-a" x="340" y="22" text-anchor="middle">events up</text>
-<text class="t-s" x="105" y="200" text-anchor="middle">a click changes</text>
-<text class="t-s" x="105" y="218" text-anchor="middle">only Counter</text>
-</svg><figcaption>A component tree. App sits at the top and passes data down as props, such as the todos array going to TodoList as items. Counter keeps its own count in state. Data only ever flows downward; to send something up, a child calls a function its parent gave it as a prop.</figcaption></figure>
+${V.card(4,'Effects','after the screen is drawn',`
+<figure class="fig"><svg viewBox="0 0 420 140" role="img" aria-label="Timeline: render, then the browser paints the screen, then the effect runs">
+<rect class="bx-a" x="10" y="30" width="110" height="50" rx="8"/><text class="t-b" x="65" y="61" text-anchor="middle">1. render</text>
+<path class="ln" d="M124 55H144"/><polygon class="ah" points="142,48 142,62 152,55"/>
+<rect class="bx" x="156" y="30" width="110" height="50" rx="8"/><text class="t-b" x="211" y="61" text-anchor="middle">2. paint</text>
+<path class="ln" d="M270 55H290"/><polygon class="ah" points="288,48 288,62 298,55"/>
+<rect class="bx-ok" x="302" y="30" width="110" height="50" rx="8"/><text class="t-b" x="357" y="61" text-anchor="middle">3. effect</text>
+<text class="t-s" x="65" y="104" text-anchor="middle">work out JSX</text><text class="t-s" x="211" y="104" text-anchor="middle">screen updates</text><text class="t-s" x="357" y="104" text-anchor="middle">talk to the outside</text>
+</svg><figcaption>Rendering only works out what the screen should show. Effects run afterwards, for jobs outside React: the tab title, timers, subscriptions.</figcaption></figure>
+${V.like(`<p>A shop at closing time. First the shop serves every customer (render), the shutters come down (paint), then someone updates the sign outside (effect). The sign is outside the shop, so it waits until the inside work is done.</p>`)}
+${V.anat([[1,'useEffect'],'(',[2,'() =&gt; {\n  document.title = \'Clicked \' + count;\n}'],', ',[3,'[count]'],');'],[
+ '<b>useEffect.</b> "After rendering, run this."',
+ '<b>The effect.</b> The job to do. Here: set the browser tab title.',
+ '<b>Dependency array.</b> Only run again when one of these values has changed since the last render.'])}
+${V.steps([
+ ['First render and paint. Then the effect runs for the first time: the tab title becomes "Clicked 0 times".',`<svg viewBox="0 0 420 160" role="img" aria-label="First render: effect runs">
+<rect class="bx" x="10" y="14" width="110" height="40" rx="6"/><text class="t" x="65" y="39" text-anchor="middle">render</text>
+<rect class="bx" x="156" y="14" width="110" height="40" rx="6"/><text class="t" x="211" y="39" text-anchor="middle">paint</text>
+<rect class="bx-hl" x="302" y="14" width="110" height="40" rx="6"/><text class="t-b" x="357" y="39" text-anchor="middle">effect runs</text>
+<text class="t-m" x="10" y="94">count: 0   (first time)</text>
+<rect class="bx" x="10" y="112" width="240" height="34" rx="6"/><text class="t" x="22" y="134">Tab: Clicked 0 times</text>
+</svg>`],
+ ['You click: count becomes 1. React renders and paints, then checks <b>[count]</b>: 0 changed to 1, so the effect runs again.',`<svg viewBox="0 0 420 160" role="img" aria-label="Count changed: effect runs again">
+<rect class="bx" x="10" y="14" width="110" height="40" rx="6"/><text class="t" x="65" y="39" text-anchor="middle">render</text>
+<rect class="bx" x="156" y="14" width="110" height="40" rx="6"/><text class="t" x="211" y="39" text-anchor="middle">paint</text>
+<rect class="bx-hl" x="302" y="14" width="110" height="40" rx="6"/><text class="t-b" x="357" y="39" text-anchor="middle">effect runs</text>
+<text class="t-m" x="10" y="94">count: 0 &#8594; 1   <tspan class="t-ok">changed</tspan></text>
+<rect class="bx-ok" x="10" y="112" width="240" height="34" rx="6"/><text class="t" x="22" y="134">Tab: Clicked 1 times</text>
+</svg>`],
+ ['The parent re-renders for some other reason, but count is still 1. Nothing in <b>[count]</b> changed, so the effect is <b>skipped</b>.',`<svg viewBox="0 0 420 160" role="img" aria-label="Count unchanged: effect skipped">
+<rect class="bx" x="10" y="14" width="110" height="40" rx="6"/><text class="t" x="65" y="39" text-anchor="middle">render</text>
+<rect class="bx" x="156" y="14" width="110" height="40" rx="6"/><text class="t" x="211" y="39" text-anchor="middle">paint</text>
+<rect class="ln-d" x="302" y="14" width="110" height="40" rx="6"/><text class="t t-dim" x="357" y="39" text-anchor="middle">skipped</text>
+<text class="t-m" x="10" y="94">count: 1 &#8594; 1   <tspan class="t-dim">same</tspan></text>
+<rect class="bx" x="10" y="112" width="240" height="34" rx="6"/><text class="t" x="22" y="134">Tab: Clicked 1 times</text>
+</svg>`]])}
+${V.rules(V.rh('The dependency array decides when'),
+ V.ok('useEffect(fn, [count])','After the first render, and whenever count changes'),V.ok('useEffect(fn, [])','Only once, after the first render'),
+ V.no('useEffect(fn)','No array: after every single render'),V.no('forgetting a value you use','The effect keeps seeing an old value'),
+ V.rh('Conventions'),
+ V.ok('effects for the outside world','Title, timers, subscriptions. Work out values during render instead'),
+ V.ok('runs twice in development?','React Strict Mode does that on purpose to catch bugs; not in production'))}
+${V.build(`<ol><li>In Counter, create <code>count</code> state starting at 0.</li><li>Show it in the button text and add an onClick that sets it one higher.</li><li>Add a useEffect that writes the count into <code>document.title</code>, with <code>count</code> in the dependency array.</li><li>Write a TodoList component that takes an <code>items</code> prop and maps it to li elements with keys.</li><li>Render it from App with an array of todo objects.</li></ol>`)}
+${V.hook(`Render, paint, then effect. The array says when to run it again.`)}
+`)}
 
-<h4>Rendering lists with map and keys</h4>
-<p>To turn an array of data into an array of elements, use the array method <code>map</code>. It runs a function on every item and collects the results into a new array:</p>
-<pre class="snip">[1, 2, 3].map((n) =&gt; n * 10);   // [10, 20, 30]
-
-&lt;ul&gt;
-  {items.map((item) =&gt; &lt;li key={item.id}&gt;{item.text}&lt;/li&gt;)}
-&lt;/ul&gt;</pre>
-<p>Each element in a list needs a <code>key</code>: a value that is unique among its siblings and stays the same between renders, such as a database id. Keys let React tell items apart. If you delete the second of three items, React uses the keys to see exactly which one went, and removes just that element. Without stable keys it might reuse the wrong element and, for example, leave typed text in the wrong row. Avoid using the array position as a key when items can be reordered or removed.</p>
-
-<h4>State: data that changes</h4>
-<p>Props come from outside. <b>State</b> is data a component owns and can change itself, like the number of clicks on a counter. You create it with the <b>hook</b> <code>useState</code>. A hook is a special React function whose name starts with <code>use</code>.</p>
-<pre class="snip">const [count, setCount] = useState(0);</pre>
-<p>Read it piece by piece:</p>
-<ul>
-<li><code>useState(0)</code> creates a piece of state whose starting value is 0.</li>
-<li>It returns two things in an array: the current value and a function to change it.</li>
-<li>The square brackets unpack them into two names you choose: <code>count</code> and <code>setCount</code>.</li>
-</ul>
-<p>To change state, call the setter: <code>setCount(count + 1)</code>. That does two things. It stores the new value, and it tells React to <b>re-render</b>: to call your component function again. This time <code>useState</code> hands back the new value, the JSX shows the new number, and React updates that one piece of text on the screen.</p>
-<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="The re-render cycle: render shows count, the click calls setCount, React stores the new value and calls the component again">
-<rect class="bx-info" x="130" y="10" width="160" height="50" rx="8"/>
-<text class="t-b" x="210" y="32" text-anchor="middle">Counter() runs</text><text class="t-s" x="210" y="50" text-anchor="middle">count is 0</text>
-<rect class="bx-ok" x="270" y="100" width="140" height="50" rx="8"/>
-<text class="t-b" x="340" y="122" text-anchor="middle">screen shows</text><text class="t-s" x="340" y="140" text-anchor="middle">Clicked 0 times</text>
-<rect class="bx-warn" x="130" y="180" width="160" height="50" rx="8"/>
-<text class="t-b" x="210" y="202" text-anchor="middle">user clicks</text><text class="t-s" x="210" y="220" text-anchor="middle">setCount(0 + 1)</text>
-<rect class="bx-a" x="10" y="100" width="140" height="50" rx="8"/>
-<text class="t-b" x="80" y="122" text-anchor="middle">React stores 1</text><text class="t-s" x="80" y="140" text-anchor="middle">and re-renders</text>
-<path class="ln" d="M290 40q50 4 50 58"/><polygon class="ah" points="334,92 346,92 340,100"/>
-<path class="ln" d="M340 150q0 52 -48 56"/><polygon class="ah" points="296,200 296,212 288,206"/>
-<path class="ln" d="M130 206q-50 -4 -50 -52"/><polygon class="ah" points="74,158 86,158 80,150"/>
-<path class="ln-a" d="M80 100q0 -58 48 -60"/><polygon class="ah-a" points="124,34 124,46 132,40"/>
-</svg><figcaption>The state cycle. Counter runs with count 0 and the screen shows Clicked 0 times. A click calls setCount with 1. React stores 1 and calls Counter again, which now returns Clicked 1 times, and React updates just that text.</figcaption></figure>
-<div class="mistake"><b>Common mistake</b>Using an ordinary variable. <code>let count = 0;</code> with <code>count = count + 1</code> in the click handler changes the number in memory, but React does not know, so nothing re-renders. Worse, the next render runs the function again and resets it to 0. Anything that should change what is on screen must live in state and change through its setter.</div>
-<p>In JSX, events are attributes in camel case, such as <code>onClick</code>, and you pass a function: <code>onClick={() =&gt; setCount(count + 1)}</code>. The arrow function matters. Writing <code>onClick={setCount(count + 1)}</code> would call the setter <i>during</i> rendering, which triggers another render, which calls it again: React stops this loop with the error "Too many re-renders".</p>
-
-<h4>Effects: doing things after rendering</h4>
-<p>A component's main job is to return JSX. But sometimes you need to reach outside React: change the browser tab's title, start a timer, or fetch data. These are called <b>side effects</b>, and they belong in <code>useEffect</code>:</p>
-<pre class="snip">useEffect(() =&gt; {
-  document.title = 'Clicked ' + count + ' times';
-}, [count]);   // dependency array: re-run when count changes</pre>
-<p><code>useEffect</code> takes two arguments. The first is a function: the effect itself. The second is the <b>dependency array</b>: the values the effect uses. React runs the effect <b>after</b> the screen has been updated, and then again only when something in that array has changed since last time.</p>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Timeline of renders and when effects run for three kinds of dependency array">
-<g text-anchor="middle">
-<text class="t-s" x="170" y="20">1st render</text><text class="t-s" x="270" y="20">count changed</text><text class="t-s" x="370" y="20">other change</text>
-</g>
-<path class="ln-d" d="M120 30h290"/>
-<text class="t-m" x="10" y="66">[count]</text>
-<circle class="dot-ok" cx="170" cy="60" r="9"/><circle class="dot-ok" cx="270" cy="60" r="9"/><circle class="dot-m" cx="370" cy="60" r="9"/>
-<text class="t-m" x="10" y="116">[ ]</text>
-<circle class="dot-ok" cx="170" cy="110" r="9"/><circle class="dot-m" cx="270" cy="110" r="9"/><circle class="dot-m" cx="370" cy="110" r="9"/>
-<text class="t-m" x="10" y="166">none</text>
-<circle class="dot-ok" cx="170" cy="160" r="9"/><circle class="dot-ok" cx="270" cy="160" r="9"/><circle class="dot-ok" cx="370" cy="160" r="9"/>
-<circle class="dot-ok" cx="130" cy="198" r="6"/><text class="t-s" x="142" y="203">effect runs</text>
-<circle class="dot-m" cx="250" cy="198" r="6"/><text class="t-s" x="262" y="203">skipped</text>
-</svg><figcaption>When effects run, after each render. With count in the dependency array, the effect runs after the first render and whenever count changes, and is skipped otherwise. With an empty array it runs once, after the first render. With no array at all it runs after every render.</figcaption></figure>
-<p>The effect can also return a <b>cleanup</b> function, which React calls before re-running the effect and when the component is removed. It is how you stop a timer you started. You will not need one today.</p>
-<div class="mistake"><b>Common mistake</b>Calling hooks inside an <code>if</code>, a loop or a click handler. Hooks must be called at the top level of the component, in the same order every render, because React matches each <code>useState</code> call to its stored value by its position in that order.</div>
-
-<h4>Tying it to the tasks</h4>
-<ol>
-<li>In <code>Counter</code>, create count state, show <code>{count}</code> inside the button text, and give the button an <code>onClick</code> that calls the setter.</li>
-<li>Add a <code>useEffect</code> that sets <code>document.title</code> from the count, with <code>count</code> in its dependency array.</li>
-<li>Write a <code>TodoList</code> component that receives an <code>items</code> prop and maps it to <code>&lt;li&gt;</code> elements with keys. Define a small array of todo objects with <code>id</code> and <code>text</code> outside the components, and render <code>&lt;TodoList items={…} /&gt;</code> inside App.</li>
-</ol>
-<p>If something breaks, read the red error in the preview. A warning that "each child in a list should have a unique key prop" means a <code>key</code> is missing on the element returned from <code>map</code>, not on the <code>&lt;ul&gt;</code>. "X is not defined" usually means a missing import or a typo in a component name.</p>
-<div class="try"><b>Try it in your head</b>Count is 4 and the user clicks once. What runs, in order? The click calls setCount with 5; React calls Counter again, which returns Clicked 5 times; React updates the button text; then, because count changed, the effect runs and sets the tab title to Clicked 5 times. If the dependency array had been empty, the title would still say Clicked 0 times.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>A component is a function that returns JSX; React turns your description into DOM updates.</li>
-<li>Props pass read-only data down the tree; events go up by calling functions passed as props.</li>
-<li><code>useState</code> gives a value and a setter. Calling the setter stores the value and re-renders the component.</li>
-<li>Render arrays with <code>map</code>, and give each item a stable, unique <code>key</code>.</li>
-<li><code>useEffect</code> runs side effects after rendering, re-running only when its dependencies change.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. You write <code>count = count + 1</code> in a click handler. What happens on screen? <i>Nothing: React does not know, so it does not re-render.</i> 2. When does <code>useEffect(fn, [])</code> run? <i>Once, after the first render.</i> 3. Why is <code>key={Math.random()}</code> bad? <i>Keys change every render, so React rebuilds every item.</i></div>
 `);
 
 explain('f4',`
-<h4>Why style with utility classes?</h4>
-<p>In the CSS lessons you wrote rules in a stylesheet and connected them to HTML with class names like <code>.card</code>. That works well for a small page. On a large app it causes some familiar pains:</p>
-<ul>
-<li><b>Naming everything.</b> Is it <code>.card</code>, <code>.project-card</code> or <code>.card-wrapper-inner</code>? Teams spend real time on this.</li>
-<li><b>Fear of deleting.</b> Nobody knows which old rules are still used somewhere, so the stylesheet only ever grows.</li>
-<li><b>Inconsistency.</b> One developer uses 15 pixels of padding, another 16, another 18, and the design slowly drifts.</li>
-<li><b>Jumping between files</b> to see how one element looks.</li>
-</ul>
-<p><b>Tailwind CSS</b> flips the approach. It provides thousands of tiny ready-made classes, called <b>utility classes</b>, that each do one small thing. You style an element by listing them directly in its markup. No names to invent, nothing to hunt for in another file, and every value comes from a shared scale, so designs stay consistent.</p>
-<pre class="snip">&lt;div className="rounded-lg border p-4 shadow-sm"&gt;Shop&lt;/div&gt;</pre>
-<p>Remember from the React lesson that JSX writes the class attribute as <code>className</code>. Several classes are separated by spaces, exactly as in plain HTML.</p>
+<p>Most new React projects today are styled with Tailwind, and a huge number use shadcn/ui components on top. Learn the pattern once and you can restyle a whole app without opening a single CSS file.</p>
 
-<h4>Reading utility classes</h4>
-<p>Each utility is shorthand for one or two CSS declarations you already know. Here is the card above, decoded:</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="Four Tailwind classes and the CSS each one produces">
-<g text-anchor="middle">
-<rect class="bx-a" x="10" y="16" width="120" height="34" rx="6"/><text class="t-m" x="70" y="38">rounded-lg</text>
-<rect class="bx-a" x="10" y="66" width="120" height="34" rx="6"/><text class="t-m" x="70" y="88">border</text>
-<rect class="bx-a" x="10" y="116" width="120" height="34" rx="6"/><text class="t-m" x="70" y="138">p-4</text>
-<rect class="bx-a" x="10" y="166" width="120" height="34" rx="6"/><text class="t-m" x="70" y="188">shadow-sm</text>
-</g>
-<path class="ln" d="M130 33h26M130 83h26M130 133h26M130 183h26"/>
-<polygon class="ah" points="154,27 154,39 164,33"/><polygon class="ah" points="154,77 154,89 164,83"/><polygon class="ah" points="154,127 154,139 164,133"/><polygon class="ah" points="154,177 154,189 164,183"/>
-<rect class="bx-dark" x="168" y="10" width="242" height="200" rx="8"/>
-<text class="t-term" x="180" y="38">border-radius: 8px</text>
-<text class="t-term" x="180" y="88">border: 1px solid</text>
-<text class="t-term" x="180" y="138">padding: 1rem</text>
-<text class="t-term" x="180" y="188">box-shadow: small</text>
-</svg><figcaption>Each Tailwind class on the left stands for CSS on the right. rounded-lg rounds the corners by 8 pixels. border adds a one pixel solid border. p-4 adds padding of 1 rem, which is 16 pixels. shadow-sm adds a small soft shadow.</figcaption></figure>
-<p>The names follow patterns, so you learn the patterns, not thousands of classes:</p>
-<div class="tbl-wrap"><table><tr><th>Pattern</th><th>Means</th><th>Examples</th></tr>
-<tr><td><code>p-</code>, <code>px-</code>, <code>py-</code>, <code>pt-</code></td><td>padding: all sides, left and right, top and bottom, top only</td><td><code>p-4</code>, <code>px-4 py-2</code></td></tr>
-<tr><td><code>m-</code>, <code>mb-</code></td><td>margin, the same way</td><td><code>mb-6</code></td></tr>
-<tr><td><code>bg-</code>, <code>text-</code></td><td>background colour, text colour or size</td><td><code>bg-violet-600</code>, <code>text-white</code>, <code>text-sm</code></td></tr>
-<tr><td><code>font-</code></td><td>font weight</td><td><code>font-semibold</code>, <code>font-bold</code></td></tr>
-<tr><td><code>rounded-</code></td><td>corner rounding</td><td><code>rounded-md</code>, <code>rounded-lg</code></td></tr></table></div>
-<p><b>The spacing scale.</b> The number in <code>p-4</code> is not pixels. Each step is a quarter of a <b>rem</b>. A rem is a unit equal to the page's base font size, 16 pixels by default. So one step is 4 pixels, and <code>p-4</code> is 4 times 4, which is 16 pixels. <code>p-2</code> is 8 pixels and <code>gap-4</code> is a 16 pixel gap. Using rem instead of pixels means spacing grows if the user increases their browser's text size.</p>
-<p><b>The colour scale.</b> Colours have a name and a shade from 50 (very light) to 950 (very dark). <code>bg-violet-600</code> is a strong violet background, <code>hover:bg-violet-700</code> a slightly darker one, and <code>bg-gray-50</code> an almost-white grey.</p>
+${V.card(1,'Utility classes','one small job per class',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="Four utility classes, p-4, border, rounded-lg and shadow-sm, each add one thing to a plain card">
+<rect class="bx-warn" x="10" y="10" width="62" height="30" rx="15"/><text class="t-m" x="41" y="30" text-anchor="middle" style="font-size:14px">p-4</text>
+<rect class="bx-warn" x="82" y="10" width="92" height="30" rx="15"/><text class="t-m" x="128" y="30" text-anchor="middle" style="font-size:14px">border</text>
+<rect class="bx-warn" x="184" y="10" width="112" height="30" rx="15"/><text class="t-m" x="240" y="30" text-anchor="middle" style="font-size:14px">rounded-lg</text>
+<rect class="bx-warn" x="306" y="10" width="104" height="30" rx="15"/><text class="t-m" x="358" y="30" text-anchor="middle" style="font-size:14px">shadow-sm</text>
+<path class="ln" d="M41 40 150 80M128 40 186 80M240 40 236 80M358 40 272 80"/>
+<rect class="bx" x="116" y="88" width="200" height="70" rx="14" style="opacity:.45"/>
+<rect class="bx" x="110" y="82" width="200" height="70" rx="14"/><text class="t-b" x="210" y="122" text-anchor="middle">Shop</text>
+</svg><figcaption>Each class does exactly one thing: padding, a border, rounded corners, a shadow. Put them together in className and you have a card.</figcaption></figure>
+${V.like(`<p>A spice rack. Each jar is one flavour: salt, pepper, paprika. You do not invent a new spice for every meal; you combine the jars you already have. Tailwind classes are the jars.</p>`)}
+${V.why(`<p>With normal CSS you must invent a class name for everything, keep a separate file in step with your HTML, and old rules pile up because nobody dares delete them. Adam Wathan released <b>Tailwind CSS</b> in 2017: the styles sit right on the element, and the build step scans your files and only ships the classes you actually used.</p>`)}
+${V.anat(['className="',[1,'rounded-lg'],' ',[2,'border'],' ',[3,'p-4'],' ',[4,'shadow-sm'],'"'],[
+ '<b>Rounded corners</b>, large size.',
+ '<b>A 1px solid border</b> in the default grey.',
+ '<b>Padding</b> on all sides: 4 steps of the spacing scale = 16px.',
+ '<b>A small drop shadow.</b>'])}
+<p><b>The spacing scale:</b> each step is 4px (0.25rem). Watch the padding grow.</p>
+${V.steps([
+ ['<b>p-0</b>: no padding. The text touches the edge.',`<svg viewBox="0 0 420 160" role="img" aria-label="p-0: no padding">
+<text class="t-m t-a" x="20" y="70" style="font-size:28px">p-0</text><text class="t-s" x="20" y="100">0px</text>
+<rect class="bx-a" x="230" y="65" width="110" height="30" rx="4"/>
+<rect class="bx-ok" x="230" y="65" width="110" height="30" rx="2"/><text class="t" x="285" y="86" text-anchor="middle">Shop</text>
+</svg>`],
+ ['<b>p-2</b>: 2 steps of 4px = 8px.',`<svg viewBox="0 0 420 160" role="img" aria-label="p-2: 8px padding">
+<text class="t-m t-a" x="20" y="70" style="font-size:28px">p-2</text><text class="t-s" x="20" y="100">2 &#215; 4 = 8px</text>
+<rect class="bx-a" x="218" y="53" width="134" height="54" rx="6"/>
+<rect class="bx-ok" x="230" y="65" width="110" height="30" rx="2"/><text class="t" x="285" y="86" text-anchor="middle">Shop</text>
+</svg>`],
+ ['<b>p-4</b>: 4 steps = 16px (1rem). The comfortable default for cards.',`<svg viewBox="0 0 420 160" role="img" aria-label="p-4: 16px padding">
+<text class="t-m t-a" x="20" y="70" style="font-size:28px">p-4</text><text class="t-s" x="20" y="100">4 &#215; 4 = 16px</text>
+<rect class="bx-a" x="206" y="41" width="158" height="78" rx="8"/>
+<rect class="bx-ok" x="230" y="65" width="110" height="30" rx="2"/><text class="t" x="285" y="86" text-anchor="middle">Shop</text>
+</svg>`],
+ ['<b>p-8</b>: 8 steps = 32px. The number is never pixels: multiply it by 4.',`<svg viewBox="0 0 420 160" role="img" aria-label="p-8: 32px padding">
+<text class="t-m t-a" x="20" y="70" style="font-size:28px">p-8</text><text class="t-s" x="20" y="100">8 &#215; 4 = 32px</text>
+<rect class="bx-a" x="182" y="17" width="206" height="126" rx="10"/>
+<rect class="bx-ok" x="230" y="65" width="110" height="30" rx="2"/><text class="t" x="285" y="86" text-anchor="middle">Shop</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('className="p-4"','In React it is className, not class'),V.no("'p-' + size",'Build names in pieces and the scanner never sees "p-4", so the style is missing'),
+ V.ok('px-4 py-2','x = left and right, y = top and bottom'),
+ V.rh('Conventions'),
+ V.ok('stick to the scale','p-4, gap-4, mt-6: spacing stays even across the app'),V.no('p-[13px] everywhere','Square-bracket custom values exist; keep them rare'))}
+${V.hook(`One class, one job. The number times 4 is the pixels: p-4 is 16px.`)}
+`)}
 
-<h4>Layout and responsive prefixes</h4>
-<p>The flexbox and grid ideas from the layout lesson come as utilities too: <code>flex</code> means <code>display: flex</code>, <code>grid</code> means <code>display: grid</code>, <code>grid-cols-3</code> means three equal columns, and <code>gap-4</code> sets the gap.</p>
-<p>Media queries become <b>prefixes</b>. A class with <code>md:</code> in front only applies when the screen is at least the "medium" width, 768 pixels:</p>
-<pre class="snip">&lt;div className="grid grid-cols-1 md:grid-cols-3 gap-4"&gt;</pre>
-<p>Read it as: "a grid with one column; from medium screens upward, three columns". This is <b>mobile-first</b>, the approach suggested in the layout lesson: classes without a prefix are for every screen, starting with phones, and each prefix adds changes for bigger screens. Under the hood, <code>md:</code> becomes a <code>@media (min-width: 48rem)</code> query.</p>
-<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="Breakpoint ruler: below 768 pixels grid-cols-1 applies; from md at 768 pixels grid-cols-3 takes over">
-<path class="ln" d="M10 70h400"/>
-<g text-anchor="middle">
-<path class="ln" d="M10 62v16M140 62v16M200 62v16M290 62v16M370 62v16"/>
-<text class="t-s" x="10" y="98">0</text><text class="t-b" x="140" y="54">sm</text><text class="t-b t-a" x="200" y="54">md</text><text class="t-b" x="290" y="54">lg</text><text class="t-b" x="370" y="54">xl</text>
-<text class="t-s" x="140" y="98">640</text><text class="t-s" x="200" y="98">768</text><text class="t-s" x="290" y="98">1024</text><text class="t-s" x="370" y="98">1280</text>
-</g>
-<rect class="bx-info" x="10" y="118" width="188" height="36" rx="6"/><text class="t-m" x="104" y="141" text-anchor="middle">grid-cols-1</text>
-<rect class="bx-ok" x="202" y="118" width="208" height="36" rx="6"/><text class="t-m" x="306" y="141" text-anchor="middle">md:grid-cols-3 wins</text>
-<text class="t-s" x="210" y="180" text-anchor="middle">Screen width in pixels. Each prefix means "this wide or wider".</text>
-<text class="t-s" x="10" y="24">phones</text><text class="t-s" x="410" y="24" text-anchor="end">big screens</text>
-</svg><figcaption>Tailwind's default breakpoints on a ruler of screen widths: sm at 640 pixels, md at 768, lg at 1024 and xl at 1280. Below 768 pixels, only grid-cols-1 applies and the cards stack. From 768 pixels up, md grid-cols-3 also applies and wins, giving three columns.</figcaption></figure>
-<p>Other prefixes work the same way for states: <code>hover:</code> applies while the mouse is over the element, <code>focus:</code> while it has keyboard focus, and <code>dark:</code> in dark mode.</p>
+${V.card(2,'Responsive prefixes','md: means "from medium up"',`
+<figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="Screen widths from 0 to 1536 pixels with breakpoints sm 640, md 768, lg 1024, xl 1280. grid-cols-1 applies below md, md:grid-cols-3 from md upwards">
+<path class="ln" d="M20 60H400"/>
+<path class="ln" d="M174 52V68M204 52V68M266 52V68M327 52V68"/>
+<text class="t-b" x="174" y="44" text-anchor="middle" style="font-size:14px">sm</text><text class="t-b t-a" x="208" y="44" text-anchor="middle" style="font-size:14px">md</text><text class="t-b" x="266" y="44" text-anchor="middle" style="font-size:14px">lg</text><text class="t-b" x="327" y="44" text-anchor="middle" style="font-size:14px">xl</text>
+<text class="t-s" x="20" y="84">0</text><text class="t-s" x="166" y="84" text-anchor="middle">640</text><text class="t-s t-a" x="210" y="84" text-anchor="middle">768</text><text class="t-s" x="266" y="84" text-anchor="middle">1024</text><text class="t-s" x="327" y="84" text-anchor="middle">1280</text>
+<rect class="bx" x="20" y="96" width="184" height="40" rx="6"/><text class="t-m" x="112" y="121" text-anchor="middle" style="font-size:14px">grid-cols-1</text>
+<rect class="bx-a" x="204" y="96" width="196" height="40" rx="6"/><text class="t-m" x="302" y="121" text-anchor="middle" style="font-size:14px">md:grid-cols-3</text>
+</svg><figcaption>Classes with no prefix apply at every width. A prefix like md: switches a class on from that breakpoint (768px) and wider.</figcaption></figure>
+${V.like(`<p>A theme park ride sign: "From 1.2 metres tall". Everyone smaller gets the default. Once you reach the line, the new rule applies, and it keeps applying however tall you grow.</p>`)}
+${V.anat([[1,'grid'],' ',[2,'grid-cols-1'],' ',[3,'md:'],[4,'grid-cols-3'],' ',[5,'gap-4']],[
+ '<b>display: grid.</b>',
+ '<b>The default</b>, for phones and up: one column.',
+ '<b>The prefix.</b> Only from the md breakpoint (768px) and wider.',
+ '<b>The utility it switches on</b>: three columns.',
+ '<b>gap-4</b>: 16px between cells, at every width.'])}
+${V.steps([
+ ['420px wide, a phone. md is not reached, so only <b>grid-cols-1</b> applies: one column.',`<svg viewBox="0 0 420 165" role="img" aria-label="420px: one column">
+<rect class="bx" x="10" y="10" width="150" height="120" rx="8"/>
+<rect class="bx-a" x="22" y="22" width="126" height="28" rx="4"/><rect class="bx-a" x="22" y="56" width="126" height="28" rx="4"/><rect class="bx-a" x="22" y="90" width="126" height="28" rx="4"/>
+<text class="t-b" x="10" y="154">420px</text><text class="t-m" x="190" y="60">grid-cols-1</text><text class="t-m t-dim" x="190" y="90">md:grid-cols-3</text>
+</svg>`],
+ ['700px. Wider, but still under 768, so md: is still off.',`<svg viewBox="0 0 420 165" role="img" aria-label="700px: still one column">
+<rect class="bx" x="10" y="10" width="250" height="120" rx="8"/>
+<rect class="bx-a" x="22" y="22" width="226" height="28" rx="4"/><rect class="bx-a" x="22" y="56" width="226" height="28" rx="4"/><rect class="bx-a" x="22" y="90" width="226" height="28" rx="4"/>
+<text class="t-b" x="10" y="154">700px</text><text class="t-m" x="274" y="60">grid-cols-1</text><text class="t-m t-dim" x="274" y="90">md:grid-</text><text class="t-m t-dim" x="274" y="110">cols-3</text>
+</svg>`],
+ ['900px. Past 768, so <b>md:grid-cols-3</b> switches on and wins: three columns.',`<svg viewBox="0 0 420 165" role="img" aria-label="900px: three columns">
+<rect class="bx-hl" x="10" y="10" width="400" height="120" rx="8"/>
+<rect class="bx-a" x="22" y="40" width="118" height="60" rx="5"/><rect class="bx-a" x="151" y="40" width="118" height="60" rx="5"/><rect class="bx-a" x="280" y="40" width="118" height="60" rx="5"/>
+<text class="t-b" x="10" y="154">900px</text><text class="t-m t-a" x="100" y="154">md:grid-cols-3 on</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('md:grid-cols-3','md and wider'),V.no('sm: for phones','No prefix is for phones; sm: starts at 640px'),
+ V.ok('hover:bg-violet-700','State prefixes work the same way: only while hovered'),
+ V.rh('Conventions'),
+ V.ok('design the phone first','Write the default, then add md: and lg: changes'))}
+${V.hook(`No prefix means everywhere. md: means "from 768px up".`)}
+`)}
 
-<h4>Components keep utility classes tidy</h4>
-<p>The usual first reaction to Tailwind is "my markup is full of class names!". The answer is React components. You write the long list of classes once, inside a component, and use the component everywhere. That is also why shadcn/ui, below, is built this way.</p>
-<p>Real apps need the same component in several looks: a solid main button and a quieter outlined one. The common pattern is a <b>variant prop</b>: a prop that picks one of a few named styles from a lookup object.</p>
-<pre class="snip">const variants = {
-  primary: 'bg-violet-600 text-white',
-  outline: 'border bg-white text-gray-900',
-};
-// inside Button: shared classes + variants[variant]
-&lt;Button variant="outline"&gt;Cancel&lt;/Button&gt;</pre>
-<p>Inside <code>Button</code>, receive <code>variant</code> as a prop with a default of <code>'primary'</code>, look up <code>variants[variant]</code>, and join that string onto the shared classes such as padding and rounding. The square brackets read an object key held in a variable: if <code>variant</code> is <code>'outline'</code>, <code>variants[variant]</code> is the outline string. Remember to keep a space between the shared classes and the variant classes when you join the strings, or two class names merge into one nonsense name.</p>
-<p>The finished pattern often also accepts <code>...props</code>, the <b>rest</b> syntax, which collects any other props such as <code>onClick</code> or <code>type</code>, and passes them on with <code>{...props}</code> to the real <code>&lt;button&gt;</code>. Then your Button works anywhere a normal button would.</p>
-<div class="mistake"><b>Common mistake</b>Building class names from pieces, like <code>'bg-' + colour + '-600'</code>. Tailwind works by scanning your source files for complete class names and generating CSS only for the ones it finds. A name glued together at runtime never appears whole in your code, so its CSS is never generated and the style silently does nothing. Always write full class names, for example in a lookup object as above.</div>
+${V.card(3,'shadcn/ui and variants','components you own',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A normal library is a sealed box in node_modules. shadcn/ui copies the component file into your own project folder, where you can change it">
+${V.ic('box',30,10,70,'ic-info')}${V.ic('lock',84,58,30,'ic-info')}
+<text class="t-b" x="70" y="114" text-anchor="middle">a normal library</text><text class="t-s" x="70" y="134" text-anchor="middle">you cannot edit it</text>
+<path class="ln-a" d="M150 50H222"/><polygon class="ah-a" points="220,43 220,57 232,50"/><text class="t-s" x="190" y="40" text-anchor="middle">copy in</text>
+${V.ic('folder',240,6,64,'ic-ok')}${V.ic('file',306,14,48,'ic-ok')}${V.ic('gear',354,26,36,'ic-ok')}
+<text class="t-m" x="320" y="96" text-anchor="middle" style="font-size:14px">components/ui/</text><text class="t-m" x="320" y="114" text-anchor="middle" style="font-size:14px">button.tsx</text>
+<text class="t-s" x="320" y="134" text-anchor="middle">yours to change</text>
+</svg><figcaption>shadcn/ui is not a package you depend on. Its command copies the component's source file into your project, and from then on the code is yours.</figcaption></figure>
+${V.like(`<p>A ready meal versus a recipe card. A normal component library is a ready meal: tasty, but you cannot take the onions out. shadcn/ui hands you the recipe to copy into your own cookbook, so you can change anything.</p>`)}
+${V.why(`<p>Component libraries are hard to restyle: you end up fighting their CSS. shadcn/ui (2023) takes a different route. Its components are built on <b>Radix UI</b>, which handles the hard accessible behaviour (keyboard use, focus, screen readers), and styled with Tailwind. Running <code>npx shadcn@latest add button</code> copies the file in.</p>`)}
+${V.anat([[1,'&lt;Button'],' ',[2,'variant'],'=',[3,'"outline"'],[4,'&gt;Cancel&lt;/Button&gt;']],[
+ '<b>Your component.</b> One Button for the whole app.',
+ '<b>A variant prop.</b> Picks one of a few named looks.',
+ '<b>The name of the look.</b> Usually primary/default, outline, ghost, destructive.',
+ '<b>children.</b> The label inside.'])}
+<p><b>Watch a variant become classes.</b></p>
+${V.steps([
+ ['You write <b>&amp;lt;Button variant="outline"&amp;gt;</b>. React calls Button with the prop variant = "outline".',`<svg viewBox="0 0 420 175" role="img" aria-label="Button is called with variant outline">
+<rect class="bx-dark" x="6" y="8" width="408" height="36" rx="6"/><text class="t-term" x="16" y="31" style="font-size:14px">&lt;Button variant="outline"&gt;Cancel&lt;/Button&gt;</text>
+<rect class="bx" x="10" y="60" width="400" height="34" rx="5"/><text class="t-m" x="20" y="82" style="font-size:14px">primary: 'bg-violet-600 text-white'</text>
+<rect class="bx" x="10" y="98" width="400" height="34" rx="5"/><text class="t-m" x="20" y="120" style="font-size:14px">outline: 'border bg-white'</text>
+<text class="t-s" x="10" y="162">the variants object inside Button</text>
+</svg>`],
+ ['Inside, <b>variants[variant]</b> looks up the "outline" key in the object.',`<svg viewBox="0 0 420 175" role="img" aria-label="Lookup finds outline">
+<rect class="bx-dark" x="6" y="8" width="408" height="36" rx="6"/><text class="t-term" x="16" y="31" style="font-size:14px">variants[variant]</text>
+<rect class="bx" x="10" y="60" width="400" height="34" rx="5"/><text class="t-m t-dim" x="20" y="82" style="font-size:14px">primary: 'bg-violet-600 text-white'</text>
+<rect class="bx-hl" x="10" y="98" width="400" height="34" rx="5"/><text class="t-m" x="20" y="120" style="font-size:14px">outline: 'border bg-white'</text>
+<text class="t-s" x="10" y="162">found: 'border bg-white'</text>
+</svg>`],
+ ['The shared base classes are joined with the classes of the variant into one className.',`<svg viewBox="0 0 420 175" role="img" aria-label="Base classes joined with variant classes">
+<rect class="bx-dark" x="6" y="8" width="408" height="36" rx="6"/><text class="t-term" x="16" y="31" style="font-size:14px">className = base + ' ' + variants[variant]</text>
+<rect class="bx-ok" x="10" y="60" width="400" height="72" rx="5"/>
+<text class="t-m" x="20" y="88" style="font-size:14px">rounded-md px-4 py-2 font-semibold</text>
+<text class="t-m t-a" x="20" y="116" style="font-size:14px">border bg-white</text>
+</svg>`],
+ ['The result: the same Button in two looks, with one place to change them all.',`<svg viewBox="0 0 420 175" role="img" aria-label="A violet Save button and an outlined Cancel button">
+<rect class="bx-a" x="60" y="60" width="130" height="48" rx="8" style="stroke-width:2"/><text class="t-b" x="125" y="90" text-anchor="middle">Save</text>
+<rect class="bx" x="230" y="60" width="130" height="48" rx="8"/><text class="t-b" x="295" y="90" text-anchor="middle">Cancel</text>
+<text class="t-s" x="125" y="136" text-anchor="middle">primary</text><text class="t-s" x="295" y="136" text-anchor="middle">outline</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok("{ variant = 'primary' }",'A default, so plain &lt;Button&gt; still works'),V.ok('{...props}','Pass the rest (onClick, type, disabled) on to the real button'),
+ V.no('npm install shadcn-ui as a dependency','You add components with the CLI; the code lands in your project'),
+ V.rh('Conventions'),
+ V.ok('a handful of variants','primary, outline, ghost, destructive: not one per page'))}
+${V.build(`<ol><li>Give each card <code>rounded-lg border p-4</code>.</li><li>Wrap the cards in a div with <code>grid grid-cols-1 md:grid-cols-3 gap-4</code>.</li><li>Make a <code>variants</code> object with a primary and an outline set of classes.</li><li>Give Button a <code>variant</code> prop with a default, and build its className from base classes plus <code>variants[variant]</code>.</li><li>Render one Button of each variant.</li></ol>`)}
+${V.hook(`Tailwind is the spice rack, shadcn is the recipe you keep. A variant picks the flavour.`)}
+`)}
 
-<h4>shadcn/ui: components you own</h4>
-<p>Buttons are easy. Accessible dialogs, dropdown menus, date pickers and tabs are hard: they must trap keyboard focus, close on Escape, announce themselves to screen readers, and work on touch screens. Getting all of that right yourself takes weeks.</p>
-<p>Most component libraries are packages you install, and their code lives hidden in your dependencies. When their look or behaviour does not quite fit, you fight them with overrides. <b>shadcn/ui</b> works differently: it is a collection of components whose <b>source code you copy into your project</b>, usually with a command such as <code>npx shadcn@latest add button</code>. After that, the file is yours. You read it, edit it, restyle it, and nothing is hidden.</p>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Layers: your app uses your copied component files, styled with Tailwind, built on Radix UI behaviour">
-<rect class="bx-a" x="40" y="10" width="340" height="40" rx="8"/><text class="t-b" x="210" y="35" text-anchor="middle">your app's pages</text>
-<rect class="bx-ok" x="40" y="62" width="340" height="52" rx="8"/><text class="t-b" x="210" y="84" text-anchor="middle">components/ui/button.tsx</text><text class="t-s" x="210" y="104" text-anchor="middle">copied in by shadcn: yours to edit</text>
-<rect class="bx-info" x="40" y="126" width="164" height="52" rx="8"/><text class="t-b" x="122" y="148" text-anchor="middle">Tailwind</text><text class="t-s" x="122" y="168" text-anchor="middle">the look</text>
-<rect class="bx-warn" x="216" y="126" width="164" height="52" rx="8"/><text class="t-b" x="298" y="148" text-anchor="middle">Radix UI</text><text class="t-s" x="298" y="168" text-anchor="middle">the behaviour</text>
-<text class="t-s" x="210" y="200" text-anchor="middle">Tailwind and Radix stay as installed packages.</text>
-</svg><figcaption>How shadcn/ui fits together. Your pages use component files that live in your own project. Each component gets its look from Tailwind classes and its accessible behaviour, such as keyboard handling and focus, from Radix UI primitives. Tailwind and Radix remain packages you install; only the component file is copied in.</figcaption></figure>
-<p>Under the hood, many shadcn components wrap <b>Radix UI</b> primitives, unstyled components that handle the hard accessibility behaviour, and style them with Tailwind. Buttons use the variant pattern you just learnt, written with a small helper library called class-variance-authority. Today's Button task is a hand-made version of exactly that idea.</p>
-
-<h4>Working through the tasks</h4>
-<ol>
-<li>Give each card div the classes for rounded corners, a border and <code>p-4</code>. The checker looks for an element with <code>p-4</code> whose padding really is 16 pixels.</li>
-<li>Give the cards' wrapper <code>grid grid-cols-1 md:grid-cols-3</code> and a gap. The checker tests it at 900 and at 420 pixels wide.</li>
-<li>Add a <code>variant</code> prop to Button with two looks, and render one of each, so their background colours differ.</li>
-</ol>
-<p>If the preview shows no styling at all, Tailwind itself has not loaded: it comes from the internet in this sandbox, so check your connection and press Run again. Note that the cards are plain divs at first; turning them into a small <code>Card</code> component, as the solution does, is optional but good practice.</p>
-<div class="try"><b>Try it in your head</b>How many pixels of padding does <code>px-6 py-2</code> give? Each step is 4 pixels, so 24 pixels left and right and 8 pixels top and bottom. And on a screen 700 pixels wide, how many columns does <code>grid-cols-1 md:grid-cols-3</code> show? One, because 700 is below the md breakpoint of 768.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Tailwind styles elements with small utility classes in <code>className</code>, each standing for one bit of CSS.</li>
-<li>Spacing steps are 4 pixels each, so <code>p-4</code> is 16 pixels; colours run from shade 50 to 950.</li>
-<li>Prefixes such as <code>md:</code> and <code>hover:</code> apply a class only from that screen width up, or in that state.</li>
-<li>Write full class names; wrap repeated class lists in components, with variant props for different looks.</li>
-<li>shadcn/ui copies accessible components into your codebase, built on Radix UI and Tailwind, so you own and can change them.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. How many pixels is <code>p-6</code>? <i>24px.</i> 2. At 500px wide, does <code>md:grid-cols-3</code> apply? <i>No: md starts at 768px.</i> 3. Where does a shadcn/ui Button's code live? <i>In your own project, usually components/ui.</i></div>
 `);
 
 explain('f5',`
