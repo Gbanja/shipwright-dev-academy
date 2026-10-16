@@ -1,534 +1,472 @@
 /* sysdesign: "Explained step by step" walkthroughs. */
 
 explain('k1',`
-<h4>What system design is about</h4>
-<p>Building an app that works for you and ten friends is one skill. Keeping it fast and online when a million people use it at once is another. <b>System design</b> is that second skill: choosing the pieces of a system (servers, databases, caches, queues) and how they connect, so it keeps working as it grows.</p>
-<p>Every design, however big, is built from one basic conversation: a <b>client</b> asks, and a <b>server</b> answers. This lesson takes that conversation apart. Once you understand it properly, the rest of the track (load balancers, caches, queues, replicas) is just ways of making it faster, cheaper and harder to break.</p>
+<p>Every app you use is a conversation between your device and computers far away. System design is about keeping that conversation fast and reliable when a hundred times more people join in. It starts with how the pieces talk.</p>
 
-<h4>Clients, servers and HTTP</h4>
-<p>A <b>client</b> is the program that asks for something: a web browser, a phone app, or even another server. A <b>server</b> is a program, running on a computer somewhere, that waits for requests and answers them. They talk over the network using <b>HTTP</b>, the HyperText Transfer Protocol, which is simply an agreed format for requests and responses.</p>
-<p>A request says <b>what to do</b> (the method), <b>to what</b> (the path), and optionally carries data (the body). A response carries a <b>status code</b>, a three-digit number saying how it went, plus the data, usually as <b>JSON</b>, a text format for structured data.</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="A phone app sends GET /users/42 to a server, which reads the database and replies 200 OK with JSON">
-<rect class="bx-info" x="10" y="50" width="70" height="140" rx="10"/><text class="t-b" x="45" y="125" text-anchor="middle">Client</text>
-<rect class="bx-a" x="180" y="50" width="76" height="140" rx="10"/><text class="t-b" x="218" y="125" text-anchor="middle">Server</text>
-<rect class="bx" x="320" y="90" width="92" height="64" rx="10"/><text class="t-b" x="366" y="127" text-anchor="middle">Database</text>
-<text class="t-m" x="130" y="34" text-anchor="middle">GET /users/42</text>
-<path class="ln-a" d="M80 70h92"/><polygon class="ah-a" points="170,64 170,76 178,70"/>
-<path class="ln" d="M256 110h56"/><polygon class="ah" points="310,104 310,116 318,110"/>
-<path class="ln" d="M320 136h-56"/><polygon class="ah" points="266,130 266,142 258,136"/>
-<text class="t-s" x="288" y="100" text-anchor="middle">query</text><text class="t-s" x="288" y="156" text-anchor="middle">row</text>
-<path class="ln-ok" d="M180 170h-92"/><polygon class="ah-ok" points="90,164 90,176 82,170"/>
-<text class="t-m t-ok" x="130" y="160" text-anchor="middle">200 OK</text>
-<text class="t-s" x="130" y="210" text-anchor="middle">{"name":"Ada"}</text>
-</svg><figcaption>One request and response. The client sends GET slash users slash 42. The server asks the database for that user, gets the row back, and replies with status 200 OK and the user as JSON. Each arrow across the network costs time.</figcaption></figure>
-<p>Status codes come in families, and the first digit tells you who is at fault:</p>
-<div class="tbl-wrap"><table><tr><th>Family</th><th>Meaning</th><th>Common examples</th></tr>
-<tr><td>2xx</td><td>Success</td><td>200 OK, 201 Created, 204 No Content</td></tr>
-<tr><td>3xx</td><td>Look somewhere else</td><td>301 Moved Permanently, 302 Found (a temporary redirect)</td></tr>
-<tr><td>4xx</td><td>The client made a mistake</td><td>400 Bad Request, 401 not logged in, 403 not allowed, 404 Not Found, 429 Too Many Requests</td></tr>
-<tr><td>5xx</td><td>The server failed</td><td>500 Internal Server Error, 503 Service Unavailable</td></tr></table></div>
-<p>The difference matters in design: retrying a 4xx usually fails again, because the request itself is wrong, while a 5xx or a timeout may succeed on a retry.</p>
+${V.card(1,'Clients and servers','a restaurant for data',`
+<figure class="fig"><svg viewBox="0 0 420 165" role="img" aria-label="A customer orders through a waiter; the kitchen cooks and the waiter brings the food back">
+${V.ic('person',14,40,64,'ic-a')}${V.ic('person',178,40,64,'ic-info')}${V.ic('server',336,36,72,'ic-ok')}<path class="ln-a" d="M86 60H160"/><polygon class="ah-a" points="158,54 158,66 170,60"/><path class="ln-a" d="M250 60H318"/><polygon class="ah-a" points="316,54 316,66 328,60"/><path class="ln-ok" d="M328 90H260"/><polygon class="ah-ok" points="262,84 262,96 250,90"/><path class="ln-ok" d="M170 90H96"/><polygon class="ah-ok" points="98,84 98,96 86,90"/>
+<text class="t-b" x="46" y="132" text-anchor="middle">you</text><text class="t-s" x="46" y="152" text-anchor="middle">client</text>
+<text class="t-b" x="210" y="132" text-anchor="middle">waiter</text><text class="t-s" x="210" y="152" text-anchor="middle">HTTP + API</text>
+<text class="t-b" x="372" y="132" text-anchor="middle">kitchen</text><text class="t-s" x="372" y="152" text-anchor="middle">server</text>
+<text class="t-s" x="128" y="50" text-anchor="middle">order</text><text class="t-s" x="128" y="112" text-anchor="middle">food</text>
+</svg><figcaption>You (the client) never walk into the kitchen. You give your order to the waiter, who follows set rules, and the food comes back to your table.</figcaption></figure>
+${V.like(`<p>A restaurant. You are the <b>client</b>. The kitchen is the <b>server</b>. The menu and the waiter are the <b>API</b>: a fixed list of things you may ask for and a fixed way of asking. HTTP is the language the waiter speaks.</p>`)}
+${V.why(`<p>One powerful computer can serve millions of small devices, and keeps the data in one safe place. Tim Berners-Lee created HTTP in 1989 to 1991 for the first web. Today phones, browsers and other servers all speak it.</p>`)}
+${V.anat([[1,'GET'],' ',[2,'/users/42'],' ',[3,'HTTP/1.1'],'\n',[4,'200 OK']],[
+ '<b>Method.</b> What you want to do: GET reads, POST creates, PUT replaces, PATCH changes part, DELETE removes.',
+ '<b>Path.</b> Which thing you mean: user number 42.',
+ '<b>Version</b> of HTTP.',
+ '<b>Status code</b> in the reply: 2xx worked, 4xx you asked wrongly, 5xx the server broke.'])}
+${V.steps([
+ ['You open a profile page. The browser, the <b>client</b>, sends an HTTP request: "GET me user 42".',`<svg viewBox="0 0 420 180" role="img" aria-label="Client sends GET /users/42">
+${V.ic('laptop',20,30,60,'ic-a')}${V.ic('server',180,30,60,'')}${V.ic('db',340,30,60,'')}<text class="t-b" x="50" y="114" text-anchor="middle">client</text><text class="t-b" x="210" y="114" text-anchor="middle">server</text><text class="t-b" x="370" y="114" text-anchor="middle">database</text>
+<path class="ln-a" d="M86 60H166"/><polygon class="ah-a" points="164,54 164,66 176,60"/>
+<rect class="bx-dark" x="10" y="128" width="400" height="44" rx="8"/><text class="t-term" x="24" y="156">GET /users/42</text>
+</svg>`],
+ ['The <b>server</b> runs your code for that route. It needs the data, so it asks the database.',`<svg viewBox="0 0 420 180" role="img" aria-label="Server queries the database">
+${V.ic('laptop',20,30,60,'')}${V.ic('server',180,30,60,'ic-a')}${V.ic('db',340,30,60,'')}<text class="t-b" x="50" y="114" text-anchor="middle">client</text><text class="t-b" x="210" y="114" text-anchor="middle">server</text><text class="t-b" x="370" y="114" text-anchor="middle">database</text>
+<path class="ln-a" d="M246 60H326"/><polygon class="ah-a" points="324,54 324,66 336,60"/>
+<rect class="bx-dark" x="10" y="128" width="400" height="44" rx="8"/><text class="t-term" x="24" y="156">SELECT * FROM users WHERE id = 42</text>
+</svg>`],
+ ['The database finds the row and hands it back to the server.',`<svg viewBox="0 0 420 180" role="img" aria-label="Database returns the row">
+${V.ic('laptop',20,30,60,'')}${V.ic('server',180,30,60,'')}${V.ic('db',340,30,60,'ic-a')}<text class="t-b" x="50" y="114" text-anchor="middle">client</text><text class="t-b" x="210" y="114" text-anchor="middle">server</text><text class="t-b" x="370" y="114" text-anchor="middle">database</text>
+<path class="ln-ok" d="M336 60H256"/><polygon class="ah-ok" points="258,54 258,66 246,60"/>
+<rect class="bx-dark" x="10" y="128" width="400" height="44" rx="8"/><text class="t-term" x="24" y="156">{ id: 42, name: "Ada" }</text>
+</svg>`],
+ ['The server replies with a <b>status code</b> and JSON. 200 means OK. The browser draws the page. The whole trip often takes under 100 ms.',`<svg viewBox="0 0 420 180" role="img" aria-label="Server responds 200 OK with JSON">
+${V.ic('laptop',20,30,60,'ic-a')}${V.ic('server',180,30,60,'')}${V.ic('db',340,30,60,'')}<text class="t-b" x="50" y="114" text-anchor="middle">client</text><text class="t-b" x="210" y="114" text-anchor="middle">server</text><text class="t-b" x="370" y="114" text-anchor="middle">database</text>
+<path class="ln-ok" d="M176 60H96"/><polygon class="ah-ok" points="98,54 98,66 86,60"/>
+<rect class="bx-dark" x="10" y="128" width="400" height="44" rx="8"/><text class="t-term" x="24" y="156">{"id":42,"name":"Ada"}</text><text class="t-b t-ok" x="398" y="156" text-anchor="end">200 OK</text>
+</svg>`]])}
+${V.rules(V.rh('Status codes to know'),
+ V.ok('200 OK','It worked, here is the data'),V.ok('201 Created','A POST made something new'),
+ V.no('400 Bad Request','Your request is malformed'),V.no('401 / 403','Not logged in / not allowed'),
+ V.no('404 Not Found','No such thing'),V.no('500','The server crashed: its fault, not yours'))}
+${V.hook(`Client orders, server cooks, HTTP carries the plates.`)}
+`)}
 
-<h4>APIs: the menu of questions</h4>
-<p>An <b>API</b>, short for Application Programming Interface, is the list of requests a server agrees to answer, and what each one returns. It is a contract: the app team and the server team can work separately as long as both stick to it. Two styles dominate.</p>
-<p><b>REST</b> treats your data as <b>resources</b>, each with its own URL, and uses the standard HTTP methods on them:</p>
-<pre class="snip">GET    /users/42          # read user 42
-POST   /users             # create a new user
-PUT    /users/42          # replace user 42
-DELETE /users/42          # delete user 42
-GET    /users/42/posts    # user 42's posts</pre>
-<p>REST is simple, works with every tool, and its GET responses are easy to cache, because the same URL gives the same answer. Its weakness shows on complex screens: a mobile page that needs a user, their posts and each post's comments may need several round trips, and each response may include fields the screen never shows. That is called <b>over-fetching</b>.</p>
-<p><b>GraphQL</b> takes a different approach. There is one endpoint, usually <code>/graphql</code>, and the client sends a query describing exactly the fields it wants, nested however it likes. The server returns that shape and nothing more, in one round trip. The cost is more server complexity and harder caching, because every request goes to the same URL with a different body.</p>
-<div class="analogy"><b>Think of it like</b>REST is a set menu: each dish (URL) comes as the kitchen designed it. GraphQL is ordering à la carte: you list exactly what goes on your plate, and the waiter brings it all at once.</div>
+${V.card(2,'REST and GraphQL','two ways to design the menu',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="REST needs three requests to three URLs; GraphQL sends one query asking for exactly the fields needed">
+<rect class="bx" x="8" y="10" width="196" height="160" rx="10"/><text class="t-b" x="106" y="34" text-anchor="middle">REST: 3 trips</text>
+<rect class="bx-a" x="13" y="48" width="186" height="30" rx="6"/><text class="t-m" x="106" y="68" text-anchor="middle" style="font-size:14px">GET /users/42</text>
+<rect class="bx-a" x="13" y="86" width="186" height="30" rx="6"/><text class="t-m" x="106" y="106" text-anchor="middle" style="font-size:14px">GET /users/42/posts</text>
+<rect class="bx-a" x="13" y="124" width="186" height="30" rx="6"/><text class="t-m" x="106" y="144" text-anchor="middle" style="font-size:14px">GET /posts/9/comments</text>
+<rect class="bx" x="216" y="10" width="196" height="160" rx="10"/><text class="t-b" x="314" y="34" text-anchor="middle">GraphQL: 1 trip</text>
+<rect class="bx-info" x="228" y="48" width="172" height="106" rx="6"/>
+<text class="t-m" x="240" y="70" style="font-size:14px">user(id: 42) {</text><text class="t-m" x="254" y="92" style="font-size:14px">name</text><text class="t-m" x="254" y="114" style="font-size:14px">posts { title }</text><text class="t-m" x="240" y="136" style="font-size:14px">}</text>
+</svg><figcaption>REST gives every kind of thing its own URL. GraphQL has one endpoint, and the client lists exactly the fields it wants.</figcaption></figure>
+${V.like(`<p>REST is a food court: one counter for burgers, one for drinks, one for pudding, so you queue three times. GraphQL is a single waiter with an order form: you tick exactly what you want and it all arrives on one tray.</p>`)}
+${V.why(`<p>REST (2000) uses plain URLs and HTTP methods, so browsers and CDNs can cache responses easily. Facebook built GraphQL (2012, public in 2015) because its mobile app needed bits of many things on one screen, and several REST trips over a slow phone network were too slow.</p>`)}
+${V.anat([[1,'GET'],' ',[2,'/users'],[3,'/42'],[4,'/posts'],[5,'?limit=20']],[
+ '<b>Method</b> is the verb.',
+ '<b>Collection.</b> A plural noun.',
+ '<b>One item</b> by its id.',
+ '<b>Things that belong</b> to that item.',
+ '<b>Query string</b> for options such as page size or filters.'])}
+${V.rules(V.rh('REST conventions'),
+ V.ok('POST /users','The method is the verb'),V.no('GET /createUser','Never put the verb in the URL'),
+ V.ok('/users/42','Plural nouns, ids in the path'),V.ok('POST /graphql','GraphQL: one endpoint for everything'))}
+${V.hook(`REST: many doors, cache-friendly. GraphQL: one door, ask for exactly what you need.`)}
+`)}
 
-<h4>Stateless servers</h4>
-<p>Soon you will run several copies of your server, and any of them might receive a given request. That only works if the servers are <b>stateless</b>: a server keeps no memory of a user between requests. Everything it needs comes in the request itself (such as a login token) or lives in shared storage everyone can reach.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Two app servers both reading the user's session from one shared session store">
-<rect class="bx-info" x="10" y="80" width="80" height="44" rx="8"/><text class="t-b" x="50" y="107" text-anchor="middle">User</text>
-<rect class="bx-a" x="160" y="20" width="100" height="44" rx="8"/><text class="t" x="210" y="47" text-anchor="middle">Server A</text>
-<rect class="bx-a" x="160" y="140" width="100" height="44" rx="8"/><text class="t" x="210" y="167" text-anchor="middle">Server B</text>
-<rect class="bx-ok" x="320" y="72" width="94" height="60" rx="8"/><text class="t-b" x="367" y="98" text-anchor="middle">Redis</text><text class="t-s" x="367" y="118" text-anchor="middle">sessions</text>
-<path class="ln" d="M90 92L152 48"/><polygon class="ah" points="148,43 155,53 160,42"/><text class="t-s" x="104" y="60">1st</text>
-<path class="ln" d="M90 112L152 156"/><polygon class="ah" points="148,161 155,151 160,162"/><text class="t-s" x="104" y="150">2nd</text>
-<path class="ln-ok" d="M260 42L314 88"/><polygon class="ah-ok" points="308,91 316,82 320,93"/>
-<path class="ln-ok" d="M260 162L314 116"/><polygon class="ah-ok" points="308,113 316,122 320,111"/>
-</svg><figcaption>A user's first request lands on server A and their second on server B. Because neither server keeps the login in its own memory, both look it up in a shared session store such as Redis, so the user stays logged in whichever server answers.</figcaption></figure>
-<p>If instead server A kept the login in its own memory, the second request on server B would find nothing, and the user would be logged out at random. Stateless servers can be added, removed or restarted freely, which is the foundation of the next lesson.</p>
+${V.card(3,'Stateless and idempotent','any waiter, any retry',`
+${V.like(`<p>A <b>stateless</b> server is a waiter with no memory: your order ticket carries your table number, so any waiter can serve you. An <b>idempotent</b> action is a lift button: pressing it five times still calls the lift once.</p>`)}
+${V.why(`<p>If server A remembers your login in its own memory, you are stuck with server A. Keep sessions in a shared store such as Redis or the database, and you can add or remove servers freely. Networks also drop replies, so clients retry. Retries must be safe, or a payment happens twice.</p>`)}
+${V.steps([
+ ['The app sends <code>POST /payments</code> for £20 with a unique <b>Idempotency-Key</b> header, key-7f3.',`<svg viewBox="0 0 420 175" role="img" aria-label="First request with key 7f3">
+${V.ic('phone',14,24,56,'ic-a')}${V.ic('server',350,24,56,'')}<text class="t-b" x="42" y="100" text-anchor="middle">app</text><text class="t-b" x="378" y="100" text-anchor="middle">payments</text>
+<path class="ln-a" d="M80 50H334"/><polygon class="ah-a" points="332,44 332,56 344,50"/><text class="t-m" x="212" y="38" text-anchor="middle">POST £20, key-7f3</text><text class="t-b t-ok" x="210" y="160" text-anchor="middle">sending...</text>
+</svg>`],
+ ['The server charges the card and saves "key-7f3 = paid". But the reply is lost, and the app times out.',`<svg viewBox="0 0 420 175" role="img" aria-label="Charged, but the reply is lost">
+${V.ic('phone',14,24,56,'ic-a')}${V.ic('server',350,24,56,'')}<text class="t-b" x="42" y="100" text-anchor="middle">app</text><text class="t-b" x="378" y="100" text-anchor="middle">payments</text>
+<path class="ln" d="M344 50H250"/><polygon class="ah" points="252,44 252,56 240,50"/><path class="ln-x" d="M200 38 226 62M226 38 200 62"/><text class="t-m" x="212" y="88" text-anchor="middle">reply lost</text><text class="t-b t-bad" x="210" y="160" text-anchor="middle">user sees an error</text>
+</svg>`],
+ ['The app retries with the <b>same key</b>. The server looks up key-7f3, sees it was already paid, and does not charge again.',`<svg viewBox="0 0 420 175" role="img" aria-label="Retry with the same key">
+${V.ic('phone',14,24,56,'ic-a')}${V.ic('server',350,24,56,'')}<text class="t-b" x="42" y="100" text-anchor="middle">app</text><text class="t-b" x="378" y="100" text-anchor="middle">payments</text>
+<path class="ln-a" d="M80 50H334"/><polygon class="ah-a" points="332,44 332,56 344,50"/><text class="t-m" x="212" y="38" text-anchor="middle">POST £20, key-7f3</text><text class="t-m t-a" x="212" y="88" text-anchor="middle">seen key-7f3!</text><text class="t-b t-ok" x="210" y="160" text-anchor="middle">no second charge</text>
+</svg>`],
+ ['It returns the <b>saved result</b> of the first request. Charged once, however many retries.',`<svg viewBox="0 0 420 175" role="img" aria-label="Saved result returned">
+${V.ic('phone',14,24,56,'ic-a')}${V.ic('server',350,24,56,'')}<text class="t-b" x="42" y="100" text-anchor="middle">app</text><text class="t-b" x="378" y="100" text-anchor="middle">payments</text>
+<path class="ln-ok" d="M344 50H90"/><polygon class="ah-ok" points="92,44 92,56 80,50"/><text class="t-m" x="212" y="38" text-anchor="middle">200 paid (saved)</text><text class="t-b t-ok" x="210" y="160" text-anchor="middle">charged exactly once</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('GET, PUT, DELETE','Idempotent: doing it twice has the same effect as once'),V.no('POST','Usually not: two POSTs make two records'),
+ V.ok('Idempotency-Key header','A unique id per action makes POST retries safe'),V.no('sessions in server memory','The next request may land on a different server'))}
+${V.hook(`Same request twice, same result once.`)}
+`)}
 
-<h4>Idempotency: making retries safe</h4>
-<p>Networks fail. A request may time out after the server already did the work, and the client cannot tell. The obvious fix is to retry, but is that safe? An operation is <b>idempotent</b> if doing it twice has the same effect as doing it once.</p>
-<ul>
-<li><code>GET</code> only reads, so repeating it changes nothing.</li>
-<li><code>PUT /users/42</code> sets the user to an exact value; doing it twice leaves the same value.</li>
-<li><code>DELETE /users/42</code> twice: the user is still just deleted.</li>
-<li><code>POST /payments</code> usually creates something new each time. Twice means two payments.</li>
-</ul>
-<p>For non-idempotent actions such as payments, the standard fix is an <b>idempotency key</b>. The client generates a unique ID for the action and sends it with the request. The server records each key it has handled; if the same key arrives again, it returns the saved result instead of charging again. Payment APIs such as Stripe work exactly like this.</p>
-<div class="mistake"><b>Common mistake</b>Assuming a timeout means "it failed". A timeout only means "I don't know". The work may have finished. Design every write so that a retry is harmless, either because it is naturally idempotent or because it carries an idempotency key.</div>
+${V.card(4,'Pagination and latency','bookmarks and distances',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Latency: memory 100 nanoseconds, SSD 100 microseconds, same data centre half a millisecond, another continent 150 milliseconds">
+<text class="t-s" x="250" y="22" text-anchor="end">real time</text><text class="t-s" x="400" y="22" text-anchor="end">if memory took 1 s</text>
+<rect class="bx-ok" x="8" y="34" width="404" height="34" rx="6"/><text class="t" x="20" y="57">memory read</text><text class="t-m" x="250" y="57" text-anchor="end">100 ns</text><text class="t-b" x="400" y="57" text-anchor="end">1 second</text>
+<rect class="bx-ok" x="8" y="74" width="404" height="34" rx="6"/><text class="t" x="20" y="97">SSD read</text><text class="t-m" x="250" y="97" text-anchor="end">100 µs</text><text class="t-b" x="400" y="97" text-anchor="end">17 minutes</text>
+<rect class="bx-warn" x="8" y="114" width="404" height="34" rx="6"/><text class="t" x="20" y="137">same data centre</text><text class="t-m" x="250" y="137" text-anchor="end">0.5 ms</text><text class="t-b" x="400" y="137" text-anchor="end">1.4 hours</text>
+<rect class="bx-bad" x="8" y="154" width="404" height="34" rx="6"/><text class="t" x="20" y="177">other continent</text><text class="t-m" x="250" y="177" text-anchor="end">150 ms</text><text class="t-b" x="400" y="177" text-anchor="end">17 days</text>
 
-<h4>Pagination: big lists in pages</h4>
-<p>Never return a list of a million posts in one response. Return a <b>page</b> at a time. The obvious way is an <b>offset</b>: "skip the first 100,000 rows and give me 20". It has two problems. The database still has to walk past all the skipped rows, so deep pages get slow. And if new posts arrive while someone scrolls, everything shifts down, so they see some posts twice and miss others.</p>
-<p>A <b>cursor</b> fixes both. Each page ends with a marker, usually the ID of the last item, and the next request says "give me 20 after this one": <code>GET /posts?after=abc123</code>. The database jumps straight there using an index, and new posts at the top do not shift anything.</p>
+</svg><figcaption>Rough latencies. Scale them so a memory read takes one second and a trip across the world takes over two weeks. Network trips are the expensive part.</figcaption></figure>
+${V.like(`<p>Reading page 5,000 of a huge book. <b>Offset</b> pagination counts every page from the start each time. <b>Cursor</b> pagination is a bookmark: "carry on after this one". The bookmark is just as fast on page 5,000 as on page 2, and new pages added at the front do not shuffle your place.</p>`)}
+${V.anat([[1,'GET /posts'],[2,'?limit=20'],[3,'&amp;after=abc123']],[
+ '<b>The list</b> you want.',
+ '<b>Page size.</b> Never return everything at once.',
+ '<b>Cursor.</b> The id of the last item you saw. The server returns the next 20 after it.'])}
+${V.rules(V.rh('Rules'),
+ V.no('OFFSET 100000','The database still walks past 100,000 rows'),V.ok('WHERE id &gt; :after LIMIT 20','A cursor jumps straight there with an index'),
+ V.ok('cache in memory','Memory is about a thousand times faster than an SSD'),V.ok('servers near users','A CDN avoids the 150 ms trip across the world'))}
+${V.hook(`Memory is a whisper, disk is a walk, the network is a flight.`)}
+`)}
 
-<h4>Latency: why distance matters</h4>
-<p><b>Latency</b> is how long you wait for something. The numbers are worth remembering, because they explain almost every design choice in this track:</p>
-<div class="tbl-wrap"><table><tr><th>Operation</th><th>Roughly</th><th>Compared with memory</th></tr>
-<tr><td>Read from memory (RAM)</td><td>100 nanoseconds</td><td>1×</td></tr>
-<tr><td>Read from an SSD</td><td>100 microseconds</td><td>1,000× slower</td></tr>
-<tr><td>Round trip inside one data centre</td><td>0.5 milliseconds</td><td>5,000× slower</td></tr>
-<tr><td>Round trip between continents</td><td>150 milliseconds</td><td>about 1,500,000× slower</td></tr></table></div>
-<p>A nanosecond is a billionth of a second, a microsecond a millionth, a millisecond a thousandth. The lesson: memory is far faster than disk, and disk far faster than the network. That is why caches keep answers in memory, and why CDNs put copies of files near users. Both are coming soon.</p>
-<div class="try"><b>Try it in your head</b>A client sends <code>DELETE /posts/7</code>, times out, and retries. Is that safe? Yes: DELETE is idempotent, and the post ends up deleted either way. The server replies 404 to a request for a page that does not exist: whose fault is it? A 4xx code means the client's.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Clients send HTTP requests (method, path, body); servers reply with a status code and data, often JSON.</li>
-<li>REST gives each resource a URL and is cache-friendly; GraphQL uses one endpoint where the client asks for exactly the fields it needs.</li>
-<li>Stateless servers keep no user data in memory, so any server can handle any request.</li>
-<li>GET, PUT and DELETE should be idempotent; protect POSTs like payments with idempotency keys.</li>
-<li>Paginate with cursors, and remember: memory is much faster than disk, and disk much faster than the network.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Which status code means the server crashed? <i>500.</i> 2. Is <code>DELETE /posts/9</code> idempotent? <i>Yes: deleting it twice still leaves it deleted.</i> 3. A feed gets new posts every second. Offset or cursor? <i>Cursor.</i></div>
 `);
 
 explain('k2',`
-<h4>Launch day: when one server is not enough</h4>
-<p>Your app gets featured, and traffic jumps to <b>1,500 requests per second</b>. "Requests per second", often written rps, is the standard way to measure load: how many questions arrive at your servers every second. In this lesson's simulator, one app server can handle about <b>400</b>. You do not need a calculator to see the problem: the server receives almost four times what it can process.</p>
-<p>What happens then is not a gentle slowdown. Requests pile up waiting, each one waits longer than the last, and soon clients give up with timeouts. Users see errors. This lesson is about the two ways to add capacity, why one of them wins at scale, and how to work out exactly how many servers you need.</p>
+<p>Your app is featured on the news and traffic jumps from a trickle to 1,500 requests a second. One server can handle about 400. This lesson is how real sites survive that moment.</p>
 
-<h4>Vertical scaling: a bigger machine</h4>
-<p><b>Vertical scaling</b>, also called scaling up, means replacing your server with a more powerful one: more CPU cores, more memory. It is attractive because nothing else changes. Your code, your deployment and your database connection stay exactly the same.</p>
-<p>It has two hard limits. First, there is a ceiling: the biggest machine you can rent is only so big, and the largest sizes cost far more per unit of power. Second, it is still <b>one machine</b>. If it crashes, or you need to restart it to install an update, the whole site is down.</p>
+${V.card(1,'Vertical or horizontal','a bigger oven or more chefs',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Vertical scaling: one huge server. Horizontal scaling: five smaller servers">
+<rect class="bx" x="8" y="8" width="196" height="186" rx="10"/><text class="t-b" x="106" y="32" text-anchor="middle">Vertical: bigger</text>
+${V.ic('server',56,46,100,'ic-warn')}<text class="t" x="106" y="168" text-anchor="middle">1 huge machine</text><text class="t-s" x="106" y="186" text-anchor="middle">has a size limit, can still die</text>
+<rect class="bx" x="216" y="8" width="196" height="186" rx="10"/><text class="t-b" x="314" y="32" text-anchor="middle">Horizontal: more</text>
+${V.ic('server',234,48,46,'ic-ok')}${V.ic('server',290,48,46,'ic-ok')}${V.ic('server',346,48,46,'ic-ok')}${V.ic('server',262,100,46,'ic-ok')}${V.ic('server',318,100,46,'ic-ok')}
+<text class="t" x="314" y="168" text-anchor="middle">many small machines</text><text class="t-s" x="314" y="186" text-anchor="middle">add more, survive a failure</text>
+</svg><figcaption>Vertical scaling buys a bigger machine. Horizontal scaling adds more machines that share the work.</figcaption></figure>
+${V.like(`<p>A busy café. You could buy one enormous oven (vertical), but there is a biggest oven money can buy, and if it breaks nobody eats. Or you hire more chefs with normal ovens (horizontal): add chefs as you get busier, and if one is ill the others keep cooking.</p>`)}
+${V.why(`<p>A <b>single point of failure</b> is one part whose failure stops everything. One server, however big, is exactly that. Horizontal scaling removes it, but now something has to decide which server gets each request. That is the load balancer.</p>`)}
+${V.hook(`Bigger has a ceiling. More has a spare.`)}
+`)}
 
-<h4>Horizontal scaling: more machines</h4>
-<p><b>Horizontal scaling</b>, or scaling out, means running several ordinary servers side by side, each a copy of your app. Need more capacity? Add another copy. One crashes? The others carry on.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Vertical scaling makes one server bigger; horizontal scaling adds more servers of the same size">
-<text class="t-b" x="100" y="22" text-anchor="middle">vertical</text><text class="t-b" x="310" y="22" text-anchor="middle">horizontal</text>
-<rect class="bx" x="30" y="130" width="40" height="44" rx="4"/><text class="t-s" x="50" y="157" text-anchor="middle">app</text>
-<path class="ln" d="M76 152h18"/><polygon class="ah" points="92,146 92,158 100,152"/>
-<rect class="bx-a" x="106" y="60" width="76" height="114" rx="6"/><text class="t-b" x="144" y="114" text-anchor="middle">BIG</text><text class="t-s" x="144" y="134" text-anchor="middle">app</text>
-<text class="t-s t-bad" x="106" y="194" text-anchor="middle">still one machine</text>
-<line class="ln-d" x1="210" y1="10" x2="210" y2="195"/>
-<rect class="bx-ok" x="232" y="130" width="40" height="44" rx="4"/><rect class="bx-ok" x="282" y="130" width="40" height="44" rx="4"/><rect class="bx-ok" x="332" y="130" width="40" height="44" rx="4"/><rect class="bx-ok" x="382" y="130" width="30" height="44" rx="4"/>
-<g text-anchor="middle"><text class="t-s" x="252" y="157">app</text><text class="t-s" x="302" y="157">app</text><text class="t-s" x="352" y="157">app</text><text class="t-s" x="397" y="157">+</text></g>
-<rect class="bx-info" x="262" y="56" width="96" height="40" rx="8"/><text class="t" x="310" y="81" text-anchor="middle">balancer</text>
-<path class="ln" d="M290 96L256 126"/><path class="ln" d="M310 96v30"/><path class="ln" d="M330 96L350 126"/>
-<text class="t-s t-ok" x="320" y="194" text-anchor="middle">add more as needed</text>
-</svg><figcaption>Left: vertical scaling swaps a small server for a big one, but it is still a single machine that can fail. Right: horizontal scaling keeps servers the same size and adds more of them behind a load balancer, which shares the traffic between them.</figcaption></figure>
-<div class="analogy"><b>Think of it like</b>A busy shop. Vertical scaling is training your one shop assistant to work twice as fast; there is a limit, and if they are ill, the shop shuts. Horizontal scaling is hiring more assistants, with someone at the door sending each customer to whoever is free.</div>
+${V.card(2,'Load balancers','the host who seats the guests',`
+${V.like(`<p>The host at a restaurant door. Guests never pick a waiter; the host sends each party to whichever section has room. If a waiter goes home ill, the host simply stops seating people in that section.</p>`)}
+${V.why(`<p>Users all type the same address. The load balancer (nginx, HAProxy, or a cloud one such as AWS Elastic Load Balancing) owns that address, spreads requests over the servers behind it, and checks their health so it never sends anyone to a dead one. It also lets you update servers one at a time with no downtime.</p>`)}
+${V.steps([
+ ['Request 1 arrives. The load balancer sends it to <b>server A</b>.',`<svg viewBox="0 0 420 200" role="img" aria-label="Request 1 to A">
+${V.ic('people',8,60,60,'ic-a')}<text class="t-b" x="38" y="140" text-anchor="middle">users</text><rect class="bx-info" x="110" y="64" width="90" height="52" rx="10"/><text class="t-b" x="155" y="88" text-anchor="middle">load</text><text class="t-b" x="155" y="106" text-anchor="middle">balancer</text><path class="ln" d="M70 90H98"/><polygon class="ah" points="96,84 96,96 108,90"/><rect class="bx-hl" x="250" y="14" width="162" height="44" rx="8"/>${V.ic('server',258,20,32,'ic-a')}<text class="t-b" x="296" y="42">server A</text><text class="t-m t-a" x="400" y="42" text-anchor="end">1</text><path class="ln-a" d="M202 90L246 36"/><rect class="bx" x="250" y="70" width="162" height="44" rx="8"/>${V.ic('server',258,76,32,'')}<text class="t-b" x="296" y="98">server B</text><path class="ln-d" d="M202 90L246 92"/><rect class="bx" x="250" y="126" width="162" height="44" rx="8"/>${V.ic('server',258,132,32,'')}<text class="t-b" x="296" y="154">server C</text><path class="ln-d" d="M202 90L246 148"/><text class="t" x="10" y="190">round robin: A, B, C, A...</text>
+</svg>`],
+ ['Requests 2 and 3 go to <b>B</b> and <b>C</b>. Taking turns like this is called round robin.',`<svg viewBox="0 0 420 200" role="img" aria-label="Requests 2 and 3 to B and C">
+${V.ic('people',8,60,60,'ic-a')}<text class="t-b" x="38" y="140" text-anchor="middle">users</text><rect class="bx-info" x="110" y="64" width="90" height="52" rx="10"/><text class="t-b" x="155" y="88" text-anchor="middle">load</text><text class="t-b" x="155" y="106" text-anchor="middle">balancer</text><path class="ln" d="M70 90H98"/><polygon class="ah" points="96,84 96,96 108,90"/><rect class="bx" x="250" y="14" width="162" height="44" rx="8"/>${V.ic('server',258,20,32,'')}<text class="t-b" x="296" y="42">server A</text><text class="t-m t-a" x="400" y="42" text-anchor="end">1</text><path class="ln-d" d="M202 90L246 36"/><rect class="bx" x="250" y="70" width="162" height="44" rx="8"/>${V.ic('server',258,76,32,'')}<text class="t-b" x="296" y="98">server B</text><text class="t-m t-a" x="400" y="98" text-anchor="end">2</text><path class="ln-d" d="M202 90L246 92"/><rect class="bx-hl" x="250" y="126" width="162" height="44" rx="8"/>${V.ic('server',258,132,32,'ic-a')}<text class="t-b" x="296" y="154">server C</text><text class="t-m t-a" x="400" y="154" text-anchor="end">3</text><path class="ln-a" d="M202 90L246 148"/><text class="t" x="10" y="190">each server gets a fair share</text>
+</svg>`],
+ ['Every few seconds the balancer runs a <b>health check</b> on each server. Server B stops answering, so it is taken out of the rotation.',`<svg viewBox="0 0 420 200" role="img" aria-label="Server B fails its health check">
+${V.ic('people',8,60,60,'ic-a')}<text class="t-b" x="38" y="140" text-anchor="middle">users</text><rect class="bx-info" x="110" y="64" width="90" height="52" rx="10"/><text class="t-b" x="155" y="88" text-anchor="middle">load</text><text class="t-b" x="155" y="106" text-anchor="middle">balancer</text><path class="ln" d="M70 90H98"/><polygon class="ah" points="96,84 96,96 108,90"/><rect class="bx" x="250" y="14" width="162" height="44" rx="8"/>${V.ic('server',258,20,32,'')}<text class="t-b" x="296" y="42">server A</text><text class="t-m t-a" x="400" y="42" text-anchor="end">1</text><path class="ln-d" d="M202 90L246 36"/><rect class="bx-bad" x="250" y="70" width="162" height="44" rx="8"/>${V.ic('server',258,76,32,'ic-bad')}<text class="t-b" x="296" y="98">server B</text><path class="ln-x" d="M388 78 404 106M404 78 388 106"/><path class="ln-d" d="M202 90L246 92"/><rect class="bx" x="250" y="126" width="162" height="44" rx="8"/>${V.ic('server',258,132,32,'')}<text class="t-b" x="296" y="154">server C</text><text class="t-m t-a" x="400" y="154" text-anchor="end">3</text><path class="ln-d" d="M202 90L246 148"/><text class="t" x="10" y="190">health check: B failed</text>
+</svg>`],
+ ['Requests 4 and 5 go to <b>A</b> and <b>C</b>. Users notice nothing. With one server, this failure would have taken the whole site down.',`<svg viewBox="0 0 420 200" role="img" aria-label="Requests 4 and 5 skip B">
+${V.ic('people',8,60,60,'ic-a')}<text class="t-b" x="38" y="140" text-anchor="middle">users</text><rect class="bx-info" x="110" y="64" width="90" height="52" rx="10"/><text class="t-b" x="155" y="88" text-anchor="middle">load</text><text class="t-b" x="155" y="106" text-anchor="middle">balancer</text><path class="ln" d="M70 90H98"/><polygon class="ah" points="96,84 96,96 108,90"/><rect class="bx-hl" x="250" y="14" width="162" height="44" rx="8"/>${V.ic('server',258,20,32,'ic-a')}<text class="t-b" x="296" y="42">server A</text><text class="t-m t-a" x="400" y="42" text-anchor="end">1 4</text><path class="ln-a" d="M202 90L246 36"/><rect class="bx-bad" x="250" y="70" width="162" height="44" rx="8"/>${V.ic('server',258,76,32,'ic-bad')}<text class="t-b" x="296" y="98">server B</text><path class="ln-x" d="M388 78 404 106M404 78 388 106"/><path class="ln-d" d="M202 90L246 92"/><rect class="bx" x="250" y="126" width="162" height="44" rx="8"/>${V.ic('server',258,132,32,'')}<text class="t-b" x="296" y="154">server C</text><text class="t-m t-a" x="400" y="154" text-anchor="end">3 5</text><path class="ln-d" d="M202 90L246 148"/><text class="t" x="10" y="190">no single point of failure</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('at least 2 servers','One server behind a balancer is still a single point of failure'),V.ok('health checks','e.g. GET /health every few seconds'),
+ V.ok('round robin or least connections','Common ways to choose the next server'),V.no('one balancer, no backup','Managed cloud balancers are built to be redundant for you'))}
+${V.hook(`The host seats guests and skips the sick waiter.`)}
+`)}
 
-<h4>The load balancer</h4>
-<p>Several servers raise a question: which one does a user talk to? Users only know one address, such as <code>shop.example.com</code>. The answer is a <b>load balancer</b>: a component that sits in front of the servers, receives every request at that one address, and forwards each to one of the servers behind it.</p>
-<p>How does it choose? The simplest rule is <b>round robin</b>: server 1, then 2, then 3, then back to 1. Smarter rules pick the server with the fewest requests in progress. Load balancers also run <b>health checks</b>: every few seconds they ask each server "are you alive?", usually by requesting a simple status URL, and stop sending traffic to any server that fails to answer.</p>
-<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="A load balancer spreads requests across four servers and skips one that has failed">
-<rect class="bx-info" x="10" y="90" width="76" height="44" rx="8"/><text class="t-b" x="48" y="117" text-anchor="middle">Users</text>
-<path class="ln-a" d="M86 112h22"/><polygon class="ah-a" points="106,106 106,118 114,112"/>
-<rect class="bx-a" x="116" y="80" width="96" height="64" rx="8"/><text class="t-b" x="164" y="108" text-anchor="middle">Load</text><text class="t-b" x="164" y="128" text-anchor="middle">balancer</text>
-<rect class="bx-ok" x="290" y="14" width="110" height="38" rx="6"/><rect class="bx-ok" x="290" y="66" width="110" height="38" rx="6"/><rect class="bx-bad" x="290" y="118" width="110" height="38" rx="6"/><rect class="bx-ok" x="290" y="170" width="110" height="38" rx="6"/>
-<g text-anchor="middle"><text class="t" x="345" y="38">App 1</text><text class="t" x="345" y="90">App 2</text><text class="t t-bad" x="345" y="142">App 3 down</text><text class="t" x="345" y="194">App 4</text></g>
-<path class="ln-ok" d="M212 98L282 36"/><polygon class="ah-ok" points="277,31 284,41 290,30"/>
-<path class="ln-ok" d="M212 106L282 86"/><polygon class="ah-ok" points="279,80 282,92 290,84"/>
-<path class="ln-d" d="M212 120L282 136"/><text class="t-s t-bad" x="246" y="121" text-anchor="middle">skipped</text>
-<path class="ln-ok" d="M212 128L282 188"/><polygon class="ah-ok" points="276,192 284,183 290,193"/>
-</svg><figcaption>Users send every request to the load balancer, which forwards each one to a healthy app server. App 3 has failed its health check, so the balancer skips it and shares the traffic between apps 1, 2 and 4. Users never notice.</figcaption></figure>
-<p>This is how horizontal scaling removes the <b>single point of failure</b>: any one part whose failure takes the whole system down. With one server, that server is a single point of failure. With four behind a balancer, losing one costs a quarter of your capacity, not your whole site. It also makes deployments safe, because you can update servers one at a time while the others keep serving. (Real setups run the load balancer itself as a redundant pair, or use a managed one from a cloud provider, so it is not a single point of failure either.)</p>
-<div class="mistake"><b>Common mistake</b>Adding servers but keeping state on them. If server 1 stores a user's login in its memory and the balancer sends their next click to server 2, they are suddenly logged out. This is why the previous lesson insisted on stateless servers: put sessions in a shared store such as Redis or the database. "Sticky sessions", which pin a user to one server, hide the problem but bring back the single point of failure for that user.</div>
+${V.card(3,'Headroom','never run at 100%',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Waiting time stays low until about 75 percent busy, then rises steeply towards 100 percent">
+<path class="ln" d="M40 10V170H404"/><path class="ln-a" style="stroke-width:3" d="M40 160C200 156 280 140 320 110S360 30 372 12"/><path class="ln-d" d="M310 170V118"/><text class="t-b t-ok" x="306" y="188" text-anchor="end">75%: safe peak</text><text class="t-b t-bad" x="404" y="188" text-anchor="end">100%</text><text class="t-s" x="48" y="22">waiting time</text><text class="t" x="60" y="140">queues stay short</text><text class="t-b t-bad" x="232" y="40">queues explode</text>
+</svg><figcaption>As a server gets close to 100% busy, requests queue up and waiting time shoots up. Teams plan for about 70 to 80% at the busiest moment.</figcaption></figure>
+${V.like(`<p>Supermarket tills. If tills are busy half the time, you walk straight up. If they are busy 99% of the time, any small rush creates a long queue that takes ages to clear. That queue is what users feel as a slow website.</p>`)}
+${V.anat([[1,'1500 rps'],' ÷ ',[2,'400 rps per server'],' ÷ ',[3,'0.75'],' ≈ ',[4,'5 servers']],[
+ '<b>Peak traffic.</b> Requests per second at the busiest moment.',
+ '<b>Capacity</b> of one server, measured with a load test.',
+ '<b>Target utilisation.</b> Aim for 75% busy, leaving headroom for spikes.',
+ '<b>Round up.</b> 1500 ÷ 400 = 3.75, ÷ 0.75 = 5.'])}
+${V.hook(`Size for the peak, then leave a quarter spare.`)}
+`)}
 
-<h4>Why you never run servers at 100%</h4>
-<p>If one server handles 400 rps, is 4 servers for 1,600 rps of capacity enough for 1,500 rps? On paper, yes. In practice, no, and the reason is <b>queueing</b>.</p>
-<p>Requests do not arrive evenly. They come in random clumps. When a server is lightly used, a clump is absorbed quickly. When it is nearly full, every clump creates a queue, and the queue barely shrinks before the next clump arrives. As a result, waiting time does not grow steadily with how busy a server is; it explodes as you approach 100%.</p>
-<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="Waiting time stays low until a server is about 70 per cent busy, then climbs steeply towards 100 per cent">
-<rect class="bx-ok" x="281" y="30" width="33" height="160"/>
-<text class="t-s t-ok" x="297" y="24" text-anchor="middle">aim here</text>
-<line class="ln" x1="50" y1="20" x2="50" y2="190"/><line class="ln" x1="50" y1="190" x2="390" y2="190"/>
-<polyline class="ln-a" fill="none" points="50,190 149,183 215,173 248,165 281,152 298,140 314,123 331,95 340,68 347,40 350,21"/>
-<line class="ln-d" x1="380" y1="20" x2="380" y2="190"/>
-<g text-anchor="middle"><text class="t-s" x="50" y="208">0%</text><text class="t-s" x="215" y="208">50%</text><text class="t-s" x="380" y="208">100%</text><text class="t-s" x="215" y="226">how busy the server is</text></g>
-<text class="t-s" x="58" y="34">waiting time</text>
-</svg><figcaption>How long requests wait as a server gets busier. Up to about half busy, waiting barely changes. Past about 80 per cent it climbs steeply, and near 100 per cent it shoots off the chart. The green band, 70 to 80 per cent, is where teams aim to run at peak.</figcaption></figure>
-<p>So teams plan for <b>headroom</b>: spare capacity. A common target is about <b>70 to 80% busy at peak</b>, often written as a target utilisation of 0.75. That leaves room for clumps, for a server failing, and for traffic you did not predict.</p>
+${V.card(4,'Sticky trouble: sessions','keep servers forgetful',`
+${V.steps([
+ ['Ada logs in. The request lands on <b>server A</b>, which stores "Ada is logged in" in its own memory.',`<svg viewBox="0 0 420 205" role="img" aria-label="Session stored in server A memory">
+${V.ic('person',10,64,52,'ic-a')}<rect class="bx" x="130" y="20" width="150" height="56" rx="8"/>${V.ic('server',138,30,36,'')}<text class="t-b" x="182" y="54">server A</text><rect class="bx" x="130" y="110" width="150" height="56" rx="8"/>${V.ic('server',138,120,36,'')}<text class="t-b" x="182" y="144">server B</text><path class="ln-a" d="M66 48H116"/><polygon class="ah-a" points="114,42 114,54 126,48"/><rect class="bx-ok" x="300" y="24" width="112" height="48" rx="8"/><text class="t-s" x="356" y="42" text-anchor="middle">in A's memory</text><text class="t-m" x="356" y="62" text-anchor="middle">Ada: in</text><text class="t" x="10" y="196">log in: works</text>
+</svg>`],
+ ['Her next click is sent to <b>server B</b>. B has never heard of her, so she is logged out. Annoying, and very common.',`<svg viewBox="0 0 420 205" role="img" aria-label="Server B does not know Ada">
+${V.ic('person',10,64,52,'ic-a')}<rect class="bx" x="130" y="20" width="150" height="56" rx="8"/>${V.ic('server',138,30,36,'')}<text class="t-b" x="182" y="54">server A</text><rect class="bx" x="130" y="110" width="150" height="56" rx="8"/>${V.ic('server',138,120,36,'')}<text class="t-b" x="182" y="144">server B</text><path class="ln" d="M66 138H116"/><polygon class="ah" points="114,132 114,144 126,138"/><rect class="bx-ok" x="300" y="24" width="112" height="48" rx="8"/><text class="t-s" x="356" y="42" text-anchor="middle">in A's memory</text><text class="t-m" x="356" y="62" text-anchor="middle">Ada: in</text><rect class="bx-bad" x="300" y="114" width="112" height="48" rx="8"/><text class="t-b t-bad" x="356" y="144" text-anchor="middle">who are you?</text><text class="t-b t-bad" x="10" y="196">next click: logged out</text>
+</svg>`],
+ ['The fix: keep sessions in a <b>shared store</b> such as Redis. Every server reads the same session, so the servers stay stateless.',`<svg viewBox="0 0 420 205" role="img" aria-label="Sessions in shared Redis">
+${V.ic('person',10,64,52,'ic-a')}<rect class="bx" x="130" y="20" width="150" height="56" rx="8"/>${V.ic('server',138,30,36,'')}<text class="t-b" x="182" y="54">server A</text><rect class="bx" x="130" y="110" width="150" height="56" rx="8"/>${V.ic('server',138,120,36,'')}<text class="t-b" x="182" y="144">server B</text><path class="ln" d="M66 138H116"/><polygon class="ah" points="114,132 114,144 126,138"/><rect class="bx-ok" x="318" y="66" width="94" height="68" rx="8"/>${V.ic('db',326,74,30,'ic-ok')}<text class="t-b" x="376" y="96" text-anchor="middle">Redis</text><text class="t-m" x="365" y="124" text-anchor="middle">Ada: in</text><path class="ln-ok" d="M282 48L316 84M282 138L316 116"/><text class="t-b t-ok" x="10" y="196">any server can read it</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('sessions in Redis or the database','Any server can handle any request'),V.no('sticky sessions forever','Pinning users to one server breaks when it dies'),
+ V.ok('stateless app servers','Then adding a server is just "start one more"'))}
+${V.build(`<ol><li>Run the load test first and read the app load: why is it failing?</li><li>Turn on the load balancer and add servers until no requests fail.</li><li>Keep adding until p95 latency, the time 95% of requests beat, is under 200 ms.</li><li>Check the monthly cost and trim any server you do not need.</li></ol>`)}
+${V.hook(`If a server remembers you, it is a trap. Keep memory in a shared store.`)}
+`)}
 
-<h4>Worked example: how many servers?</h4>
-<p>The formula combines everything above:</p>
-<pre class="snip">servers needed = peak rps ÷ capacity per server ÷ target utilisation
-               = 1500 ÷ 400 ÷ 0.75
-               = 3.75 ÷ 0.75
-               = 5</pre>
-<p>Read it in two steps. 1,500 ÷ 400 = 3.75 servers would be exactly 100% busy. Dividing by 0.75 adds the headroom, giving 5. Always round <b>up</b>: you cannot run three quarters of a server.</p>
-<p>The simulator agrees. With a load balancer and 4 app servers, they run about 94% busy: nothing fails outright, but queues build and the slowest requests take far longer than the 200 ms goal. With 5 servers they run about 75% busy, and p95 latency drops well under 200 ms. <b>p95</b> means the 95th percentile: 95 out of 100 requests are at least this fast. Teams watch it instead of the average because the average hides the slow requests that users actually complain about.</p>
-<p>Cost matters too. In the simulator, a load balancer costs $20 a month and each app server $40, on top of the database. Five servers and a balancer fit comfortably inside the $350 budget. Real system design is always this balance: fast enough, reliable enough, and affordable.</p>
-<div class="mistake"><b>Common mistake</b>Turning up the app server count without switching on the load balancer. Without one, all traffic still goes to a single server, and the extra machines sit idle while you pay for them. The simulator's notes warn you when this happens.</div>
-<div class="try"><b>Try it in your head</b>Traffic grows to 2,400 rps, and each server still handles 400. How many servers at a 0.75 target? 2,400 ÷ 400 = 6, and 6 ÷ 0.75 = 8 servers.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Vertical scaling buys a bigger machine: simple, but it has a ceiling and is still a single point of failure.</li>
-<li>Horizontal scaling adds more machines behind a load balancer, which spreads requests and skips unhealthy servers.</li>
-<li>Servers must be stateless for this to work: keep sessions in a shared store.</li>
-<li>Waiting time explodes near 100% busy, so aim for about 75% at peak.</li>
-<li>Servers needed ≈ peak rps ÷ capacity per server ÷ target utilisation, rounded up.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Peak is 2,000 rps and a server handles 500. How many at 75% target? <i>2000 ÷ 500 ÷ 0.75 ≈ 5.3, so 6.</i> 2. What does a health check do? <i>Takes dead servers out of rotation.</i> 3. Why can one big server be risky? <i>It is a single point of failure.</i></div>
 `);
 
 explain('k3',`
-<h4>Black Friday: the same questions, over and over</h4>
-<p>It is the biggest sale of the year. Traffic hits <b>4,000 requests per second</b>, and 95% of them are <b>reads</b>: people looking at products, not buying them yet. Thousands of shoppers ask for the same few popular product pages, the same prices and the same images, again and again.</p>
-<p>Without help, every one of those requests travels all the way to your database, which works out the same answer it gave a millisecond ago. Remember the latency numbers from the first lesson: memory is far faster than disk or the network. This lesson uses that fact twice: a <b>cache</b> keeps popular answers in memory next to your servers, and a <b>CDN</b> keeps copies of your files close to your users.</p>
-<div class="analogy"><b>Think of it like</b>A librarian who keeps a notepad of questions they have already looked up. "What time does the library close?" gets answered from the notepad in a second, instead of a trip to the archive every time.</div>
+<p>On Black Friday a shop gets 4,000 requests a second, and almost all of them read the same popular products. Asking the database every time would melt it. The fix is to keep copies close by: caches and CDNs.</p>
 
-<h4>What a cache is</h4>
-<p>A <b>cache</b> is a fast, temporary store of answers you have already worked out. The most common one in web systems is <b>Redis</b>, a server that keeps <b>key-value pairs</b> in memory: you store a value under a key, such as <code>product:42</code>, and fetch it back by that key in about a millisecond or two. It is the hash map from the algorithms track, running as a shared service that all your app servers can reach.</p>
-<p>Two words describe every cache lookup. A <b>hit</b> means the answer was in the cache. A <b>miss</b> means it wasn't, so you must go to the slower source. The <b>hit rate</b> is the share of lookups that are hits. With an 80% hit rate, only 20 out of every 100 reads reach the database.</p>
+${V.card(1,'Caching','the fridge and the supermarket',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="A fridge at home is 5 steps away; the supermarket with everything is 20 minutes away">
+${V.ic('house',10,30,110,'ic-a')}<rect class="bx-ok" x="46" y="86" width="36" height="46" rx="4"/><text class="t-b" x="64" y="160" text-anchor="middle">fridge</text><text class="t-s" x="64" y="180" text-anchor="middle">cache: 5 steps</text><path class="ln-d" d="M130 100H280"/><text class="t" x="205" y="90" text-anchor="middle">20 minutes away</text>${V.ic('truck',180,104,50,'')}${V.ic('house',290,24,120,'ic-info')}<text class="t-b" x="350" y="160" text-anchor="middle">supermarket</text><text class="t-s" x="350" y="180" text-anchor="middle">database: everything</text>
+</svg><figcaption>Keep what you use most in the fridge. Only go to the supermarket when the fridge does not have it.</figcaption></figure>
+${V.like(`<p>You do not drive to the supermarket every time you want milk. You keep milk in the fridge, a few steps away. The supermarket (the database) has everything, but it is far. The fridge (the cache) is small but instant. When the fridge is empty, you shop once and restock it.</p>`)}
+${V.why(`<p>Databases read from disk and do real work for each query. A cache such as Redis keeps answers in memory, which is around a thousand times faster. With an 80% <b>hit rate</b>, the database only sees one read in five.</p>`)}
+${V.steps([
+ ['A request needs product 42. The app asks the cache first. It is not there: a <b>cache miss</b>.',`<svg viewBox="0 0 420 210" role="img" aria-label="Cache miss">
+<rect class="bx" x="10" y="60" width="120" height="70" rx="10"/>${V.ic('server',20,72,44,'ic-a')}<text class="t-b" x="98" y="100" text-anchor="middle">app</text><rect class="bx-bad" x="270" y="8" width="142" height="70" rx="10"/>${V.ic('bulb',280,22,40,'ic-ok')}<text class="t-b" x="364" y="40" text-anchor="middle">cache</text><text class="t-s" x="364" y="62" text-anchor="middle">in memory</text><rect class="bx" x="270" y="112" width="142" height="70" rx="10"/>${V.ic('db',280,126,40,'')}<text class="t-b" x="364" y="144" text-anchor="middle">database</text><text class="t-s" x="364" y="166" text-anchor="middle">disk, slower</text><path class="ln-a" d="M132 60H256"/><polygon class="ah-a" points="254,54 254,66 266,60"/><text class="t-m" x="160" y="50">get p:42</text><text class="t-b t-bad" x="196" y="200" text-anchor="middle">MISS: not there</text>
+</svg>`],
+ ['So the app reads it from the <b>database</b>, the slow way.',`<svg viewBox="0 0 420 210" role="img" aria-label="Read from database">
+<rect class="bx" x="10" y="60" width="120" height="70" rx="10"/>${V.ic('server',20,72,44,'ic-a')}<text class="t-b" x="98" y="100" text-anchor="middle">app</text><rect class="bx" x="270" y="8" width="142" height="70" rx="10"/>${V.ic('bulb',280,22,40,'ic-ok')}<text class="t-b" x="364" y="40" text-anchor="middle">cache</text><text class="t-s" x="364" y="62" text-anchor="middle">in memory</text><rect class="bx-hl" x="270" y="112" width="142" height="70" rx="10"/>${V.ic('db',280,126,40,'')}<text class="t-b" x="364" y="144" text-anchor="middle">database</text><text class="t-s" x="364" y="166" text-anchor="middle">disk, slower</text><path class="ln-a" d="M132 128H256"/><polygon class="ah-a" points="254,122 254,134 266,128"/><text class="t-m" x="150" y="122">SELECT...</text><path class="ln-ok" d="M266 150H142"/><polygon class="ah-ok" points="144,144 144,156 132,150"/><text class="t-b" x="196" y="200" text-anchor="middle">read the database: slower</text>
+</svg>`],
+ ['Before replying, the app stores a copy in the cache with a <b>TTL</b> (time to live) of 60 seconds.',`<svg viewBox="0 0 420 210" role="img" aria-label="Store with TTL 60 seconds">
+<rect class="bx" x="10" y="60" width="120" height="70" rx="10"/>${V.ic('server',20,72,44,'ic-a')}<text class="t-b" x="98" y="100" text-anchor="middle">app</text><rect class="bx-ok" x="270" y="8" width="142" height="70" rx="10"/>${V.ic('bulb',280,22,40,'ic-ok')}<text class="t-b" x="364" y="40" text-anchor="middle">cache</text><text class="t-s" x="364" y="62" text-anchor="middle">in memory</text><rect class="bx" x="270" y="112" width="142" height="70" rx="10"/>${V.ic('db',280,126,40,'')}<text class="t-b" x="364" y="144" text-anchor="middle">database</text><text class="t-s" x="364" y="166" text-anchor="middle">disk, slower</text><path class="ln-ok" d="M132 60H256"/><polygon class="ah-ok" points="254,54 254,66 266,60"/><text class="t-m" x="150" y="50">SET EX 60</text><text class="t-b t-ok" x="196" y="200" text-anchor="middle">keep a copy for 60 s</text>
+</svg>`],
+ ['The next request for product 42 is a <b>cache hit</b>. Answered from memory, and the database never hears about it.',`<svg viewBox="0 0 420 210" role="img" aria-label="Cache hit">
+<rect class="bx" x="10" y="60" width="120" height="70" rx="10"/>${V.ic('server',20,72,44,'ic-a')}<text class="t-b" x="98" y="100" text-anchor="middle">app</text><rect class="bx-hl" x="270" y="8" width="142" height="70" rx="10"/>${V.ic('bulb',280,22,40,'ic-ok')}<text class="t-b" x="364" y="40" text-anchor="middle">cache</text><text class="t-s" x="364" y="62" text-anchor="middle">in memory</text><rect class="bx" x="270" y="112" width="142" height="70" rx="10"/>${V.ic('db',280,126,40,'')}<text class="t-b" x="364" y="144" text-anchor="middle">database</text><text class="t-s" x="364" y="166" text-anchor="middle">disk, slower</text><path class="ln-a" d="M132 46H256"/><polygon class="ah-a" points="254,40 254,52 266,46"/><path class="ln-ok" d="M266 70H142"/><polygon class="ah-ok" points="144,64 144,76 132,70"/><text class="t-m" x="160" y="36">get p:42</text><text class="t-b t-ok" x="196" y="200" text-anchor="middle">HIT: fast, database untouched</text>
+</svg>`]])}
+${V.anat([[1,'SET'],' ',[2,'product:42'],' ',[3,'"{name:...,price:15}"'],' ',[4,'EX 60']],[
+ '<b>Redis command</b> to store a value.',
+ '<b>Key.</b> Convention: <code>type:id</code>, so keys are easy to find and delete.',
+ '<b>Value.</b> Often the JSON the database would have given you.',
+ '<b>Expiry.</b> Delete it automatically after 60 seconds. This is the TTL.'])}
+${V.rules(V.rh('Rules'),
+ V.ok('cache read-heavy data','Product pages, profiles: read often, changed rarely'),V.no('cache passwords or card numbers','Caches are for speed, not secrets'),
+ V.ok('always set a TTL','So stale copies clean themselves up'),V.ok('miss: read DB, then SET','That is the cache-aside pattern'))}
+${V.hook(`Check the fridge first. Empty? Shop once, restock, carry on.`)}
+`)}
 
-<h4>Cache-aside, step by step</h4>
-<p>The most common way to use a cache is called <b>cache-aside</b>, because the cache sits beside the database and your app code manages it:</p>
-<pre class="snip">value = redis.get(key)
-if value is missing:                  # cache miss
-    value = db.query(...)             # the slow, reliable source
-    redis.set(key, value, ttl=60)     # remember it for 60 seconds
-return value</pre>
-<figure class="fig"><svg viewBox="0 0 420 215" role="img" aria-label="A cache hit answered by the cache alone, beside a cache miss that queries the database and then saves the answer in the cache">
-<text class="t-b t-ok" x="100" y="16" text-anchor="middle">hit</text><text class="t-b t-warn" x="310" y="16" text-anchor="middle">miss</text>
-<rect class="bx-a" x="40" y="24" width="120" height="36" rx="6"/><text class="t" x="100" y="47" text-anchor="middle">App</text>
-<rect class="bx-ok" x="40" y="90" width="120" height="40" rx="6"/><text class="t" x="100" y="115" text-anchor="middle">Cache</text>
-<rect class="bx" x="40" y="160" width="120" height="40" rx="6"/><text class="t-s" x="100" y="185" text-anchor="middle">DB not touched</text>
-<path class="ln" d="M80 60v22"/><polygon class="ah" points="74,80 86,80 80,88"/><text class="t-s" x="74" y="79" text-anchor="end">get</text>
-<path class="ln-ok" d="M120 90v-22"/><polygon class="ah-ok" points="114,70 126,70 120,62"/><text class="t-s t-ok" x="128" y="79">value</text>
-<line class="ln-d" x1="210" y1="8" x2="210" y2="208"/>
-<rect class="bx-a" x="250" y="24" width="120" height="36" rx="6"/><text class="t" x="310" y="47" text-anchor="middle">App</text>
-<rect class="bx-warn" x="250" y="90" width="120" height="40" rx="6"/><text class="t" x="310" y="115" text-anchor="middle">Cache: empty</text>
-<rect class="bx-info" x="250" y="160" width="120" height="40" rx="6"/><text class="t" x="310" y="185" text-anchor="middle">Database</text>
-<path class="ln" d="M280 60v22"/><polygon class="ah" points="274,80 286,80 280,88"/><text class="t-s" x="274" y="79" text-anchor="end">1 get</text>
-<path class="ln-d" d="M335 60v22"/><polygon class="ah" points="329,80 341,80 335,88"/><text class="t-s" x="341" y="79">3 save</text>
-<path class="ln" d="M370 36h22v144h-14"/><polygon class="ah" points="380,174 380,186 372,180"/><text class="t-b" x="400" y="112">2</text>
-</svg><figcaption>Left, a hit: the app asks the cache, gets the value back in about two milliseconds, and the database is never touched. Right, a miss: step 1, the cache has nothing. Step 2, the app queries the database. Step 3, it saves the answer in the cache with a time limit, so the next request for the same key is a hit.</figcaption></figure>
-<p>Notice that the cache never has to be complete. It fills itself with whatever people actually ask for, which is usually a small set of popular items. That is why caches work so well for <b>read-heavy</b> workloads, where reads far outnumber writes: the same answers are reused many times before they change.</p>
+${V.card(2,'CDNs','corner shops all over the world',`
+${V.like(`<p>A big brand does not ship every chocolate bar from its one factory. It stocks corner shops in every town. A <b>CDN</b> (content delivery network) is a chain of corner shops for your files: copies of your images, CSS and JavaScript sit on servers close to every user.</p>`)}
+${V.why(`<p>A trip across the world takes about 150 ms, and files like images are big. CDNs such as Cloudflare, Amazon CloudFront and Vercel's edge network have hundreds of locations. On Black Friday, 30% of requests are static files: a CDN takes all of them off your servers.</p>`)}
+${V.steps([
+ ['A user in Lagos asks for <code>logo.png</code>. The request goes to the nearest CDN <b>edge</b> server. It does not have the file yet.',`<svg viewBox="0 0 420 196" role="img" aria-label="Edge miss">
+${V.ic('globe',150,30,120,'ic-info')}<rect class="bx-a" x="300" y="20" width="112" height="58" rx="10"/>${V.ic('server',306,30,36,'ic-a')}<text class="t-b" x="374" y="46" text-anchor="middle">origin</text><text class="t-s" x="374" y="66" text-anchor="middle">far away</text><rect class="bx-hl" x="8" y="20" width="128" height="58" rx="10"/>${V.ic('server',14,30,36,'ic-ok')}<text class="t-b" x="88" y="46" text-anchor="middle">edge</text><text class="t-s" x="88" y="66" text-anchor="middle">near Lagos</text>${V.ic('person',14,120,44,'ic-a')}<text class="t-s" x="36" y="180" text-anchor="middle">user 1</text><path class="ln-a" d="M36 118V92"/><polygon class="ah-a" points="30,94 42,94 36,82"/><text class="t-b t-bad" x="160" y="186">edge: miss</text>
+</svg>`],
+ ['The edge fetches the file once from your <b>origin</b> server, perhaps in another continent, and keeps a copy.',`<svg viewBox="0 0 420 196" role="img" aria-label="Edge fetches from origin">
+${V.ic('globe',150,30,120,'ic-info')}<rect class="bx-a" x="300" y="20" width="112" height="58" rx="10"/>${V.ic('server',306,30,36,'ic-a')}<text class="t-b" x="374" y="46" text-anchor="middle">origin</text><text class="t-s" x="374" y="66" text-anchor="middle">far away</text><rect class="bx-ok" x="8" y="20" width="128" height="58" rx="10"/>${V.ic('server',14,30,36,'ic-ok')}<text class="t-b" x="88" y="46" text-anchor="middle">edge</text><text class="t-s" x="88" y="66" text-anchor="middle">near Lagos</text>${V.ic('person',14,120,44,'ic-a')}<text class="t-s" x="36" y="180" text-anchor="middle">user 1</text><path class="ln-a" d="M138 40H296"/><polygon class="ah-a" points="148,34 148,46 138,40"/><text class="t-b" x="160" y="186">fetch once from origin</text>
+</svg>`],
+ ['Every later user nearby gets it straight from the edge: fast for them, and your servers never see the request.',`<svg viewBox="0 0 420 196" role="img" aria-label="Edge hit for user 2">
+${V.ic('globe',150,30,120,'ic-info')}<rect class="bx-a" x="300" y="20" width="112" height="58" rx="10"/>${V.ic('server',306,30,36,'ic-a')}<text class="t-b" x="374" y="46" text-anchor="middle">origin</text><text class="t-s" x="374" y="66" text-anchor="middle">far away</text><rect class="bx-hl" x="8" y="20" width="128" height="58" rx="10"/>${V.ic('server',14,30,36,'ic-ok')}<text class="t-b" x="88" y="46" text-anchor="middle">edge</text><text class="t-s" x="88" y="66" text-anchor="middle">near Lagos</text>${V.ic('person',14,120,44,'ic-a')}<text class="t-s" x="36" y="180" text-anchor="middle">user 1</text>${V.ic('person',84,120,44,'ic-ok')}<text class="t-s" x="106" y="180" text-anchor="middle">user 2</text><path class="ln-ok" d="M106 118V92"/><polygon class="ah-ok" points="100,94 112,94 106,82"/><text class="t-b t-ok" x="160" y="186">edge: hit, close by</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('static files on the CDN','Images, fonts, CSS, JS'),V.ok('app.3f9c2b.js','Put a content hash in the file name, so a new version gets a new URL'),
+ V.no('private, per-user pages','Do not let a shared cache store one user\'s data for everyone'))}
+${V.hook(`Ship once to the corner shop; serve the street from there.`)}
+`)}
 
-<h4>TTL and the hard part: invalidation</h4>
-<p>A cached answer is a copy, and copies go out of date. If a product's price changes in the database, the cache still holds the old price. Data that is out of date is called <b>stale</b>.</p>
-<p>The simplest defence is a <b>TTL</b>, short for "time to live": an expiry time attached to each cached value. With <code>ttl=60</code>, Redis deletes the value after 60 seconds, so the next request is a miss and fetches the fresh price. A TTL puts an upper limit on staleness: at worst, users see a price up to a minute old.</p>
-<p>When a minute is too long, you <b>invalidate</b> explicitly: whenever the app updates the price in the database, it also deletes that key from the cache. The next read is a miss and loads the new value. Deleting the key is usually safer than writing the new value into the cache, because two updates racing each other could leave the older value in the cache.</p>
-<div class="tip"><b>Tip</b>The old joke says there are only two hard things in computer science: cache invalidation and naming things. The practical answer is to decide, for each piece of data, how stale it may be. A product description can be an hour old. A stock count at checkout should not be cached at all.</div>
-<div class="mistake"><b>Common mistake</b>Caching without a TTL "because the data never changes". It always changes eventually, and without an expiry the stale value lives forever, or until someone restarts Redis. Always set a TTL, even a long one.</div>
+${V.card(3,'Invalidation','the hard part',`
+<figure class="fig"><svg viewBox="0 0 420 175" role="img" aria-label="The cache shows a price of 20 pounds while the database already says 15 pounds">
+<rect class="bx-warn" x="10" y="20" width="180" height="110" rx="10"/><text class="t-b" x="100" y="46" text-anchor="middle">cache says</text><text class="t-m" x="100" y="90" text-anchor="middle" style="font-size:30px">£20</text><text class="t-s" x="100" y="118" text-anchor="middle">TTL: 45 s left</text>
+<rect class="bx-ok" x="230" y="20" width="180" height="110" rx="10"/><text class="t-b" x="320" y="46" text-anchor="middle">database says</text><text class="t-m" x="320" y="90" text-anchor="middle" style="font-size:30px">£15</text><text class="t-s" x="320" y="118" text-anchor="middle">price just changed</text>
+<text class="t-b t-bad" x="210" y="160" text-anchor="middle">users see stale data until it expires</text>
+</svg><figcaption>The price changed in the database, but the cache still holds the old copy until its TTL runs out.</figcaption></figure>
+${V.like(`<p>Milk in the fridge has a use-by date. Before that date you trust it; after it you throw it out and buy fresh. A TTL is the use-by date for cached data. And if you <i>know</i> the milk went off, you bin it early: that is invalidation.</p>`)}
+${V.why(`<p>A programmer called Phil Karlton joked: "There are only two hard things in computer science: cache invalidation and naming things." Every cache trades freshness for speed. Your job is to decide, for each piece of data, how stale it may be.</p>`)}
+${V.rules(V.rh('Rules'),
+ V.ok('DEL product:42 on update','When the data changes, delete the cached copy'),V.ok('short TTL for prices and stock','Seconds, not days'),
+ V.ok('long TTL for logos','Pair it with a hashed file name'),V.no('no TTL, no invalidation','Users may see old data forever'))}
+${V.build(`<ol><li>Add a cache in the simulator and watch database load fall below 50%.</li><li>Add a CDN so static files never reach your app servers.</li><li>Tune servers until there are no errors, p95 is under 150 ms and the bill is under $620 a month.</li></ol>`)}
+${V.hook(`Fast, fresh, simple: a cache lets you pick two.`)}
+`)}
 
-<h4>CDNs: files close to your users</h4>
-<p>Many requests are not questions for the database at all. They are <b>static files</b>: images, JavaScript, CSS and fonts, which are the same for every user. In this lesson's scenario, 30% of all requests are static files, and your app servers are wasting their time sending them.</p>
-<p>A <b>CDN</b>, or Content Delivery Network, is a company's network of servers in hundreds of cities worldwide, called <b>edge locations</b>. Examples are Cloudflare, Amazon CloudFront and Vercel's edge network. The first time someone near an edge asks for a file, the edge fetches it from your server, called the <b>origin</b>, and keeps a copy. Everyone nearby after that gets the copy from the edge.</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="An origin server in the middle with CDN edge servers in four distant cities serving nearby users">
-<rect class="bx-a" x="160" y="90" width="100" height="44" rx="8"/><text class="t-b" x="210" y="117" text-anchor="middle">Origin</text>
-<rect class="bx-ok" x="10" y="14" width="110" height="36" rx="8"/><rect class="bx-ok" x="300" y="14" width="110" height="36" rx="8"/><rect class="bx-ok" x="10" y="166" width="110" height="36" rx="8"/><rect class="bx-ok" x="300" y="166" width="110" height="36" rx="8"/>
-<g text-anchor="middle"><text class="t" x="65" y="37">New York</text><text class="t" x="355" y="37">Tokyo</text><text class="t" x="65" y="189">São Paulo</text><text class="t" x="355" y="189">Lagos</text>
-<text class="t-s" x="65" y="70">users: ~20 ms</text><text class="t-s" x="355" y="70">users: ~20 ms</text><text class="t-s" x="65" y="158">users: ~20 ms</text><text class="t-s" x="355" y="158">users: ~20 ms</text></g>
-<path class="ln-d" d="M120 50L160 92"/><path class="ln-d" d="M300 50L260 92"/><path class="ln-d" d="M120 166L160 132"/><path class="ln-d" d="M300 166L260 132"/>
-<text class="t-s" x="210" y="152" text-anchor="middle">fetched once</text>
-</svg><figcaption>Your origin server sits in one place. CDN edge servers in New York, Tokyo, São Paulo and Lagos each fetch a file from the origin once, along the dashed lines, then serve it to nearby users in around 20 milliseconds instead of a long round trip across the world.</figcaption></figure>
-<p>A CDN wins twice. Users get files faster, because the round trip is short. And your servers never see those requests, so they have more capacity for real work. CDNs also use TTLs, set through HTTP caching headers. A common trick is to put a version or content hash in each file's name, such as <code>app.3f9a1c.js</code>, so a new release has a new name and old copies simply stop being requested.</p>
-
-<h4>Worked example: the Black Friday numbers</h4>
-<p>The lesson starts you with a load balancer and 9 app servers, which handle about 9 × 400 = 3,600 rps. That is less than 4,000, so the app tier is overloaded. Follow the traffic once you add both a CDN and a cache:</p>
-<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="4,000 requests per second split between the CDN, the app servers, the cache and the database">
-<rect class="bx-info" x="10" y="90" width="72" height="44" rx="6"/><text class="t-b" x="46" y="110" text-anchor="middle">Users</text><text class="t-s" x="46" y="126" text-anchor="middle">4,000/s</text>
-<rect class="bx-ok" x="110" y="14" width="84" height="44" rx="6"/><text class="t-b" x="152" y="34" text-anchor="middle">CDN</text><text class="t-s" x="152" y="50" text-anchor="middle">1,200/s</text>
-<rect class="bx" x="110" y="90" width="84" height="44" rx="6"/><text class="t-b" x="152" y="110" text-anchor="middle">App</text><text class="t-s" x="152" y="126" text-anchor="middle">2,800/s</text>
-<rect class="bx-ok" x="222" y="90" width="84" height="44" rx="6"/><text class="t-b" x="264" y="110" text-anchor="middle">Cache</text><text class="t-s" x="264" y="126" text-anchor="middle">2,128 hits</text>
-<rect class="bx-info" x="334" y="90" width="78" height="44" rx="6"/><text class="t-b" x="373" y="110" text-anchor="middle">DB</text><text class="t-s" x="373" y="126" text-anchor="middle">672/s</text>
-<path class="ln" d="M82 98L104 60"/><polygon class="ah" points="98,59 108,64 108,52"/>
-<path class="ln" d="M82 112h20"/><polygon class="ah" points="100,106 100,118 108,112"/>
-<path class="ln" d="M194 112h20"/><polygon class="ah" points="212,106 212,118 220,112"/>
-<path class="ln" d="M306 112h20"/><polygon class="ah" points="324,106 324,118 332,112"/>
-<text class="t-s" x="262" y="164" text-anchor="middle">DB gets 532 reads + 140 writes</text>
-</svg><figcaption>Of 4,000 requests per second, the 1,200 static ones are served by the CDN. The app servers handle the other 2,800. Of those, 2,660 are reads, and the cache answers 80 per cent of them, 2,128. Only 532 reads and 140 writes, 672 in all, reach the database.</figcaption></figure>
-<ul>
-<li><b>App servers:</b> 2,800 ÷ 3,600 is about 78% busy. Busy, but under the danger zone.</li>
-<li><b>Database:</b> without the cache it would get all 2,660 reads, about 89% of its 3,000-read capacity in the simulator. With the cache, 532 reads is about 18%.</li>
-<li><b>Cost:</b> balancer $20, nine servers $360, CDN $30, cache $60 and the database $120 add up to $590, inside the $620 budget.</li>
-</ul>
-<p>Notice the order matters for diagnosis: the CDN fixes the overloaded <i>app</i> tier, and the cache fixes the overloaded <i>database</i>. Read the load figures in the results to see which tier is struggling before you add anything.</p>
-<div class="try"><b>Try it in your head</b>Reads reaching the cache: 1,000 per second. Hit rate: 90%. How many reach the database? 10% of 1,000, so 100 per second. And a user updates their profile photo, but their friends still see the old one for a few minutes: why? The old image is still cached, in a CDN or cache, until its TTL runs out or it is invalidated.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>A cache keeps popular answers in memory (Redis), so repeated reads skip the database.</li>
-<li>Cache-aside: read the cache; on a miss, read the database and store the result with a TTL.</li>
-<li>The database only sees the misses: reads × (1 − hit rate).</li>
-<li>Stale data is the price. Use TTLs to limit it, and delete keys when the data changes.</li>
-<li>A CDN serves static files from edge locations near users, which is faster for them and takes load off your servers.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Hit rate 90%: what share of reads reach the database? <i>10%.</i> 2. What happens on a cache miss in cache-aside? <i>Read the database, then store the result in the cache.</i> 3. Why put a hash in a JS file name? <i>A new version gets a new URL, so CDNs and browsers fetch it fresh.</i></div>
 `);
 
 explain('k4',`
-<h4>Why users should not wait for slow work</h4>
-<p>When someone signs up, your app does three things: it saves the new user in the database, sends a welcome email, and generates a PDF receipt. Saving takes a few milliseconds. The email and PDF take about <b>400 milliseconds</b>, because they involve talking to an email provider and building a document. If the app does all of it before replying, the new user stares at a spinner for the whole time.</p>
-<p>But does the user need the email to have been sent before they see "Welcome!"? No. They need to know their account exists. The email can arrive a few seconds later and nobody will notice. This lesson is about splitting work into "must happen now" and "can happen soon", and using a <b>queue</b> to do the second kind in the background.</p>
-<div class="analogy"><b>Think of it like</b>A restaurant. The waiter takes your order, clips the ticket to the kitchen rail and comes straight back to you. They do not stand at the stove while your meal cooks. The rail is the queue, and the cooks are the workers.</div>
+<p>When you sign up for a website, a welcome email arrives a few seconds later. You did not wait for it, and that is on purpose. Work that can happen later is handed to a queue, so the page stays fast.</p>
 
-<h4>The pieces: producers, a queue and workers</h4>
-<p>A <b>message queue</b> is a service that holds a list of <b>jobs</b> (also called messages) in order, until something takes them. Popular choices are Amazon SQS, RabbitMQ, and Redis-based libraries such as BullMQ. It is the first-in, first-out queue from the algorithms track, run as a reliable shared service.</p>
-<ul>
-<li>A <b>producer</b> adds jobs to the queue. Here, your app servers are the producers: "send the welcome email to user 42".</li>
-<li>A <b>worker</b>, or consumer, is a separate program that takes jobs off the queue one by one and does the actual work.</li>
-<li>A job is small: usually just the facts needed to do the work, such as a user ID, not the whole email.</li>
-</ul>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Three app servers add jobs to a queue, and two workers take jobs from it">
-<rect class="bx-a" x="10" y="20" width="80" height="36" rx="6"/><rect class="bx-a" x="10" y="80" width="80" height="36" rx="6"/><rect class="bx-a" x="10" y="140" width="80" height="36" rx="6"/>
-<g text-anchor="middle"><text class="t" x="50" y="43">App 1</text><text class="t" x="50" y="103">App 2</text><text class="t" x="50" y="163">App 3</text></g>
-<path class="ln" d="M90 38L130 86"/><path class="ln" d="M90 98h40"/><path class="ln" d="M90 158L130 110"/><polygon class="ah" points="128,92 128,104 136,98"/>
-<rect class="bx-info" x="138" y="76" width="140" height="44" rx="6"/>
-<rect class="bx" x="146" y="84" width="24" height="28"/><rect class="bx" x="174" y="84" width="24" height="28"/><rect class="bx" x="202" y="84" width="24" height="28"/><rect class="bx" x="230" y="84" width="24" height="28"/>
-<text class="t-b" x="208" y="66" text-anchor="middle">Queue</text><text class="t-s" x="208" y="140" text-anchor="middle">80 jobs/s arrive</text>
-<path class="ln-ok" d="M278 92L318 56"/><polygon class="ah-ok" points="313,52 320,61 324,50"/>
-<path class="ln-ok" d="M278 104L318 140"/><polygon class="ah-ok" points="313,144 320,135 324,146"/>
-<rect class="bx-ok" x="326" y="30" width="86" height="36" rx="6"/><rect class="bx-ok" x="326" y="130" width="86" height="36" rx="6"/>
-<g text-anchor="middle"><text class="t" x="369" y="53">Worker 1</text><text class="t" x="369" y="153">Worker 2</text><text class="t-s" x="369" y="86">50 jobs/s</text><text class="t-s" x="369" y="186">50 jobs/s</text></g>
-</svg><figcaption>The app servers are producers: each sign-up adds a small job to the queue. Two workers take jobs from the front and do the slow work. Together they can finish 100 jobs a second, more than the 80 a second arriving, so the queue stays short.</figcaption></figure>
-<p>The request now goes: save the user, add one job to the queue, reply. Adding a job is a quick network call, a millisecond or two, so the user gets their answer almost at once.</p>
+${V.card(1,'Queues and workers','the ticket rail in a kitchen',`
+${V.like(`<p>A restaurant kitchen. The waiter clips your order ticket to a rail and goes straight back to the tables. Chefs take tickets from the rail in order, at their own pace. The waiter never stands in the kitchen waiting for your pizza.</p>`)}
+${V.why(`<p>Some work is slow and the user does not need it right now: emails, PDFs, resizing photos, calling other companies' webhooks. A <b>message queue</b> such as Amazon SQS, RabbitMQ, or BullMQ on top of Redis holds small job messages until a <b>worker</b> process is ready for them.</p>`)}
+${V.steps([
+ ['Without a queue: the app sends the welcome email and builds the PDF receipt <b>before</b> replying. The user stares at a spinner for 400 ms.',`<svg viewBox="0 0 420 196" role="img" aria-label="User waits for slow work">
+${V.ic('person',6,40,44,'ic-a')}<rect class="bx" x="66" y="30" width="96" height="62" rx="10"/>${V.ic('server',74,42,36,'')}<text class="t-b" x="132" y="68" text-anchor="middle">app</text><text class="t-s" x="210" y="120" text-anchor="middle">queue</text><path class="ln" d="M150 160H272"/><rect class="bx-dark" x="300" y="30" width="112" height="62" rx="10"/>${V.ic('robot',306,40,40,'ic-ok')}<text class="t-term" x="372" y="68" text-anchor="middle">worker</text><path class="ln-a" d="M50 62H54"/><polygon class="ah-a" points="52,56 52,68 64,62"/><text class="t-b t-bad" x="10" y="186">user waits 400 ms: email + PDF</text>${V.ic('clock',176,36,48,'ic-bad')}
+</svg>`],
+ ['With a queue: the app saves the user, drops a small <b>job</b> message on the queue, and replies straight away.',`<svg viewBox="0 0 420 196" role="img" aria-label="App enqueues a job and replies">
+${V.ic('person',6,40,44,'ic-a')}<rect class="bx" x="66" y="30" width="96" height="62" rx="10"/>${V.ic('server',74,42,36,'')}<text class="t-b" x="132" y="68" text-anchor="middle">app</text><text class="t-s" x="210" y="120" text-anchor="middle">queue</text><path class="ln" d="M150 160H272"/><rect class="bx-dark" x="300" y="30" width="112" height="62" rx="10"/>${V.ic('robot',306,40,40,'ic-ok')}<text class="t-term" x="372" y="68" text-anchor="middle">worker</text><rect class="bx-warn" x="166" y="128" width="50" height="30" rx="5"/><text class="t-m" x="191" y="149" text-anchor="middle">job</text><path class="ln-a" d="M150 94V118"/><polygon class="ah-a" points="144,116 156,116 150,128"/><path class="ln-ok" d="M64 96H32"/><polygon class="ah-ok" points="34,90 34,102 22,96"/><text class="t-b t-ok" x="10" y="186">201 sent at once: about 20 ms</text>
+</svg>`],
+ ['A separate <b>worker</b> process takes the job from the front of the queue whenever it is free.',`<svg viewBox="0 0 420 196" role="img" aria-label="Worker takes the job">
+${V.ic('person',6,40,44,'ic-a')}<rect class="bx" x="66" y="30" width="96" height="62" rx="10"/>${V.ic('server',74,42,36,'')}<text class="t-b" x="132" y="68" text-anchor="middle">app</text><text class="t-s" x="210" y="120" text-anchor="middle">queue</text><path class="ln" d="M150 160H272"/><rect class="bx-dark" x="300" y="30" width="112" height="62" rx="10"/>${V.ic('robot',306,40,40,'ic-ok')}<text class="t-term" x="372" y="68" text-anchor="middle">worker</text><rect class="bx-hl" x="230" y="128" width="50" height="30" rx="5"/><text class="t-m" x="255" y="149" text-anchor="middle">job</text><path class="ln-a" d="M282 140C320 140 350 120 352 100"/><polygon class="ah-a" points="346,104 358,104 352,94"/><text class="t-b" x="10" y="186">worker takes the job from the front</text>
+</svg>`],
+ ['The worker does the slow work. The user was already on the next page long ago.',`<svg viewBox="0 0 420 196" role="img" aria-label="Worker sends the email">
+${V.ic('person',6,40,44,'ic-a')}<rect class="bx" x="66" y="30" width="96" height="62" rx="10"/>${V.ic('server',74,42,36,'')}<text class="t-b" x="132" y="68" text-anchor="middle">app</text><text class="t-s" x="210" y="120" text-anchor="middle">queue</text><path class="ln" d="M150 160H272"/><rect class="bx-dark" x="300" y="30" width="112" height="62" rx="10"/>${V.ic('robot',306,40,40,'ic-ok')}<text class="t-term" x="372" y="68" text-anchor="middle">worker</text>${V.ic('mail',360,110,46,'ic-ok')}<text class="t-b t-ok" x="10" y="186">email + PDF sent in the background</text>
+</svg>`]])}
+${V.rules(V.rh('Queue it or not?'),
+ V.ok('welcome emails, receipts','Can happen a few seconds later'),V.ok('resizing uploaded photos','Slow, and the user can see a placeholder'),
+ V.no('checking a password at login','The user needs the answer now'),V.no('showing the basket total','Part of the page they are looking at'))}
+${V.hook(`Clip the ticket, serve the next table.`)}
+`)}
 
-<h4>Before and after, on a timeline</h4>
-<figure class="fig"><svg viewBox="0 0 420 215" role="img" aria-label="Timeline: without a queue the user waits for the email and PDF; with a queue they get a reply at once and a worker does the slow part later">
-<text class="t-b" x="10" y="22">without a queue</text>
-<rect class="bx-info" x="60" y="34" width="16" height="26"/><rect class="bx-warn" x="76" y="34" width="308" height="26"/>
-<text class="t-s" x="230" y="52" text-anchor="middle">email + PDF, about 400 ms</text>
-<path class="ln-a" d="M60 72h324"/><polygon class="ah-a" points="382,66 382,78 390,72"/>
-<text class="t-s t-a" x="225" y="92" text-anchor="middle">user waits about 420 ms</text>
-<text class="t-b" x="10" y="124">with a queue</text>
-<rect class="bx-info" x="60" y="136" width="16" height="26"/><rect class="bx-ok" x="76" y="136" width="6" height="26"/>
-<text class="t-s t-ok" x="92" y="154">reply: about 25 ms</text>
-<rect class="bx-warn" x="90" y="176" width="308" height="26"/>
-<text class="t-s" x="244" y="194" text-anchor="middle">worker: email + PDF, later</text>
-</svg><figcaption>Top: without a queue, the user waits for the save, shown in blue, and the slow email and PDF work, in amber, before getting a reply. Bottom: with a queue, the app saves the user, quickly adds a job, shown in green, and replies straight away. A background worker does the same slow work afterwards, while the user is already using the app.</figcaption></figure>
-<p>The total work is the same. What changes is <b>who waits for it</b>. In the simulator, 10% of the 800 requests per second trigger the slow task, and without a queue that pushes p95 latency well over the 150 ms goal. With a queue, the slow part disappears from the request path.</p>
+${V.card(2,'Keeping up','out must beat in',`
+<figure class="fig"><svg viewBox="0 0 420 185" role="img" aria-label="A bath fills at 80 jobs per second and drains through two workers at 100 per second">
+${V.ic('repeat',20,20,44,'ic-a')}<text class="t-b" x="76" y="38">in: 80 jobs/s</text><path class="ln-a" style="stroke-width:6" d="M110 60V96"/><path class="ln" style="stroke-width:3" d="M60 92V170H300V92"/><rect class="bx-info" x="62" y="130" width="236" height="38"/><text class="t-b" x="180" y="155" text-anchor="middle">queue level</text>${V.ic('robot',318,110,40,'ic-ok')}${V.ic('robot',366,110,40,'ic-ok')}<path class="ln-ok" style="stroke-width:6" d="M300 160H316"/><text class="t-b t-ok" x="414" y="70" text-anchor="end">out: 2 x 50 = 100/s</text><text class="t-s" x="384" y="100" text-anchor="middle">2 workers</text>
+</svg><figcaption>If jobs arrive faster than workers finish them, the queue grows forever. Drain must beat tap.</figcaption></figure>
+${V.like(`<p>A bath with the tap running and the plug out. If water drains faster than it pours in, the level stays low. If the tap wins, the bath overflows, however big it is. A queue only smooths out bursts; it cannot fix too few workers.</p>`)}
+${V.why(`<p>Traffic comes in bursts: a TV advert, a sale starting at 9am. A queue soaks up the burst so nothing is lost, and the workers catch up afterwards. But if the <b>average</b> arrival rate is higher than the workers can handle, the backlog grows every minute and jobs arrive hours late. So you size the workers from the numbers.</p>`)}
+${V.anat([[1,'800 rps'],' x ',[2,'10%'],' = ',[3,'80 jobs/s'],'   ',[4,'80 ÷ 50 = 1.6 → 2 workers']],[
+ '<b>Requests per second</b> at peak.',
+ '<b>Share that create a job</b> (the sign-ups).',
+ '<b>Arrival rate</b> of jobs into the queue.',
+ '<b>Workers needed.</b> Each finishes about 50 jobs a second. Always round up.'])}
+${V.hook(`Tap in, drain out: workers x speed must beat arrivals.`)}
+`)}
 
-<h4>Keeping up: throughput must beat the arrival rate</h4>
-<p>A queue does not make work vanish. It only lets work wait. So you must check that the workers can keep up on average:</p>
-<pre class="snip">jobs arriving  = 800 requests/s × 10% = 80 jobs/s
-one worker     = 50 jobs/s
-workers needed = 80 ÷ 50 = 1.6  →  round up to 2
-two workers    = 100 jobs/s, about 80% busy</pre>
-<p><b>Throughput</b> is how many jobs your workers finish per second. The <b>arrival rate</b> is how many jobs are added per second. If throughput is higher, the queue drains and stays short. If it is lower, even slightly, the queue grows every second, forever: with one worker, 30 extra jobs pile up each second, over 100,000 an hour, and emails arrive later and later. A short burst above capacity is fine, because the queue absorbs it and workers catch up afterwards. That buffering is one of the queue's biggest benefits.</p>
-<div class="mistake"><b>Common mistake</b>Adding a queue with zero workers. Jobs go in and nothing ever takes them out. The simulator warns you when this happens; in real life you notice when customers complain that no emails arrived. Always watch the queue's length: a number that only grows means your workers are not keeping up, or are not running.</div>
+${V.card(3,'When things go wrong','retries, idempotency, dead letters',`
+${V.like(`<p>A postman who is not sure a parcel was signed for brings it again the next day. That is safe only if you can say "already got it, thanks". Jobs must be just as safe to deliver twice.</p>`)}
+${V.why(`<p>Most queues promise <b>at-least-once</b> delivery: a job is only removed when a worker says "done". If the worker crashes first, the job comes back. That is good, because nothing is lost, but it means a job can run twice.</p>`)}
+${V.steps([
+ ['A worker takes "send welcome email to user 42" and sends it.',`<svg viewBox="0 0 420 170" role="img" aria-label="Worker processing job">
+<rect class="bx" x="10" y="20" width="400" height="44" rx="8"/><text class="t-s" x="20" y="14">queue</text>${V.ic('robot',20,96,44,'ic-ok')}<text class="t-b" x="42" y="160" text-anchor="middle">worker</text><rect class="bx-info" x="290" y="96" width="120" height="56" rx="8"/><text class="t-s" x="350" y="116" text-anchor="middle">sent log</text><rect class="bx-hl" x="20" y="28" width="190" height="28" rx="5"/><text class="t-m" x="115" y="47" text-anchor="middle" style="font-size:14px">email user 42</text><path class="ln-a" d="M42 58V84"/><polygon class="ah-a" points="36,82 48,82 42,94"/><text class="t-m" x="350" y="140" text-anchor="middle">(empty)</text><text class="t" x="80" y="124">sends the email...</text>
+</svg>`],
+ ['It records "42: sent", then crashes before telling the queue the job is done. The queue never got the "done" message.',`<svg viewBox="0 0 420 170" role="img" aria-label="Worker crashes before acknowledging">
+<rect class="bx" x="10" y="20" width="400" height="44" rx="8"/><text class="t-s" x="20" y="14">queue</text>${V.ic('robot',20,96,44,'ic-bad')}<text class="t-b" x="42" y="160" text-anchor="middle">worker</text><rect class="bx-info" x="290" y="96" width="120" height="56" rx="8"/><text class="t-s" x="350" y="116" text-anchor="middle">sent log</text><rect class="ln-d" x="20" y="28" width="190" height="28" rx="5"/><text class="t-m t-dim" x="115" y="47" text-anchor="middle" style="font-size:14px">email user 42</text><text class="t-m" x="350" y="140" text-anchor="middle">42: sent</text><path class="ln-x" d="M20 96 64 140M64 96 20 140"/><text class="t-b t-bad" x="80" y="124">crash before "done"</text>
+</svg>`],
+ ['After a timeout the queue delivers the same job <b>again</b>. This is at-least-once delivery, and it is normal.',`<svg viewBox="0 0 420 170" role="img" aria-label="Job delivered again">
+<rect class="bx" x="10" y="20" width="400" height="44" rx="8"/><text class="t-s" x="20" y="14">queue</text>${V.ic('robot',20,96,44,'ic-ok')}<text class="t-b" x="42" y="160" text-anchor="middle">worker</text><rect class="bx-info" x="290" y="96" width="120" height="56" rx="8"/><text class="t-s" x="350" y="116" text-anchor="middle">sent log</text><rect class="bx-warn" x="20" y="28" width="190" height="28" rx="5"/><text class="t-m" x="115" y="47" text-anchor="middle" style="font-size:14px">email user 42</text><text class="t-b t-warn" x="220" y="47">redelivered</text><path class="ln-a" d="M42 58V84"/><polygon class="ah-a" points="36,82 48,82 42,94"/><text class="t-m" x="350" y="140" text-anchor="middle">42: sent</text><text class="t" x="80" y="124">"sent for 42?"</text>
+</svg>`],
+ ['The job is <b>idempotent</b>: it checks the log first, sees the email went, and skips it. One email, not two.',`<svg viewBox="0 0 420 170" role="img" aria-label="Idempotent job skips the duplicate">
+<rect class="bx" x="10" y="20" width="400" height="44" rx="8"/><text class="t-s" x="20" y="14">queue</text>${V.ic('robot',20,96,44,'ic-ok')}<text class="t-b" x="42" y="160" text-anchor="middle">worker</text><rect class="bx-info" x="290" y="96" width="120" height="56" rx="8"/><text class="t-s" x="350" y="116" text-anchor="middle">sent log</text><text class="t-s" x="210" y="47" text-anchor="middle">(job removed)</text><text class="t-m" x="350" y="140" text-anchor="middle">42: sent</text><text class="t-b t-ok" x="80" y="124">yes: skip, mark done</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('idempotent jobs','Check "already done for user 42?" before acting'),V.ok('retry with a growing wait','1 s, then 2 s, then 4 s: called backoff'),
+ V.ok('dead-letter queue','After, say, 5 failures, park the job for a human'),V.no('assume exactly once','Duplicates will happen; plan for them'))}
+${V.build(`<ol><li>In the simulator, turn on the queue so the slow 400 ms work leaves the request.</li><li>Work out the job rate and add enough workers that worker load stays under 100%.</li><li>Check there are no errors and p95 is under 150 ms.</li></ol>`)}
+${V.hook(`At least once means maybe twice: make every job safe to repeat.`)}
+`)}
 
-<h4>At-least-once delivery and idempotent jobs</h4>
-<p>Here is a subtle problem. A worker takes a job, sends the email, and then crashes before telling the queue "done". The queue cannot know the email went out. To be safe, it makes the job visible again after a timeout, and another worker runs it. The user gets two welcome emails.</p>
-<p>This is called <b>at-least-once delivery</b>: the queue promises every job will run, but some may run more than once. Most queues work this way, because the alternative, risking jobs that never run, is worse. So the rule is: <b>make every job idempotent</b>. Running it twice must have the same effect as running it once. You met idempotency with HTTP methods; here it applies to jobs.</p>
-<p>How, in practice? Record what was done, and check before doing it:</p>
-<pre class="snip">job: send welcome email to user 42
-if user 42 already has welcome_email_sent:
-    skip                      # a repeat delivery: do nothing
-else:
-    send the email
-    mark welcome_email_sent for user 42</pre>
-<p>Another common approach is to give each job a unique ID and store the IDs of finished jobs. Email and payment providers often accept such an ID themselves and ignore repeats.</p>
-
-<h4>Retries and the dead-letter queue</h4>
-<p>Sometimes a job fails for a passing reason: the email provider is briefly down. The queue <b>retries</b> it later, usually waiting a little longer between each attempt so it does not hammer a struggling service. But some jobs will never succeed, for example an email address that does not exist. Retrying those forever wastes worker time.</p>
-<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="A job is retried after failing, and after several failures moves to a dead-letter queue">
-<rect class="bx-info" x="10" y="60" width="90" height="44" rx="6"/><text class="t-b" x="55" y="87" text-anchor="middle">Queue</text>
-<rect class="bx-ok" x="160" y="60" width="90" height="44" rx="6"/><text class="t-b" x="205" y="87" text-anchor="middle">Worker</text>
-<rect class="bx-ok" x="320" y="14" width="92" height="40" rx="6"/><text class="t" x="366" y="39" text-anchor="middle">done</text>
-<rect class="bx-bad" x="320" y="112" width="92" height="52" rx="6"/><text class="t-b" x="366" y="134" text-anchor="middle">dead-letter</text><text class="t-s" x="366" y="152" text-anchor="middle">for a human</text>
-<path class="ln" d="M100 82h52"/><polygon class="ah" points="150,76 150,88 158,82"/>
-<path class="ln-ok" d="M250 72L312 40"/><polygon class="ah-ok" points="308,35 313,46 320,36"/><text class="t-s t-ok" x="300" y="28" text-anchor="end">success</text>
-<path class="ln-a" d="M250 96L312 132"/><polygon class="ah-a" points="306,135 313,126 320,138"/><text class="t-s t-a" x="304" y="154" text-anchor="end">failed 5 times</text>
-<path class="ln-d" d="M175 104v40H55v-32"/><polygon class="ah" points="49,114 61,114 55,106"/><text class="t-s" x="115" y="162" text-anchor="middle">failed: retry later</text>
-</svg><figcaption>A worker takes a job from the queue. If it succeeds, the job is done. If it fails, it goes back to the queue to be retried later. After too many failures, say five, it moves to a dead-letter queue, where a person can look at what went wrong.</figcaption></figure>
-<p>A <b>dead-letter queue</b> is a separate queue where jobs go after failing too many times. Nothing processes it automatically. Engineers check it, fix the cause, and replay the jobs if needed. It keeps one broken job from blocking or slowing everything else.</p>
-
-<h4>What belongs on a queue, and what does not</h4>
-<p>Good candidates are anything the user does not need to see finished right now: sending emails and notifications, resizing uploaded photos, generating reports and PDFs, calling other companies' webhooks. Bad candidates are anything the response depends on. Checking a password at login must happen before you can reply "welcome back" or "wrong password", so it stays in the request.</p>
-<div class="try"><b>Try it in your head</b>Jobs arrive at 230 per second, and each worker handles 50 per second. How many workers do you need to keep up? 230 ÷ 50 = 4.6, so round up to 5. And with only 4 workers, what happens to the queue? It grows by 30 jobs every second.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Put slow work the user does not need right now on a queue, and reply immediately.</li>
-<li>Producers add small jobs; workers take them from the front and do the work in the background.</li>
-<li>Worker throughput must beat the arrival rate, or the queue grows forever. Watch the queue length.</li>
-<li>Queues usually deliver at least once, so make every job idempotent.</li>
-<li>Failed jobs are retried with growing delays, then moved to a dead-letter queue for a human.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. 200 jobs a second arrive and each worker does 60. How many workers? <i>200 ÷ 60 ≈ 3.3, so 4.</i> 2. Should "check the password" go on a queue? <i>No: the user needs the answer now.</i> 3. What is a dead-letter queue for? <i>Jobs that keep failing, so a human can inspect them.</i></div>
 `);
 
 explain('k5',`
-<h4>When the database becomes the bottleneck</h4>
-<p>So far you have scaled the app tier by adding servers, which is easy because app servers are stateless: any copy can do any job. The database is different. It holds the <b>state</b>, the actual data, and there is normally only one of it. Caches take a lot of reads off it, but eventually even a well-cached database runs out of capacity.</p>
-<p>This lesson covers the two classic ways to spread a database over several machines. <b>Replication</b> keeps full copies of the data on several servers, which helps with reading. <b>Sharding</b> splits the data into pieces stored on different servers, which helps with writing too. The lesson's simulator has two phases, one for each.</p>
+<p>Sooner or later the database is the busiest part of every system. There are two big ways to spread its load: make <b>copies</b> of it for reading, or <b>split</b> it into pieces. Each solves a different problem.</p>
 
-<h4>Reads and writes are different jobs</h4>
-<p>A <b>read</b> asks for data and changes nothing: show this article, list these comments. A <b>write</b> changes data: insert a new reading, update a balance. The mix of the two decides which tool you need. A news site is <b>read-heavy</b>: in this lesson's first scenario, 97% of requests are reads. A system collecting measurements from sensors is <b>write-heavy</b>: the second scenario is 70% writes.</p>
-<p>In the simulator, one database handles about 3,000 reads per second or 1,000 writes per second. Writes are more expensive because the database must update its indexes and save every change safely to disk.</p>
+${V.card(1,'Read replicas','photocopies of the recipe book',`
+${V.like(`<p>One master recipe book in the head chef's office. Only the head chef may change it. Photocopies sit at every station, so cooks can read without queueing at the office. When a recipe changes, new copies go out, and for a minute some stations still have the old page.</p>`)}
+${V.why(`<p>Most apps read far more than they write: a news site might be 97% reads. One database cannot answer them all, but copies can. PostgreSQL and MySQL both stream every change from the <b>primary</b> to its <b>replicas</b>.</p>`)}
+${V.steps([
+ ['A seller changes a price. Every <b>write</b> goes to the one <b>primary</b> database.',`<svg viewBox="0 0 420 234" role="img" aria-label="Write goes to the primary">
+<rect class="bx" x="8" y="76" width="100" height="56" rx="10"/>${V.ic('server',14,86,36,'')}<text class="t-b" x="76" y="110" text-anchor="middle">app</text><rect class="bx-hl" x="150" y="70" width="110" height="68" rx="10"/>${V.ic('db',158,82,40,'ic-a')}<text class="t-b" x="226" y="100" text-anchor="middle">primary</text><text class="t-m" x="226" y="124" text-anchor="middle">£15</text><rect class="bx" x="300" y="14" width="112" height="64" rx="10"/>${V.ic('db',306,26,36,'ic-info')}<text class="t-b" x="374" y="42" text-anchor="middle">replica 1</text><text class="t-m" x="374" y="66" text-anchor="middle">£20</text><rect class="bx" x="300" y="130" width="112" height="64" rx="10"/>${V.ic('db',306,142,36,'ic-info')}<text class="t-b" x="374" y="158" text-anchor="middle">replica 2</text><text class="t-m" x="374" y="182" text-anchor="middle">£20</text><path class="ln-a" d="M110 104H138"/><polygon class="ah-a" points="136,98 136,110 148,104"/><text class="t-b" x="10" y="226">write: price = £15 (primary only)</text>
+</svg>`],
+ ['The primary sends the change to each <b>replica</b>. This takes a moment, so replica 2 is still behind: that delay is <b>replication lag</b>.',`<svg viewBox="0 0 420 234" role="img" aria-label="Replication with lag">
+<rect class="bx" x="8" y="76" width="100" height="56" rx="10"/>${V.ic('server',14,86,36,'')}<text class="t-b" x="76" y="110" text-anchor="middle">app</text><rect class="bx-a" x="150" y="70" width="110" height="68" rx="10"/>${V.ic('db',158,82,40,'ic-a')}<text class="t-b" x="226" y="100" text-anchor="middle">primary</text><text class="t-m" x="226" y="124" text-anchor="middle">£15</text><rect class="bx" x="300" y="14" width="112" height="64" rx="10"/>${V.ic('db',306,26,36,'ic-info')}<text class="t-b" x="374" y="42" text-anchor="middle">replica 1</text><text class="t-m" x="374" y="66" text-anchor="middle">£15</text><rect class="bx-warn" x="300" y="130" width="112" height="64" rx="10"/>${V.ic('db',306,142,36,'ic-info')}<text class="t-b" x="374" y="158" text-anchor="middle">replica 2</text><text class="t-m" x="374" y="182" text-anchor="middle">£20</text><path class="ln-ok" d="M262 90L296 56"/><path class="ln-d" d="M262 120L296 150"/><text class="t-b" x="10" y="226">copied to replicas: replica 2 is behind</text>
+</svg>`],
+ ['Once caught up, every replica holds the same data, and <b>reads</b> are spread across them. Two replicas, roughly double the read capacity.',`<svg viewBox="0 0 420 234" role="img" aria-label="Reads spread over replicas">
+<rect class="bx" x="8" y="76" width="100" height="56" rx="10"/>${V.ic('server',14,86,36,'')}<text class="t-b" x="76" y="110" text-anchor="middle">app</text><rect class="bx-a" x="150" y="70" width="110" height="68" rx="10"/>${V.ic('db',158,82,40,'ic-a')}<text class="t-b" x="226" y="100" text-anchor="middle">primary</text><text class="t-m" x="226" y="124" text-anchor="middle">£15</text><rect class="bx-hl" x="300" y="14" width="112" height="64" rx="10"/>${V.ic('db',306,26,36,'ic-info')}<text class="t-b" x="374" y="42" text-anchor="middle">replica 1</text><text class="t-m" x="374" y="66" text-anchor="middle">£15</text><rect class="bx-hl" x="300" y="130" width="112" height="64" rx="10"/>${V.ic('db',306,142,36,'ic-info')}<text class="t-b" x="374" y="158" text-anchor="middle">replica 2</text><text class="t-m" x="374" y="182" text-anchor="middle">£15</text><path class="ln-a" d="M108 92C180 30 250 40 296 46M108 116C180 190 250 170 296 162"/><text class="t-b t-ok" x="10" y="226">reads share the replicas</text>
+</svg>`],
+ ['The catch: a read that lands on a lagging replica sees the old value. If a user must see their own change at once, read that from the primary.',`<svg viewBox="0 0 420 234" role="img" aria-label="Stale read from a lagging replica">
+<rect class="bx" x="8" y="76" width="100" height="56" rx="10"/>${V.ic('server',14,86,36,'')}<text class="t-b" x="76" y="110" text-anchor="middle">app</text><rect class="bx-a" x="150" y="70" width="110" height="68" rx="10"/>${V.ic('db',158,82,40,'ic-a')}<text class="t-b" x="226" y="100" text-anchor="middle">primary</text><text class="t-m" x="226" y="124" text-anchor="middle">£15</text><rect class="bx" x="300" y="14" width="112" height="64" rx="10"/>${V.ic('db',306,26,36,'ic-info')}<text class="t-b" x="374" y="42" text-anchor="middle">replica 1</text><text class="t-m" x="374" y="66" text-anchor="middle">£15</text><rect class="bx-bad" x="300" y="130" width="112" height="64" rx="10"/>${V.ic('db',306,142,36,'ic-info')}<text class="t-b" x="374" y="158" text-anchor="middle">replica 2</text><text class="t-m" x="374" y="182" text-anchor="middle">£20</text><path class="ln-a" d="M108 116C180 190 250 170 296 162"/><text class="t-b t-bad" x="10" y="226">a read hit replica 2 too early: old £20</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('writes → primary','There is only one place to change data'),V.ok('reads → replicas','Spread them for read capacity'),
+ V.ok('read your own writes from the primary','Avoids "my change vanished" after saving'),V.no('replicas for a write-heavy app','Every write still lands on the primary, and then on every replica too'))}
+${V.hook(`One writer, many readers, and the copies run a little late.`)}
+`)}
 
-<h4>Replication: copies that share the reading</h4>
-<p>With <b>replication</b>, one database is the <b>primary</b> (sometimes called the leader). Every write goes to it. The primary then sends each change to one or more <b>read replicas</b>, which apply the same changes and so hold a full copy of the data. Your app sends writes to the primary and spreads reads across the replicas, and often the primary too.</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="Writes go to the primary, which copies changes to two replicas; reads are spread across the replicas">
-<rect class="bx-a" x="10" y="84" width="80" height="44" rx="6"/><text class="t-b" x="50" y="111" text-anchor="middle">App</text>
-<rect class="bx-a" x="170" y="20" width="110" height="48" rx="6"/><text class="t-b" x="225" y="49" text-anchor="middle">Primary</text>
-<rect class="bx-info" x="290" y="100" width="104" height="40" rx="6"/><rect class="bx-info" x="290" y="170" width="104" height="40" rx="6"/>
-<text class="t" x="342" y="125" text-anchor="middle">Replica 1</text><text class="t" x="342" y="195" text-anchor="middle">Replica 2</text>
-<path class="ln-a" d="M90 96L162 52"/><polygon class="ah-a" points="157,48 163,58 170,47"/><text class="t-s t-a" x="112" y="60">writes</text>
-<path class="ln-d" d="M280 44H412V190H402"/><path class="ln-d" d="M412 120H402"/>
-<polygon class="ah" points="402,114 402,126 395,120"/><polygon class="ah" points="402,184 402,196 395,190"/>
-<text class="t-s" x="340" y="36" text-anchor="middle">copy</text>
-<path class="ln-ok" d="M90 112L282 120"/><polygon class="ah-ok" points="281,114 281,126 289,120"/>
-<path class="ln-ok" d="M90 122L282 188"/><polygon class="ah-ok" points="279,182 276,194 288,191"/>
-<text class="t-s t-ok" x="150" y="168">reads</text>
-</svg><figcaption>The app sends every write to the primary. The primary copies each change, along the dashed lines, to replica 1 and replica 2. Reads are spread across the replicas, so adding a replica adds read capacity.</figcaption></figure>
-<p>Worked example, phase 1: 2,000 requests per second with 97% reads is 1,940 reads per second. One database can do about 3,000, so it is 65% busy, above the lesson's 50% goal. Add one replica and the reads are shared by two copies with 6,000 reads of capacity: about 32% busy. Goal met.</p>
-<p>Replicas bring a bonus: if the primary dies, a replica already holds the data and can be <b>promoted</b> to become the new primary. Managed databases such as Amazon RDS can do this automatically.</p>
+${V.card(2,'Sharding','split the phone book',`
+${V.like(`<p>A phone book too big for one library. Put A to H in one library, I to P in a second and Q to Z in a third. Each library only stores, and only updates, its own part. To find "Okafor", you know to go straight to the second one.</p>`)}
+${V.why(`<p>When <b>writes</b> are the problem, copies do not help: each copy has to take every write. Sharding splits the rows across several databases by a <b>shard key</b>, so each one takes only part of the writes. Real systems use a hash of the key, or consistent hashing, rather than plain % 3, so shards can be added more easily.</p>`)}
+${V.steps([
+ ['A sensor reading from <b>device 17</b> arrives. The shard key is device_id. 17 divided by 3 leaves 2, so it goes to <b>shard 2</b>.',`<svg viewBox="0 0 420 196" role="img" aria-label="Device 17 to shard 2">
+<rect class="bx" x="14" y="104" width="124" height="80" rx="10"/>${V.ic('db',22,118,40,'ic-info')}<text class="t-b" x="102" y="136" text-anchor="middle">shard 0</text><rect class="bx" x="150" y="104" width="124" height="80" rx="10"/>${V.ic('db',158,118,40,'ic-info')}<text class="t-b" x="238" y="136" text-anchor="middle">shard 1</text><rect class="bx-hl" x="286" y="104" width="124" height="80" rx="10"/>${V.ic('db',294,118,40,'ic-info')}<text class="t-b" x="374" y="136" text-anchor="middle">shard 2</text><text class="t-m" x="14" y="30" style="font-size:17px">device 17</text><text class="t-m t-a" x="14" y="62" style="font-size:17px">17 % 3 = 2</text><text class="t-b t-ok" x="406" y="62" text-anchor="end">→ shard 2</text><text class="t-m" x="102" y="166" text-anchor="middle">0 rows</text><text class="t-m" x="238" y="166" text-anchor="middle">0 rows</text><text class="t-m" x="374" y="166" text-anchor="middle">1 rows</text>
+</svg>`],
+ ['<b>Device 42</b>: 42 % 3 = 0, so shard 0. Different devices land on different databases, so the writes are shared out.',`<svg viewBox="0 0 420 196" role="img" aria-label="Device 42 to shard 0">
+<rect class="bx-hl" x="14" y="104" width="124" height="80" rx="10"/>${V.ic('db',22,118,40,'ic-info')}<text class="t-b" x="102" y="136" text-anchor="middle">shard 0</text><rect class="bx" x="150" y="104" width="124" height="80" rx="10"/>${V.ic('db',158,118,40,'ic-info')}<text class="t-b" x="238" y="136" text-anchor="middle">shard 1</text><rect class="bx" x="286" y="104" width="124" height="80" rx="10"/>${V.ic('db',294,118,40,'ic-info')}<text class="t-b" x="374" y="136" text-anchor="middle">shard 2</text><text class="t-m" x="14" y="30" style="font-size:17px">device 42</text><text class="t-m t-a" x="14" y="62" style="font-size:17px">42 % 3 = 0</text><text class="t-b t-ok" x="406" y="62" text-anchor="end">→ shard 0</text><text class="t-m" x="102" y="166" text-anchor="middle">1 rows</text><text class="t-m" x="238" y="166" text-anchor="middle">0 rows</text><text class="t-m" x="374" y="166" text-anchor="middle">1 rows</text>
+</svg>`],
+ ['Device 8 also goes to shard 2. All of one device\'s readings always land together, so "show me device 8\'s history" asks only one shard.',`<svg viewBox="0 0 420 196" role="img" aria-label="Device 8 to shard 2">
+<rect class="bx" x="14" y="104" width="124" height="80" rx="10"/>${V.ic('db',22,118,40,'ic-info')}<text class="t-b" x="102" y="136" text-anchor="middle">shard 0</text><rect class="bx" x="150" y="104" width="124" height="80" rx="10"/>${V.ic('db',158,118,40,'ic-info')}<text class="t-b" x="238" y="136" text-anchor="middle">shard 1</text><rect class="bx-hl" x="286" y="104" width="124" height="80" rx="10"/>${V.ic('db',294,118,40,'ic-info')}<text class="t-b" x="374" y="136" text-anchor="middle">shard 2</text><text class="t-m" x="14" y="30" style="font-size:17px">device 8</text><text class="t-m t-a" x="14" y="62" style="font-size:17px">8 % 3 = 2</text><text class="t-b t-ok" x="406" y="62" text-anchor="end">→ shard 2</text><text class="t-m" x="102" y="166" text-anchor="middle">1 rows</text><text class="t-m" x="238" y="166" text-anchor="middle">0 rows</text><text class="t-m" x="374" y="166" text-anchor="middle">2 rows</text>
+</svg>`],
+ ['A bad shard key: <b>created_at</b> by day. Every write today hits the same shard while the others sit idle. That is a <b>hot shard</b>.',`<svg viewBox="0 0 420 196" role="img" aria-label="A date key creates a hot shard">
+<rect class="bx" x="14" y="104" width="124" height="80" rx="10"/>${V.ic('db',22,118,40,'ic-info')}<text class="t-b" x="102" y="136" text-anchor="middle">shard 0</text><rect class="bx" x="150" y="104" width="124" height="80" rx="10"/>${V.ic('db',158,118,40,'ic-info')}<text class="t-b" x="238" y="136" text-anchor="middle">shard 1</text><rect class="bx-bad" x="286" y="104" width="124" height="80" rx="10"/>${V.ic('db',294,118,40,'ic-bad')}<text class="t-b" x="374" y="136" text-anchor="middle">shard 2</text><text class="t-m" x="14" y="30" style="font-size:17px">created_at = today</text><text class="t-m t-a" x="14" y="62" style="font-size:17px">every new row</text><text class="t-b t-bad" x="406" y="62" text-anchor="end">→ one shard</text><text class="t-m" x="102" y="166" text-anchor="middle">0 rows</text><text class="t-m" x="238" y="166" text-anchor="middle">0 rows</text><text class="t-m" x="374" y="166" text-anchor="middle">all</text>
+</svg>`]])}
+${V.anat([[1,'shard'],' = ',[2,'hash(device_id)'],' ',[3,'% 3']],[
+ '<b>Which database</b> stores this row.',
+ '<b>The shard key</b>, turned into a number. Pick a key with many different values.',
+ '<b>Number of shards.</b> The remainder is always 0, 1 or 2.'])}
+${V.rules(V.rh('A good shard key'),
+ V.ok('device_id, user_id','Spreads writes evenly and keeps related rows together'),V.no('created_at date','All of today\'s writes hit one hot shard'),
+ V.no('a random number per row','Even, but one device\'s history is scattered everywhere'),V.no('JOIN across shards','Slow and hard: design so queries stay on one shard'))}
+${V.hook(`Copies scale reads. Splits scale writes.`)}
+`)}
 
-<h4>Replication lag</h4>
-<p>Copying takes time. Usually it is milliseconds, but under heavy load it can be seconds. That delay is called <b>replication lag</b>, and during it a replica returns slightly old data.</p>
-<p>The classic symptom: a user posts a comment, the page reloads, and their own comment is missing, because the write went to the primary but the reload read from a replica that has not caught up. The common fix is called <b>read-your-own-writes</b>: for a short time after a user writes something, send that user's reads to the primary. Data where a few seconds of delay is harmless, such as an article's view count, can always come from replicas.</p>
+${V.card(3,'Order of operations','sharding is the last resort',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Five steps from simplest to hardest: indexes, caching, read replicas, a bigger database, sharding">
+<rect class="bx-ok" x="8" y="8" width="404" height="28" rx="6"/><text class="t" x="20" y="28">1. indexes and query fixes</text><rect class="bx-ok" x="38" y="42" width="374" height="28" rx="6"/><text class="t" x="50" y="62">2. caching</text><rect class="bx-ok" x="68" y="76" width="344" height="28" rx="6"/><text class="t" x="80" y="96">3. read replicas</text><rect class="bx-warn" x="98" y="110" width="314" height="28" rx="6"/><text class="t" x="110" y="130">4. a bigger database</text><rect class="bx-bad" x="128" y="144" width="284" height="28" rx="6"/><text class="t" x="140" y="164">5. sharding</text><text class="t-s" x="410" y="196" text-anchor="end">try them in this order</text>
+</svg><figcaption>Each step down is harder to undo. Most apps never need the last one.</figcaption></figure>
+${V.like(`<p>Before building an extension on your house, you tidy up, then add shelves, then rent a storage unit. Knocking walls down comes last, because it is expensive and hard to undo.</p>`)}
+${V.build(`<ol><li>Phase 1, the news site: add one read replica and watch database load drop below 50%.</li><li>Phase 2, the IoT sensors: notice that more replicas barely help, because 70% of requests are writes.</li><li>Add shards until write load is under 60% with no errors.</li><li>Answer the questions: why replicas failed, and which shard key is best.</li></ol>`)}
+${V.hook(`Fix the query, cache it, copy it, grow it, and only then split it.`)}
+`)}
 
-<h4>Why replicas do not help with writes</h4>
-<p>Now phase 2: an IoT system, meaning the "Internet of Things", lots of small devices sending sensor readings. It also receives 2,000 requests per second, but 70% are writes: 1,400 writes per second against a capacity of 1,000. The database is at 140% and failing.</p>
-<p>Add replicas and nothing improves. Every write still has to go to the one primary. Worse, each replica must also apply every write, so each copy does the full write workload. Replicas multiply <b>read</b> capacity only.</p>
-<div class="mistake"><b>Common mistake</b>Adding replicas to fix a write problem. It is the most natural thing to try and it never works. Before scaling a database, check which kind of load is high: the simulator's notes say "drowning in reads" or "can't keep up with writes". Reads point to caches and replicas; writes point to sharding.</div>
-
-<h4>Sharding: split the data itself</h4>
-<p><b>Sharding</b>, also called partitioning, splits the data across several independent databases, called <b>shards</b>. Each shard holds only part of the data and handles only the reads and writes for that part. Three shards means roughly three times the write capacity, because each write goes to just one of them.</p>
-<p>How does the app know which shard holds a row? It uses a <b>shard key</b>: a column, such as <code>device_id</code>, whose value decides the shard. A common rule is to <b>hash</b> the key, turning it into a number exactly as a hash map does, and take the remainder when dividing by the number of shards:</p>
-<pre class="snip">shard = hash(device_id) % 3      # % means "remainder after dividing"
-# hash("sensor-17")  = 1,000,004  → remainder 2 → shard C
-# hash("sensor-42")  = 7,331      → remainder 2 → shard C
-# hash("sensor-99")  = 52,416     → remainder 0 → shard A</pre>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Sensor readings routed to three shards by hashing the device id">
-<rect class="bx" x="10" y="20" width="110" height="34" rx="6"/><rect class="bx" x="10" y="86" width="110" height="34" rx="6"/><rect class="bx" x="10" y="152" width="110" height="34" rx="6"/>
-<g text-anchor="middle"><text class="t-m" x="65" y="42">sensor-99</text><text class="t-m" x="65" y="108">sensor-5</text><text class="t-m" x="65" y="174">sensor-17</text></g>
-<rect class="bx-a" x="160" y="60" width="90" height="86" rx="8"/><text class="t-b" x="205" y="98" text-anchor="middle">hash</text><text class="t-s" x="205" y="118" text-anchor="middle">% 3</text>
-<path class="ln" d="M120 37L152 72"/><path class="ln" d="M120 103h32"/><path class="ln" d="M120 169L152 134"/>
-<rect class="bx-ok" x="300" y="20" width="110" height="40" rx="6"/><rect class="bx-ok" x="300" y="84" width="110" height="40" rx="6"/><rect class="bx-ok" x="300" y="148" width="110" height="40" rx="6"/>
-<g text-anchor="middle"><text class="t" x="355" y="45">Shard A</text><text class="t" x="355" y="109">Shard B</text><text class="t" x="355" y="173">Shard C</text></g>
-<path class="ln-ok" d="M250 80L292 46"/><polygon class="ah-ok" points="287,42 294,52 298,40"/>
-<path class="ln-ok" d="M250 104h42"/><polygon class="ah-ok" points="290,98 290,110 298,104"/>
-<path class="ln-ok" d="M250 128L292 162"/><polygon class="ah-ok" points="287,166 294,156 298,168"/>
-</svg><figcaption>Every reading carries its device ID. The router hashes the ID and takes the remainder after dividing by 3, which picks shard A, B or C. The same device always lands on the same shard, so all of one device's readings live together.</figcaption></figure>
-<p>Worked example, phase 2: 1,400 writes per second. Two shards give 2,000 writes of capacity, which is 70% busy, still above the lesson's 60% goal. Three shards give 3,000: about 47% busy. Goal met.</p>
-
-<h4>Choosing a good shard key</h4>
-<p>A shard key must do two jobs at once:</p>
-<ul>
-<li><b>Spread the load evenly</b>, so no shard gets far more traffic than the others. An overloaded shard is called a <b>hot shard</b>, and it limits the whole system.</li>
-<li><b>Keep related data together</b>, so common queries need only one shard.</li>
-</ul>
-<div class="tbl-wrap"><table><tr><th>Shard key for sensor readings</th><th>Even load?</th><th>Related data together?</th></tr>
-<tr><td><code>created_at</code> date</td><td>No: every write today hits the same shard</td><td>Yes, for one day</td></tr>
-<tr><td>A random number per row</td><td>Yes</td><td>No: one device's readings are scattered everywhere</td></tr>
-<tr><td><code>device_id</code></td><td>Yes: thousands of devices hash evenly</td><td>Yes: each device's history is on one shard</td></tr></table></div>
-<p>The date key is the trap. It looks tidy, but all of today's writes go to a single shard while the others sit idle, so you have paid for three databases and still have the write capacity of one.</p>
-
-<h4>The price of sharding</h4>
-<p>Sharding works, but it makes everything harder. A query that needs data from every shard, such as "average reading across all devices", must ask all of them and combine the answers. Joins between rows on different shards are no longer done by the database; your code has to do them. Transactions across shards are difficult. And adding a fourth shard to a <code>% 3</code> scheme changes the remainder for most keys, so most of the data must move. That is called <b>resharding</b>, and it is painful (techniques such as consistent hashing reduce how much moves).</p>
-<div class="tip"><b>Tip</b>The usual order when a database struggles: first add indexes and fix slow queries; then add caching; then read replicas; then a bigger database server (vertical scaling); and only then shard. Many very large companies run for years on one primary with replicas.</div>
-<div class="try"><b>Try it in your head</b>A database handles 1,000 writes per second, and you expect 2,500. You add four replicas. Does it help? No: every write still goes to the primary. How many shards would keep each one at or under 50% busy? 2,500 ÷ 500 = 5 shards.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Replication: one primary takes all writes and copies them to read replicas, which add read capacity.</li>
-<li>Replicas can lag behind, so read your own writes from the primary when freshness matters.</li>
-<li>Replicas do not scale writes: every write still goes to the primary, and to every copy.</li>
-<li>Sharding splits data across databases by a shard key, so reads and writes both scale.</li>
-<li>Pick a key that spreads load evenly and keeps related data together, like <code>device_id</code>; shard only after simpler fixes.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. 95% of requests are reads. Replicas or shards? <i>Replicas.</i> 2. With 4 shards and key % 4, where does user 10 go? <i>Shard 2.</i> 3. Why might a user not see their new profile picture right after saving? <i>Replication lag: the read went to a replica that had not caught up.</i></div>
 `);
 
 explain('k6',`
-<h4>What a design interview is really testing</h4>
-<p>"Design a service like bit.ly" is one of the most common system design interview questions. You will not write code. Instead, for about 45 minutes, you talk through how you would build it, drawing boxes and arrows as you go. There is no single right answer. The interviewer is watching <b>how you think</b>: do you ask before assuming, do you back your choices with numbers, and can you explain the trade-offs?</p>
-<p>This lesson walks through the whole design using everything from the track: APIs, stateless servers, load balancers, caches and replicas. Then you build the architecture in the simulator.</p>
+<p>"Design a service like bit.ly" is the most famous system design interview question. It is small enough to finish in 45 minutes and touches every idea from this track. The secret is not a perfect answer, it is a calm, step-by-step method.</p>
 
-<h4>A structure to follow</h4>
-<p>A clear structure keeps you calm and shows the interviewer you are organised. Six steps:</p>
-<ol>
-<li><b>Clarify</b> the requirements and the scale.</li>
-<li><b>Estimate</b> the load and storage with quick rough maths.</li>
-<li><b>Sketch the API</b>: the requests the system answers.</li>
-<li><b>Design the data model</b>: what you store.</li>
-<li><b>Draw the high-level architecture.</b></li>
-<li><b>Deep dive</b> into the hard parts and the trade-offs.</li>
-</ol>
-<p>Say each step out loud as you start it, so the interviewer can follow along and steer you.</p>
+${V.card(1,'The method','six steps, every time',`
+<figure class="fig"><svg viewBox="0 0 420 196" role="img" aria-label="Six rising steps: clarify, estimate, API, data, design, dive in">
+<rect class="bx-a" x="6" y="120" width="64" height="70" rx="6"/>${V.ic('chat',20,128,36,'ic-a')}<text class="t-b" x="38" y="186" text-anchor="middle" style="font-size:13.5px">Clarify</text><rect class="bx-a" x="75" y="100" width="64" height="90" rx="6"/>${V.ic('gear',89,108,36,'ic-a')}<text class="t-b" x="107" y="166" text-anchor="middle" style="font-size:13.5px">Estimate</text><rect class="bx-a" x="144" y="80" width="64" height="110" rx="6"/>${V.ic('terminal',158,88,36,'ic-a')}<text class="t-b" x="176" y="146" text-anchor="middle" style="font-size:13.5px">API</text><rect class="bx-a" x="213" y="60" width="64" height="130" rx="6"/>${V.ic('db',227,68,36,'ic-a')}<text class="t-b" x="245" y="126" text-anchor="middle" style="font-size:13.5px">Data</text><rect class="bx-a" x="282" y="40" width="64" height="150" rx="6"/>${V.ic('server',296,48,36,'ic-a')}<text class="t-b" x="314" y="106" text-anchor="middle" style="font-size:13.5px">Design</text><rect class="bx-a" x="351" y="20" width="64" height="170" rx="6"/>${V.ic('search',365,28,36,'ic-a')}<text class="t-b" x="383" y="86" text-anchor="middle" style="font-size:13.5px">Dive in</text>
+</svg><figcaption>Climb in order. Each step uses what you learned on the one below.</figcaption></figure>
+${V.like(`<p>Planning a school trip. First ask: where, how many pupils, what budget (clarify). Then count coaches and packed lunches (estimate). Then the timetable, the seating plan, the route, and finally the details: what if a coach breaks down?</p>`)}
+${V.why(`<p>Interviewers grade how you think, not just the boxes you draw. Jumping straight to "microservices and Kafka" without asking how big the system is shows you are guessing. The steps keep you honest and make your reasoning easy to follow.</p>`)}
+${V.rules(V.rh('Do'),
+ V.ok('"Custom aliases? Expiry? Analytics?"','Clarify the features'),V.ok('"About 100M new links a month?"','Agree the scale'),
+ V.ok('POST /links, GET /{code}','Sketch the API early'),V.no('drawing before asking','Every later choice depends on the requirements'))}
+${V.hook(`Clarify, estimate, API, data, design, deep dive.`)}
+`)}
 
-<h4>Step 1: clarify</h4>
-<p>A URL shortener takes a long link and returns a short one, like <code>sho.rt/4c92</code>. Anyone who opens the short link is <b>redirected</b> to the long one. Before designing, ask questions such as:</p>
-<ul>
-<li>Can users choose their own custom codes? Do links expire?</li>
-<li>Do we need click analytics, meaning counting who clicked and when?</li>
-<li>How many new links per month, and how many clicks?</li>
-</ul>
-<p>Say the interviewer answers: about 100 million new links a month, analytics wanted, and clicks outnumber new links about 100 to 1. Already you know the most important fact: this system is extremely <b>read-heavy</b>. Almost all traffic is redirects.</p>
+${V.card(2,'Napkin maths','rough numbers, quickly',`
+<figure class="fig"><svg viewBox="0 0 420 172" role="img" aria-label="100 million links a month is about 40 per second; 100 times as many redirects is about 4,000 per second; storage about 50 gigabytes">
+<rect class="bx-info" x="8" y="10" width="404" height="46" rx="8"/><text class="t" x="20" y="39">new links</text><text class="t-m" x="400" y="39" text-anchor="end">100M/month ≈ 40/s</text>
+<rect class="bx-warn" x="8" y="64" width="404" height="46" rx="8"/><text class="t" x="20" y="93">redirects (x100)</text><text class="t-m" x="400" y="93" text-anchor="end">≈ 4,000/s</text>
+<rect class="bx-ok" x="8" y="118" width="404" height="46" rx="8"/><text class="t" x="20" y="147">storage</text><text class="t-m" x="400" y="147" text-anchor="end">100M x 500 B ≈ 50 GB</text>
+</svg><figcaption>Round hard. A month is about 2.6 million seconds, so 100 million a month is roughly 40 a second.</figcaption></figure>
+${V.like(`<p>Guessing how many sweets are in a jar: count one layer, count the layers, multiply. You do not need the exact number, just the right size: tens, thousands or millions.</p>`)}
+${V.anat([[1,'100,000,000'],' ÷ ',[2,'2,600,000 s'],' ≈ ',[3,'40 writes/s'],'  x ',[4,'100']],[
+ '<b>Links per month</b>, agreed while clarifying.',
+ '<b>Seconds in a month</b>, roughly.',
+ '<b>Average write rate.</b> Tiny for one database.',
+ '<b>Read ratio.</b> Each link is clicked about 100 times, so about 4,000 redirects a second. This is a read-heavy system.'])}
+${V.hook(`Round hard, multiply fast, then ask: does it fit on one machine?`)}
+`)}
 
-<h4>Step 2: estimate with napkin maths</h4>
-<p><b>Napkin maths</b> means rough calculations with rounded numbers, the kind you could do on a napkin. The goal is the right order of magnitude, not precision. One handy fact: a month has about 2.5 million seconds (30 days × 86,400 seconds).</p>
-<pre class="snip">new links:  100,000,000 ÷ 2,500,000 s  ≈ 40 per second
-redirects:  40 × 100                   ≈ 4,000 per second
-storage:    100,000,000 × 500 bytes    = 50,000,000,000 bytes
-                                       ≈ 50 GB per month</pre>
-<p>Read that last line slowly. 500 bytes is a generous guess for one row (the code, the long URL, a date and an owner). 10⁸ rows × 500 bytes is 5 × 10¹⁰ bytes, which is 50 GB. A single database server holds that comfortably; even several years of links fits on one large server. So storage is not the problem. Handling thousands of redirects a second, quickly, is. The 4,000 figure is an average, and real traffic has peaks above it, which is why you plan with headroom.</p>
+${V.card(3,'Short codes','base62: counting with 62 digits',`
+${V.like(`<p>Car number plates. Using letters as well as digits lets a short plate cover millions of cars. Base62 uses 10 digits, 26 small letters and 26 capitals, so just 7 characters give 62⁷, about 3.5 trillion different codes.</p>`)}
+${V.steps([
+ ['Every new link gets the next unique id from the database, say <b>1000</b>. Base62 writes that number with 62 symbols: 0-9, a-z, A-Z.',`<svg viewBox="0 0 420 220" role="img" aria-label="id 1000">
+<text class="t-s" x="10" y="20">alphabet: position → character</text><rect class="bx" x="10" y="28" width="41" height="40" rx="5"/><text class="t-m" x="30" y="54" text-anchor="middle" style="font-size:17px">0</text><text class="t-s" x="30" y="86" text-anchor="middle">0</text><rect class="bx" x="55" y="28" width="41" height="40" rx="5"/><text class="t-m" x="75" y="54" text-anchor="middle" style="font-size:17px">1</text><text class="t-s" x="75" y="86" text-anchor="middle">1</text><rect class="bx" x="100" y="28" width="41" height="40" rx="5"/><text class="t-m" x="120" y="54" text-anchor="middle" style="font-size:17px">8</text><text class="t-s" x="120" y="86" text-anchor="middle">8</text><rect class="bx" x="145" y="28" width="41" height="40" rx="5"/><text class="t-m" x="165" y="54" text-anchor="middle" style="font-size:17px">9</text><text class="t-s" x="165" y="86" text-anchor="middle">9</text><rect class="bx" x="190" y="28" width="41" height="40" rx="5"/><text class="t-m" x="210" y="54" text-anchor="middle" style="font-size:17px">a</text><text class="t-s" x="210" y="86" text-anchor="middle">10</text><rect class="bx" x="235" y="28" width="41" height="40" rx="5"/><text class="t-m" x="255" y="54" text-anchor="middle" style="font-size:17px">g</text><text class="t-s" x="255" y="86" text-anchor="middle">16</text><rect class="bx" x="280" y="28" width="41" height="40" rx="5"/><text class="t-m" x="300" y="54" text-anchor="middle" style="font-size:17px">z</text><text class="t-s" x="300" y="86" text-anchor="middle">35</text><rect class="bx" x="325" y="28" width="41" height="40" rx="5"/><text class="t-m" x="345" y="54" text-anchor="middle" style="font-size:17px">A</text><text class="t-s" x="345" y="86" text-anchor="middle">36</text><rect class="bx" x="370" y="28" width="41" height="40" rx="5"/><text class="t-m" x="390" y="54" text-anchor="middle" style="font-size:17px">Z</text><text class="t-s" x="390" y="86" text-anchor="middle">61</text><text class="t-s" x="226" y="54" text-anchor="middle"></text><text class="t-m" x="10" y="124" style="font-size:18px">id = 1000</text><text class="t" x="10" y="156">divide by 62 and keep the remainders</text>
+</svg>`],
+ ['1000 ÷ 62 = 16, remainder <b>8</b>. Position 8 in the alphabet is the character <b>8</b>.',`<svg viewBox="0 0 420 220" role="img" aria-label="first remainder 8">
+<text class="t-s" x="10" y="20">alphabet: position → character</text><rect class="bx" x="10" y="28" width="41" height="40" rx="5"/><text class="t-m" x="30" y="54" text-anchor="middle" style="font-size:17px">0</text><text class="t-s" x="30" y="86" text-anchor="middle">0</text><rect class="bx" x="55" y="28" width="41" height="40" rx="5"/><text class="t-m" x="75" y="54" text-anchor="middle" style="font-size:17px">1</text><text class="t-s" x="75" y="86" text-anchor="middle">1</text><rect class="bx-hl" x="100" y="28" width="41" height="40" rx="5"/><text class="t-m" x="120" y="54" text-anchor="middle" style="font-size:17px">8</text><text class="t-s" x="120" y="86" text-anchor="middle">8</text><rect class="bx" x="145" y="28" width="41" height="40" rx="5"/><text class="t-m" x="165" y="54" text-anchor="middle" style="font-size:17px">9</text><text class="t-s" x="165" y="86" text-anchor="middle">9</text><rect class="bx" x="190" y="28" width="41" height="40" rx="5"/><text class="t-m" x="210" y="54" text-anchor="middle" style="font-size:17px">a</text><text class="t-s" x="210" y="86" text-anchor="middle">10</text><rect class="bx" x="235" y="28" width="41" height="40" rx="5"/><text class="t-m" x="255" y="54" text-anchor="middle" style="font-size:17px">g</text><text class="t-s" x="255" y="86" text-anchor="middle">16</text><rect class="bx" x="280" y="28" width="41" height="40" rx="5"/><text class="t-m" x="300" y="54" text-anchor="middle" style="font-size:17px">z</text><text class="t-s" x="300" y="86" text-anchor="middle">35</text><rect class="bx" x="325" y="28" width="41" height="40" rx="5"/><text class="t-m" x="345" y="54" text-anchor="middle" style="font-size:17px">A</text><text class="t-s" x="345" y="86" text-anchor="middle">36</text><rect class="bx" x="370" y="28" width="41" height="40" rx="5"/><text class="t-m" x="390" y="54" text-anchor="middle" style="font-size:17px">Z</text><text class="t-s" x="390" y="86" text-anchor="middle">61</text><text class="t-s" x="226" y="54" text-anchor="middle"></text><text class="t-m" x="10" y="124" style="font-size:17px">1000 ÷ 62 = 16 r 8</text><text class="t-m t-a" x="300" y="124" style="font-size:17px">→ 8</text>
+</svg>`],
+ ['16 ÷ 62 = 0, remainder <b>16</b>. Position 16 is <b>g</b> (a is 10, b is 11 ... g is 16). The quotient is 0, so stop.',`<svg viewBox="0 0 420 220" role="img" aria-label="second remainder 16 is g">
+<text class="t-s" x="10" y="20">alphabet: position → character</text><rect class="bx" x="10" y="28" width="41" height="40" rx="5"/><text class="t-m" x="30" y="54" text-anchor="middle" style="font-size:17px">0</text><text class="t-s" x="30" y="86" text-anchor="middle">0</text><rect class="bx" x="55" y="28" width="41" height="40" rx="5"/><text class="t-m" x="75" y="54" text-anchor="middle" style="font-size:17px">1</text><text class="t-s" x="75" y="86" text-anchor="middle">1</text><rect class="bx-hl" x="100" y="28" width="41" height="40" rx="5"/><text class="t-m" x="120" y="54" text-anchor="middle" style="font-size:17px">8</text><text class="t-s" x="120" y="86" text-anchor="middle">8</text><rect class="bx" x="145" y="28" width="41" height="40" rx="5"/><text class="t-m" x="165" y="54" text-anchor="middle" style="font-size:17px">9</text><text class="t-s" x="165" y="86" text-anchor="middle">9</text><rect class="bx" x="190" y="28" width="41" height="40" rx="5"/><text class="t-m" x="210" y="54" text-anchor="middle" style="font-size:17px">a</text><text class="t-s" x="210" y="86" text-anchor="middle">10</text><rect class="bx-hl" x="235" y="28" width="41" height="40" rx="5"/><text class="t-m" x="255" y="54" text-anchor="middle" style="font-size:17px">g</text><text class="t-s" x="255" y="86" text-anchor="middle">16</text><rect class="bx" x="280" y="28" width="41" height="40" rx="5"/><text class="t-m" x="300" y="54" text-anchor="middle" style="font-size:17px">z</text><text class="t-s" x="300" y="86" text-anchor="middle">35</text><rect class="bx" x="325" y="28" width="41" height="40" rx="5"/><text class="t-m" x="345" y="54" text-anchor="middle" style="font-size:17px">A</text><text class="t-s" x="345" y="86" text-anchor="middle">36</text><rect class="bx" x="370" y="28" width="41" height="40" rx="5"/><text class="t-m" x="390" y="54" text-anchor="middle" style="font-size:17px">Z</text><text class="t-s" x="390" y="86" text-anchor="middle">61</text><text class="t-s" x="226" y="54" text-anchor="middle"></text><text class="t-m" x="10" y="124" style="font-size:17px">1000 ÷ 62 = 16 r 8</text><text class="t-m t-a" x="300" y="124" style="font-size:17px">→ 8</text><text class="t-m" x="10" y="156" style="font-size:17px">  16 ÷ 62 =  0 r 16</text><text class="t-m t-a" x="300" y="156" style="font-size:17px">→ g</text>
+</svg>`],
+ ['Read the characters from the last one up: <b>g8</b>. Unique ids give unique codes, with no collisions to check.',`<svg viewBox="0 0 420 220" role="img" aria-label="code g8">
+<text class="t-s" x="10" y="20">alphabet: position → character</text><rect class="bx" x="10" y="28" width="41" height="40" rx="5"/><text class="t-m" x="30" y="54" text-anchor="middle" style="font-size:17px">0</text><text class="t-s" x="30" y="86" text-anchor="middle">0</text><rect class="bx" x="55" y="28" width="41" height="40" rx="5"/><text class="t-m" x="75" y="54" text-anchor="middle" style="font-size:17px">1</text><text class="t-s" x="75" y="86" text-anchor="middle">1</text><rect class="bx-hl" x="100" y="28" width="41" height="40" rx="5"/><text class="t-m" x="120" y="54" text-anchor="middle" style="font-size:17px">8</text><text class="t-s" x="120" y="86" text-anchor="middle">8</text><rect class="bx" x="145" y="28" width="41" height="40" rx="5"/><text class="t-m" x="165" y="54" text-anchor="middle" style="font-size:17px">9</text><text class="t-s" x="165" y="86" text-anchor="middle">9</text><rect class="bx" x="190" y="28" width="41" height="40" rx="5"/><text class="t-m" x="210" y="54" text-anchor="middle" style="font-size:17px">a</text><text class="t-s" x="210" y="86" text-anchor="middle">10</text><rect class="bx-hl" x="235" y="28" width="41" height="40" rx="5"/><text class="t-m" x="255" y="54" text-anchor="middle" style="font-size:17px">g</text><text class="t-s" x="255" y="86" text-anchor="middle">16</text><rect class="bx" x="280" y="28" width="41" height="40" rx="5"/><text class="t-m" x="300" y="54" text-anchor="middle" style="font-size:17px">z</text><text class="t-s" x="300" y="86" text-anchor="middle">35</text><rect class="bx" x="325" y="28" width="41" height="40" rx="5"/><text class="t-m" x="345" y="54" text-anchor="middle" style="font-size:17px">A</text><text class="t-s" x="345" y="86" text-anchor="middle">36</text><rect class="bx" x="370" y="28" width="41" height="40" rx="5"/><text class="t-m" x="390" y="54" text-anchor="middle" style="font-size:17px">Z</text><text class="t-s" x="390" y="86" text-anchor="middle">61</text><text class="t-s" x="226" y="54" text-anchor="middle"></text><text class="t-m" x="10" y="124" style="font-size:17px">1000 ÷ 62 = 16 r 8</text><text class="t-m t-a" x="300" y="124" style="font-size:17px">→ 8</text><text class="t-m" x="10" y="156" style="font-size:17px">  16 ÷ 62 =  0 r 16</text><text class="t-m t-a" x="300" y="156" style="font-size:17px">→ g</text><rect class="bx-ok" x="10" y="172" width="400" height="40" rx="8"/><text class="t-m" x="210" y="199" text-anchor="middle" style="font-size:18px">read bottom-up: sho.rt/g8</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('base62 of a unique id','Unique by design: no collision checks'),V.ok('random 7 characters','Also fine, but check the code is not already taken'),
+ V.no('first 3 characters of MD5(url)','Only 4,096 possible codes: collisions everywhere'),V.ok('trade-off: ids are guessable','Say it out loud: g8 means g9 probably exists'))}
+${V.hook(`Unique number in, short code out: divide by 62, read the remainders upwards.`)}
+`)}
 
-<h4>Steps 3 and 4: API and data model</h4>
-<p>Two requests do almost all the work:</p>
-<pre class="snip">POST /links   body: {"url": "https://example.com/very/long"}
-              → 201 Created  {"code": "4c92"}
+${V.card(4,'A click, end to end','following one redirect',`
+${V.steps([
+ ['You click <b>sho.rt/g8</b>. The browser sends <code>GET /g8</code>.',`<svg viewBox="0 0 420 216" role="img" aria-label="Browser sends GET /g8">
+<rect class="bx-hl" x="6" y="20" width="88" height="84" rx="10"/>${V.ic('laptop',30,28,40,'ic-a')}<text class="t-b" x="50" y="94" text-anchor="middle">browser</text><rect class="bx" x="110" y="20" width="88" height="84" rx="10"/>${V.ic('sign',134,28,40,'')}<text class="t-b" x="154" y="94" text-anchor="middle">balancer</text><rect class="bx" x="214" y="20" width="88" height="84" rx="10"/>${V.ic('server',238,28,40,'')}<text class="t-b" x="258" y="94" text-anchor="middle">app</text><rect class="bx" x="318" y="20" width="88" height="84" rx="10"/>${V.ic('bulb',342,28,40,'')}<text class="t-b" x="362" y="94" text-anchor="middle">cache</text><rect class="bx-info" x="214" y="140" width="192" height="40" rx="8"/>${V.ic('db',222,144,30,'ic-info')}<text class="t-b" x="320" y="166" text-anchor="middle">database</text><text class="t-b" x="10" y="206">GET /g8</text>
+</svg>`],
+ ['The <b>load balancer</b> passes it to any healthy app server. They are stateless, so any one will do.',`<svg viewBox="0 0 420 216" role="img" aria-label="Load balancer picks a server">
+<rect class="bx" x="6" y="20" width="88" height="84" rx="10"/>${V.ic('laptop',30,28,40,'')}<text class="t-b" x="50" y="94" text-anchor="middle">browser</text><rect class="bx-hl" x="110" y="20" width="88" height="84" rx="10"/>${V.ic('sign',134,28,40,'ic-a')}<text class="t-b" x="154" y="94" text-anchor="middle">balancer</text><rect class="bx" x="214" y="20" width="88" height="84" rx="10"/>${V.ic('server',238,28,40,'')}<text class="t-b" x="258" y="94" text-anchor="middle">app</text><rect class="bx" x="318" y="20" width="88" height="84" rx="10"/>${V.ic('bulb',342,28,40,'')}<text class="t-b" x="362" y="94" text-anchor="middle">cache</text><rect class="bx-info" x="214" y="140" width="192" height="40" rx="8"/>${V.ic('db',222,144,30,'ic-info')}<text class="t-b" x="320" y="166" text-anchor="middle">database</text><path class="ln-a" d="M95 62H99"/><polygon class="ah-a" points="97,56 97,68 109,62"/><text class="t-b" x="10" y="206">any app server can answer</text>
+</svg>`],
+ ['The app asks the <b>cache</b>: "g8?" Popular links are almost always there.',`<svg viewBox="0 0 420 216" role="img" aria-label="App asks the cache">
+<rect class="bx" x="6" y="20" width="88" height="84" rx="10"/>${V.ic('laptop',30,28,40,'')}<text class="t-b" x="50" y="94" text-anchor="middle">browser</text><rect class="bx" x="110" y="20" width="88" height="84" rx="10"/>${V.ic('sign',134,28,40,'')}<text class="t-b" x="154" y="94" text-anchor="middle">balancer</text><rect class="bx-hl" x="214" y="20" width="88" height="84" rx="10"/>${V.ic('server',238,28,40,'ic-a')}<text class="t-b" x="258" y="94" text-anchor="middle">app</text><rect class="bx" x="318" y="20" width="88" height="84" rx="10"/>${V.ic('bulb',342,28,40,'')}<text class="t-b" x="362" y="94" text-anchor="middle">cache</text><rect class="bx-info" x="214" y="140" width="192" height="40" rx="8"/>${V.ic('db',222,144,30,'ic-info')}<text class="t-b" x="320" y="166" text-anchor="middle">database</text><path class="ln-a" d="M95 62H99"/><polygon class="ah-a" points="97,56 97,68 109,62"/><path class="ln-a" d="M199 62H203"/><polygon class="ah-a" points="201,56 201,68 213,62"/><path class="ln-a" d="M303 62H307"/><polygon class="ah-a" points="305,56 305,68 317,62"/><text class="t-b" x="10" y="206">cache: g8 → ?</text>
+</svg>`],
+ ['Cache hit: g8 means <code>https://example.com/a/very/long/page</code>. On a miss the app reads the database and stores the answer in the cache.',`<svg viewBox="0 0 420 216" role="img" aria-label="Cache hit">
+<rect class="bx" x="6" y="20" width="88" height="84" rx="10"/>${V.ic('laptop',30,28,40,'')}<text class="t-b" x="50" y="94" text-anchor="middle">browser</text><rect class="bx" x="110" y="20" width="88" height="84" rx="10"/>${V.ic('sign',134,28,40,'')}<text class="t-b" x="154" y="94" text-anchor="middle">balancer</text><rect class="bx" x="214" y="20" width="88" height="84" rx="10"/>${V.ic('server',238,28,40,'')}<text class="t-b" x="258" y="94" text-anchor="middle">app</text><rect class="bx-hl" x="318" y="20" width="88" height="84" rx="10"/>${V.ic('bulb',342,28,40,'ic-a')}<text class="t-b" x="362" y="94" text-anchor="middle">cache</text><rect class="bx-info" x="214" y="140" width="192" height="40" rx="8"/>${V.ic('db',222,144,30,'ic-info')}<text class="t-b" x="320" y="166" text-anchor="middle">database</text><path class="ln-a" d="M95 62H99"/><polygon class="ah-a" points="97,56 97,68 109,62"/><path class="ln-a" d="M199 62H203"/><polygon class="ah-a" points="201,56 201,68 213,62"/><path class="ln-ok" d="M317 62H313"/><polygon class="ah-ok" points="315,56 315,68 303,62"/><text class="t-b t-ok" x="10" y="206">hit: the long URL, no database trip</text>
+</svg>`],
+ ['The app replies <b>302 Found</b> with a <code>Location</code> header holding the long URL. The browser follows it. Total time: a few milliseconds of server work.',`<svg viewBox="0 0 420 216" role="img" aria-label="302 redirect back to browser">
+<rect class="bx-hl" x="6" y="20" width="88" height="84" rx="10"/>${V.ic('laptop',30,28,40,'ic-a')}<text class="t-b" x="50" y="94" text-anchor="middle">browser</text><rect class="bx" x="110" y="20" width="88" height="84" rx="10"/>${V.ic('sign',134,28,40,'')}<text class="t-b" x="154" y="94" text-anchor="middle">balancer</text><rect class="bx" x="214" y="20" width="88" height="84" rx="10"/>${V.ic('server',238,28,40,'')}<text class="t-b" x="258" y="94" text-anchor="middle">app</text><rect class="bx" x="318" y="20" width="88" height="84" rx="10"/>${V.ic('bulb',342,28,40,'')}<text class="t-b" x="362" y="94" text-anchor="middle">cache</text><rect class="bx-info" x="214" y="140" width="192" height="40" rx="8"/>${V.ic('db',222,144,30,'ic-info')}<text class="t-b" x="320" y="166" text-anchor="middle">database</text><path class="ln-ok" d="M258 106V124H50V116"/><polygon class="ah-ok" points="44,118 56,118 50,106"/><text class="t-b t-ok" x="10" y="206">302 Location: https://example.com/...</text>
+</svg>`]])}
+${V.anat([[1,'HTTP/1.1 302 Found'],'\n',[2,'Location: https://example.com/a/very/long/page']],[
+ '<b>Status.</b> 302 means "temporarily over there". Browsers come back to you on every click, so you can count clicks.',
+ '<b>Location header.</b> Where the browser should go next.'])}
+${V.rules(V.rh('301 or 302?'),
+ V.ok('302 Found','Every click passes through you: analytics work'),V.ok('301 Moved Permanently','Browsers cache it and stop asking: less load, but no click counts'),
+ V.rh('Design choices'),
+ V.ok('cache code → URL','99% reads with a 95% hit rate: the database barely notices'),V.ok('links(code PRIMARY KEY, url, ...)','Lookup by code is one index hit'))}
+${V.build(`<ol><li>Answer the code-generation and 301 or 302 questions.</li><li>In the simulator, add a load balancer and enough app servers for 3,000 redirects a second.</li><li>Add a cache, then trim servers until p95 is under 100 ms and the bill is under $700 a month.</li><li>Do the storage maths: links times bytes per link.</li></ol>`)}
+${V.hook(`Read-heavy? Cache first. Want the clicks? 302.`)}
+`)}
 
-GET  /4c92    → 302 Found
-              Location: https://example.com/very/long</pre>
-<p>The second one is the redirect. The <code>Location</code> header tells the browser where to go next, and it follows automatically. The data model is one table, with the short code as its <b>primary key</b> (the unique identifier, indexed for instant lookups):</p>
-<pre class="snip">links(code PRIMARY KEY, url, created_at, owner_id)</pre>
-
-<h4>Step 5: the architecture</h4>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="Users, load balancer, stateless app servers, a cache and a database with a replica">
-<rect class="bx-info" x="8" y="88" width="68" height="44" rx="6"/><text class="t-b" x="42" y="115" text-anchor="middle">Users</text>
-<rect class="bx-a" x="96" y="80" width="70" height="60" rx="6"/><text class="t-b" x="131" y="106" text-anchor="middle">Load</text><text class="t-s" x="131" y="124" text-anchor="middle">balancer</text>
-<rect class="bx" x="194" y="64" width="80" height="44" rx="6"/><rect class="bx" x="190" y="76" width="80" height="44" rx="6"/><rect class="bx" x="186" y="88" width="80" height="44" rx="6"/>
-<text class="t-b" x="226" y="108" text-anchor="middle">App</text><text class="t-s" x="226" y="125" text-anchor="middle">stateless</text>
-<rect class="bx-ok" x="300" y="14" width="112" height="44" rx="6"/><text class="t-b" x="356" y="34" text-anchor="middle">Cache</text><text class="t-s" x="356" y="50" text-anchor="middle">code → url</text>
-<rect class="bx-info" x="300" y="100" width="112" height="40" rx="6"/><text class="t-b" x="356" y="125" text-anchor="middle">Database</text>
-<rect class="bx" x="300" y="168" width="112" height="36" rx="6"/><text class="t" x="356" y="191" text-anchor="middle">Replica</text>
-<path class="ln" d="M76 110h12"/><polygon class="ah" points="86,104 86,116 94,110"/>
-<path class="ln" d="M166 110h12"/><polygon class="ah" points="176,104 176,116 184,110"/>
-<path class="ln-ok" d="M270 80L294 52"/><polygon class="ah-ok" points="289,49 297,57 300,45"/><text class="t-s t-ok" x="250" y="40" text-anchor="middle">1 look up</text>
-<path class="ln" d="M266 118h26"/><polygon class="ah" points="290,112 290,124 298,118"/><text class="t-s" x="250" y="160" text-anchor="middle">2 on a miss</text>
-<path class="ln-d" d="M356 140v20"/><polygon class="ah" points="350,158 362,158 356,166"/>
-</svg><figcaption>Users reach a load balancer, which spreads requests over several stateless app servers. For a redirect, an app server first looks the code up in the cache. Only on a miss does it ask the database, which is copied to a replica for safety and extra read capacity.</figcaption></figure>
-<p>Walk the redirect path out loud: the request reaches the load balancer, which picks an app server. The app looks up the code in the cache. On a hit, it replies with the redirect at once. On a miss, it reads the database, stores the answer in the cache, then replies. Creating a link goes the other way: the app generates a code, writes the row to the database, and returns the code.</p>
-<p>Why does the cache matter so much here? Links never change once created, so cached entries never go stale, and popular links are clicked over and over. In the lesson's scenario, 95% of lookups hit the cache, so out of about 3,000 reads per second only around 150 reach the database.</p>
-
-<h4>Step 6, deep dive: generating short codes</h4>
-<p>Each code must be short and unique. The clean approach is to give every link a unique, increasing number (the database can generate one, as an auto-incrementing ID) and write that number in <b>base62</b>.</p>
-<p>You know base 10: ten digits, 0 to 9. Base62 uses 62 "digits": <code>0-9</code>, then <code>a-z</code> for 10 to 35, then <code>A-Z</code> for 36 to 61. Converting works like converting to any base: divide by 62 repeatedly and keep the remainders. Take the ID 1,000,000:</p>
-<div class="tbl-wrap"><table><tr><th>Divide</th><th>Result</th><th>Remainder</th><th>Character</th></tr>
-<tr><td>1,000,000 ÷ 62</td><td>16,129</td><td>2</td><td>2</td></tr>
-<tr><td>16,129 ÷ 62</td><td>260</td><td>9</td><td>9</td></tr>
-<tr><td>260 ÷ 62</td><td>4</td><td>12</td><td>c</td></tr>
-<tr><td>4 ÷ 62</td><td>0</td><td>4</td><td>4</td></tr></table></div>
-<p>Read the characters from the bottom up: <code>4c92</code>. A million links need only four characters. Seven characters give 62⁷, about 3.5 trillion codes, which is enough for this service practically forever.</p>
-<p>The alternative is a random 7-character code, checking the database to make sure it is not already taken. Random codes cannot be guessed in sequence, which some products prefer, at the cost of that extra check.</p>
-<div class="mistake"><b>Common mistake</b>Using the first few characters of a hash of the URL, such as MD5, as the code. Three characters give only 62³, about 238,000 combinations, so with millions of links, different URLs collide constantly and one link silently overwrites another. Hashes are only safe as codes if you keep them long and still check for collisions.</div>
-
-<h4>Deep dive: 301 or 302?</h4>
-<p>Both status codes redirect, but they tell the browser different things. <b>301 Moved Permanently</b> says "this will always point there". Browsers remember it and, next time, go straight to the long URL without asking you. <b>302 Found</b> says "for now, go there", so the browser asks you every time.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="With 302 every click passes through the shortener; with 301 later clicks skip it">
-<text class="t-b" x="10" y="22">302: every click</text>
-<rect class="bx-info" x="10" y="34" width="90" height="36" rx="6"/><rect class="bx-a" x="165" y="34" width="90" height="36" rx="6"/><rect class="bx-ok" x="320" y="34" width="90" height="36" rx="6"/>
-<g text-anchor="middle"><text class="t" x="55" y="57">Browser</text><text class="t" x="210" y="57">sho.rt</text><text class="t" x="365" y="57">Target</text></g>
-<path class="ln-a" d="M100 52h57"/><polygon class="ah-a" points="155,46 155,58 163,52"/><path class="ln-ok" d="M255 52h57"/><polygon class="ah-ok" points="310,46 310,58 318,52"/>
-<text class="t-s t-ok" x="210" y="90" text-anchor="middle">you count every click</text>
-<line class="ln-d" x1="10" y1="104" x2="410" y2="104"/>
-<text class="t-b" x="10" y="128">301: later clicks</text>
-<rect class="bx-info" x="10" y="150" width="90" height="36" rx="6"/><rect class="bx" x="165" y="150" width="90" height="36" rx="6"/><rect class="bx-ok" x="320" y="150" width="90" height="36" rx="6"/>
-<g text-anchor="middle"><text class="t" x="55" y="173">Browser</text><text class="t-s" x="210" y="173">never asked</text><text class="t" x="365" y="173">Target</text></g>
-<path class="ln-ok" d="M100 160Q210 120 312 160"/><polygon class="ah-ok" points="306,152 310,164 318,162"/>
-</svg><figcaption>Top: with a 302 redirect, every click goes from the browser to the shortener and then on to the target, so every click can be counted. Bottom: after a 301, the browser remembers the target and goes straight there on later clicks. The shortener never sees them, so analytics miss them.</figcaption></figure>
-<p>Since this design needs click analytics, choose <b>302</b>. The trade-off, said out loud: 301 would cut your traffic, because browsers stop asking, but you would lose visibility of repeat clicks. Naming a trade-off like this is exactly what interviewers listen for.</p>
-
-<h4>Building it in the simulator</h4>
-<p>The scenario: 3,000 redirects per second, 99% reads, and a goal of no errors, p95 under 100 ms, and at most $700 a month. Use the formula from the scaling lesson: 3,000 ÷ 400 ÷ 0.75 = 10 app servers behind a load balancer, plus a cache. Then check the results: the 100 ms goal is strict, so if p95 is still too high, add a server or two and watch the cost stay under budget. With a 95% hit rate, the database load barely moves, which answers the last question in the tasks: the cache is the single biggest win.</p>
-<div class="try"><b>Try it in your head</b>What is the ID 125 in base62? 125 ÷ 62 is 2 remainder 1, and 2 ÷ 62 is 0 remainder 2. Reading bottom up: <code>21</code>. And if storage were 1 billion links at 500 bytes each? 10⁹ × 500 = 5 × 10¹¹ bytes, about 500 GB.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Follow the steps out loud: clarify, estimate, API, data model, architecture, deep dive.</li>
-<li>Napkin maths sets priorities: about 40 writes and 4,000 reads a second, and 50 GB a month, so reads are the challenge.</li>
-<li>Read-heavy plus links that never change means caching the code-to-URL lookup is the biggest win.</li>
-<li>Generate codes by base62-encoding a unique ID; 7 characters give about 3.5 trillion codes.</li>
-<li>Use 302 when you need analytics, 301 when you don't, and always say the trade-off out loud.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. What is 62 in base62? <i>10: one sixty-two and zero ones.</i> 2. Why does a cache help this system so much? <i>99% of requests are reads of a few popular codes.</i> 3. A marketing team wants click counts. 301 or 302? <i>302.</i></div>
 `);

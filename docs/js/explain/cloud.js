@@ -1,584 +1,467 @@
-/* cloud: "Explained step by step" walkthroughs. */
+/* cloud: "Understand it" visual walkthroughs. */
+{
+const rentF=(k,label)=>{
+ const msg=['$ aws ec2 run-instances ...','AWS finds a free slot in a real machine','i-05a8c1e3f7b9d2468  running  (meter on)','$ aws ec2 terminate-instances ...  (meter off)'][k];
+ let s='';for(let r=0;r<2;r++)for(let c=0;c<4;c++){const x=132+c*70,y=34+r*58,me=r===0&&c===2;s+=(me&&k>0&&k<3?`<rect class="bx-hl" x="${x-6}" y="${y-4}" width="56" height="54" rx="6"/>`:'')+V.ic('server',x,y,44,me&&k===2?'ic-ok':me&&k===3?'ic-info':'ic-info')+(me&&k===3?V.ic('cross',x+24,y+24,22,'ic-bad'):'')+(me&&k===2?V.ic('check',x+24,y+24,22,'ic-ok'):'')}
+ return `<svg viewBox="0 0 420 200" role="img" aria-label="${label}">
+${V.ic('laptop',8,52,60,'ic-a')}<text class="t" x="38" y="130" text-anchor="middle">you</text>
+${k===0?'<path class="ln-a" style="stroke-width:3" d="M72 82H104"/><polygon class="ah-a" points="102,75 102,89 114,82"/>':''}
+<rect class="ln-d" x="116" y="8" width="296" height="142" rx="10"/><text class="t-s" x="128" y="26" style="font-size:14px">data centre, us-east-1</text>
+${s}
+<rect class="bx-dark" x="8" y="160" width="404" height="34" rx="8"/><text class="t-term" x="20" y="183" style="font-size:14px">${msg}</text>
+</svg>`};
+const azF=(down,label,msg,ok)=>{
+ const Z=['2a','2b','2c'];
+ return `<svg viewBox="0 0 420 200" role="img" aria-label="${label}">
+<rect class="bx-info" x="6" y="6" width="408" height="148" rx="10"/><text class="t-b t-info" x="18" y="30">Region eu-west-2 (London)</text>
+${Z.map((z,i)=>{const x=18+i*134,isDown=down.includes(i),runs=i<2;return `<rect class="${isDown?'bx-bad':'bx'}" x="${x}" y="42" width="120" height="102" rx="8"/><text class="t-m" x="${x+60}" y="64" text-anchor="middle" style="font-size:14px">eu-west-${z}</text>`+V.ic(isDown?'cross':'server',x+38,72,44,isDown?'ic-bad':runs?'ic-ok':'ic-info')+`<text class="t ${isDown?'t-bad':runs?'t-ok':''}" x="${x+60}" y="136" text-anchor="middle" style="font-size:14px">${isDown?'power cut':runs?'your app':'spare'}</text>`}).join('')}
+${V.ic('people',8,158,38,ok?'ic-ok':'ic-bad')}<text class="t-b ${ok?'t-ok':'t-bad'}" x="54" y="184">${msg}</text>
+</svg>`};
 
 explain('c1',`
-<h4>What "the cloud" actually is</h4>
-<p>"The cloud" sounds mysterious, but it is just <b>other people's computers, rented by the minute</b>. Companies like Amazon (AWS), Microsoft (Azure) and Google (Google Cloud) own enormous buildings full of servers. You rent a slice of them over the internet, use it for as long as you need, and stop paying when you hand it back.</p>
-<p>Why not just buy your own servers? Imagine you are launching a shop and expect a rush on launch day. With your own hardware you would have to guess how many machines to buy, wait weeks for delivery, and then pay for them all year even when they sit idle. With the cloud you ask for ten servers at 9am, and give nine of them back at 6pm. That flexibility, <b>paying only for what you use and getting it in seconds</b>, is the whole point.</p>
-<div class="analogy"><b>Think of it like</b>Electricity from the grid instead of running your own generator. You do not build a power station; you plug in, use what you need, and get a bill for exactly that. The cloud does the same for computing.</div>
-<p>This track uses <b>AWS</b> (Amazon Web Services), the largest provider. The ideas carry over almost one to one to Azure and Google Cloud, only the names change.</p>
+<p>Netflix, Duolingo and millions of small apps do not own most of the computers they run on. They rent them, by the second, from giant buildings full of machines. That is "the cloud".</p>
 
-<h4>How much do you want to manage? IaaS, PaaS, serverless, SaaS</h4>
-<p>Cloud services differ in how much of the work they do for you. Picture a stack of layers, from the physical machine at the bottom to your app at the top. Each kind of service draws the line between "the provider handles it" and "you handle it" at a different height.</p>
-<figure class="fig"><svg viewBox="0 0 420 260" role="img" aria-label="Which layers you manage in IaaS, PaaS, serverless and SaaS">
-<g text-anchor="middle">
-<text class="t-b" x="121" y="20">IaaS</text><text class="t-b" x="203" y="20">PaaS</text><text class="t-s" x="285" y="20">Serverless</text><text class="t-b" x="367" y="20">SaaS</text>
-</g>
-<text class="t-s" x="8" y="57">your app</text><text class="t-s" x="8" y="103">runtime</text><text class="t-s" x="8" y="149">OS</text><text class="t-s" x="8" y="195">hardware</text>
-<rect class="bx-a" x="84" y="34" width="74" height="38" rx="4"/><rect class="bx-a" x="84" y="80" width="74" height="38" rx="4"/><rect class="bx-a" x="84" y="126" width="74" height="38" rx="4"/><rect class="bx" x="84" y="172" width="74" height="38" rx="4"/>
-<rect class="bx-a" x="166" y="34" width="74" height="38" rx="4"/><rect class="bx" x="166" y="80" width="74" height="38" rx="4"/><rect class="bx" x="166" y="126" width="74" height="38" rx="4"/><rect class="bx" x="166" y="172" width="74" height="38" rx="4"/>
-<rect class="bx-a" x="248" y="34" width="74" height="38" rx="4"/><rect class="bx" x="248" y="80" width="74" height="38" rx="4"/><rect class="bx" x="248" y="126" width="74" height="38" rx="4"/><rect class="bx" x="248" y="172" width="74" height="38" rx="4"/>
-<rect class="bx" x="330" y="34" width="74" height="38" rx="4"/><rect class="bx" x="330" y="80" width="74" height="38" rx="4"/><rect class="bx" x="330" y="126" width="74" height="38" rx="4"/><rect class="bx" x="330" y="172" width="74" height="38" rx="4"/>
-<rect class="bx-a" x="84" y="226" width="20" height="20" rx="3"/><text class="t-s" x="112" y="241">you manage</text>
-<rect class="bx" x="230" y="226" width="20" height="20" rx="3"/><text class="t-s" x="258" y="241">provider manages</text>
-</svg><figcaption>Coloured squares are the layers you look after; plain ones are handled by the provider. With IaaS you manage everything from the operating system up. With PaaS and serverless you only bring your app or your functions. With SaaS you simply use finished software.</figcaption></figure>
-<div class="tbl-wrap"><table><tr><th>Model</th><th>What you get</th><th>Examples</th></tr>
-<tr><td><b>IaaS</b>, infrastructure as a service</td><td>Raw virtual machines, disks and networks. You install and patch the operating system and everything above it.</td><td>AWS EC2, DigitalOcean droplets, the VPS from the deployment track</td></tr>
-<tr><td><b>PaaS</b>, platform as a service</td><td>You hand over your app; the platform builds, runs and scales it.</td><td>Vercel, Render, Heroku, AWS Elastic Beanstalk</td></tr>
-<tr><td><b>Serverless</b> (functions)</td><td>You upload single functions; they run only when an event arrives, and you pay per request.</td><td>AWS Lambda, Cloudflare Workers</td></tr>
-<tr><td><b>SaaS</b>, software as a service</td><td>Finished software you log in to and use.</td><td>Gmail, Slack, GitHub</td></tr></table></div>
-<p>Here is a test you can always apply: <b>"Do I ever log in to a server and run <code>apt</code>?"</b> If yes, it is IaaS. If you only push code and it gets run for you, it is PaaS or serverless. If you only use it, it is SaaS. So Vercel, where you never touch a server, is PaaS.</p>
-<p>"Serverless" does not mean there are no servers. It means the servers are entirely the provider's problem: you never see, size or patch them.</p>
+${V.card(1,'Renting computers','the cloud is someone else\'s data centre',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A data centre full of server racks; you rent one machine and pay by the hour">
+<polygon class="bx" points="120,40 266,8 412,40"/><rect class="bx" x="120" y="40" width="292" height="122"/>
+${V.ic('server',138,54,44,'ic-info')}${V.ic('server',206,54,44,'ic-info')}${V.ic('server',274,54,44,'ic-info')}${V.ic('server',342,54,44,'ic-info')}
+${V.ic('server',138,108,44,'ic-info')}<rect class="bx-ok" x="200" y="102" width="56" height="56" rx="6"/>${V.ic('server',206,108,44,'ic-ok')}${V.ic('server',274,108,44,'ic-info')}${V.ic('server',342,108,44,'ic-info')}
+${V.ic('person',14,40,60,'ic-a')}<text class="t" x="44" y="124" text-anchor="middle">you</text>
+<text class="t-m t-ok" x="44" y="152" text-anchor="middle" style="font-size:14px">pay by</text><text class="t-m t-ok" x="44" y="168" text-anchor="middle" style="font-size:14px">the hour</text>
+</svg><figcaption>A cloud provider owns huge buildings full of computers, called data centres. You rent a slice of one machine over the internet and pay only while you use it.</figcaption></figure>
+${V.like(`<p>Hiring a bike from a city bike rack. You do not buy a bike, store it or fix its brakes. You unlock one with your phone, ride, drop it off and pay for the minutes.</p>`)}
+${V.why(`<p>Companies used to buy their own servers: wait weeks for delivery, guess how many they would need, and pay for them even when idle. In 2006 Amazon started renting out spare computing as Amazon Web Services (AWS). Microsoft Azure and Google Cloud followed.</p>`)}
+${V.steps([
+ ['You ask for a computer with one command (or a click in the web console).',rentF(0,'You request a server')],
+ ['AWS finds room on one of its real machines. Your server is a <b>virtual machine</b>: a software computer sharing that hardware.',rentF(1,'AWS picks a slot')],
+ ['Seconds later it is running and has an ID. The meter starts.',rentF(2,'The server is running')],
+ ['When you are done you terminate it. The slot goes back to the pool and the meter stops.',rentF(3,'Terminated, meter off')]])}
+${V.hook(`The cloud is just someone else's computer, rented by the second.`)}
+`)}
 
-<h4>Regions and availability zones</h4>
-<p>AWS's data centres are grouped by geography. A <b>region</b> is a separate area of the world with its own cluster of data centres, named with a code like <code>us-east-1</code> (Northern Virginia), <code>eu-west-1</code> (Ireland) or <code>af-south-1</code> (Cape Town). When you create something, you create it <b>in one region</b>, and it stays there.</p>
-<p>Inside each region there are several <b>availability zones</b>, or AZs, named like <code>us-east-1a</code> and <code>us-east-1b</code>. Each AZ is one or more data centres with its own power, cooling and network, a few kilometres from the others but linked by very fast connections. They are built so that a fire, flood or power cut in one zone does not affect the next.</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="A region contains three availability zones; the app runs in two, so losing one zone keeps it online">
-<rect class="bx-info" x="10" y="10" width="400" height="170" rx="10"/>
-<text class="t-b" x="24" y="34">Region: us-east-1</text>
-<rect class="bx-bad" x="24" y="48" width="114" height="118" rx="6"/><text class="t-b" x="81" y="72" text-anchor="middle">AZ a</text>
-<rect class="bx" x="38" y="86" width="86" height="36" rx="4"/><text class="t-s" x="81" y="109" text-anchor="middle">server</text>
-<path class="ln" d="M40 82l82 44M122 82l-82 44"/><text class="t-s t-bad" x="81" y="152" text-anchor="middle">power cut</text>
-<rect class="bx-ok" x="153" y="48" width="114" height="118" rx="6"/><text class="t-b" x="210" y="72" text-anchor="middle">AZ b</text>
-<rect class="bx" x="167" y="86" width="86" height="36" rx="4"/><text class="t-s" x="210" y="109" text-anchor="middle">server</text>
-<text class="t-s t-ok" x="210" y="152" text-anchor="middle">still serving</text>
-<rect class="bx" x="282" y="48" width="114" height="118" rx="6"/><text class="t-b" x="339" y="72" text-anchor="middle">AZ c</text>
-<text class="t-s" x="339" y="109" text-anchor="middle">spare room</text>
-<text class="t-s" x="210" y="206" text-anchor="middle">Two zones: one can fail and the app stays up.</text>
-</svg><figcaption>A region is a group of independent availability zones. Because the app runs in two zones, a power cut that takes out zone a leaves the copy in zone b serving every visitor.</figcaption></figure>
-<p>That is the trick to surviving failures: run important things in <b>at least two availability zones</b>. A bigger server does not help if its building loses power; a second copy in a different zone does. Choose the region itself mostly by <b>distance to your users</b> (closer means faster), by any legal rules about where data must stay, and by price, which varies a little between regions.</p>
-<div class="mistake"><b>Common mistake</b>"My resources have vanished!" Usually they have not: the console or CLI is looking at a different region. Everything in AWS is per region, so a server made in <code>eu-west-1</code> does not appear when you list <code>us-east-1</code>. Check the region first.</div>
+${V.card(2,'IaaS, PaaS, serverless, SaaS','how much do you want to look after?',`
+<figure class="fig"><svg viewBox="0 0 420 218" role="img" aria-label="Who manages each layer: in IaaS you manage almost everything, in SaaS the provider manages everything">
+<text class="t-b" x="141" y="24" text-anchor="middle" style="font-size:14px">IaaS</text><text class="t-b" x="219" y="24" text-anchor="middle" style="font-size:14px">PaaS</text><text class="t-b" x="297" y="24" text-anchor="middle" style="font-size:14px">Serverless</text><text class="t-b" x="375" y="24" text-anchor="middle" style="font-size:14px">SaaS</text>
+${['your code','scaling','runtime','OS','hardware'].map((r,i)=>{const y=36+i*31;const who=[[1,1,1,0],[1,1,0,0],[1,0,0,0],[1,0,0,0],[0,0,0,0]][i];return `<text class="t" x="8" y="${y+19}" style="font-size:14px">${r}</text>`+who.map((w,c)=>`<rect class="${w?'bx-a':'bx-ok'}" x="${104+c*78}" y="${y}" width="74" height="26" rx="4"/>`).join('')}).join('')}
+<rect class="bx-a" x="104" y="196" width="18" height="18" rx="3"/><text class="t" x="128" y="210" style="font-size:14px">you</text>
+<rect class="bx-ok" x="190" y="196" width="18" height="18" rx="3"/><text class="t" x="214" y="210" style="font-size:14px">the provider</text>
+</svg><figcaption>Moving right, the provider takes over more layers. You do less work but have less control.</figcaption></figure>
+${V.like(`<p>Pizza. <b>IaaS</b>: they rent you a kitchen, you make everything. <b>PaaS</b>: you bring your recipe, they cook it. <b>Serverless</b>: they cook one slice each time someone orders. <b>SaaS</b>: you just eat at the restaurant.</p>`)}
+${V.rules(V.rh('Examples'),V.ok('IaaS','AWS EC2, DigitalOcean droplets'),V.ok('PaaS','Vercel, Render, Heroku, Elastic Beanstalk'),
+ V.ok('Serverless','AWS Lambda, Cloudflare Workers'),V.ok('SaaS','Gmail, Slack, GitHub'))}
+${V.hook(`Kitchen, chef, slice, restaurant: the further right, the less you manage.`)}
+`)}
 
-<h4>Shared responsibility: who secures what</h4>
-<p>AWS and you split the security work, and the split follows the stack from earlier. AWS is responsible for the security <b>of</b> the cloud: the buildings, the hardware, the network cables and the software that runs the services. You are responsible for security <b>in</b> the cloud: everything you configure. Who may log in to your account, whether your storage is public, which ports are open, how strong your passwords are, and what data you store.</p>
-<p>So if you make a storage bucket public by mistake and it leaks, that is on you, not AWS. Many real data breaches happen exactly this way, not because the cloud was hacked but because a setting was wrong.</p>
+${V.card(3,'Regions and availability zones','do not keep all your eggs in one building',`
+${V.like(`<p>A shop chain with two branches in the same city. If one branch floods, customers walk to the other. A <b>region</b> is the city; an <b>availability zone</b> (AZ) is one branch: a separate data centre with its own power and network.</p>`)}
+${V.steps([
+ ['Your app runs in two availability zones inside the London region.',azF([],'App in two zones','Users: all fine',1)],
+ ['A power cut takes out zone eu-west-2a. Its copy of your app goes dark.',azF([0],'Zone 2a fails','Half the servers are gone...',0)],
+ ['Traffic simply goes to eu-west-2b. Users never notice. Had you used one zone only, the site would be down.',azF([0],'Traffic moves to 2b','Users: still fine',1)]])}
+${V.rules(V.rh('Naming'),V.ok('us-east-1, eu-west-2','Region codes: area, direction, number'),V.ok('eu-west-2a','An AZ: the region code plus a letter'),
+ V.rh('Conventions'),V.ok('at least two AZs','For anything that must stay up'),V.ok('a region near your users','Shorter distance, faster pages'))}
+${V.hook(`Region is the city, zone is the building. Use two buildings.`)}
+`)}
 
-<h4>Talking to AWS from the terminal: <code>aws configure</code></h4>
-<p>You can control AWS through its website, the <b>console</b>, but professionals mostly use the <b>AWS CLI</b>, a command called <code>aws</code>, because commands can be repeated, scripted and shared. Every command has the same shape: <code>aws</code>, then the service, then the operation, then options, like <code>aws s3 ls</code> or <code>aws ec2 describe-instances</code>.</p>
-<p>First the CLI needs to know who you are and which region to use. <code>aws configure</code> asks four questions:</p>
-<pre class="snip">aws configure
-AWS Access Key ID [None]: AKIAEXAMPLE123      # like a username
-AWS Secret Access Key [None]: ****            # like a password
-Default region name [None]: us-east-1
-Default output format [None]: json</pre>
-<p>An <b>access key</b> is a pair: an ID that is not secret (long-term ones start with <code>AKIA</code>), and a secret key that absolutely is. The CLI saves them in your home folder, in <code>~/.aws/credentials</code> and <code>~/.aws/config</code>. In this sandbox the keys are made up. With a real account, treat the secret key exactly like the secrets in the deployment track: never commit it, never paste it into code. For your own daily work, AWS now recommends signing in with short-lived credentials through IAM Identity Center (<code>aws configure sso</code>) rather than long-lived keys; you will see why in the IAM lesson.</p>
-<p>Then check who the CLI thinks you are:</p>
-<pre class="snip">aws sts get-caller-identity
-{ "UserId": "AIDA...", "Account": "123456789012",
-  "Arn": "arn:aws:iam::123456789012:user/you" }</pre>
-<p><code>sts</code> is the Security Token Service, which handles identities. The answer shows your 12-digit <b>account number</b> and your <b>ARN</b> (Amazon Resource Name), the full unique name AWS gives every user and resource. Run this whenever a command fails strangely: it is the AWS equivalent of <code>whoami</code>. If it says <code>Unable to locate credentials</code>, the CLI has not been configured yet.</p>
+${V.card(4,'Your account and the CLI','who locks which door',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="AWS secures the building and hardware; you secure your data, permissions and passwords">
+<rect class="bx-info" x="6" y="6" width="200" height="158" rx="10"/>${V.ic('house',20,16,46,'ic-info')}<text class="t-b" x="74" y="46">AWS secures</text>
+<text class="t" x="20" y="92" style="font-size:14px">buildings and guards</text><text class="t" x="20" y="118" style="font-size:14px">hardware and network</text><text class="t" x="20" y="144" style="font-size:14px">the cloud itself</text>
+<rect class="bx-a" x="214" y="6" width="200" height="158" rx="10"/>${V.ic('key',228,16,46,'ic-a')}<text class="t-b" x="282" y="46">You secure</text>
+<text class="t" x="228" y="92" style="font-size:14px">your data</text><text class="t" x="228" y="118" style="font-size:14px">who has permission</text><text class="t" x="228" y="144" style="font-size:14px">passwords and keys</text>
+</svg><figcaption>The shared responsibility model. AWS protects the cloud; you protect what you put in it.</figcaption></figure>
+${V.like(`<p>A landlord and a tenant. The landlord keeps the building safe; if you leave your own front door open, that is on you.</p>`)}
+${V.anat([[1,'aws'],' ',[2,'sts'],' ',[3,'get-caller-identity']],[
+ '<b>aws.</b> The AWS command-line tool. Set it up once with <code>aws configure</code>: access key, secret key, region, output format.',
+ '<b>Service.</b> Which AWS service to talk to. STS is the security token service.',
+ '<b>Operation.</b> What to ask it. This one answers "who am I logged in as?"'])}
+${V.rules(V.rh('Day one rules'),V.ok('MFA on the root user','The root login can do anything: protect it with a second factor'),
+ V.ok('a billing alarm','Get an email before a forgotten server costs you money'),V.no('access keys in Git','Bots find them within minutes and run up huge bills'),
+ V.no('using root every day','Create a separate everyday login'))}
+${V.build(`<ol><li>Run <code>aws configure</code> and answer its four questions.</li><li>Check who you are with <code>aws sts get-caller-identity</code>.</li><li>In a real account: turn on MFA for root and create a budget alert.</li></ol>`)}
+${V.hook(`AWS locks the building; you lock your own door.`)}
+`)}
 
-<h4>Day one rules: protect the account and the bill</h4>
-<ul>
-<li><b>Lock away the root user.</b> The email address you signed up with is the <b>root user</b>, which can do absolutely anything, including closing the account. Turn on <b>MFA</b> (multi-factor authentication: a code from an app on your phone as well as the password), then stop using root for daily work.</li>
-<li><b>Create an everyday identity</b>, such as a user in IAM Identity Center, with only the access you need.</li>
-<li><b>Set a billing alert</b>, for example a monthly budget of a few dollars in AWS Budgets that emails you when spending passes it. Cloud resources bill until you delete them, and a forgotten server or a leaked key can run up a large bill quietly. Free-tier offers change over time, so check the current terms rather than assuming something is free.</li>
-</ul>
-<div class="try"><b>Try it in your head</b>Your app runs on one large server in <code>us-east-1a</code>. The zone has a power failure. Would a bigger server have helped? No: it would be in the same dark building. Two smaller servers in <code>us-east-1a</code> and <code>us-east-1b</code> would have kept the app online.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>The cloud is renting computing on demand: pay for what you use, get it in seconds, give it back.</li>
-<li>IaaS gives raw machines, PaaS runs your app, serverless runs functions per request, SaaS is finished software.</li>
-<li>A region is an area of the world; it holds several independent availability zones. Run important things in at least two.</li>
-<li>Shared responsibility: AWS secures the cloud itself; you secure your configuration, data and access.</li>
-<li><code>aws configure</code> stores your keys and region; <code>aws sts get-caller-identity</code> shows who you are.</li>
-<li>Day one: MFA on root, an everyday identity, and a billing alert.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Vercel builds and hosts your code; you never see a server. Which model? <i>PaaS.</i> 2. How do you survive one data centre losing power? <i>Run in at least two availability zones.</i> 3. Who secures your bucket's permissions? <i>You.</i></div>
 `);
+
+const lifeF=(k,cmd,bill,label)=>{
+ const S=['pending','running','stopped','terminated'];
+ return `<svg viewBox="0 0 420 190" role="img" aria-label="${label}">
+<rect class="bx-dark" x="8" y="6" width="404" height="34" rx="8"/><text class="t-term" x="20" y="29" style="font-size:14px">$ ${cmd}</text>
+${S.map((s,i)=>{const x=8+i*103;return `<rect class="${i===k?'bx-hl':'bx'}" x="${x}" y="58" width="94" height="76" rx="8"/>`+V.ic(i===3?'cross':i===2?'clock':i===1?'check':'gear',x+29,64,36,i===k?(i===3?'ic-bad':i===1?'ic-ok':'ic-a'):'ic-info')+`<text class="t${i===k?'-b':''}" x="${x+47}" y="122" text-anchor="middle" style="font-size:14px">${s}</text>`+(i<3?`<path class="ln" d="M${x+94} 96H${x+103}"/>`:'')}).join('')}
+<rect class="${bill==='none'?'bx-ok':bill==='disk'?'bx-warn':'bx-bad'}" x="8" y="146" width="404" height="38" rx="8"/>
+<text class="t-b ${bill==='none'?'t-ok':bill==='disk'?'t-warn':'t-bad'}" x="20" y="171">${bill==='none'?'Billing: nothing':bill==='disk'?'Billing: still paying for the disk':'Billing: every second it runs'}</text>
+</svg>`};
+const lamF=(n,who,msg,label)=>`<svg viewBox="0 0 420 196" role="img" aria-label="${label}">
+${V.ic(n>3?'people':'person',8,30,64,n?'ic-p':'ic-info')}<text class="t" x="40" y="116" text-anchor="middle" style="font-size:14px">${who}</text>
+${n?'<path class="ln-a" style="stroke-width:3" d="M78 62H104"/><polygon class="ah-a" points="102,55 102,69 114,62"/>':''}
+<rect class="ln-d" x="118" y="8" width="294" height="136" rx="10"/><text class="t-s" x="130" y="28" style="font-size:14px">copies of your function</text>
+${n===0?'<text class="t t-dim" x="265" y="88" text-anchor="middle">none running: $0</text>':Array.from({length:Math.min(n,10)},(_,i)=>V.ic('box',132+(i%5)*56,40+Math.floor(i/5)*50,42,'ic-ok')).join('')}
+<rect class="bx-dark" x="8" y="154" width="404" height="36" rx="8"/><text class="t-term" x="20" y="177" style="font-size:14px">${msg}</text>
+</svg>`;
 
 explain('c2',`
-<h4>Two ways to run code in the cloud</h4>
-<p>"Compute" just means running programs. AWS offers many ways to do it, but two are the foundations, and they sit at opposite ends of the scale you met in the last lesson:</p>
-<ul>
-<li><b>EC2</b> (Elastic Compute Cloud) rents you a whole <b>virtual machine</b>: a computer that exists as software on AWS's hardware. It is IaaS. You choose its size, log in, install things, and it runs until you stop it.</li>
-<li><b>Lambda</b> runs a single <b>function</b> each time an event happens, then stops. It is serverless. There is no machine for you to see; you upload code, and you pay only while it runs.</li>
-</ul>
-<div class="analogy"><b>Think of it like</b>Renting a car versus taking a taxi. A rented car (EC2) is yours all day: you can go anywhere and keep things in the boot, but you pay for every hour, even while it is parked. A taxi (Lambda) appears when you call it, takes you on one trip, and you pay only for that trip. For a daily commute the car wins; for occasional trips the taxi does.</div>
-<p>Credentials and region are already set up in the sandbox, so you can go straight to the commands.</p>
+<p>Every app needs computers to run on. AWS offers two very different ways to rent them: a server that is always on, or a function that wakes up only when someone needs it. Picking the right one saves money and stress.</p>
 
-<h4>EC2 ingredients: image, instance type, key pair</h4>
-<p>To launch a virtual machine, called an <b>instance</b>, you make three choices:</p>
-<ul>
-<li>An <b>AMI</b> (Amazon Machine Image): the starting disk, with an operating system already installed, such as Ubuntu or Amazon Linux. Every AMI has an ID like <code>ami-0abcdef1234567890</code>. AMI IDs differ from region to region, so in real life you look up the current one for your region.</li>
-<li>An <b>instance type</b>: how big the machine is. The name has a pattern. In <code>t3.micro</code>, <code>t</code> is the family (general purpose, "burstable", good for small sites that are mostly idle), <code>3</code> is the generation, and <code>micro</code> is the size: two virtual CPUs and 1 GiB of memory. Bigger sizes, like <code>large</code> or <code>xlarge</code>, cost more per hour.</li>
-<li>A <b>key pair</b>: how you will log in with SSH. AWS keeps the public half and gives you the private half <b>once</b>.</li>
-</ul>
-<pre class="snip">aws ec2 create-key-pair --key-name my-key
-# the "KeyMaterial" in the reply is your private key.
-# Real life: save it with --query KeyMaterial --output text &gt; my-key.pem
-# then chmod 400 my-key.pem, so only you can read it</pre>
-<p>AWS does not keep a copy of the private key. If you lose it, you cannot use it to log in again; you would need a new key. And <code>chmod 400</code> is the Linux permission habit for secrets: read for the owner, nothing for anyone else. SSH refuses to use a key file other people can read.</p>
+${V.card(1,'EC2','an always-on shop',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A shop open 24 hours with lights on and a meter running, even with no customers">
+<polygon class="bx-a" points="40,46 150,8 260,46"/><rect class="bx" x="40" y="46" width="220" height="116"/>
+<rect class="bx-ok" x="60" y="60" width="96" height="34" rx="6"/><text class="t-b t-ok" x="108" y="83" text-anchor="middle">OPEN</text>
+${V.ic('door',176,60,60,'ic-a')}${V.ic('server',56,104,48,'ic-info')}<text class="t-m" x="160" y="140" text-anchor="middle" style="font-size:14px">t3.micro</text>
+${V.ic('clock',290,14,54,'ic-a')}<text class="t-b" x="317" y="92" text-anchor="middle">24/7</text>
+<rect class="bx-bad" x="282" y="108" width="132" height="54" rx="8"/><text class="t-m t-bad" x="348" y="132" text-anchor="middle" style="font-size:14px">meter on</text><text class="t" x="348" y="152" text-anchor="middle" style="font-size:14px">even if empty</text>
+</svg><figcaption>An EC2 instance is a virtual server you rent. It runs, and costs money, every second until you stop it, whether anyone visits or not.</figcaption></figure>
+${V.like(`<p>Renting a shop on the high street. It is yours to arrange however you like, open all day, but you pay the rent even on days nobody walks in.</p>`)}
+${V.why(`<p>EC2 (Elastic Compute Cloud), launched in 2006, was AWS's first big hit: a whole server in seconds instead of weeks. It is still the right tool when you need full control or something must run all the time.</p>`)}
+${V.anat([[1,'aws ec2 run-instances'],' ',[2,'--image-id ami-0abc...'],' ',[3,'--instance-type t3.micro'],' ',[4,'--key-name my-key']],[
+ '<b>Launch.</b> Start one or more new instances.',
+ '<b>Image.</b> An AMI (Amazon Machine Image): the disk to start from, such as Ubuntu with nothing else installed.',
+ '<b>Size.</b> How big a computer. <code>t3</code> is the family and generation; <code>micro</code> is the size.',
+ '<b>Key pair.</b> The key you will use to SSH in. Create it first with <code>create-key-pair</code>.'])}
+${V.steps([
+ ['You launch it. AWS prepares the machine: the state is <b>pending</b>.',lifeF(0,'aws ec2 run-instances ...','on','Pending')],
+ ['A few seconds later it is <b>running</b>. <code>describe-instances</code> shows it, with its ID and IP address.',lifeF(1,'aws ec2 describe-instances','on','Running')],
+ ['If you <b>stop</b> it, the computer switches off but its disk is kept, and the disk still costs a little.',lifeF(2,'aws ec2 stop-instances ...','disk','Stopped')],
+ ['<b>Terminate</b> deletes it for good, disk included. Billing ends.',lifeF(3,'aws ec2 terminate-instances ...','none','Terminated')]])}
+${V.rules(V.rh('Rules'),V.ok('create-key-pair first','run-instances fails if the key name does not exist'),V.no('stopped = free','A stopped instance still bills for its disk'),
+ V.rh('Conventions'),V.ok('t3.micro','Start small: you can resize later'),V.ok('terminate when done','Forgotten servers are the classic surprise bill'))}
+${V.hook(`EC2 is a shop: open all day, rent all day. Terminate what you don't use.`)}
+`)}
 
-<h4>Launching, listing and terminating</h4>
-<pre class="snip">aws ec2 run-instances --image-id ami-0abcdef1234567890 \\
-    --instance-type t3.micro --key-name my-key
-# the backslash continues the command on the next line</pre>
-<p>The reply is a block of <b>JSON</b>, a format of labelled values in curly braces. Look for <code>InstanceId</code>, which here is <code>i-05a8c1e3f7b9d2468</code>, and <code>State</code>, which starts as <code>pending</code> while AWS finds hardware and boots the machine. A few moments later, <code>aws ec2 describe-instances</code> lists your instances, and the state reads <code>running</code>. When it runs, it also gets a public IP address, and you could SSH in exactly as you did with the VPS.</p>
-<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="Instance lifecycle: pending, running, stopped, terminated, and what each one costs">
-<rect class="bx-info" x="10" y="20" width="110" height="44" rx="6"/><text class="t-b" x="65" y="47" text-anchor="middle">pending</text>
-<path class="ln" d="M120 42h22"/><polygon class="ah" points="140,36 140,48 148,42"/>
-<rect class="bx-ok" x="150" y="20" width="110" height="44" rx="6"/><text class="t-b" x="205" y="47" text-anchor="middle">running</text>
-<path class="ln" d="M260 42h22"/><polygon class="ah" points="280,36 280,48 288,42"/>
-<rect class="bx-warn" x="290" y="20" width="120" height="44" rx="6"/><text class="t-b" x="350" y="47" text-anchor="middle">stopped</text>
-<path class="ln" d="M190 64v50"/><polygon class="ah" points="184,112 196,112 190,120"/>
-<path class="ln" d="M350 64v38h-120v12"/><polygon class="ah" points="224,114 236,114 230,122"/>
-<rect class="bx-bad" x="150" y="122" width="110" height="44" rx="6"/><text class="t-b" x="205" y="149" text-anchor="middle">terminated</text>
-<text class="t-s" x="196" y="86" text-anchor="end">billed per second</text>
-<text class="t-s" x="342" y="86" text-anchor="end">disk still billed</text>
-<text class="t-s" x="205" y="190" text-anchor="middle">deleted for good, nothing billed</text>
-<text class="t-s" x="205" y="214" text-anchor="middle">(this cannot be undone)</text>
-</svg><figcaption>A new instance is pending, then running, which is billed by the second. Stopping it pauses the computing charge, but its disk is still billed. Terminating deletes it completely and stops all charges, and cannot be undone.</figcaption></figure>
-<p>When you are done, terminate it, naming it by its ID:</p>
-<pre class="snip">aws ec2 terminate-instances --instance-ids i-05a8c1e3f7b9d2468</pre>
-<p><b>Stop</b> and <b>terminate</b> are different. Stopping is like shutting a laptop: you can start it again later, and its disk survives, which is why the disk keeps costing money. Terminating is like recycling the laptop: the instance and, by default, its main disk are gone for good.</p>
-<div class="mistake"><b>Common mistake</b>Launching an instance to try something and forgetting it. It keeps running, and billing, all month. Make it a habit to run <code>describe-instances</code> at the end of every session and terminate whatever you no longer need. Stopped is not free.</div>
+${V.card(2,'Lambda','a pop-up stall that appears for each customer',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="An empty pitch costs nothing; when customers arrive, stalls pop up, one per customer">
+<rect class="ln-d" x="6" y="10" width="124" height="120" rx="10"/><text class="t t-dim" x="68" y="76" text-anchor="middle">empty: $0</text>
+<path class="ln-a" style="stroke-width:3" d="M136 70H158"/><polygon class="ah-a" points="156,63 156,77 168,70"/>
+${V.ic('person',176,14,40,'ic-p')}${V.ic('box',176,64,44,'ic-ok')}
+${V.ic('person',236,14,40,'ic-p')}${V.ic('box',236,64,44,'ic-ok')}
+${V.ic('person',296,14,40,'ic-p')}${V.ic('box',296,64,44,'ic-ok')}
+${V.ic('person',356,14,40,'ic-p')}${V.ic('box',356,64,44,'ic-ok')}
+<text class="t" x="290" y="132" text-anchor="middle">one copy per request</text>
+<text class="t-s" x="210" y="154" text-anchor="middle" style="font-size:14px">pay per request, not per hour</text>
+</svg><figcaption>AWS Lambda runs your function only when an event arrives, such as a web request. More events means more copies at once, automatically.</figcaption></figure>
+${V.like(`<p>A pop-up stall. When a customer turns up, a stall appears, serves them and folds away. A thousand customers? A thousand stalls. No customers, no stalls, no rent.</p>`)}
+${V.why(`<p>Lots of code runs only now and then: resizing a photo, sending an email, answering an API call. Keeping a server on all day for that is waste. Lambda launched in 2014 and started the "serverless" idea: there are still servers, you just never see or manage them.</p>`)}
+${V.anat([[1,'exports.handler'],' = ',[2,'async'],' (',[3,'event'],') =&gt; {\n  ',[4,'return { statusCode: 200, body: ... }'],';\n};'],[
+ '<b>Handler.</b> The function Lambda calls. <code>--handler index.handler</code> means "file index.js, export handler".',
+ '<b>async.</b> It can wait for things like database calls.',
+ '<b>event.</b> The input: the request or the JSON you send, like <code>{"name":"Ada"}</code>.',
+ '<b>Return.</b> The answer, sent back to whoever called it.'])}
+${V.steps([
+ ['Quiet time. No copies of your function exist, and you pay nothing.',lamF(0,'nobody','$ (no requests)','Nothing running')],
+ ['An event arrives: <code>{"name":"Ada"}</code>. Lambda starts a copy and calls your handler. The first start takes a little longer; this is called a <b>cold start</b>.',lamF(1,'1 request','event: {"name":"Ada"}','One copy runs')],
+ ['The handler returns. The answer goes back.',lamF(1,'1 request','{"message":"Hello, Ada!"}','The function returns')],
+ ['Sale day: thousands of requests arrive at once. Lambda simply runs many copies side by side.',lamF(10,'5,000/min','scaling out automatically...','Many copies run')],
+ ['Traffic drops and the copies are cleared away. You paid only for the work done.',lamF(0,'nobody','billed: requests + run time only','Back to zero')]])}
+${V.rules(V.rh('Rules'),V.ok('--handler index.handler','Must match the file name and the exported name'),V.no('a 2-hour job','Each run is limited to 15 minutes'),
+ V.ok('zip function.zip index.js','Code is uploaded as a zip'),V.ok('--cli-binary-format raw-in-base64-out','AWS CLI v2 needs this to send plain JSON with invoke'))}
+${V.hook(`Lambda is a pop-up: it appears for each customer, then folds away.`)}
+`)}
 
-<h4>Lambda: just the function</h4>
-<p>An EC2 instance runs all the time, waiting for work. Most small jobs do not need that. "Resize this uploaded photo", "answer this API request", "send a reminder email at 8am" each take a fraction of a second. Lambda lets you upload just the code for that job. AWS keeps it ready, runs it when an <b>event</b> arrives (an HTTP request, a new file, a timer), and scales it automatically: one copy for one request, hundreds of copies running side by side for hundreds.</p>
-<p>A Lambda function in Node.js is a file that exports one function, called the <b>handler</b>:</p>
-<pre class="snip">exports.handler = async (event) =&gt; {        // index.js
-  const name = event.name || 'world';      // read the input
-  return {
-    statusCode: 200,
-    body: JSON.stringify({ message: 'Hello, ' + name + '!' }),
-  };
-};</pre>
-<p>Read it line by line. <code>exports.handler</code> makes the function available under the name <code>handler</code>. It is <code>async</code> because Lambda waits for its result. The <code>event</code> is the input: whatever data the trigger sent, already turned from JSON into a JavaScript object. <code>event.name || 'world'</code> means "use the name if there is one, otherwise <code>world</code>". The return value is the output. The <code>statusCode</code> and <code>body</code> shape is what Lambda expects when the function answers web requests, and <code>body</code> must be a string, so the object is turned into JSON text with <code>JSON.stringify</code>.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="An event goes into the handler, which returns a response that is saved to out.json">
-<rect class="bx-dark" x="10" y="20" width="120" height="60" rx="6"/><text class="t-term" x="70" y="46" text-anchor="middle">event</text><text class="t-term" x="70" y="68" text-anchor="middle">name: Ada</text>
-<path class="ln-a" d="M130 50h20"/><polygon class="ah-a" points="148,44 148,56 156,50"/>
-<rect class="bx-a" x="158" y="20" width="110" height="60" rx="6"/><text class="t-b" x="213" y="46" text-anchor="middle">handler</text><text class="t-s" x="213" y="66" text-anchor="middle">index.js</text>
-<path class="ln-a" d="M268 50h20"/><polygon class="ah-a" points="286,44 286,56 294,50"/>
-<rect class="bx-ok" x="296" y="20" width="114" height="60" rx="6"/><text class="t-b" x="353" y="46" text-anchor="middle">out.json</text><text class="t-s" x="353" y="66" text-anchor="middle">Hello, Ada!</text>
-<text class="t-s" x="10" y="116">--payload sends the event in.</text>
-<text class="t-s" x="10" y="138">--handler index.handler names the file and</text>
-<text class="t-s" x="10" y="160">the exported function to call.</text>
-<text class="t-s" x="10" y="182">The last argument is where the reply is saved.</text>
-</svg><figcaption>Invoking the function sends an event, here with the name Ada. Lambda calls the exported handler in index.js, and the value it returns is written to the file out.json.</figcaption></figure>
+${V.card(3,'Which one?','match the tool to the traffic',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="Steady traffic suits EC2; spiky traffic suits Lambda">
+<rect class="bx-info" x="6" y="6" width="200" height="158" rx="10"/><text class="t-b" x="106" y="30" text-anchor="middle">steady all day</text>
+<path class="ln-a" style="stroke-width:3" d="M20 90H192"/><path class="ln" d="M20 130H192"/><text class="t-b t-info" x="106" y="154" text-anchor="middle">EC2</text>
+<rect class="bx-ok" x="214" y="6" width="200" height="158" rx="10"/><text class="t-b" x="314" y="30" text-anchor="middle">quiet, then spikes</text>
+<path class="ln-a" style="stroke-width:3" d="M228 126H260L272 50 284 126H330L340 70 350 126H400"/><path class="ln" d="M228 130H400"/><text class="t-b t-ok" x="314" y="154" text-anchor="middle">Lambda</text>
+</svg><figcaption>Busy all the time? A server is cheaper. Quiet most of the time with sudden rushes? Lambda wins.</figcaption></figure>
+${V.rules(V.ok('EC2','Long-running servers, games, custom software, full control'),V.ok('Lambda','APIs with spiky traffic, scheduled jobs, reacting to file uploads'))}
+${V.build(`<ol><li><code>create-key-pair</code>, then <code>run-instances</code> with t3.micro.</li><li><code>describe-instances</code> to see it running.</li><li><code>terminate-instances</code> with its ID.</li><li>Write <code>index.js</code>, zip it, <code>lambda create-function</code>.</li><li><code>lambda invoke</code> with a name, then read <code>out.json</code>.</li></ol>`)}
+${V.hook(`Always-on shop: pay rent. Pop-up stall: pay per customer.`)}
+`)}
 
-<h4>Packaging and creating the function</h4>
-<p>Lambda receives code as a <b>zip file</b>. Then <code>create-function</code> tells AWS everything it needs:</p>
-<pre class="snip">zip function.zip index.js
-aws lambda create-function --function-name hello \\
-    --runtime nodejs24.x --handler index.handler \\
-    --role arn:aws:iam::123456789012:role/lambda-basic \\
-    --zip-file fileb://function.zip</pre>
-<ul>
-<li><code>--runtime</code> picks the language version. Node.js versions retire over time, so for real projects choose the newest Node.js runtime Lambda currently offers.</li>
-<li><code>--handler index.handler</code> means "in the file <code>index.js</code>, call the export named <code>handler</code>". If either half is wrong, every call fails with a "handler is undefined" or "cannot find module" error.</li>
-<li><code>--role</code> is the identity the function runs as, written as an ARN. At minimum it lets the function write its logs. You will build roles in the IAM lesson.</li>
-<li><code>fileb://</code> means "read this local file as binary data". <code>file://</code> is for text, such as JSON.</li>
-</ul>
-
-<h4>Invoking it and reading the result</h4>
-<pre class="snip">aws lambda invoke --function-name hello \\
-    --payload '{"name":"Ada"}' out.json
-cat out.json     # {"statusCode":200,"body":"{\\"message\\":\\"Hello, Ada!\\"}"}</pre>
-<p>The single quotes around the payload stop the shell from interfering with the double quotes inside the JSON. Two outputs can confuse you here. The command prints a short reply with <code>"StatusCode": 200</code>, which only means "Lambda ran your function". Your function's own answer is in <code>out.json</code>. If the code crashed, the command still prints 200 but adds <code>"FunctionError": "Unhandled"</code>, and <code>out.json</code> contains the error message. Always read <code>out.json</code>.</p>
-<div class="tip"><b>Tip</b>With the real AWS CLI version 2, add <code>--cli-binary-format raw-in-base64-out</code> to <code>invoke</code> when you pass the payload as plain JSON. Without it, CLI v2 expects the payload in base64 encoding and reports an invalid base64 error.</div>
-
-<h4>Which one should you choose?</h4>
-<div class="tbl-wrap"><table><tr><th></th><th>EC2</th><th>Lambda</th></tr>
-<tr><td>You pay</td><td>Every second it runs, busy or idle</td><td>Per request plus the milliseconds of run time</td></tr>
-<tr><td>Scaling</td><td>You add instances, or set up Auto Scaling</td><td>Automatic, from zero to thousands at once</td></tr>
-<tr><td>Limits</td><td>Runs for as long as you like, any software</td><td>Each run lasts at most 15 minutes</td></tr>
-<tr><td>Good for</td><td>Steady long-running servers, custom software</td><td>Spiky or occasional event-driven work</td></tr></table></div>
-<p>One trade-off to know: after a quiet spell, Lambda's first request takes a little longer while AWS prepares a fresh copy of your function, a <b>cold start</b>. For most apps it is a fraction of a second, but it is why steady, latency-sensitive services often stay on servers.</p>
-<div class="try"><b>Try it in your head</b>An API gets about 10 requests a minute, except during a monthly sale when it gets 5,000. Which fits better? Lambda. An EC2 setup would need to be sized, and paid for all month, for the sale peak. Lambda scales up for the sale on its own and costs almost nothing on quiet days.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>EC2 rents a virtual machine: pick an AMI, an instance type like <code>t3.micro</code> and a key pair, then <code>run-instances</code>.</li>
-<li>Instances go pending, running, stopped, terminated. Running bills per second, stopped still bills the disk, so terminate what you are done with.</li>
-<li>Lambda runs one exported <code>handler(event)</code> per event and you pay per request.</li>
-<li><code>create-function</code> needs a name, runtime, handler (<code>file.export</code>), role and zip; <code>invoke</code> writes the function's reply to a file.</li>
-<li>Choose EC2 for steady, long-running work and Lambda for spiky, event-driven work.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. An API gets 10 requests a minute, and 5,000 during a monthly sale. EC2 or Lambda? <i>Lambda.</i> 2. You stopped an instance. Are you paying anything? <i>Yes, for its disk. Terminate to stop paying.</i> 3. What does <code>--handler index.handler</code> point at? <i>The handler export in index.js.</i></div>
 `);
+
+const bucketSvg=(x,items,lock)=>`<path class="${lock?'bx-info':'bx'}" d="M${x} 76H${x+170}L${x+152} 190H${x+18}Z"/><ellipse class="${lock?'bx-info':'bx'}" cx="${x+85}" cy="76" rx="85" ry="12"/>${items.map((n,i)=>V.ic('file',x+28+i*60,104,44,'ic-ok')+`<text class="t-m" x="${x+50+i*60}" y="174" text-anchor="middle" style="font-size:14px">${n}</text>`).join('')}${lock?V.ic('lock',x+140,50,30,'ic-info'):''}`;
+const s3F=(lines,items,right,label)=>`<svg viewBox="0 0 420 200" role="img" aria-label="${label}">
+<rect class="bx-dark" x="8" y="4" width="404" height="${lines.length*22+12}" rx="8"/>${lines.map((l,i)=>`<text class="t-term" x="18" y="${24+i*22}" style="font-size:14px">${l}</text>`).join('')}
+${bucketSvg(8,items,false)}
+${right.map(([t,c],i)=>`<text class="t-m ${c||''}" x="200" y="${104+i*26}" style="font-size:14px">${t}</text>`).join('')}
+</svg>`;
+const preF=(cmd,link,who,code,banner,label)=>`<svg viewBox="0 0 420 200" role="img" aria-label="${label}">
+<rect class="bx-dark" x="8" y="4" width="404" height="34" rx="8"/><text class="t-term" x="18" y="27" style="font-size:14px">$ ${cmd}</text>
+${V.ic('person',8,56,56,who?'ic-p':'ic-info')}<text class="t" x="36" y="132" text-anchor="middle" style="font-size:14px">${who||'stranger'}</text>
+<rect class="${link?'bx-warn':'bx'}" x="80" y="60" width="210" height="60" rx="8"/>${link?`<text class="t-m" x="92" y="84" style="font-size:14px">logo.png?X-Amz-</text><text class="t-m" x="92" y="108" style="font-size:14px">Signature=9f3c...</text>`:'<text class="t t-dim" x="185" y="96" text-anchor="middle" style="font-size:14px">no link</text>'}
+${V.ic('folder',318,50,64,'ic-info')}${V.ic('lock',362,94,28,'ic-info')}<text class="t" x="350" y="136" text-anchor="middle" style="font-size:14px">private bucket</text>
+<rect class="${code===200?'bx-ok':code?'bx-bad':'bx-info'}" x="8" y="150" width="404" height="42" rx="8"/><text class="t-b ${code===200?'t-ok':code?'t-bad':'t-info'}" x="20" y="177">${banner}</text>
+</svg>`;
 
 explain('c3',`
-<h4>Where should your data live?</h4>
-<p>In the last lesson you ran code. But almost every app also needs to <b>keep</b> things: the photos people upload, your site's images, nightly backups, and the rows of a database such as users and orders. Where you put them matters, because a server can be terminated at any moment, and anything stored only on its disk goes with it.</p>
-<p>AWS has a storage service for each kind of data. This lesson covers the two you will use most:</p>
-<div class="tbl-wrap"><table><tr><th>Service</th><th>Stores</th><th>Use for</th></tr>
-<tr><td><b>S3</b></td><td>Files, called objects, in containers called buckets</td><td>Uploads, images, backups, static websites</td></tr>
-<tr><td><b>EBS</b></td><td>A virtual disk attached to one EC2 instance</td><td>The server's own operating system and files</td></tr>
-<tr><td><b>RDS</b></td><td>A managed relational database</td><td>Postgres or MySQL without running the database server yourself</td></tr></table></div>
-<p>EBS you met without knowing it: it is the disk that stays billed when an instance is stopped. The rest of this lesson is about S3 and RDS.</p>
+<p>Apps are full of files: profile pictures, uploads, backups. They also need a database that never loses data. The cloud gives you both without you looking after a single disk.</p>
 
-<h4>S3: buckets and objects</h4>
-<p><b>S3</b> (Simple Storage Service) is storage for files on the internet. You never think about disks or how full they are; you simply put files in and take them out, and AWS stores each one redundantly across several availability zones. It is designed to be extremely durable: losing a file you stored is vanishingly rare.</p>
-<p>Two words to learn:</p>
-<ul>
-<li>A <b>bucket</b> is a named container for files. You create it once.</li>
-<li>An <b>object</b> is one stored file, plus a little information about it. Each object has a <b>key</b>, its name inside the bucket, such as <code>logo.png</code> or <code>images/2026/logo.png</code>.</li>
-</ul>
-<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="A bucket holds objects, each identified by a key; the full address is s3 colon slash slash bucket slash key">
-<rect class="bx-info" x="10" y="10" width="400" height="160" rx="10"/>
-<text class="t-b" x="24" y="34">bucket: you-portfolio-assets-2026</text>
-<rect class="bx" x="24" y="48" width="180" height="50" rx="6"/><text class="t-m" x="114" y="70" text-anchor="middle">logo.png</text><text class="t-s" x="114" y="88" text-anchor="middle">an object</text>
-<rect class="bx" x="216" y="48" width="180" height="50" rx="6"/><text class="t-m" x="306" y="70" text-anchor="middle">index.html</text><text class="t-s" x="306" y="88" text-anchor="middle">an object</text>
-<rect class="bx" x="24" y="108" width="372" height="50" rx="6"/><text class="t-m" x="210" y="130" text-anchor="middle">backups/2026-10-01.sql</text><text class="t-s" x="210" y="148" text-anchor="middle">the key contains slashes; there is no real folder</text>
-<text class="t-s" x="10" y="196">Full address of one object:</text>
-<text class="t-m" x="10" y="222"><tspan class="t-info">s3://you-portfolio-assets-2026</tspan>/logo.png</text>
-<text class="t-s" x="10" y="242">bucket name, then the object's key</text>
-</svg><figcaption>A bucket is one big container. Inside it, each file is an object with a key, its name. Slashes in a key only look like folders. You address an object as s3, colon, two slashes, the bucket name, a slash and the key.</figcaption></figure>
-<p>Inside a bucket there are no real folders. A key like <code>backups/2026-10-01.sql</code> is just a name that happens to contain a slash, and the console draws it as a folder to be friendly. The part before the last slash is called a <b>prefix</b>.</p>
+${V.card(1,'S3 buckets','unlimited storage for files',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="A bucket named you-portfolio-assets-2026 holding objects logo.png and index.html, each found by its key">
+<text class="t-m" x="93" y="34" text-anchor="middle" style="font-size:14px">s3://you-portfolio-</text><text class="t-m" x="93" y="54" text-anchor="middle" style="font-size:14px">assets-2026</text>
+${bucketSvg(8,['logo','index'],false)}
+<text class="t-b" x="210" y="96">object = file + key</text>
+<text class="t-m" x="210" y="126" style="font-size:14px">key: logo.png</text>
+<text class="t-m" x="210" y="152" style="font-size:14px">key: index.html</text>
+<text class="t" x="210" y="184" style="font-size:14px">private by default</text>
+</svg><figcaption>S3 (Simple Storage Service) keeps files, called objects, in containers called buckets. Each object is found by its key, its name inside the bucket.</figcaption></figure>
+${V.like(`<p>A cloakroom with an endless rail. You hand over your coat (the file) and get a ticket with its name (the key). Show the ticket and you get exactly that coat back, years later.</p>`)}
+${V.why(`<p>Storing files on your own server means the disk fills up, breaks or is lost with the server. S3, launched in 2006, stores each file on several devices in several data centres, so losing one is almost impossible. It is designed for 99.999999999% durability ("eleven nines").</p>`)}
+${V.anat([[1,'aws s3 cp'],' ',[2,'logo.png'],' ',[3,'s3://'],[4,'you-portfolio-assets-2026'],[5,'/']],[
+ '<b>Copy.</b> Works like the Linux <code>cp</code>, but one side can be S3.',
+ '<b>Source.</b> The file on your computer.',
+ '<b>S3 address.</b> Means "inside S3".',
+ '<b>Bucket name.</b>',
+ '<b>Key prefix.</b> A trailing slash keeps the same file name: the key becomes <code>logo.png</code>.'])}
+${V.steps([
+ ['<code>mb</code> (make bucket) creates an empty bucket.',s3F(['$ aws s3 mb s3://you-portfolio-assets-2026'],[],[['make_bucket:','t-ok'],['you-portfolio-'],['assets-2026']],'Bucket created')],
+ ['<code>cp</code> uploads the file. It becomes an object with the key logo.png.',s3F(['$ aws s3 cp logo.png','    s3://you-portfolio-assets-2026/'],['logo'],[['upload:','t-ok'],['logo.png']],'File uploaded')],
+ ['<code>ls</code> lists what is inside, with sizes and dates.',s3F(['$ aws s3 ls s3://you-portfolio-assets-2026'],['logo'],[['2026-10-15'],['logo.png','t-ok']],'Bucket listed')]])}
+${V.rules(V.rh('Bucket name rules'),V.ok('you-portfolio-assets-2026','Lowercase letters, numbers and hyphens, 3 to 63 characters'),
+ V.no('Photos_2026','No capitals, no underscores'),V.no('s3://photos','Names are global across every AWS account: "photos" was taken long ago'),
+ V.rh('Convention'),V.ok('project-purpose-year','Prefix with your project or organisation so the name is unique'))}
+${V.hook(`Bucket is the rail, key is the ticket, object is the coat.`)}
+`)}
 
-<h4>Bucket names are global</h4>
-<p>Here is the surprise that catches everyone. A bucket name must be unique across <b>every AWS account in the world</b>, not just yours, because it becomes part of a web address like <code>you-portfolio-assets-2026.s3.amazonaws.com</code>. Names must be 3 to 63 characters of lowercase letters, numbers, dots and hyphens.</p>
-<p>So <code>aws s3 mb s3://photos</code> fails even on a brand-new account: somebody claimed <code>photos</code> years ago. The error is <code>BucketAlreadyExists</code>. Pick something distinctive, usually starting with your name, organisation or project, like <code>you-portfolio-assets-2026</code>.</p>
+${V.card(2,'Presigned URLs','a ticket that expires',`
+${V.like(`<p>A cinema ticket. It gets one person into one film, and after the showing it is worthless. Nobody needs a key to the whole cinema.</p>`)}
+${V.why(`<p>Thousands of data leaks came from buckets made public by mistake. Since 2023, new buckets block public access by default. When someone needs one file, you give them a temporary signed link instead.</p>`)}
+${V.steps([
+ ['A stranger tries to download the logo directly. The bucket is private, so S3 says <b>403 Access Denied</b>.',preF('curl https://...s3.amazonaws.com/logo.png','','',403,'403 Access Denied','Private bucket refuses')],
+ ['You create a <b>presigned URL</b>: a link with a secret signature and an expiry time baked in.',preF('aws s3 presign ... --expires-in 600',1,'you',0,'Link valid for 600 seconds','A signed link is created')],
+ ['You send the link to a friend. S3 checks the signature and the time, then hands over the file.',preF('curl "https://...logo.png?X-Amz-..."',1,'friend',200,'200 OK: here is logo.png','The friend downloads it')],
+ ['Eleven minutes later the same link fails. Nothing to clean up.',preF('curl "https://...logo.png?X-Amz-..."',1,'friend',403,'403: Request has expired','The link has expired')]])}
+${V.rules(V.ok('--expires-in 600','Seconds: 600 is 10 minutes'),V.no('making the bucket public','Anyone could list and download everything'))}
+${V.hook(`Private bucket, temporary ticket.`)}
+`)}
 
-<h4>Working with S3 from the CLI</h4>
-<p>The S3 commands deliberately look like Linux file commands:</p>
-<pre class="snip">aws s3 mb s3://you-portfolio-assets-2026        # make bucket
-aws s3 cp logo.png s3://you-portfolio-assets-2026/   # copy up
-aws s3 ls                                        # list your buckets
-aws s3 ls s3://you-portfolio-assets-2026         # list objects inside</pre>
-<p><code>mb</code> means "make bucket", and <code>cp</code> copies just like the Linux <code>cp</code>: from the first place to the second. Ending the destination with a slash keeps the file's own name as the key. Swap the two arguments to download. <code>ls</code> with no argument lists your buckets; with a bucket address it lists the objects, showing date, size in bytes and key.</p>
+${V.card(3,'Managed databases','a database with a caretaker',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="An RDS Postgres database inside a private network, with AWS doing backups, updates and failover">
+<rect class="ln-d" x="6" y="6" width="210" height="158" rx="10"/><text class="t-s" x="18" y="28" style="font-size:14px">private network</text>
+${V.ic('db',60,40,80,'ic-info')}<text class="t-b" x="100" y="146" text-anchor="middle">Postgres</text>
+${V.ic('robot',236,10,50,'ic-ok')}<text class="t-b t-ok" x="296" y="42">AWS does:</text>
+<text class="t" x="240" y="86" style="font-size:14px">nightly backups</text>
+<text class="t" x="240" y="112" style="font-size:14px">security updates</text>
+<text class="t" x="240" y="138" style="font-size:14px">swap to a spare if</text><text class="t" x="240" y="158" style="font-size:14px">a machine dies</text>
+</svg><figcaption>RDS (Relational Database Service) runs Postgres or MySQL for you. You use the database; AWS does the chores.</figcaption></figure>
+${V.like(`<p>Renting a flat with a caretaker instead of owning a house. You live there; someone else fixes the boiler and checks the smoke alarms.</p>`)}
+${V.anat([[1,'aws rds create-db-instance'],' ',[2,'--engine postgres'],' ',[3,'--db-instance-class db.t3.micro'],' ',[4,'--manage-master-user-password']],[
+ '<b>Create.</b> Start a new managed database. Give it a name with <code>--db-instance-identifier</code>.',
+ '<b>Engine.</b> Which database software.',
+ '<b>Size.</b> Database sizes start with <code>db.</code>',
+ '<b>Password.</b> AWS creates the admin password and keeps it in Secrets Manager, so it is never typed or committed.'])}
+${V.rules(V.rh('Rules'),V.ok('private network only','Only your app servers can reach it'),V.no('port 5432 open to the internet','Bots will start guessing passwords at once'),
+ V.rh('Which store?'),V.ok('S3','Files: uploads, images, backups'),V.ok('EBS','The disk attached to one EC2 server'),V.ok('RDS','Tables of data your app queries'))}
+${V.build(`<ol><li><code>aws s3 mb</code> with a unique name.</li><li><code>aws s3 cp</code> the logo, then <code>aws s3 ls</code>.</li><li><code>aws s3 presign</code> with <code>--expires-in 600</code>.</li><li><code>aws rds create-db-instance</code> with postgres, db.t3.micro, 20 GB and a managed password.</li><li><code>aws rds describe-db-instances</code> until it says available.</li></ol>`)}
+${V.hook(`Files in buckets, rows in RDS, and neither on the open internet.`)}
+`)}
 
-<h4>Private by default, and presigned URLs</h4>
-<p>New buckets block all public access by default, and you should keep it that way. Some of the largest data leaks in history were S3 buckets someone made public "just for a moment". Remember shared responsibility: AWS secures S3, but who may read your bucket is your setting.</p>
-<p>So how do you let someone download one private file, say a customer's invoice? You create a <b>presigned URL</b>: a normal web link that includes a signature made with your credentials and an expiry time. Anyone holding the link can fetch that one object until it expires, and nothing else.</p>
-<pre class="snip">aws s3 presign s3://you-portfolio-assets-2026/logo.png --expires-in 600
-# prints https://...amazonaws.com/logo.png?X-Amz-Expires=600&amp;X-Amz-Signature=...</pre>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="You sign a link to one private object; the recipient can fetch it until it expires">
-<rect class="bx-a" x="10" y="20" width="110" height="50" rx="6"/><text class="t-b" x="65" y="42" text-anchor="middle">You</text><text class="t-s" x="65" y="60" text-anchor="middle">aws s3 presign</text>
-<path class="ln-a" d="M120 45h36"/><polygon class="ah-a" points="154,39 154,51 162,45"/>
-<rect class="bx-info" x="164" y="20" width="110" height="50" rx="6"/><text class="t-b" x="219" y="42" text-anchor="middle">Link</text><text class="t-s" x="219" y="60" text-anchor="middle">valid 10 min</text>
-<path class="ln-a" d="M274 45h36"/><polygon class="ah-a" points="308,39 308,51 316,45"/>
-<rect class="bx" x="318" y="20" width="92" height="50" rx="6"/><text class="t-b" x="364" y="49" text-anchor="middle">Friend</text>
-<path class="ln-ok" d="M364 70v40h-150v14"/><polygon class="ah-ok" points="208,122 220,122 214,130"/>
-<rect class="bx-ok" x="120" y="132" width="190" height="50" rx="6"/><text class="t-b" x="215" y="154" text-anchor="middle">private bucket</text><text class="t-s" x="215" y="172" text-anchor="middle">returns logo.png</text>
-<text class="t-s t-bad" x="10" y="160">after 10 min:</text><text class="t-s t-bad" x="10" y="178">access denied</text>
-</svg><figcaption>You sign a link for one object. Your friend uses it to fetch that file from the private bucket. After ten minutes the same link is refused, and the bucket itself was never made public.</figcaption></figure>
-<p><code>--expires-in</code> is in seconds, so 600 is ten minutes. The signature is checked by S3 on every use, so the link cannot be edited to point at a different file. The link can only do what your own credentials could, so it fails if you lack read access.</p>
-<div class="mistake"><b>Common mistake</b>Making a whole bucket public because one image needed sharing. Share single files with presigned URLs, and for a public website put a CDN such as CloudFront in front of a private bucket. "Public bucket" should always feel alarming.</div>
-
-<h4>Managed databases with RDS</h4>
-<p>Running a database yourself on a server means installing it, applying security patches, taking backups, testing that the backups restore, and replacing the server when it fails, ideally without losing data. That is a lot of careful, boring work. A <b>managed database</b> does it for you. On AWS that is <b>RDS</b> (Relational Database Service), which runs Postgres, MySQL and others; outside AWS, Neon and Supabase offer managed Postgres too.</p>
-<pre class="snip">aws rds create-db-instance --db-instance-identifier shop-db \\
-    --engine postgres --db-instance-class db.t3.micro \\
-    --allocated-storage 20 --master-username shop \\
-    --manage-master-user-password</pre>
-<ul>
-<li><code>--db-instance-identifier</code> is your name for it. <code>--engine postgres</code> picks the database software.</li>
-<li><code>--db-instance-class db.t3.micro</code> is the machine size, named like EC2 types with <code>db.</code> in front. <code>--allocated-storage 20</code> is 20 GiB of disk.</li>
-<li><code>--master-username</code> is the administrator login. <code>--manage-master-user-password</code> tells AWS to generate the password and keep it in <b>Secrets Manager</b>, AWS's vault for secrets. You never type it, never see it in your shell history, and it can be rotated automatically.</li>
-</ul>
-<p>The database starts in the state <code>creating</code>, which takes several minutes in real life. <code>aws rds describe-db-instances</code> shows when it becomes <code>available</code>, and gives its <b>endpoint</b>: the host name and port (5432 for Postgres) your app connects to, which goes into your <code>DATABASE_URL</code>.</p>
-
-<h4>Keep the database off the internet</h4>
-<p>Look for <code>"PubliclyAccessible": false</code> in the output. A production database should only be reachable from your own app servers, inside a private network, never from the whole internet. If attackers cannot even connect, a guessed or leaked password is far less dangerous. Whether a new instance is public by default depends on your network setup, so in real projects say it explicitly with <code>--no-publicly-accessible</code>. The networking lesson shows how to build that private network.</p>
-<div class="try"><b>Try it in your head</b>You run <code>aws s3 cp report.pdf s3://you-portfolio-assets-2026/docs/</code>. What is the object's key, and is there now a folder called <code>docs</code>? The key is <code>docs/report.pdf</code>. There is no real folder; <code>docs/</code> is just the start of the name, which the console displays as a folder.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>S3 stores objects (files) under keys inside buckets; address them as <code>s3://bucket/key</code>.</li>
-<li>Bucket names are global across all AWS accounts: choose distinctive names.</li>
-<li><code>aws s3 mb</code>, <code>cp</code> and <code>ls</code> work like their Linux cousins.</li>
-<li>Keep buckets private and share single files with <code>aws s3 presign --expires-in</code>.</li>
-<li>RDS runs, patches and backs up databases for you; <code>--manage-master-user-password</code> keeps the password in Secrets Manager.</li>
-<li>Production databases are not publicly accessible: only your app can reach them.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Why can <code>aws s3 mb s3://photos</code> fail on a brand-new account? <i>Bucket names are global, and it is taken.</i> 2. How long is <code>--expires-in 600</code>? <i>10 minutes.</i> 3. Where should the production database live? <i>In a private network, reachable only by your app.</i></div>
 `);
+
+const iamF=(act,step,a,b,dec,label)=>{
+ const row=(y,n,q,st,on)=>`<rect class="${on?'bx-hl':'bx'}" x="8" y="${y}" width="404" height="38" rx="6"/><text class="t-b" x="20" y="${y+25}">${n}</text><text class="t" x="44" y="${y+25}" style="font-size:14px">${q}</text>`+(st?`<text class="t-b ${st[1]}" x="400" y="${y+25}" text-anchor="end">${st[0]}</text>`:'');
+ return `<svg viewBox="0 0 420 206" role="img" aria-label="${label}">
+${V.ic('robot',8,4,40,'ic-info')}<text class="t-m" x="56" y="22" style="font-size:14px">deploy-bot wants</text><text class="t-m t-a" x="56" y="42" style="font-size:14px;font-weight:700">${act}</text>
+${row(56,'1','Any Deny that matches?',a,step===1)}
+${row(102,'2','Any Allow that matches?',b,step===2)}
+<rect class="${dec==='ALLOWED'?'bx-ok':dec?'bx-bad':'bx'}" x="8" y="152" width="404" height="46" rx="8"/>${dec?V.ic(dec==='ALLOWED'?'check':'cross',18,159,32,dec==='ALLOWED'?'ic-ok':'ic-bad'):''}
+<text class="t-b ${dec==='ALLOWED'?'t-ok':dec?'t-bad':'t-dim'}" x="60" y="181">${dec||'decision...'}</text>
+</svg>`};
 
 explain('c4',`
-<h4>Why permissions are the heart of cloud security</h4>
-<p>Your AWS account can do almost anything: launch hundreds of servers, read every file, delete every database. Every request to AWS, from the console, the CLI or your own code, arrives with credentials, and AWS must decide: <b>is this identity allowed to do this action to this thing?</b> The service that answers is <b>IAM</b>, Identity and Access Management.</p>
-<p>In this lesson your CI pipeline needs to upload files to the portfolio bucket. The lazy answer is to give it full admin rights. The professional answer is to give it exactly "upload and read files in that one bucket", and nothing more. You will build that, and then prove it works.</p>
-<div class="analogy"><b>Think of it like</b>Key cards in an office building. The cleaner's card opens the corridors and the store cupboard, not the server room. If a card is lost, the damage is limited to the doors it opens. IAM policies decide which doors each card opens.</div>
+<p>One leaked password can hand a stranger your whole cloud account. IAM is how you make sure every person and every program can do exactly its job, and nothing more.</p>
 
-<h4>Identities: users, groups and roles</h4>
-<p>IAM has three kinds of identity, each called a <b>principal</b> (the "who" in a request):</p>
-<ul>
-<li>An <b>IAM user</b> is a long-lived identity for one person or program. It can have a password for the console and <b>access keys</b> for the CLI, the AKIA keys you met in the first lesson.</li>
-<li>A <b>group</b> is a set of users that share permissions, like "developers". Attach permissions to the group, and every member gets them.</li>
-<li>A <b>role</b> is an identity with no password or keys of its own. Instead, something trusted <b>assumes</b> the role and receives <b>temporary credentials</b> that expire on their own, usually within an hour. EC2 instances, Lambda functions and GitHub Actions all use roles. The <code>--role</code> you passed to Lambda in the compute lesson was exactly this.</li>
-</ul>
-<p>Creating a user is one command:</p>
-<pre class="snip">aws iam create-user --user-name deploy-bot</pre>
-<p>A brand-new user can do <b>nothing</b>. IAM starts from "no" for everything. Permissions only exist when you attach a policy.</p>
+${V.card(1,'Identities','who is asking?',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="Three kinds of identity: a user for one person or program, a group for many people, a role worn temporarily by a service">
+<rect class="bx-info" x="6" y="6" width="130" height="158" rx="10"/>${V.ic('person',41,16,60,'ic-info')}<text class="t-b" x="71" y="100" text-anchor="middle">user</text><text class="t" x="71" y="126" text-anchor="middle" style="font-size:14px">one person</text><text class="t" x="71" y="146" text-anchor="middle" style="font-size:14px">or program</text>
+<rect class="bx-a" x="145" y="6" width="130" height="158" rx="10"/>${V.ic('people',180,16,60,'ic-a')}<text class="t-b" x="210" y="100" text-anchor="middle">group</text><text class="t" x="210" y="126" text-anchor="middle" style="font-size:14px">same rules</text><text class="t" x="210" y="146" text-anchor="middle" style="font-size:14px">for many</text>
+<rect class="bx-ok" x="284" y="6" width="130" height="158" rx="10"/>${V.ic('card',319,16,60,'ic-ok')}<text class="t-b" x="349" y="100" text-anchor="middle">role</text><text class="t" x="349" y="126" text-anchor="middle" style="font-size:14px">a badge worn</text><text class="t" x="349" y="146" text-anchor="middle" style="font-size:14px">for a while</text>
+</svg><figcaption>IAM (Identity and Access Management) knows three kinds of identity. Permissions, written as policies, are attached to them.</figcaption></figure>
+${V.like(`<p>School keycards. A student's card opens the library but not the staff room. A visitor gets a badge at reception that stops working at 5pm.</p>`)}
+${V.why(`<p>In the early days, teams shared one all-powerful login. If it leaked, everything was exposed, and you could not tell who did what. IAM, added to AWS in 2010, gives every person and program its own identity with its own limits.</p>`)}
+${V.anat([[1,'aws iam'],' ',[2,'create-user'],' ',[3,'--user-name deploy-bot']],[
+ '<b>Service.</b> IAM, for identities and permissions.',
+ '<b>Operation.</b> Make a new user. A new user can do nothing at all until you attach a policy.',
+ '<b>Name.</b> Say what it is for: <code>deploy-bot</code>, not <code>user2</code>.'])}
+${V.rules(V.rh('Conventions'),V.ok('one user per person','Never share a login: you lose track of who did what'),V.ok('policies on groups','Give the "developers" group its rules, then add people to it'),V.ok('roles for programs','Servers and CI wear a role instead of holding a password'))}
+${V.hook(`Every person and every program gets its own card.`)}
+`)}
 
-<h4>Names for everything: ARNs</h4>
-<p>To say which thing a permission applies to, IAM uses <b>ARNs</b> (Amazon Resource Names), the unique full names you saw in <code>get-caller-identity</code>. They look long, but they are built from parts separated by colons:</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="Two ARNs split into their parts: service, account and resource">
-<text class="t-m" x="10" y="34">arn:aws:<tspan class="t-a">iam</tspan>::<tspan class="t-info">123456789012</tspan>:<tspan class="t-ok">user/deploy-bot</tspan></text>
-<text class="t-s t-a" x="106" y="58" text-anchor="middle">service</text><text class="t-s t-info" x="192" y="58" text-anchor="middle">account</text><text class="t-s t-ok" x="306" y="58" text-anchor="middle">resource</text>
-<text class="t-m" x="10" y="118">arn:aws:<tspan class="t-a">s3</tspan>:::<tspan class="t-ok">you-portfolio-</tspan></text>
-<text class="t-m" x="100" y="140"><tspan class="t-ok">assets-2026/*</tspan></text>
-<text class="t-s t-a" x="102" y="164" text-anchor="middle">service</text><text class="t-s t-ok" x="250" y="164" text-anchor="middle">bucket, then every object</text>
-<text class="t-s" x="10" y="200">S3 names are global, so its ARNs leave region and account empty.</text>
-</svg><figcaption>An ARN starts with arn, colon, aws, then the service, the region, the account number and the resource, separated by colons. A user ARN names the IAM service, your account and the user. An S3 ARN has empty region and account parts, because bucket names are already global, and ends with the bucket and a pattern for its objects.</figcaption></figure>
-<p>The star is a <b>wildcard</b> meaning "anything here". So <code>arn:aws:s3:::you-portfolio-assets-2026/*</code> means "every object inside that bucket". Note that the bucket itself, <code>arn:aws:s3:::you-portfolio-assets-2026</code> without the slash and star, is a different resource from the objects in it.</p>
+${V.card(2,'Policies','the rules on the card',`
+${V.like(`<p>A guest list at a door: names that may come in, and which rooms they may enter. Not on the list? You are not getting in.</p>`)}
+${V.anat([[1,'"Effect": "Allow"'],',\n',[2,'"Action": ["s3:PutObject", "s3:GetObject"]'],',\n',[3,'"Resource": "arn:aws:s3:::you-portfolio-assets-2026/*"']],[
+ '<b>Effect.</b> Allow or Deny.',
+ '<b>Action.</b> Which operations, as <code>service:Operation</code>.',
+ '<b>Resource.</b> Which things, by ARN (Amazon Resource Name). <code>/*</code> means every object in the bucket.'])}
+<p>These three lines sit inside a <code>Statement</code>, under <code>"Version": "2012-10-17"</code>. <b>Watch AWS check a request</b> against them:</p>
+${V.steps([
+ ['deploy-bot asks to upload logo.png. AWS gathers every policy attached to it.',iamF('s3:PutObject  bucket/logo.png',0,null,null,'','A request arrives')],
+ ['First question: does any policy <b>Deny</b> this? An explicit Deny beats everything. There is none.',iamF('s3:PutObject  bucket/logo.png',1,['none','t-ok'],null,'','No deny')],
+ ['Second question: does any policy <b>Allow</b> it? Yes: the action s3:PutObject and the resource bucket/* both match.',iamF('s3:PutObject  bucket/logo.png',2,['none','t-ok'],['yes','t-ok'],'','Allow matches')],
+ ['So the request is <b>allowed</b>.',iamF('s3:PutObject  bucket/logo.png',0,['none','t-ok'],['yes','t-ok'],'ALLOWED','Allowed')],
+ ['Now it asks for s3:DeleteBucket. No Deny, but no Allow either. Anything not allowed is <b>denied</b> by default.',iamF('s3:DeleteBucket  bucket',0,['none','t-ok'],['no','t-bad'],'DENIED (nothing allows it)','Implicitly denied')]])}
+${V.rules(V.rh('Rules'),V.ok('"Version": "2012-10-17"','The policy language version. Copy it exactly; it is not today\'s date'),
+ V.ok('bucket/*','Objects inside the bucket: needed for PutObject and GetObject'),V.no('"Action": "s3:*"','Every S3 action, including deleting buckets'),
+ V.no('"Resource": "*"','Every resource in the account'))}
+${V.hook(`Deny beats Allow, and silence means no.`)}
+`)}
 
-<h4>Policies: Effect, Action, Resource</h4>
-<p>A <b>policy</b> is a JSON document listing permissions. Each entry is a <b>statement</b> with three key parts that answer: allow or deny, which actions, on which resources.</p>
-<pre class="snip">{
-  "Version": "2012-10-17",
-  "Statement": [{
-    "Effect": "Allow",
-    "Action": ["s3:PutObject", "s3:GetObject"],
-    "Resource": "arn:aws:s3:::you-portfolio-assets-2026/*"
-  }]
-}</pre>
-<ul>
-<li><code>Version</code> is the version of the policy language, and is always the literal date <code>2012-10-17</code>. It is not today's date; do not change it.</li>
-<li><code>Effect</code> is <code>Allow</code> or <code>Deny</code>.</li>
-<li><code>Action</code> lists operations, written <code>service:Operation</code>. <code>s3:PutObject</code> is uploading an object, <code>s3:GetObject</code> is downloading one.</li>
-<li><code>Resource</code> is the ARN, or ARNs, the actions may touch.</li>
-</ul>
-<p>Read that statement aloud: "Allow uploading and downloading objects, but only in the portfolio bucket." It does not allow deleting objects, listing other buckets, or touching EC2. Real JSON files cannot contain comments, so keep notes outside the file.</p>
-<p>You save it as <code>policy.json</code>, turn it into a named policy in AWS, then attach it to the user:</p>
-<pre class="snip">aws iam create-policy --policy-name portfolio-uploads \\
-    --policy-document file://policy.json
-aws iam attach-user-policy --user-name deploy-bot \\
-    --policy-arn arn:aws:iam::123456789012:policy/portfolio-uploads</pre>
-<p><code>file://</code> tells the CLI to read the document from a local file. The <code>create-policy</code> output includes the new policy's ARN, which is what <code>attach-user-policy</code> needs. If the JSON has a typo, such as a missing comma or quote, you get a <code>MalformedPolicyDocument</code> error.</p>
+${V.card(3,'Least privilege','the smallest keyring that does the job',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="A master key opens every door; a single key opens one. If the master key leaks, everything is exposed">
+<rect class="bx-bad" x="6" y="6" width="200" height="148" rx="10"/>${V.ic('key',20,16,48,'ic-bad')}<text class="t-b t-bad" x="76" y="40">Administrator</text><text class="t-b t-bad" x="76" y="60">Access</text>
+${V.ic('door',22,82,36,'ic-bad')}${V.ic('door',66,82,36,'ic-bad')}${V.ic('door',110,82,36,'ic-bad')}${V.ic('door',154,82,36,'ic-bad')}<text class="t" x="106" y="144" text-anchor="middle" style="font-size:14px">leak = lose everything</text>
+<rect class="bx-ok" x="214" y="6" width="200" height="148" rx="10"/>${V.ic('key',228,16,48,'ic-ok')}<text class="t-b t-ok" x="284" y="40">PutObject</text><text class="t-b t-ok" x="284" y="60">one bucket</text>
+${V.ic('door',230,82,36,'ic-ok')}${V.ic('lock',274,82,36,'ic-info')}${V.ic('lock',318,82,36,'ic-info')}${V.ic('lock',362,82,36,'ic-info')}<text class="t" x="314" y="144" text-anchor="middle" style="font-size:14px">leak = one bucket</text>
+</svg><figcaption>Least privilege: give each identity only what its job needs. If its keys leak, the damage, called the blast radius, stays small.</figcaption></figure>
+${V.like(`<p>Giving the dog walker your front door key, not the keys to your car, safe and office too.</p>`)}
+${V.anat([[1,'aws iam simulate-principal-policy'],' ',[2,'--policy-source-arn ...user/deploy-bot'],' ',[3,'--action-names s3:PutObject s3:DeleteBucket']],[
+ '<b>Simulate.</b> Ask "would this be allowed?" without actually doing it.',
+ '<b>Who.</b> The identity to test, by ARN.',
+ '<b>What.</b> The actions to try. Expect <code>allowed</code> and <code>implicitDeny</code>.'])}
+${V.rules(V.rh('Rules'),V.no('AdministratorAccess on CI','If CI\'s keys leak, the attacker owns your account'),V.ok('roles for machines','EC2, Lambda and GitHub Actions (via OIDC) get temporary credentials that expire on their own'),
+ V.no('access keys in code','Long-lived keys get leaked. Rotate any you must keep'))}
+${V.build(`<ol><li><code>aws iam create-user --user-name deploy-bot</code></li><li>Write <code>policy.json</code>: Allow PutObject and GetObject on the bucket's <code>/*</code> only.</li><li><code>aws iam create-policy --policy-name portfolio-uploads --policy-document file://policy.json</code></li><li><code>aws iam attach-user-policy</code> with the policy's ARN.</li><li>Simulate PutObject (allowed) and DeleteBucket (denied).</li></ol>`)}
+${V.hook(`Smallest keyring, smallest blast radius. Machines wear roles, not keys.`)}
+`)}
 
-<h4>How AWS decides: deny wins</h4>
-<p>When a request arrives, AWS gathers every policy that applies to that principal and works through a fixed order:</p>
-<figure class="fig"><svg viewBox="0 0 420 290" role="img" aria-label="Policy evaluation: an explicit deny wins, then an allow, otherwise denied by default">
-<rect class="bx" x="70" y="10" width="280" height="40" rx="8"/><text class="t-b" x="210" y="35" text-anchor="middle">Request: who, action, resource</text>
-<path class="ln" d="M210 50v16"/><polygon class="ah" points="204,64 216,64 210,72"/>
-<rect class="bx-bad" x="40" y="74" width="230" height="44" rx="8"/><text class="t" x="155" y="101" text-anchor="middle">Any statement Denies it?</text>
-<path class="ln" d="M270 96h40"/><polygon class="ah" points="308,90 308,102 316,96"/><text class="t-s" x="290" y="88" text-anchor="middle">yes</text>
-<rect class="bx-bad" x="318" y="76" width="92" height="40" rx="6"/><text class="t-s t-bad" x="364" y="101" text-anchor="middle">DENIED</text>
-<path class="ln" d="M155 118v18"/><polygon class="ah" points="149,134 161,134 155,142"/><text class="t-s" x="166" y="134">no</text>
-<rect class="bx-ok" x="40" y="144" width="230" height="44" rx="8"/><text class="t" x="155" y="171" text-anchor="middle">Any statement Allows it?</text>
-<path class="ln-ok" d="M270 166h40"/><polygon class="ah-ok" points="308,160 308,172 316,166"/><text class="t-s" x="290" y="158" text-anchor="middle">yes</text>
-<rect class="bx-ok" x="318" y="146" width="92" height="40" rx="6"/><text class="t-s t-ok" x="364" y="171" text-anchor="middle">ALLOWED</text>
-<path class="ln" d="M155 188v18"/><polygon class="ah" points="149,204 161,204 155,212"/><text class="t-s" x="166" y="204">no</text>
-<rect class="bx-warn" x="40" y="214" width="230" height="44" rx="8"/><text class="t" x="155" y="241" text-anchor="middle">Denied by default</text>
-<text class="t-s" x="155" y="280" text-anchor="middle">"implicit deny": nobody said yes</text>
-</svg><figcaption>AWS first looks for any statement that explicitly denies the request; if it finds one, the answer is no, whatever else says yes. Then it looks for an allow. If nothing allows it, the request is refused by default.</figcaption></figure>
-<ol>
-<li>An <b>explicit Deny</b> anywhere beats every Allow.</li>
-<li>Otherwise, an <b>Allow</b> that matches the action and the resource permits it.</li>
-<li>Otherwise, it is denied: an <b>implicit deny</b>, because nothing said yes.</li>
-</ol>
-<p>Everything starts as "no". That is why you only ever need to write down what <b>is</b> allowed.</p>
-
-<h4>Proving it with the policy simulator</h4>
-<p>Do not just hope a policy is right. IAM has a simulator that evaluates it without doing anything for real:</p>
-<pre class="snip">aws iam simulate-principal-policy \\
-    --policy-source-arn arn:aws:iam::123456789012:user/deploy-bot \\
-    --action-names s3:PutObject s3:DeleteBucket \\
-    --resource-arns arn:aws:s3:::you-portfolio-assets-2026/logo.png</pre>
-<p>In the output, find <code>EvalDecision</code> for each action. You want <code>allowed</code> for <code>s3:PutObject</code> and <code>implicitDeny</code> for <code>s3:DeleteBucket</code>, because nothing allowed it. If you ever see <code>explicitDeny</code>, some statement says Deny.</p>
-
-<h4>Least privilege and the blast radius</h4>
-<p><b>Least privilege</b> means every identity gets exactly the permissions its job needs, and no more: the same habit you learned with <code>chmod 600</code> and <code>sudo</code> on Linux. The reason is the <b>blast radius</b>: how much damage is possible if those credentials leak. CI keys end up in logs, laptops get stolen, dependencies get compromised. If <code>deploy-bot</code> has <code>AdministratorAccess</code>, a leak hands an attacker your whole account, including the bill. With your policy, the worst they can do is upload files to one bucket.</p>
-<div class="mistake"><b>Common mistake</b>Writing <code>"Action": "s3:*"</code> or <code>"Resource": "*"</code> to make an <code>AccessDenied</code> error go away. It works, and it quietly grants deleting every bucket in the account. Read the error instead: it names the exact action that was denied, so add just that action on just that resource.</div>
-
-<h4>Roles over access keys</h4>
-<p>Access keys for an IAM user never expire on their own, so a leaked key works until someone notices and deletes it. Roles fix that. A Lambda function or EC2 instance is given a role, and AWS hands it fresh temporary credentials automatically. GitHub Actions can do the same through <b>OIDC</b> (OpenID Connect): GitHub proves to AWS "this is a run of workflow X in repository Y", and AWS lets that run assume a role for a short time. No long-lived secret is stored anywhere. The <code>deploy-bot</code> user in this lesson is fine for learning, but in a real project you would give the same policy to a role.</p>
-<div class="try"><b>Try it in your head</b><code>deploy-bot</code> has only your policy. It tries <code>s3:DeleteObject</code> on <code>logo.png</code> in the portfolio bucket. Result? Denied, an implicit deny: the policy allows only PutObject and GetObject, and nothing allows deleting.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>IAM decides whether a principal (user, group member or role) may perform an action on a resource.</li>
-<li>A policy is JSON: statements with <code>Effect</code>, <code>Action</code> (<code>service:Operation</code>) and <code>Resource</code> (an ARN). <code>Version</code> is always <code>2012-10-17</code>.</li>
-<li>Explicit Deny beats Allow; with no Allow, the answer is an implicit deny.</li>
-<li><code>create-policy</code>, then <code>attach-user-policy</code>, then check with <code>simulate-principal-policy</code>.</li>
-<li>Least privilege keeps the blast radius small. Prefer roles with temporary credentials over access keys.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. A policy allows s3:PutObject only. Can the user delete the bucket? <i>No: nothing allows it, so it is denied.</i> 2. One policy allows an action and another denies it. Result? <i>Denied: an explicit Deny always wins.</i> 3. How should GitHub Actions get AWS access? <i>An IAM role via OIDC, with temporary credentials.</i></div>
 `);
+
+const sgF=(who,ip,port,hit,ok,label)=>`<svg viewBox="0 0 420 190" role="img" aria-label="${label}">
+${V.ic(who==='bot'?'bug':who==='you'?'laptop':'globe',8,24,56,who==='bot'?'ic-bad':'ic-p')}<text class="t-m" x="36" y="102" text-anchor="middle" style="font-size:14px">${ip}</text>
+<path class="${ok?'ln-ok':'ln'}" style="stroke-width:3" d="M72 52H142"/><polygon class="${ok?'ah-ok':'ah'}" points="140,45 140,59 152,52"/>
+<rect class="bx-dark" x="80" y="62" width="58" height="26" rx="5"/><text class="t-term" x="109" y="81" text-anchor="middle" style="font-size:14px">${port}</text>
+${ok?'':V.ic('cross',94,30,26,'ic-bad')}
+<rect class="${ok?'bx-ok':'bx'}" x="156" y="14" width="96" height="104" rx="8"/>${V.ic('server',180,22,48,'ic-info')}<text class="t" x="204" y="92" text-anchor="middle" style="font-size:14px">web</text><text class="t" x="204" y="110" text-anchor="middle" style="font-size:14px">server</text>
+<rect class="bx-info" x="262" y="14" width="150" height="104" rx="8"/>${V.ic('shield',270,20,26,'ic-info')}<text class="t-b" x="302" y="39">web-sg</text>
+${hit===0?'<rect class="bx-hl" x="268" y="48" width="138" height="28" rx="5"/>':''}${hit===1?'<rect class="bx-hl" x="268" y="80" width="138" height="28" rx="5"/>':''}
+<text class="t-m" x="274" y="67" style="font-size:14px">443 ← anyone</text><text class="t-m" x="274" y="99" style="font-size:14px">22 ← 198.51…/32</text>
+<rect class="${ok?'bx-ok':'bx-bad'}" x="8" y="132" width="404" height="50" rx="8"/><text class="t-b ${ok?'t-ok':'t-bad'}" x="20" y="163">${ok?'Allowed in':'Blocked: no rule lets it in'}</text>
+</svg>`;
+const vpcF=(k,cmd,label)=>`<svg viewBox="0 0 420 200" role="img" aria-label="${label}">
+<rect class="bx-dark" x="8" y="4" width="404" height="32" rx="8"/><text class="t-term" x="18" y="26" style="font-size:14px">$ ${cmd}</text>
+<rect class="${k>=0?'bx-info':'ln-d'}" x="8" y="46" width="404" height="148" rx="10"/><text class="t-b t-info" x="20" y="68">VPC 10.0.0.0/16</text>
+${k>=1?`<rect class="${k===1?'bx-hl':'bx-ok'}" x="22" y="78" width="376" height="106" rx="8"/><text class="t-m" x="34" y="100" style="font-size:14px">subnet 10.0.1.0/24</text>`:''}
+${k>=2?`<rect class="${k===2?'bx-hl':'bx'}" x="196" y="88" width="190" height="88" rx="8"/>${V.ic('shield',204,94,30,'ic-a')}<text class="t-b" x="240" y="114">web-sg</text><text class="t-m" x="206" y="140" style="font-size:14px">443 ← anyone</text><text class="t-m" x="206" y="164" style="font-size:14px">22 ← your IP</text>`:''}
+${k>=3?`${V.ic('server',60,108,60,'ic-ok')}<path class="ln-ok" style="stroke-width:3" d="M124 138H192"/><text class="t" x="90" y="182" text-anchor="middle" style="font-size:14px">instance</text>`:''}
+</svg>`;
 
 explain('c5',`
-<h4>Why your cloud needs its own network</h4>
-<p>So far your servers and databases have floated somewhere inside AWS. In reality, every one of them sits in a network, and the network decides who can even <b>try</b> to connect. IAM, from the last lesson, controls who may call the AWS API. Networking controls a different thing: which <b>network traffic</b>, such as a visitor's browser or an attacker's scanner, can reach your machines at all.</p>
-<p>The goal is the layout every serious web app uses: the website is reachable from the internet on HTTPS, the admin door (SSH) is open only to you, and the database is not reachable from the internet at all.</p>
-<div class="analogy"><b>Think of it like</b>A private campus. The <b>VPC</b> is the wall around the whole site. <b>Subnets</b> are the buildings: a reception building near the public gate, and back-office buildings with no street entrance. <b>Security groups</b> are the guards at each door, holding a list of who may come in.</div>
+<p>When you put a server in the cloud, who can reach it? By default, maybe the whole internet. A VPC and its security groups let you decide exactly which doors exist and who may knock.</p>
 
-<h4>IP ranges and CIDR notation</h4>
-<p>A <b>VPC</b> (Virtual Private Cloud) is your own private network inside AWS. When you create one, you choose which IP addresses it owns, written in <b>CIDR notation</b>, like <code>10.0.0.0/16</code>. Addresses starting with <code>10.</code> are reserved for private networks, so they never clash with real internet addresses.</p>
-<p>The number after the slash is the key. An IPv4 address is 32 bits, four numbers of 8 bits each. The slash number says how many bits, counting from the left, are <b>fixed</b>. The remaining bits are free to vary, and each free bit doubles the number of addresses.</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="CIDR: /16 fixes two numbers and leaves 65,536 addresses, /24 fixes three and leaves 256, /32 fixes all four and is one address">
-<g text-anchor="middle">
-<text class="t-b" x="70" y="22">range</text><text class="t-b" x="230" y="22">fixed / free</text><text class="t-b" x="370" y="22">addresses</text>
-</g>
-<text class="t-m" x="10" y="62">10.0.0.0/16</text>
-<rect class="bx-a" x="140" y="44" width="44" height="28" rx="3"/><rect class="bx-a" x="188" y="44" width="44" height="28" rx="3"/><rect class="bx-ok" x="236" y="44" width="44" height="28" rx="3"/><rect class="bx-ok" x="284" y="44" width="44" height="28" rx="3"/>
-<text class="t" x="370" y="63" text-anchor="middle">65,536</text>
-<text class="t-m" x="10" y="112">10.0.1.0/24</text>
-<rect class="bx-a" x="140" y="94" width="44" height="28" rx="3"/><rect class="bx-a" x="188" y="94" width="44" height="28" rx="3"/><rect class="bx-a" x="236" y="94" width="44" height="28" rx="3"/><rect class="bx-ok" x="284" y="94" width="44" height="28" rx="3"/>
-<text class="t" x="370" y="113" text-anchor="middle">256</text>
-<text class="t-m" x="10" y="162">x.x.x.x/32</text>
-<rect class="bx-a" x="140" y="144" width="44" height="28" rx="3"/><rect class="bx-a" x="188" y="144" width="44" height="28" rx="3"/><rect class="bx-a" x="236" y="144" width="44" height="28" rx="3"/><rect class="bx-a" x="284" y="144" width="44" height="28" rx="3"/>
-<text class="t" x="370" y="163" text-anchor="middle">1</text>
-<rect class="bx-a" x="140" y="190" width="18" height="18" rx="3"/><text class="t-s" x="164" y="204">fixed 8 bits</text>
-<rect class="bx-ok" x="260" y="190" width="18" height="18" rx="3"/><text class="t-s" x="284" y="204">free 8 bits</text>
-</svg><figcaption>Each block is one of the four numbers in an address, 8 bits each. A /16 fixes the first two numbers and leaves two free, which gives 256 times 256, or 65,536 addresses. A /24 fixes three and leaves 256. A /32 fixes all four, so it means exactly one address.</figcaption></figure>
-<ul>
-<li><code>10.0.0.0/16</code>: the first 16 bits (<code>10.0</code>) are fixed; everything from <code>10.0.0.0</code> to <code>10.0.255.255</code> belongs to it. That is 65,536 addresses, plenty for a whole VPC.</li>
-<li><code>10.0.1.0/24</code>: the first 24 bits (<code>10.0.1</code>) are fixed; it covers <code>10.0.1.0</code> to <code>10.0.1.255</code>, 256 addresses. AWS keeps 5 of each subnet for itself, leaving 251.</li>
-<li><code>198.51.100.7/32</code>: all 32 bits fixed, so it means that one address only.</li>
-<li><code>0.0.0.0/0</code>: zero bits fixed, so it matches <b>every</b> address. In a firewall rule it means "the whole internet".</li>
-</ul>
+${V.card(1,'The VPC','your own gated estate',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="A VPC as a walled estate with one gate to the internet, a public street with the web server and a private street with the database">
+${V.ic('globe',2,76,44,'ic-p')}<text class="t" x="33" y="140" text-anchor="middle" style="font-size:14px">internet</text>
+<rect class="bx" x="66" y="6" width="348" height="188" rx="12"/><text class="t-b" x="80" y="28">VPC 10.0.0.0/16</text>
+<rect class="bx-warn" x="54" y="80" width="26" height="40" rx="4"/>${V.ic('door',54,82,26,'ic-warn')}
+<rect class="bx-ok" x="92" y="40" width="310" height="68" rx="8"/><text class="t-b t-ok" x="104" y="62">public subnet</text><text class="t-m" x="104" y="86" style="font-size:14px">10.0.1.0/24</text>${V.ic('server',348,48,48,'ic-ok')}<text class="t" x="300" y="98" text-anchor="end" style="font-size:14px">web server</text>
+<rect class="bx-info" x="92" y="118" width="310" height="68" rx="8"/><text class="t-b t-info" x="104" y="140">private subnet</text><text class="t-m" x="104" y="164" style="font-size:14px">10.0.2.0/24</text>${V.ic('db',348,126,48,'ic-info')}${V.ic('lock',306,140,26,'ic-info')}
+</svg><figcaption>A VPC (virtual private cloud) is your own private network in AWS. Subnets are streets inside it: public ones face the gate, private ones cannot be reached from outside at all.</figcaption></figure>
+${V.like(`<p>A gated housing estate. One gate to the road. Shops near the gate where visitors are welcome (the public subnet), homes deep inside where only residents go (the private subnet).</p>`)}
+${V.why(`<p>The first cloud servers all sat on one big shared network. Since 2009, a VPC gives every customer a walled-off network with its own address range, so your database is not one mistake away from the internet.</p>`)}
+${V.anat([[1,'10.0.0.0'],[2,'/16']],[
+ '<b>Starting address.</b> The first address of the range. Private ranges start with 10., 172.16 to 172.31, or 192.168.',
+ '<b>Prefix length.</b> How many of the 32 bits are fixed. The more fixed, the smaller the range.'])}
+${V.rules(V.rh('CIDR sizes'),V.ok('/16','65,536 addresses: a whole VPC'),V.ok('/24','256 addresses: one subnet (AWS keeps 5)'),V.ok('/32','Exactly one address, like your own IP'),
+ V.rh('Rules'),V.ok('10.0.1.0/24 inside 10.0.0.0/16','A subnet must fit inside its VPC'),V.no('two subnets both 10.0.1.0/24','Subnets in a VPC cannot overlap'))}
+${V.hook(`VPC is the estate, subnets are streets, the internet comes in through one gate.`)}
+`)}
 
-<h4>Subnets: public and private</h4>
-<p>A <b>subnet</b> is a slice of the VPC's range, and each subnet lives in one availability zone. The VPC <code>10.0.0.0/16</code> can hold subnets like <code>10.0.1.0/24</code> and <code>10.0.2.0/24</code>, since both fit inside it. What makes a subnet "public" or "private" is not its name but its <b>route table</b>, the list of directions for traffic leaving it:</p>
-<ul>
-<li>A <b>public subnet</b> has a route sending internet traffic to an <b>internet gateway</b>, the VPC's door to the internet. Machines there can have public IP addresses. Put load balancers here, the front doors that receive visitors.</li>
-<li>A <b>private subnet</b> has no such route. Nothing on the internet can start a connection to it. Put app servers and databases here. (If they need to download updates, a NAT gateway lets them start outgoing connections only.)</li>
-</ul>
-<figure class="fig"><svg viewBox="0 0 420 310" role="img" aria-label="A VPC with a public subnet holding a load balancer and a private subnet holding the app and database">
-<rect class="bx" x="10" y="56" width="400" height="246" rx="10"/>
-<text class="t-m" x="22" y="78">VPC 10.0.0.0/16</text>
-<rect class="bx-info" x="251" y="8" width="120" height="32" rx="6"/><text class="t-b" x="311" y="29" text-anchor="middle">Internet</text>
-<text class="t-s t-a" x="240" y="29" text-anchor="end">443 only</text>
-<rect class="bx-ok" x="24" y="94" width="372" height="62" rx="8"/>
-<text class="t-s" x="36" y="116">public subnet</text><text class="t-s" x="36" y="134">10.0.1.0/24</text>
-<rect class="bx" x="226" y="106" width="160" height="36" rx="6"/><text class="t-s" x="306" y="129" text-anchor="middle">load balancer</text>
-<path class="ln-a" d="M311 40v58"/><polygon class="ah-a" points="305,98 317,98 311,106"/>
-<rect class="bx-warn" x="24" y="170" width="372" height="122" rx="8"/>
-<text class="t-s" x="36" y="192">private subnet</text><text class="t-s" x="36" y="210">10.0.2.0/24</text>
-<rect class="bx" x="226" y="186" width="160" height="36" rx="6"/><text class="t-s" x="306" y="209" text-anchor="middle">app servers</text>
-<path class="ln" d="M306 142v36"/><polygon class="ah" points="300,178 312,178 306,186"/>
-<rect class="bx" x="226" y="244" width="160" height="36" rx="6"/><text class="t-s" x="306" y="267" text-anchor="middle">database :5432</text>
-<path class="ln" d="M306 222v14"/><polygon class="ah" points="300,236 312,236 306,244"/>
-<text class="t-s" x="36" y="252">no route</text><text class="t-s" x="36" y="270">from internet</text>
-</svg><figcaption>Visitors reach only the public subnet, on port 443, where the load balancer receives them and passes requests to app servers in the private subnet. The app servers talk to the database, which sits in the private subnet with no route from the internet.</figcaption></figure>
+${V.card(2,'Security groups','a door guard on every server',`
+${V.like(`<p>A guard at each front door with a short list: "deliveries for door 443 from anyone; door 22 only for the owner". Anyone not on the list is turned away, and people inside can always open the door to leave.</p>`)}
+${V.why(`<p>Bots scan every public address on the internet for open ports, all day. A security group is a firewall attached to each resource, so even inside your VPC every server only accepts what you listed.</p>`)}
+${V.anat([[1,'authorize-security-group-ingress'],' ',[2,'--protocol tcp'],' ',[3,'--port 443'],' ',[4,'--cidr 0.0.0.0/0']],[
+ '<b>Add an inbound rule.</b> Ingress means traffic coming in.',
+ '<b>Protocol.</b> Web traffic and SSH both use TCP.',
+ '<b>Port.</b> Which door.',
+ '<b>From where.</b> <code>0.0.0.0/0</code> means anyone; <code>198.51.100.7/32</code> means one address.'])}
+${V.steps([
+ ['A visitor requests your site on port 443. The first rule matches: <b>allowed</b>. The reply goes back out by itself, because security groups remember allowed connections (they are <b>stateful</b>).',sgF('web','visitor','443',0,1,'HTTPS from anyone allowed')],
+ ['You SSH in from your home IP, 198.51.100.7. The second rule matches: allowed.',sgF('you','your IP','22',1,1,'SSH from your IP allowed')],
+ ['A bot tries port 22 from another address. No rule matches that address: <b>blocked</b>.',sgF('bot','a bot','22',-1,0,'SSH from a bot blocked')],
+ ['Someone tries the database port 5432. There is no rule for it at all, so it is blocked. Security groups only have Allow rules; everything else is refused.',sgF('web','anyone','5432',-1,0,'Port 5432 blocked')]])}
+${V.rules(V.rh('Rules'),V.no('--port 22 --cidr 0.0.0.0/0','SSH open to the world: bots start guessing in minutes'),V.ok('--port 22 --cidr 198.51.100.7/32','SSH from your IP only, or use Session Manager with no port open'),
+ V.ok('database SG: 5432 from app SG','Let the database accept only your app servers\' security group'))}
+${V.hook(`A guard with a guest list: not listed, not getting in.`)}
+`)}
 
-<h4>Security groups: a guard on every door</h4>
-<p>Subnets decide where traffic can be routed. A <b>security group</b> is a firewall attached to each individual resource, such as an instance or a database, and lists which incoming traffic is allowed. Key facts:</p>
-<ul>
-<li>Rules only <b>allow</b>. Anything not allowed is blocked. A new security group allows no incoming traffic at all, and allows all outgoing traffic.</li>
-<li>Each inbound rule names a <b>protocol</b> (usually <code>tcp</code>), a <b>port</b> (which service), and a <b>source</b> (who may connect, as a CIDR range or another security group).</li>
-<li>They are <b>stateful</b>: if a request is allowed in, the reply is automatically allowed back out. You never write rules for replies.</li>
-</ul>
-<p>It is the same idea as <code>ufw</code> on your VPS, except it lives outside the machine, so a mistake inside the server cannot switch it off.</p>
+${V.card(3,'Build the estate','four commands, in order',`
+${V.steps([
+ ['Create the VPC with its address range. You get an ID like vpc-05a8c1e3f7b9d2468.',vpcF(0,'aws ec2 create-vpc --cidr-block 10.0.0.0/16','VPC created')],
+ ['Carve out a subnet. Its range must sit inside the VPC\'s range.',vpcF(1,'aws ec2 create-subnet ... 10.0.1.0/24','Subnet created')],
+ ['Create the security group web-sg in the VPC, then add the two rules: 443 from anyone, 22 from your IP.',vpcF(2,'aws ec2 authorize-security-group-ingress ...','Security group with rules')],
+ ['Launch the server into the subnet, guarded by web-sg.',vpcF(3,'aws ec2 run-instances ... --subnet-id ...','Instance launched')]])}
+${V.rules(V.ok('--vpc-id, --subnet-id, --group-id','Each command uses the ID the one before printed'),V.ok('private subnet for the database','Only reachable from inside the estate'))}
+${V.hook(`Estate, street, guard, house.`)}
+`)}
 
-<h4>Building it step by step</h4>
-<pre class="snip">aws ec2 create-vpc --cidr-block 10.0.0.0/16
-aws ec2 create-subnet --vpc-id vpc-05a8c1e3f7b9d2468 \\
-    --cidr-block 10.0.1.0/24
-aws ec2 create-security-group --group-name web-sg \\
-    --description "Web servers" --vpc-id vpc-05a8c1e3f7b9d2468</pre>
-<p>Each command prints an ID you need in the next one: the VPC ID goes into the subnet and security group commands, and the group ID (<code>sg-...</code>) goes into the rules. In this sandbox the IDs are predictable; in real life, copy them from the output. A security group <b>must</b> have a description, which is why that option is there.</p>
-<p>Now the two rules:</p>
-<pre class="snip">aws ec2 authorize-security-group-ingress --group-id sg-05a8c1e3f7b9d2468 \\
-    --protocol tcp --port 443 --cidr 0.0.0.0/0          # HTTPS, everyone
-aws ec2 authorize-security-group-ingress --group-id sg-05a8c1e3f7b9d2468 \\
-    --protocol tcp --port 22 --cidr 198.51.100.7/32     # SSH, just you</pre>
-<p>"Ingress" means incoming. Read each rule as a sentence: "allow TCP on port 443 from anywhere", and "allow TCP on port 22 from this single address". Finally you launch an instance with <code>run-instances</code>, adding <code>--subnet-id</code> and <code>--security-group-ids</code> to place it in your subnet behind your guard.</p>
-<div class="mistake"><b>Common mistake</b>Opening port 22 to <code>0.0.0.0/0</code> "just for now". Automated bots scan every public address for SSH within minutes of it appearing, trying common passwords. Restrict SSH to your own IP with <code>/32</code>, or better, use AWS Systems Manager Session Manager, which gives you a shell with no inbound port open at all.</div>
-
-<h4>Where the database goes</h4>
-<p>The database belongs in a private subnet, with its own security group allowing port 5432 (Postgres) only from the <b>app servers' security group</b>, not from an IP range. Using a group as the source means "any machine wearing that badge", so it keeps working as app servers come and go. Now an attacker needs to get past the internet, into the VPC, onto an app server, and only then try the password. Each layer has to fail before data leaks. Security people call this <b>defence in depth</b>.</p>
-<div class="try"><b>Try it in your head</b>Your security group allows <code>tcp 22 from 198.51.100.7/32</code>. You go to a café and your public IP becomes <code>203.0.113.50</code>. Can you SSH in? No: <code>/32</code> means only <code>198.51.100.7</code>. The connection simply times out, because security groups drop disallowed traffic silently. You would add a rule for your new IP, then remove it afterwards.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>A VPC is your private network, defined by a CIDR range such as <code>10.0.0.0/16</code>.</li>
-<li>The slash number is how many bits are fixed: /16 is 65,536 addresses, /24 is 256, /32 is one, /0 is everyone.</li>
-<li>Subnets split the VPC: public ones route to an internet gateway, private ones do not. Databases and apps go private.</li>
-<li>Security groups are stateful, allow-only firewalls on each resource: protocol, port and source.</li>
-<li>443 from <code>0.0.0.0/0</code> for a website; SSH only from your <code>/32</code>, or no SSH at all with Session Manager.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. How many addresses does /24 cover? <i>256.</i> 2. SSH should be open to whom? <i>Only your IP (/32), or nobody if you use Session Manager.</i> 3. Where does the database go? <i>A private subnet, accepting 5432 only from the app's security group.</i></div>
 `);
+
+const tfF=(code,state,cloud,out,label)=>{
+ const col=(x,title,cls,items)=>`<rect class="${cls}" x="${x}" y="8" width="128" height="134" rx="8"/><text class="t-b${cls==='bx-dark'?' t-term':''}" x="${x+12}" y="30" style="font-size:14px">${title}</text>`+items;
+ return `<svg viewBox="0 0 420 212" role="img" aria-label="${label}">
+${col(8,'main.tf','bx-dark',code.map(([t,c],i)=>`<text class="t-term ${c||''}" x="20" y="${60+i*26}" style="font-size:14px">${t}</text>`).join(''))}
+${col(146,'state','bx',state.length?state.map(([t,c],i)=>`<text class="t-m ${c||''}" x="158" y="${60+i*26}" style="font-size:14px">${t}</text>`).join(''):'<text class="t t-dim" x="158" y="62" style="font-size:14px">empty</text>')}
+${col(284,'AWS','bx-info',cloud.map(([ic,c],i)=>V.ic(ic,296+i*58,54,48,c)).join('')+(cloud.length?'':'<text class="t t-dim" x="296" y="62" style="font-size:14px">nothing</text>'))}
+<rect class="bx-dark" x="8" y="150" width="404" height="56" rx="8"/>${out.map(([t,c],i)=>`<text class="t-term ${c||''}" x="18" y="${172+i*24}" style="font-size:14px">${t}</text>`).join('')}
+</svg>`};
 
 explain('c6',`
-<h4>Why describe infrastructure in code</h4>
-<p>Over this track you have created buckets, servers, users, policies, networks and firewall rules, each with a CLI command. Now imagine doing that again for a staging copy of your app. And again after someone changes a setting by hand and nobody remembers what it was. Clicking or typing infrastructure into existence works once, but it is hard to repeat, hard to review and impossible to undo neatly.</p>
-<p><b>Infrastructure as code</b> (IaC) means describing the infrastructure you want in text files, kept in Git like any other code. A tool reads those files and makes the cloud match them. The benefits are the ones you already get from Git for your app:</p>
-<ul>
-<li><b>Reviewable</b>: a change to a firewall rule is a pull request someone can read before it happens.</li>
-<li><b>Repeatable</b>: run the same files again for staging, or in another region, and you get the same result.</li>
-<li><b>History</b>: <code>git log</code> tells you who changed what and why.</li>
-</ul>
-<p><b>Terraform</b> is the most widely used IaC tool and works with almost every cloud. (Alternatives include OpenTofu, an open-source fork of Terraform with the same language, Pulumi and AWS CloudFormation.)</p>
-<div class="analogy"><b>Think of it like</b>An architect's blueprint. You do not tell the builders "add a brick here, now another one". You hand over a drawing of the finished house, and they work out what to build, change or knock down to match it.</div>
+<p>Clicking around a cloud console works once. But can you click it exactly the same way next month, for a second environment, after a teammate changed something? Infrastructure as code means your servers and buckets are described in files, reviewed and rebuilt at will.</p>
 
-<h4>Declarative: describe the result, not the steps</h4>
-<p>The CLI commands you used were <b>imperative</b>: each one says "do this now". Terraform files are <b>declarative</b>: they say "this is what should exist". If the bucket already exists exactly as described, running Terraform again does nothing. You never write "create" or "delete"; Terraform works that out by comparing what you want with what exists.</p>
+${V.card(1,'Infrastructure as code','a blueprint instead of memory',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="A main.tf blueprint goes to Terraform, which builds a bucket and a server in AWS">
+<rect class="bx-dark" x="6" y="12" width="132" height="120" rx="8"/><text class="t-term" x="18" y="38" style="font-size:14px">main.tf</text>
+<text class="t-term t-dim" x="18" y="70" style="font-size:14px">bucket</text><text class="t-term t-dim" x="18" y="98" style="font-size:14px">server</text>
+<path class="ln-a" style="stroke-width:3" d="M142 72H160"/><polygon class="ah-a" points="158,65 158,79 170,72"/>
+${V.ic('robot',176,30,64,'ic-a')}<text class="t-b" x="208" y="118" text-anchor="middle">Terraform</text>
+<path class="ln-ok" style="stroke-width:3" d="M246 72H264"/><polygon class="ah-ok" points="262,65 262,79 274,72"/>
+<rect class="bx-info" x="280" y="12" width="134" height="120" rx="8"/><text class="t-b t-info" x="292" y="36">AWS</text>${V.ic('folder',290,52,52,'ic-ok')}${V.ic('server',350,52,52,'ic-ok')}
+<text class="t-s" x="210" y="154" text-anchor="middle" style="font-size:14px">same file, same result, every time</text>
+</svg><figcaption>You describe what you want in files. Terraform works out the steps and builds it. Running it again builds nothing new, because it is already there.</figcaption></figure>
+${V.like(`<p>LEGO instructions versus building from memory. With the booklet, anyone can build the same castle, spot a missing page, and build a second copy for a friend.</p>`)}
+${V.why(`<p>Hand-built infrastructure drifts: nobody remembers which box was ticked, and staging slowly stops matching production. HashiCorp released Terraform in 2014 so infrastructure could live in Git, be reviewed in pull requests and be rebuilt on demand. OpenTofu is an open-source copy with the same commands.</p>`)}
+${V.hook(`Write it down once; build it the same way forever.`)}
+`)}
 
-<h4>Reading <code>main.tf</code></h4>
-<p>Terraform files end in <code>.tf</code> and use a language called <b>HCL</b>. It is made of <b>blocks</b>: a keyword, some labels, and settings in curly braces.</p>
-<pre class="snip">terraform {
-  required_providers {
-    aws = { source = "hashicorp/aws", version = "~&gt; 5.0" }
-  }
-}
-provider "aws" {
-  region = "us-east-1"
-}</pre>
-<p>A <b>provider</b> is a plugin that teaches Terraform how to talk to one service's API. The <code>terraform</code> block says which provider you need and where to download it from. <code>~&gt; 5.0</code> means "any 5.x version, but not 6", so an upgrade with breaking changes never sneaks in. The <code>provider</code> block configures it, here with the region. Credentials come from the same place as the CLI: what you set up with <code>aws configure</code>.</p>
-<pre class="snip">resource "aws_s3_bucket" "assets" {
-  bucket = "you-portfolio-assets-tf-2026"
-  tags = {
-    Project = "portfolio"
-  }
-}</pre>
-<p>A <b>resource</b> block is one thing that should exist. It has two labels. The first, <code>aws_s3_bucket</code>, is the <b>type</b>, defined by the provider. The second, <code>assets</code>, is <b>your name for it inside Terraform</b>; AWS never sees it. Together they form its <b>address</b>, <code>aws_s3_bucket.assets</code>, which is how Terraform refers to it in plans and state. Inside are its settings, called <b>arguments</b>: the real bucket name (still globally unique) and some <b>tags</b>, labels that help you find and cost things later.</p>
+${V.card(2,'Writing a resource','the shape of a .tf file',`
+${V.anat([[1,'resource'],' ',[2,'"aws_s3_bucket"'],' ',[3,'"assets"'],' {\n  ',[4,'bucket'],' = ',[5,'"you-portfolio-assets-tf-2026"'],'\n}'],[
+ '<b>Block type.</b> <code>resource</code> means "a thing that should exist". Other blocks: <code>provider</code>, <code>terraform</code>.',
+ '<b>Resource type.</b> Which kind of thing, from the AWS provider.',
+ '<b>Local name.</b> Terraform\'s nickname, used only inside your code. Together they form the address <code>aws_s3_bucket.assets</code>.',
+ '<b>Argument.</b> A setting of that resource.',
+ '<b>Value.</b> Here the real bucket name in AWS, which must be globally unique.'])}
+${V.rules(V.rh('Rules'),V.ok('provider "aws" { region = "us-east-1" }','Tell Terraform which cloud and which region'),
+ V.no('bucket = you-portfolio','Text values need double quotes'),V.ok('"assets" vs the bucket name','The local name is for your code; the bucket name is what AWS sees'),
+ V.rh('Conventions'),V.ok('version = "~&gt; 5.0"','Pin the provider so an upgrade cannot surprise you'),V.ok('snake_case local names','<code>web</code>, <code>assets</code>, <code>main_db</code>'))}
+${V.hook(`resource "type" "nickname" { settings }.`)}
+`)}
 
-<h4>The loop: init, plan, apply</h4>
-<figure class="fig"><svg viewBox="0 0 420 270" role="img" aria-label="Terraform compares your files with its state and the real cloud, shows a plan, then applies it and updates the state">
-<rect class="bx-a" x="10" y="10" width="120" height="48" rx="6"/><text class="t-b" x="70" y="32" text-anchor="middle">.tf files</text><text class="t-s" x="70" y="50" text-anchor="middle">what you want</text>
-<rect class="bx-info" x="150" y="10" width="120" height="48" rx="6"/><text class="t-b" x="210" y="32" text-anchor="middle">state</text><text class="t-s" x="210" y="50" text-anchor="middle">what it made</text>
-<rect class="bx" x="290" y="10" width="120" height="48" rx="6"/><text class="t-b" x="350" y="32" text-anchor="middle">AWS</text><text class="t-s" x="350" y="50" text-anchor="middle">what exists</text>
-<path class="ln" d="M70 58v30h280v-30"/><path class="ln" d="M210 58v30"/>
-<path class="ln" d="M210 88v12"/><polygon class="ah" points="204,100 216,100 210,108"/>
-<rect class="bx-warn" x="110" y="110" width="200" height="44" rx="8"/><text class="t-b" x="210" y="130" text-anchor="middle">terraform plan</text><text class="t-s" x="210" y="147" text-anchor="middle">the difference</text>
-<path class="ln" d="M210 154v16"/><polygon class="ah" points="204,170 216,170 210,178"/>
-<text class="t-s" x="222" y="168">you read it</text>
-<rect class="bx-ok" x="110" y="180" width="200" height="44" rx="8"/><text class="t-b" x="210" y="200" text-anchor="middle">terraform apply</text><text class="t-s" x="210" y="217" text-anchor="middle">make it so</text>
-<path class="ln-ok" d="M310 202h80v-136"/><polygon class="ah-ok" points="384,68 396,68 390,60"/>
-<text class="t-s t-ok" x="380" y="196" text-anchor="end">changes</text>
-<text class="t-s" x="210" y="258" text-anchor="middle">then records the result in state</text>
-</svg><figcaption>Terraform compares three things: your files, its state record of what it created before, and what really exists in AWS. The plan is the difference. When you apply it, Terraform makes the changes in AWS and then updates the state to match.</figcaption></figure>
-<ol>
-<li><b><code>terraform init</code></b> prepares the folder. It downloads the providers into a hidden <code>.terraform</code> folder and writes <code>.terraform.lock.hcl</code>, which records the exact provider versions. Run it once per project, and again when you add a provider.</li>
-<li><b><code>terraform plan</code></b> works out what would change and prints it, <b>without changing anything</b>. This is your safety net.</li>
-<li><b><code>terraform apply</code></b> shows the plan again, asks you to type <code>yes</code>, then makes the changes. Anything other than exactly <code>yes</code> cancels.</li>
-</ol>
+${V.card(3,'Plan, then apply','see the changes before they happen',`
+${V.like(`<p>An architect showing you the plans before the builders arrive. You read them, say yes, and only then does anyone pick up a shovel.</p>`)}
+${V.steps([
+ ['<code>terraform init</code> downloads the AWS provider, the plug-in that knows how to talk to AWS.',tfF([['bucket']],[],[],[['$ terraform init'],['Terraform has been successfully initialized!','t-ok']],'Init')],
+ ['<code>terraform plan</code> compares your files with the state (what it built before). The bucket is missing, so the plan says <b>+ create</b>. Nothing is built yet.',tfF([['+ bucket','t-ok']],[],[],[['+ aws_s3_bucket.assets','t-ok'],['Plan: 1 to add, 0 to change, 0 to destroy.']],'Plan')],
+ ['<code>terraform apply</code> shows the plan again and waits for you to type <b>yes</b>. Then it creates the bucket and records it in the state.',tfF([['bucket']],[['assets']],[['folder','ic-ok']],[['Enter a value: yes'],['Apply complete! Resources: 1 added.','t-ok']],'Apply')],
+ ['You add an <code>aws_instance</code> called web. The plan only adds the server: the bucket already matches, so it is left alone.',tfF([['bucket'],['+ instance','t-ok']],[['assets']],[['folder','ic-ok']],[['+ aws_instance.web','t-ok'],['Plan: 1 to add, 0 to change, 0 to destroy.']],'Second plan')],
+ ['After apply, both exist. <code>terraform destroy</code> plans <b>- destroy</b> for everything, you type yes, and the bill stops.',tfF([['bucket'],['instance']],[],[],[['- aws_instance.web  - aws_s3_bucket.assets','t-bad'],['Destroy complete! Resources: 2 destroyed.']],'Destroy')]])}
+${V.rules(V.rh('Read the symbols'),V.ok('+','Will be created'),V.ok('~','Will be changed in place'),V.no('-','Will be destroyed: read twice'),V.no('-/+','Destroyed and rebuilt: data on it can be lost'))}
+${V.hook(`Plan is the preview, apply is the button. Never press the button without reading the preview.`)}
+`)}
 
-<h4>Reading a plan</h4>
-<p>Each resource in a plan has a symbol in front of it, and the last line sums it up:</p>
-<pre class="snip">  # aws_s3_bucket.assets will be created
-  + resource "aws_s3_bucket" "assets" {
-      + bucket = "you-portfolio-assets-tf-2026"
-    }
-Plan: 1 to add, 0 to change, 0 to destroy.</pre>
-<div class="tbl-wrap"><table><tr><th>Symbol</th><th>Meaning</th></tr>
-<tr><td><code>+</code></td><td>will be created</td></tr>
-<tr><td><code>~</code></td><td>will be updated in place</td></tr>
-<tr><td><code>-</code></td><td>will be <b>destroyed</b></td></tr>
-<tr><td><code>-/+</code></td><td>will be destroyed and created again (replaced), because a setting cannot be changed in place</td></tr></table></div>
-<p>Always read the summary line, and look hard at any <code>-</code> or <code>-/+</code>. Replacing a database, for example, means a new, empty database. When you later add an <code>aws_instance</code> named <code>web</code> to the same file and plan again, you should see <code>1 to add, 0 to change</code>: Terraform knows the bucket already exists, so it leaves it alone. <code>terraform state list</code> then shows both addresses.</p>
-<p><code>terraform apply -auto-approve</code> skips the "type yes" question. That is handy in automation where a human already approved the plan, but dangerous by hand, because you lose your last look before changes happen.</p>
-<div class="mistake"><b>Common mistake</b>Fixing something by hand in the AWS console when it is managed by Terraform. The next plan sees the difference, called <b>drift</b>, and tries to undo your change. Make every change in the <code>.tf</code> files, so the code stays the truth.</div>
+${V.card(4,'State','Terraform\'s memory',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="The state file links each address in your code to a real resource ID in AWS">
+<rect class="bx-dark" x="6" y="10" width="140" height="120" rx="8"/><text class="t-term" x="18" y="34" style="font-size:14px">your code</text><text class="t-term" x="18" y="74" style="font-size:14px">assets</text><text class="t-term" x="18" y="108" style="font-size:14px">web</text>
+<rect class="bx-warn" x="160" y="10" width="100" height="120" rx="8"/>${V.ic('book',186,24,48,'ic-warn')}<text class="t-b" x="210" y="100" text-anchor="middle">state</text>
+<path class="ln-d" d="M90 70H160M90 104H160M260 70H274M260 104H274"/>
+<rect class="bx-info" x="274" y="10" width="140" height="120" rx="8"/><text class="t-b t-info" x="286" y="34">AWS</text><text class="t-m" x="286" y="74" style="font-size:14px">you-portf…</text><text class="t-m" x="286" y="108" style="font-size:14px">i-05a8c1…</text>
+<text class="t-s" x="210" y="152" text-anchor="middle" style="font-size:14px">which name in code is which real thing</text>
+</svg><figcaption>The state file is Terraform's notebook: it links each address in your code to the real resource it created.</figcaption></figure>
+${V.like(`<p>A cloakroom's ticket book. Lose it, and the attendant no longer knows which coat belongs to which ticket.</p>`)}
+${V.rules(V.rh('Rules'),V.ok('commit the .tf files and .terraform.lock.hcl','Code and pinned provider versions belong in Git'),
+ V.no('commit terraform.tfstate','It can contain secrets, and two copies will disagree'),V.no('edit the state by hand','Use terraform commands, like terraform state list'),
+ V.rh('Conventions'),V.ok('remote state with locking','An S3 backend (with its lock file) or HCP Terraform, so two people cannot apply at once'))}
+${V.build(`<ol><li>Write <code>main.tf</code> with the provider and an S3 bucket.</li><li><code>terraform init</code>, then <code>terraform plan</code>.</li><li><code>terraform apply</code> and type yes.</li><li>Add an <code>aws_instance</code> named web; plan, apply, then <code>terraform state list</code>.</li><li><code>terraform destroy</code> and type yes.</li></ol>`)}
+${V.hook(`Code says what you want, state says what you have, plan shows the difference.`)}
+`)}
 
-<h4>State: Terraform's memory</h4>
-<p>How does Terraform know <code>aws_s3_bucket.assets</code> is that particular bucket in AWS? It keeps a <b>state</b> file, <code>terraform.tfstate</code>, a JSON record linking each address in your code to the real resource's ID and settings. Three rules:</p>
-<ul>
-<li><b>Never commit state to Git.</b> It can contain secrets in plain text, such as generated database passwords.</li>
-<li><b>Never edit it by hand.</b> Use <code>terraform state</code> commands if you must change it.</li>
-<li><b>Teams keep it remote, with locking.</b> A <b>backend</b> stores state somewhere shared, like an S3 bucket or HCP Terraform (formerly Terraform Cloud). <b>Locking</b> stops two people applying at the same moment and corrupting it. The S3 backend can now lock on its own; older setups use a DynamoDB table for the lock.</li>
-</ul>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="The tf files and lock file go in Git; the state file goes in a locked remote backend">
-<rect class="bx-ok" x="10" y="10" width="190" height="140" rx="8"/><text class="t-b" x="105" y="36" text-anchor="middle">Git repository</text>
-<text class="t-m" x="24" y="70">main.tf</text><text class="t-m" x="24" y="96">.terraform</text><text class="t-m" x="24" y="118">  .lock.hcl</text>
-<text class="t-s" x="24" y="140">reviewed in PRs</text>
-<rect class="bx-info" x="220" y="10" width="190" height="140" rx="8"/><text class="t-b" x="315" y="36" text-anchor="middle">Remote backend</text>
-<text class="t-m" x="234" y="70">terraform</text><text class="t-m" x="234" y="92">  .tfstate</text>
-<text class="t-s" x="234" y="118">S3 bucket, locked</text><text class="t-s" x="234" y="140">may hold secrets</text>
-<text class="t-s t-bad" x="210" y="180" text-anchor="middle">Never commit: *.tfstate and the .terraform folder</text>
-</svg><figcaption>Your code and the provider lock file live in Git, where they are reviewed. The state file lives in a remote backend, such as an S3 bucket with locking, because it can contain secrets and must only be written by one person at a time.</figcaption></figure>
-<p>So what goes into Git? The <code>.tf</code> files and <code>.terraform.lock.hcl</code>. What stays out, in <code>.gitignore</code>? The <code>.terraform</code> folder and every <code>*.tfstate</code> file.</p>
-
-<h4>Tearing it down</h4>
-<pre class="snip">terraform destroy     # plans the removal of everything, then asks for yes</pre>
-<p><code>destroy</code> removes every resource in the state, shown as a plan full of <code>-</code> lines, and asks for <code>yes</code> first. Afterwards <code>terraform state list</code> is empty and nothing keeps billing. For learning projects, that is the cleanest way to make sure nothing is left running.</p>
-<div class="try"><b>Try it in your head</b>You change the bucket's tag from <code>Project = "portfolio"</code> to <code>Project = "site"</code> and run <code>terraform plan</code>. Which symbol and summary do you expect? A <code>~</code> on <code>aws_s3_bucket.assets</code>, and <code>0 to add, 1 to change, 0 to destroy</code>: tags can be updated in place. Change the <code>bucket</code> name instead, and you would see <code>-/+</code>, because S3 cannot rename a bucket.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Infrastructure as code describes what should exist in files that are reviewed, versioned and repeatable.</li>
-<li>A <code>provider</code> talks to the cloud; each <code>resource "type" "name"</code> is one thing, addressed as <code>type.name</code>.</li>
-<li><code>init</code> downloads providers, <code>plan</code> shows the difference (+ create, ~ update, - destroy), <code>apply</code> makes it so after you type yes, <code>destroy</code> removes it all.</li>
-<li>Always read the plan, especially destroy and replace lines.</li>
-<li>Commit the <code>.tf</code> files and the lock file; keep state in a remote, locked backend, never in Git.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Which command shows changes without making them? <i>terraform plan.</i> 2. A plan line starts with <code>-/+</code>. Worried? <i>Yes: it will destroy and rebuild that resource.</i> 3. Should <code>terraform.tfstate</code> go in Git? <i>No: keep it in a remote, locked backend.</i></div>
 `);
+
+}

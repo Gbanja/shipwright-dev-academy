@@ -1,643 +1,782 @@
 /* security: "Explained step by step" walkthroughs. */
 
 explain('x1',`
-<h4>Why a "most wanted" list exists</h4>
-<p>Every web app you build will be poked at by strangers. Some are curious, many are automated programs called <b>bots</b> that scan the whole internet day and night, and a few are skilled attackers looking for money or data. You cannot guess every trick they might try. The good news is that you don't have to: the same handful of mistakes cause most real break-ins, year after year.</p>
-<p>A <b>vulnerability</b> is a weakness in an app that someone can abuse. An <b>attacker</b> is whoever abuses it. To <b>exploit</b> a vulnerability means to actually use it, for example to read data you should not see. A <b>breach</b> is what happens when an exploit succeeds and data leaks out.</p>
-<p><b>OWASP</b>, the Open Worldwide Application Security Project, is a non-profit community of security people. Every few years it studies data from thousands of real apps and publishes the <b>OWASP Top 10</b>: the ten kinds of risk that matter most. It is the closest thing the industry has to a shared checklist, and interviewers, auditors and security tools all speak its language.</p>
-<div class="analogy"><b>Think of it like</b>A police "most wanted" poster for burglaries. It doesn't list every possible crime, but if you lock the doors and windows it mentions, you have stopped most break-ins already.</div>
+<p>Every website you build will be poked at by strangers, many of them automatic programs that scan the whole internet day and night. You cannot guess every trick, and you don't have to: the same few mistakes cause most real break-ins, year after year.</p>
 
-<h4>How an app is put together, and where things go wrong</h4>
-<p>Before naming the risks, picture the parts of a typical web app. Your <b>browser</b> shows pages and sends requests. Your <b>server</b> runs your code, decides what to do and talks to a <b>database</b> where the data lives. Your code leans on <b>libraries</b>, which are packages of code written by other people. Around all of it sit <b>settings</b> (passwords, debug switches, cloud storage permissions) and <b>logs</b>, the written record of what happened.</p>
-<p>Each Top 10 risk lives in one of these places. Seeing the map first makes the list much easier to remember.</p>
-<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="Parts of a web app matched to the risks that live in them">
-<g text-anchor="middle">
-<rect class="bx" x="10" y="10" width="130" height="38" rx="6"/><text class="t-b" x="75" y="34">Browser</text>
-<rect class="bx" x="10" y="58" width="130" height="38" rx="6"/><text class="t-b" x="75" y="82">Your code</text>
-<rect class="bx" x="10" y="106" width="130" height="38" rx="6"/><text class="t-b" x="75" y="130">Data</text>
-<rect class="bx" x="10" y="154" width="130" height="38" rx="6"/><text class="t-b" x="75" y="178">Settings</text>
-<rect class="bx" x="10" y="202" width="130" height="38" rx="6"/><text class="t-b" x="75" y="226">Libraries, logs</text>
-</g>
-<g>
-<path class="ln" d="M140 29h22"/><polygon class="ah" points="160,23 160,35 168,29"/>
-<path class="ln" d="M140 77h22"/><polygon class="ah" points="160,71 160,83 168,77"/>
-<path class="ln" d="M140 125h22"/><polygon class="ah" points="160,119 160,131 168,125"/>
-<path class="ln" d="M140 173h22"/><polygon class="ah" points="160,167 160,179 168,173"/>
-<path class="ln" d="M140 221h22"/><polygon class="ah" points="160,215 160,227 168,221"/>
-</g>
-<g text-anchor="middle">
-<rect class="bx-warn" x="170" y="10" width="240" height="38" rx="6"/><text class="t" x="290" y="34">XSS, weak logins</text>
-<rect class="bx-bad" x="170" y="58" width="240" height="38" rx="6"/><text class="t" x="290" y="82">Access control, injection</text>
-<rect class="bx-warn" x="170" y="106" width="240" height="38" rx="6"/><text class="t" x="290" y="130">Weak crypto, plain text</text>
-<rect class="bx-warn" x="170" y="154" width="240" height="38" rx="6"/><text class="t" x="290" y="178">Misconfiguration</text>
-<rect class="bx-warn" x="170" y="202" width="240" height="38" rx="6"/><text class="t" x="290" y="226">Old parts, nobody watching</text>
-</g>
-</svg><figcaption>Each part of a web app has its own typical weakness. The browser suffers cross-site scripting and weak logins, your code suffers broken access control and injection, stored data suffers weak cryptography, settings suffer misconfiguration, and libraries and logs suffer outdated components and missing monitoring.</figcaption></figure>
+${V.card(1,'The most wanted list','ten risks behind most breaches',`
+<figure class="fig"><svg viewBox="0 0 420 196" role="img" aria-label="A wanted board with six of the OWASP Top 10 risks: access control, crypto, injection, misconfiguration, outdated parts, logging">
+<rect class="bx" x="6" y="6" width="408" height="184" rx="10"/>
+<text class="t-b" x="210" y="30" text-anchor="middle" style="font-size:17px">OWASP Top 10: most wanted</text>
+<rect class="bx-bad" x="16" y="42" width="126" height="66" rx="8"/>${V.ic('unlock',24,58,34,'ic-bad')}<text class="t-b" x="64" y="70">A01</text><text class="t" x="64" y="94">Access</text>
+<rect class="bx-warn" x="150" y="42" width="126" height="66" rx="8"/>${V.ic('key',158,58,34,'ic-warn')}<text class="t-b" x="198" y="70">A02</text><text class="t" x="198" y="94">Crypto</text>
+<rect class="bx-bad" x="284" y="42" width="126" height="66" rx="8"/>${V.ic('bug',292,58,34,'ic-bad')}<text class="t-b" x="332" y="70">A03</text><text class="t" x="332" y="94">Injection</text>
+<rect class="bx-warn" x="16" y="116" width="126" height="66" rx="8"/>${V.ic('gear',24,132,34,'ic-warn')}<text class="t-b" x="64" y="144">A05</text><text class="t" x="64" y="168">Misconfig</text>
+<rect class="bx-warn" x="150" y="116" width="126" height="66" rx="8"/>${V.ic('box',158,132,34,'ic-warn')}<text class="t-b" x="198" y="144">A06</text><text class="t" x="198" y="168">Outdated</text>
+<rect class="bx-warn" x="284" y="116" width="126" height="66" rx="8"/>${V.ic('clock',292,132,34,'ic-warn')}<text class="t-b" x="332" y="144">A09</text><text class="t" x="332" y="168">Logging</text>
+</svg><figcaption>Six of the ten. A01 is broken access control: people reaching things that are not theirs. It sits at number one because it turns up in more apps than anything else.</figcaption></figure>
+${V.like(`<p>A "most wanted" board at a police station. The police cannot stop every crime, so they pin up the ten criminals who do the most damage. Learn those ten faces and you will spot most trouble before it happens.</p>`)}
+${V.why(`<p><b>OWASP</b> (the Open Worldwide Application Security Project) is a charity of security volunteers. Since 2003 they have gathered data from thousands of real apps and ranked the risks behind real breaches. They update the list every few years. This lesson shows the 2021 numbering; the 2025 edition reshuffles some places, but broken access control is still number one.</p>`)}
+${V.anat([[1,'A03'],':',[2,'2021'],'-',[3,'Injection']],[
+ '<b>Rank.</b> A for application, then the position on the list. Lower means more common or more harmful.',
+ '<b>Edition.</b> The year of the list. Always say which year, because the numbers change.',
+ '<b>Category.</b> A family of mistakes, not one single bug. Injection covers SQL, shell commands and XSS.'])}
+${V.rules(V.rh('The ten, in plain words'),
+ V.ok('A01 Access control','Users see or change things that are not theirs'),V.ok('A02 Crypto failures','Plain-text passwords, weak hashing, no HTTPS'),
+ V.ok('A03 Injection','Typed input runs as SQL, shell or page script'),V.ok('A04 Insecure design','The plan itself is unsafe, e.g. no limit on login tries'),
+ V.ok('A05 Misconfiguration','Default passwords, debug mode on, open storage'),V.ok('A06 Outdated parts','Libraries with known, published holes'),
+ V.ok('A07 Auth failures','Weak logins, no 2FA, sessions that never end'),V.ok('A08 Integrity failures','Updates or packages nobody checked'),
+ V.ok('A09 Logging failures','Attacks happen and nobody notices'),V.ok('A10 SSRF','Your server is tricked into fetching internal URLs'))}
+${V.hook(`Ten faces on the wall. Number one: "Is this really yours?"`)}
+`)}
 
-<h4>The six risks this lesson focuses on</h4>
-<p>The lesson's quick reference shows all ten entries. Six of them come up again and again, so let's take them one at a time.</p>
-<p><b>1. Broken access control.</b> "Access control" means the rules about who may see or change what. It is broken when the server forgets to check those rules. The classic example: you are viewing <code>/invoices/1042</code>, you change the number in the address bar to <code>1043</code>, and you see a stranger's invoice. The server checked that you were logged in, but never checked that invoice 1043 is <i>yours</i>. This specific bug is called <b>IDOR</b>, insecure direct object reference. It has been number one on the list since 2021, and you will fix one yourself in a later lesson.</p>
-<p><b>2. Injection.</b> Your app often builds instructions for another program: a SQL query for the database, a shell command, or HTML for the browser. Injection happens when text typed by a user gets glued into those instructions and is treated as <i>part of the instructions</i> instead of as plain data. If the login form glues the email straight into a SQL string, a clever "email" can rewrite the query. Cross-site scripting, or <b>XSS</b>, is injection into HTML: a "comment" that is really a script. Both get their own lesson next.</p>
-<p><b>3. Cryptographic failures.</b> Cryptography is the maths that keeps data secret or proves it hasn't changed. This risk covers data that should be protected but isn't: a site still on plain <code>http://</code> so anyone on the café Wi-Fi can read the traffic, or passwords stored as plain text or with a fast, outdated hash such as MD5. A <b>hash</b> is a one-way scramble of data; you will learn how password hashing should work in the sessions lesson.</p>
-<p><b>4. Security misconfiguration.</b> The code is fine but a setting is not. Examples: an admin panel still using the factory password <code>admin/admin</code>, a production site that shows full error details (called <b>stack traces</b>) to visitors, or a cloud storage bucket left readable by the whole internet. These are easy for attackers to find because bots check for them automatically.</p>
-<p><b>5. Vulnerable and outdated components.</b> Most of the code in a modern app was written by someone else and installed as packages. When a security hole is found in a package, it gets a public ID called a <b>CVE</b> (Common Vulnerabilities and Exposures), and a fixed version is released. If you never update, you are running code with a hole the whole world knows about. Tools like <code>npm audit</code>, Dependabot and Renovate warn you and help you update.</p>
-<p><b>6. Logging and monitoring failures.</b> Attacks rarely succeed on the first try. Someone guessing passwords makes thousands of failed attempts first. If you don't record failed logins and nobody is alerted when they spike, the attack can run for weeks unnoticed. Good logging turns a silent breach into an alarm.</p>
+${V.card(2,'Spot the risk','name it, then you can fix it',`
+<p>Security people sort every problem into a category, because each category has a known fix. Step through some incidents and watch each one get its label.</p>
+${V.steps([
+ ['The admin page opens for anyone who types its address. Nothing checks who you are or what you may do. That is <b>broken access control</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="Incident: admin page opens for anyone. Category A01 broken access control">
+<rect class="bx" x="6" y="8" width="408" height="76" rx="8"/>${V.ic('warn',16,22,40,'ic-warn')}
+<text class="t" x="68" y="40">The /admin page opens for anyone</text><text class="t" x="68" y="64">who types the address.</text>
+<path class="ln-a" d="M210 88V104"/><polygon class="ah-a" points="203,102 217,102 210,112"/>
+<rect class="bx-a" x="40" y="114" width="340" height="50" rx="8"/>${V.ic('unlock',52,120,38,'ic-a')}
+<text class="t-b" x="100" y="145" style="font-size:17px">A01 Broken access control</text>
+</svg>`],
+ ['A search box pastes your words straight into a database command. Typed text that becomes code is <b>injection</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="Incident: search text pasted into SQL. Category A03 injection">
+<rect class="bx" x="6" y="8" width="408" height="76" rx="8"/>${V.ic('warn',16,22,40,'ic-warn')}
+<text class="t" x="68" y="40">A search box pastes your words</text><text class="t" x="68" y="64">straight into an SQL command.</text>
+<path class="ln-a" d="M210 88V104"/><polygon class="ah-a" points="203,102 217,102 210,112"/>
+<rect class="bx-a" x="40" y="114" width="340" height="50" rx="8"/>${V.ic('bug',52,120,38,'ic-a')}
+<text class="t-b" x="100" y="145" style="font-size:17px">A03 Injection</text>
+</svg>`],
+ ['Passwords are saved exactly as people typed them. One leak and every account is open. That is a <b>cryptographic failure</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="Incident: passwords saved as typed. Category A02 cryptographic failures">
+<rect class="bx" x="6" y="8" width="408" height="76" rx="8"/>${V.ic('warn',16,22,40,'ic-warn')}
+<text class="t" x="68" y="40">Passwords are saved in the</text><text class="t" x="68" y="64">database exactly as typed.</text>
+<path class="ln-a" d="M210 88V104"/><polygon class="ah-a" points="203,102 217,102 210,112"/>
+<rect class="bx-a" x="40" y="114" width="340" height="50" rx="8"/>${V.ic('key',52,120,38,'ic-a')}
+<text class="t-b" x="100" y="145" style="font-size:17px">A02 Cryptographic failures</text>
+</svg>`],
+ ['A storage bucket full of customer files was left public. The code was fine; the <b>settings</b> were wrong. That is misconfiguration.',`<svg viewBox="0 0 420 170" role="img" aria-label="Incident: public storage bucket. Category A05 security misconfiguration">
+<rect class="bx" x="6" y="8" width="408" height="76" rx="8"/>${V.ic('warn',16,22,40,'ic-warn')}
+<text class="t" x="68" y="40">A storage bucket of customer</text><text class="t" x="68" y="64">files was left open to everyone.</text>
+<path class="ln-a" d="M210 88V104"/><polygon class="ah-a" points="203,102 217,102 210,112"/>
+<rect class="bx-a" x="40" y="114" width="340" height="50" rx="8"/>${V.ic('gear',52,120,38,'ic-a')}
+<text class="t-b" x="100" y="145" style="font-size:17px">A05 Misconfiguration</text>
+</svg>`],
+ ['A library from years ago has a published hole, called a <b>CVE</b> (a numbered public warning). Nobody updated it. That is an <b>outdated component</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="Incident: old library with a known CVE. Category A06 vulnerable and outdated components">
+<rect class="bx" x="6" y="8" width="408" height="76" rx="8"/>${V.ic('warn',16,22,40,'ic-warn')}
+<text class="t" x="68" y="40">The app still uses a 2015 library</text><text class="t" x="68" y="64">with a known, published hole.</text>
+<path class="ln-a" d="M210 88V104"/><polygon class="ah-a" points="203,102 217,102 210,112"/>
+<rect class="bx-a" x="40" y="114" width="340" height="50" rx="8"/>${V.ic('box',52,120,38,'ic-a')}
+<text class="t-b" x="100" y="145" style="font-size:17px">A06 Outdated components</text>
+</svg>`],
+ ['Someone tried thousands of passwords overnight and no alarm went off. Nobody was watching the logs. That is a <b>logging and monitoring failure</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="Incident: thousands of failed logins, no alert. Category A09 logging and monitoring failures">
+<rect class="bx" x="6" y="8" width="408" height="76" rx="8"/>${V.ic('warn',16,22,40,'ic-warn')}
+<text class="t" x="68" y="40">Thousands of wrong passwords</text><text class="t" x="68" y="64">overnight. No alarm went off.</text>
+<path class="ln-a" d="M210 88V104"/><polygon class="ah-a" points="203,102 217,102 210,112"/>
+<rect class="bx-a" x="40" y="114" width="340" height="50" rx="8"/>${V.ic('clock',52,120,38,'ic-a')}
+<text class="t-b" x="100" y="145" style="font-size:17px">A09 Logging failures</text>
+</svg>`]])}
+${V.rules(V.rh('Quick tells for each label'),
+ V.ok('"not theirs"','Someone reached data or pages they should not: access control'),V.ok('"became code"','Input was run as SQL, shell or script: injection'),
+ V.ok('"stored badly"','Plain text, MD5, no HTTPS: crypto failure'),V.ok('"wrong settings"','Defaults, debug pages, open buckets: misconfiguration'),
+ V.ok('"old version"','A CVE in a dependency: outdated components'),V.ok('"nobody noticed"','No logs or alerts: logging failure'))}
+${V.hook(`Not theirs, became code, stored badly, wrong settings, old version, nobody noticed.`)}
+`)}
 
-<h4>The other four, briefly</h4>
-<ul>
-<li><b>Insecure design</b>: the plan itself is unsafe, for example a password-reset flow with no limit on guesses. No amount of careful coding fixes a bad design.</li>
-<li><b>Identification and authentication failures</b>: weak login systems, such as allowing "123456" as a password, no multi-factor authentication (a second proof like a code on your phone), or sessions that never expire.</li>
-<li><b>Software and data integrity failures</b>: trusting updates or data without checking they are genuine. "Supply-chain attacks", where an attacker poisons a package or build step that many apps use, live here.</li>
-<li><b>Server-side request forgery (SSRF)</b>: tricking your server into fetching a URL the attacker chooses, often an internal address that outsiders should never reach.</li>
-</ul>
-<div class="tip"><b>Tip</b>The numbering changes between editions. OWASP published a newer edition in 2025 that reorders some entries and renames a few (for example, outdated components grew into "software supply chain failures", and SSRF was folded into broken access control). The ideas you learn here carry straight over, so focus on recognising the pattern, not memorising the number.</div>
+${V.card(3,'Layers of defence','no single lock is enough',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A castle with a moat, a wall, a guard and a vault: four layers">
+<rect class="bx-info" x="6" y="8" width="408" height="154" rx="14"/><text class="t-s" x="18" y="28">moat: HTTPS</text>
+<rect class="bx" x="40" y="36" width="340" height="118" rx="10"/><text class="t-s" x="52" y="56">wall: login check</text>
+<rect class="bx-a" x="80" y="64" width="260" height="82" rx="8"/><text class="t-s" x="92" y="84">guard: "is it yours?"</text>
+<rect class="bx-ok" x="150" y="92" width="120" height="46" rx="6"/>${V.ic('lock',160,98,34,'ic-ok')}<text class="t-b" x="200" y="121">data</text>
+</svg><figcaption>Defence in depth: several layers, so one mistake does not open everything.</figcaption></figure>
+${V.like(`<p>A castle has a moat, a wall, guards and a locked vault. An attacker who swims the moat still meets the wall. Your app works the same way: if one check fails, the next one catches the attack.</p>`)}
+${V.steps([
+ ['A request arrives at your app. It travels over <b>HTTPS</b>, so nobody on the café Wi-Fi can read or change it.',`<svg viewBox="0 0 420 160" role="img" aria-label="Request passes the HTTPS layer">
+<circle class="dot" cx="20" cy="24" r="9"/><path class="ln-a" d="M32 24H64"/>
+<rect class="bx-ok" x="20" y="44" width="70" height="104" rx="8"/>${V.ic('lock',37,60,36,'ic-ok')}<text class="t-b" x="55" y="134" text-anchor="middle">HTTPS</text>
+<rect class="bx" x="98" y="44" width="70" height="104" rx="8"/>${V.ic('person',115,60,36,'ic-info')}<text class="t-b" x="133" y="134" text-anchor="middle">Login</text>
+<rect class="bx" x="176" y="44" width="70" height="104" rx="8"/>${V.ic('key',193,60,36,'ic-info')}<text class="t-b" x="211" y="134" text-anchor="middle">Owner</text>
+<rect class="bx" x="254" y="44" width="70" height="104" rx="8"/>${V.ic('shield',271,60,36,'ic-info')}<text class="t-b" x="289" y="134" text-anchor="middle">Params</text>
+<rect class="bx" x="332" y="44" width="70" height="104" rx="8"/>${V.ic('clock',349,60,36,'ic-info')}<text class="t-b" x="367" y="134" text-anchor="middle">Logs</text>
+</svg>`],
+ ['It belongs to a real, logged-in user, so it passes the <b>login</b> check. The owner check passes too: they are asking about their own account.',`<svg viewBox="0 0 420 160" role="img" aria-label="Request passes login and owner checks">
+<circle class="dot" cx="250" cy="24" r="9"/><path class="ln-a" d="M20 24H238"/>
+<rect class="bx-ok" x="20" y="44" width="70" height="104" rx="8"/>${V.ic('lock',37,60,36,'ic-ok')}<text class="t-b" x="55" y="134" text-anchor="middle">HTTPS</text>
+<rect class="bx-ok" x="98" y="44" width="70" height="104" rx="8"/>${V.ic('person',115,60,36,'ic-ok')}<text class="t-b" x="133" y="134" text-anchor="middle">Login</text>
+<rect class="bx-ok" x="176" y="44" width="70" height="104" rx="8"/>${V.ic('key',193,60,36,'ic-ok')}<text class="t-b" x="211" y="134" text-anchor="middle">Owner</text>
+<rect class="bx" x="254" y="44" width="70" height="104" rx="8"/>${V.ic('shield',271,60,36,'ic-info')}<text class="t-b" x="289" y="134" text-anchor="middle">Params</text>
+<rect class="bx" x="332" y="44" width="70" height="104" rx="8"/>${V.ic('clock',349,60,36,'ic-info')}<text class="t-b" x="367" y="134" text-anchor="middle">Logs</text>
+</svg>`],
+ ['But the search text contains SQL. The <b>parameterised query</b> treats it as plain text, so the trick does nothing. Blocked.',`<svg viewBox="0 0 420 160" role="img" aria-label="Parameters layer blocks the injection">
+<circle class="dot" cx="250" cy="24" r="9"/><path class="ln-a" d="M20 24H238"/>${V.ic('cross',272,6,36,'ic-bad')}
+<rect class="bx-ok" x="20" y="44" width="70" height="104" rx="8"/>${V.ic('lock',37,60,36,'ic-ok')}<text class="t-b" x="55" y="134" text-anchor="middle">HTTPS</text>
+<rect class="bx-ok" x="98" y="44" width="70" height="104" rx="8"/>${V.ic('person',115,60,36,'ic-ok')}<text class="t-b" x="133" y="134" text-anchor="middle">Login</text>
+<rect class="bx-ok" x="176" y="44" width="70" height="104" rx="8"/>${V.ic('key',193,60,36,'ic-ok')}<text class="t-b" x="211" y="134" text-anchor="middle">Owner</text>
+<rect class="bx-hl" x="254" y="44" width="70" height="104" rx="8"/>${V.ic('shield',271,60,36,'ic-a')}<text class="t-b" x="289" y="134" text-anchor="middle">Params</text>
+<rect class="bx" x="332" y="44" width="70" height="104" rx="8"/>${V.ic('clock',349,60,36,'ic-info')}<text class="t-b" x="367" y="134" text-anchor="middle">Logs</text>
+</svg>`],
+ ['Finally the <b>logs</b> record the strange request and raise an alert. A person can now look into it before the attacker tries something else.',`<svg viewBox="0 0 420 160" role="img" aria-label="Logs record the attempt and raise an alert">
+<circle class="dot-m" cx="250" cy="24" r="9"/><path class="ln-d" d="M262 24H340"/>${V.ic('warn',348,4,38,'ic-warn')}
+<rect class="bx-ok" x="20" y="44" width="70" height="104" rx="8"/>${V.ic('lock',37,60,36,'ic-ok')}<text class="t-b" x="55" y="134" text-anchor="middle">HTTPS</text>
+<rect class="bx-ok" x="98" y="44" width="70" height="104" rx="8"/>${V.ic('person',115,60,36,'ic-ok')}<text class="t-b" x="133" y="134" text-anchor="middle">Login</text>
+<rect class="bx-ok" x="176" y="44" width="70" height="104" rx="8"/>${V.ic('key',193,60,36,'ic-ok')}<text class="t-b" x="211" y="134" text-anchor="middle">Owner</text>
+<rect class="bx-ok" x="254" y="44" width="70" height="104" rx="8"/>${V.ic('shield',271,60,36,'ic-ok')}<text class="t-b" x="289" y="134" text-anchor="middle">Params</text>
+<rect class="bx-hl" x="332" y="44" width="70" height="104" rx="8"/>${V.ic('clock',349,60,36,'ic-warn')}<text class="t-b" x="367" y="134" text-anchor="middle">Logs</text>
+</svg>`]])}
+${V.rules(V.rh('Rules: the law and good sense'),
+ V.ok('your own sandbox','Practise only on systems you own, or ones built for it like OWASP Juice Shop'),
+ V.no('"just testing" a real site','Without written permission it is a crime (in the UK, the Computer Misuse Act)'),
+ V.ok('assume input is hostile','Every form, URL and header can be typed by an attacker'),
+ V.ok('check on the server','The browser is in the user\'s hands; it can be changed'))}
+${V.hook(`Moat, wall, guard, vault, alarm. One layer fails, the next one holds.`)}
+`)}
 
-<h4>A worked example: classifying real incidents</h4>
-<p>The tasks in this lesson describe an incident and ask which category it belongs to. The trick is to ask "what exactly went wrong?" and follow the clues. This flow covers the six main risks:</p>
-<figure class="fig"><svg viewBox="0 0 420 266" role="img" aria-label="Decision flow for classifying a security bug">
-<g text-anchor="middle">
-<rect class="bx" x="10" y="8" width="230" height="36" rx="6"/><text class="t" x="125" y="31">Input ran as code?</text>
-<rect class="bx" x="10" y="60" width="230" height="36" rx="6"/><text class="t" x="125" y="83">Saw others' data?</text>
-<rect class="bx" x="10" y="112" width="230" height="36" rx="6"/><text class="t" x="125" y="135">Data poorly protected?</text>
-<rect class="bx" x="10" y="164" width="230" height="36" rx="6"/><text class="t" x="125" y="187">Unsafe setting left on?</text>
-<rect class="bx" x="10" y="216" width="230" height="36" rx="6"/><text class="t" x="125" y="239">Old library with a hole?</text>
-<rect class="bx-bad" x="270" y="8" width="140" height="36" rx="6"/><text class="t-b" x="340" y="31">Injection</text>
-<rect class="bx-bad" x="270" y="60" width="140" height="36" rx="6"/><text class="t-b" x="340" y="83">Access control</text>
-<rect class="bx-bad" x="270" y="112" width="140" height="36" rx="6"/><text class="t-b" x="340" y="135">Crypto failure</text>
-<rect class="bx-bad" x="270" y="164" width="140" height="36" rx="6"/><text class="t-b" x="340" y="187">Misconfigured</text>
-<rect class="bx-bad" x="270" y="216" width="140" height="36" rx="6"/><text class="t-b" x="340" y="239">Old component</text>
-</g>
-<g>
-<path class="ln-a" d="M240 26h20"/><polygon class="ah-a" points="260,20 260,32 268,26"/>
-<path class="ln-a" d="M240 78h20"/><polygon class="ah-a" points="260,72 260,84 268,78"/>
-<path class="ln-a" d="M240 130h20"/><polygon class="ah-a" points="260,124 260,136 268,130"/>
-<path class="ln-a" d="M240 182h20"/><polygon class="ah-a" points="260,176 260,188 268,182"/>
-<path class="ln-a" d="M240 234h20"/><polygon class="ah-a" points="260,228 260,240 268,234"/>
-<path class="ln" d="M125 44v8"/><polygon class="ah" points="119,52 131,52 125,60"/>
-<path class="ln" d="M125 96v8"/><polygon class="ah" points="119,104 131,104 125,112"/>
-<path class="ln" d="M125 148v8"/><polygon class="ah" points="119,156 131,156 125,164"/>
-<path class="ln" d="M125 200v8"/><polygon class="ah" points="119,208 131,208 125,216"/>
-</g>
-<text class="t-s" x="137" y="56">no</text><text class="t-s" x="137" y="108">no</text><text class="t-s" x="137" y="160">no</text><text class="t-s" x="137" y="212">no</text>
-</svg><figcaption>Ask the questions from the top. Input that ran as code is injection. Seeing someone else's data is broken access control. Weakly protected data is a cryptographic failure. An unsafe default or debug setting is misconfiguration. A library with a known hole is a vulnerable component.</figcaption></figure>
-<p>Let's walk through two of the lesson's incidents with that flow:</p>
-<ol>
-<li><i>"Passwords are stored as unsalted MD5 hashes."</i> No input ran as code, and nobody reached another user's page. But the passwords, which are secret data, are protected with a weak method. That is a <b>cryptographic failure</b>.</li>
-<li><i>"Attackers tried 50,000 passwords last month and nobody noticed."</i> The key word is <i>noticed</i>. The weakness isn't how passwords are stored, it is that no alarm went off. That is a <b>logging and monitoring failure</b>. Rate limiting, which caps how many attempts one person can make per minute, would also help.</li>
-</ol>
-<div class="mistake"><b>Common mistake</b>Thinking "my app is too small to be attacked". Bots don't choose targets by size; they scan every address they can find for known weaknesses like default passwords and outdated packages. A brand-new hobby site can get its first automated attack within hours of going live.</div>
-<div class="mistake"><b>Common mistake</b>Mixing up injection and access control. Ask: did the attacker <i>change what the code does</i> (injection), or did they just <i>ask for something they shouldn't get</i> and the server handed it over (access control)? Changing an id in a URL changes nothing about the code, so it is access control.</div>
-
-<h4>Defence in depth</h4>
-<p>No single fix stops everything, so professionals stack several layers. This idea is called <b>defence in depth</b>. If one layer fails, the next one limits the damage. For example: parameterised queries stop SQL injection, a database user with limited permissions limits what an attacker could do if one slipped through, and logging means you find out quickly. You will see this layering in every lesson of this track.</p>
-<div class="tip"><b>Tip</b>Only ever test the security of systems you own, or that you have written permission to test. The sandboxes in this track, and practice apps like OWASP Juice Shop, exist so you can learn attacks legally.</div>
-<div class="try"><b>Try it in your head</b>A shop's production site shows a full error page with file paths and library versions when you type a weird URL. Which category? Nothing ran as code and no other user's data appeared, but a setting meant for development (detailed errors) was left on in production. That is <b>security misconfiguration</b>.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>The OWASP Top 10 lists the kinds of risk behind most real breaches; learn to recognise the pattern rather than the number.</li>
-<li>Broken access control: the server doesn't check whether this user may see or change this thing. IDOR is the classic case.</li>
-<li>Injection: user input becomes part of SQL, a shell command or HTML. Cryptographic failures: secrets stored or sent without strong protection.</li>
-<li>Misconfiguration is unsafe settings; vulnerable components are outdated packages with known holes; logging failures mean nobody notices an attack.</li>
-<li>Stack defences in layers, and only test systems you have permission to test.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. A shop shows another customer's address when you change a number in the URL. Which category? <i>A01 broken access control.</i> 2. A password database leaks and the passwords are readable. Which category? <i>Cryptographic failures.</i> 3. Is it fine to test your school's website for holes "to help"? <i>No, not without written permission.</i></div>
 `);
 
 explain('x2',`
-<h4>Why SQL injection happens</h4>
-<p>Your app talks to its database in <b>SQL</b>, a language of commands such as <code>SELECT</code> (read rows) with a <code>WHERE</code> clause that says which rows. To log someone in, the app asks the database: "find the user whose email is this and whose password hash is that".</p>
-<p>The problem starts when the app <b>builds that SQL by gluing strings together</b>. In the lesson's starter code, <code>login()</code> does exactly this:</p>
-<pre class="snip">const sql = "SELECT id, email, role FROM users WHERE email = '" + email +
-            "' AND password_hash = '" + hash(password) + "'";</pre>
-<p>Gluing strings is called <b>concatenation</b>, and the <code>+</code> does it. If the email is <code>ada@example.com</code>, the result is a perfectly normal query. But the database doesn't know which parts you wrote and which parts the user typed. It just receives one long piece of text and reads all of it as SQL code. So if the user types something that <i>looks like SQL</i>, it becomes SQL. That is <b>SQL injection</b>: the user's data gets injected into your code.</p>
-<div class="analogy"><b>Think of it like</b>A cheque where you write the amount in words and someone else fills in the payee's name. If they write "Bob, and also pay Eve one thousand pounds" in the name box and the bank reads the whole line as instructions, you have a problem. The bank should treat the name box as a name, nothing more.</div>
+<p>One of the oldest web attacks still works on careless code today. A few odd characters typed into a login box can let a stranger in as the admin. Once you see how, the fix is one simple habit.</p>
 
-<h4>Two pieces of SQL you need for the attack</h4>
-<p>The famous attack string is <code>' OR '1'='1' --</code>. It uses three small ideas:</p>
-<ul>
-<li><b>A single quote</b> <code>'</code> ends a text value in SQL. Text values are written between single quotes, like <code>'ada@example.com'</code>. Typing a quote closes the value early, so whatever comes next is read as code.</li>
-<li><b><code>OR '1'='1'</code></b> adds a condition that is always true, because the text <code>'1'</code> always equals <code>'1'</code>. A <code>WHERE</code> clause with "something OR true" is true for every row.</li>
-<li><b>Two dashes</b> <code>--</code> start a comment in SQL. Everything after them on that line is ignored, including the password check your code added.</li>
-</ul>
+${V.card(1,'How injection happens','typed text becomes code',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A form letter: Give the parcel to blank. Someone fills the blank with Bob. Also open the safe.">
+<rect class="bx" x="10" y="10" width="400" height="100" rx="10"/>${V.ic('file',22,24,42,'ic-info')}
+<text class="t" x="76" y="44" style="font-size:17px">Give the parcel to</text>
+<rect class="bx-warn" x="76" y="58" width="322" height="38" rx="6"/>
+<text class="t-m" x="86" y="83">Bob. <tspan class="t-bad" style="font-weight:700">Also open the safe.</tspan></text>
+<text class="t-s" x="210" y="138" text-anchor="middle">The blank was meant for a name.</text>
+<text class="t-s" x="210" y="160" text-anchor="middle">The reader obeyed the whole line instead.</text>
+</svg><figcaption>Injection: data meant for a blank is read as extra instructions.</figcaption></figure>
+${V.like(`<p>A form letter with a blank: "Give the parcel to ____". Someone writes "Bob. Also open the safe." If the reader follows the whole line as instructions, the blank has become a command. The database is that reader.</p>`)}
+${V.why(`<p>Apps talk to databases in <b>SQL</b>. Early web code built SQL by gluing the user's text into a string with <code>+</code>, which is called <b>concatenation</b>. The database receives one long string and cannot tell which part you wrote and which part a stranger typed. Injection was first described publicly in 1998, and it still shows up today.</p>`)}
+${V.anat([[1,'"... WHERE email = \''],' ',[2,'+ email +'],' ',[3,'"\' AND ..."']],[
+ '<b>Your SQL, part one.</b> It opens a quote and expects a plain email to follow.',
+ '<b>The user\'s text, glued in.</b> Whatever they type lands inside your code, quotes and all.',
+ '<b>Your SQL, part two.</b> It closes the quote and adds the password check. An attacker can make this part disappear.'])}
+<p><b>Watch the query change meaning.</b> Three SQL ideas matter: a quote <code>'</code> ends a text value, <code>OR</code> means "either side true is enough", and <code>--</code> starts a comment that the database ignores.</p>
+${V.steps([
+ ['A normal login. The email sits safely between the two quotes and the database checks both the email and the password.',`<svg viewBox="0 0 420 200" role="img" aria-label="Normal login query with ada's email between quotes">
+<rect class="bx-dark" x="6" y="8" width="408" height="96" rx="8"/>
+<text class="t-term" x="18" y="36" style="font-size:14px">SELECT id, email, role FROM users</text>
+<text class="t-term" x="18" y="62" style="font-size:14px">WHERE email = '<tspan class="t-ok">ada@example.com</tspan>'</text>
+<text class="t-term" x="18" y="88" style="font-size:14px">AND password_hash = 'h$…'</text>
+<text class="t-s" x="10" y="132">Typed in the email box:</text>
+<rect class="bx" x="10" y="140" width="400" height="40" rx="6"/><text class="t-m" x="22" y="166" style="font-size:16px">ada@example.com</text>
+</svg>`],
+ ['Now someone types <b>\' OR \'1\'=\'1\' --</b> as the email. The code glues it in exactly as typed.',`<svg viewBox="0 0 420 200" role="img" aria-label="Attacker input glued into the query">
+<rect class="bx-dark" x="6" y="8" width="408" height="96" rx="8"/>
+<text class="t-term" x="18" y="36" style="font-size:14px">SELECT id, email, role FROM users</text>
+<text class="t-term" x="18" y="62" style="font-size:14px">WHERE email = '<tspan class="t-warn">' OR '1'='1' --</tspan>'</text>
+<text class="t-term" x="18" y="88" style="font-size:14px">AND password_hash = 'h$…'</text>
+<text class="t-s" x="10" y="132">Typed in the email box:</text>
+<rect class="bx-warn" x="10" y="140" width="400" height="40" rx="6"/><text class="t-m" x="22" y="166" style="font-size:16px">' OR '1'='1' --</text>
+</svg>`],
+ ['The first quote closes the email early: <b>email = \'\'</b> matches nobody. Then <b>OR \'1\'=\'1\'</b> is true for every row. Then <b>--</b> turns the rest, including the password check, into a comment.',`<svg viewBox="0 0 420 200" role="img" aria-label="The database reads always-true condition and a comment">
+<rect class="bx-dark" x="6" y="8" width="408" height="96" rx="8"/>
+<text class="t-term" x="18" y="36" style="font-size:14px">SELECT id, email, role FROM users</text>
+<text class="t-term" x="18" y="62" style="font-size:14px">WHERE email = '' <tspan class="t-bad" style="font-weight:700">OR '1'='1'</tspan> <tspan class="t-dim">--'</tspan></text>
+<text class="t-term t-dim" x="18" y="88" style="font-size:14px">AND password_hash = 'h$…'</text>
+<rect class="bx" x="10" y="122" width="126" height="64" rx="6"/><text class="t-m" x="73" y="148" text-anchor="middle">email=''</text><text class="t-s" x="73" y="172" text-anchor="middle">no one</text>
+<rect class="bx-bad" x="146" y="122" width="126" height="64" rx="6"/><text class="t-m" x="209" y="148" text-anchor="middle">'1'='1'</text><text class="t-s" x="209" y="172" text-anchor="middle">always true</text>
+<rect class="bx" x="282" y="122" width="128" height="64" rx="6"/><text class="t-m" x="346" y="148" text-anchor="middle">-- ...</text><text class="t-s" x="346" y="172" text-anchor="middle">ignored</text>
+</svg>`],
+ ['Every row matches. The code takes the first one, <b>[0]</b>, which is Ada, the admin. The attacker is in without any password.',`<svg viewBox="0 0 420 200" role="img" aria-label="All rows returned, first is the admin">
+<rect class="bx-dark" x="6" y="8" width="408" height="96" rx="8"/>
+<text class="t-term" x="18" y="36" style="font-size:14px">SELECT id, email, role FROM users</text>
+<text class="t-term" x="18" y="62" style="font-size:14px">WHERE email = '' <tspan class="t-bad" style="font-weight:700">OR '1'='1'</tspan> <tspan class="t-dim">--'</tspan></text>
+<text class="t-term t-dim" x="18" y="88" style="font-size:14px">AND password_hash = 'h$…'</text>
+${V.ic('db',12,122,56,'ic-info')}
+<rect class="bx-bad" x="80" y="118" width="330" height="30" rx="5"/><text class="t-m" x="92" y="139">[0] ada@example.com  admin</text>
+<rect class="bx" x="80" y="152" width="330" height="20" rx="4"/><text class="t-m t-dim" x="92" y="167" style="font-size:14px">[1] grace@example.com  member</text>
+<text class="t-bad" x="80" y="194" style="font-size:14px">Logged in as admin. No password needed.</text>
+</svg>`]])}
+${V.rules(V.rh('Rules: the danger signs'),
+ V.no('"... = \'" + email + "\'"','User text glued into SQL with +'),V.no('`... = \'\${email}\'`','A template string is still gluing'),
+ V.no('escaping quotes by hand','Decades of clever bypasses; easy to get wrong'),V.ok('only test your sandbox','This lesson\'s database is built for it'))}
+${V.hook(`If your SQL has a <code>+</code> next to user input, it has a door you did not mean to build.`)}
+`)}
 
-<h4>Watching the query change meaning</h4>
-<p>Let's run the attack in slow motion. The attacker types <code>' OR '1'='1' --</code> as the email and anything as the password.</p>
-<figure class="fig"><svg viewBox="0 0 420 236" role="img" aria-label="How the injected email rewrites the SQL query">
-<text class="t-s" x="10" y="20">Your code expects a value here:</text>
-<rect class="bx-info" x="10" y="28" width="400" height="34" rx="6"/>
-<text class="t-m" x="22" y="51">WHERE email = '<tspan class="t-a">[input]</tspan>' AND ...</text>
-<text class="t-s" x="10" y="88">The attacker types:</text>
-<rect class="bx-warn" x="10" y="96" width="190" height="34" rx="6"/>
-<text class="t-m" x="22" y="119">' OR '1'='1' --</text>
-<text class="t-s" x="10" y="156">The database reads three separate parts:</text>
-<g text-anchor="middle">
-<rect class="bx" x="10" y="164" width="124" height="34" rx="6"/><text class="t-m" x="72" y="187">email = ''</text>
-<rect class="bx-bad" x="148" y="164" width="124" height="34" rx="6"/><text class="t-m" x="210" y="187">OR '1'='1'</text>
-<rect class="bx-ok" x="286" y="164" width="124" height="34" rx="6"/><text class="t-m" x="348" y="187">-- ' AND …</text>
-<text class="t-s" x="72" y="222">matches no one</text>
-<text class="t-s t-bad" x="210" y="222">always true</text>
-<text class="t-s" x="348" y="222">ignored</text>
-</g>
-</svg><figcaption>The quote closes the email value early, so the database sees an empty email check, then "or one equals one", which is always true, then a comment that hides the password check. The user's text has changed the meaning of the query.</figcaption></figure>
-<p>The full query the database receives is now:</p>
-<pre class="snip">SELECT id, email, role FROM users
-WHERE email = '' OR '1'='1' --' AND password_hash = 'h$…'
--- everything from the two dashes onwards is a comment</pre>
-<p>Reading it step by step:</p>
-<ol>
-<li><code>email = ''</code> is false for every user, because nobody has an empty email.</li>
-<li><code>OR '1'='1'</code> is true for every user. False or true is true, so <b>every row matches</b>.</li>
-<li>The password check is inside a comment, so it never runs.</li>
-<li><code>login()</code> returns <code>db.query(sql)[0]</code>, the first row. In the lesson's table that is Ada, the admin.</li>
-</ol>
-<p>That is the first task: craft the email, call <code>login</code> with it and log the result. You'll see the admin's row come back without any real password.</p>
-<p>A real attacker can go much further than logging in: with other injected SQL they can read whole tables, such as every user's email and password hash, or even change and delete data.</p>
+${V.card(2,'Parameterised queries','code and data travel separately',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="Two envelopes go to the database: one holds the SQL with question marks, the other holds the values">
+<rect class="bx-a" x="10" y="16" width="190" height="80" rx="8"/>${V.ic('mail',22,28,34,'ic-a')}<text class="t-b" x="64" y="50">The SQL</text>
+<text class="t-m" x="22" y="84" style="font-size:14px">WHERE email = ?</text>
+<rect class="bx-info" x="10" y="106" width="190" height="56" rx="8"/>${V.ic('mail',22,116,34,'ic-info')}<text class="t-b" x="64" y="140">The values</text>
+<path class="ln-a" d="M206 56H300"/><polygon class="ah-a" points="298,49 298,63 310,56"/>
+<path class="ln" d="M206 134H300"/><polygon class="ah" points="298,127 298,141 310,134"/>
+${V.ic('db',322,50,80,'ic-info')}<text class="t-s" x="362" y="152" text-anchor="middle">database</text>
+</svg><figcaption>The SQL goes first with <code>?</code> holes. The values go separately and only ever fill holes.</figcaption></figure>
+${V.like(`<p>A paper form with boxes. Whatever you write inside the "Name" box is treated as a name, even if you write "and give me the keys". The box decides what the writing means, not the writing itself.</p>`)}
+${V.why(`<p>Because the database receives the SQL and the values on separate tracks, it fixes the <b>shape</b> of the query before it ever sees user input. Nothing typed can close a quote or add an <code>OR</code>. This is called a <b>parameterised query</b> or prepared statement, and every serious database library supports it.</p>`)}
+${V.anat([[1,'db.query('],[2,"'... WHERE email = ? AND password_hash = ?'"],', ',[3,'[email, hash(password)]'],[1,')']],[
+ '<b>The call.</b> Your database library\'s query function.',
+ '<b>The SQL.</b> A fixed string. Every place a value goes gets a <code>?</code> placeholder. No <code>+</code>, no quotes around the <code>?</code>.',
+ '<b>The values.</b> An array, in the same order as the <code>?</code> marks. They are always data.'])}
+${V.steps([
+ ['Step 1: the SQL arrives alone, with <b>?</b> holes. The database reads it and fixes its shape.',`<svg viewBox="0 0 420 200" role="img" aria-label="SQL with placeholders sent first">
+<text class="t-s" x="8" y="16">1. The SQL, with ? placeholders</text>
+<rect class="bx-dark" x="6" y="24" width="408" height="86" rx="8"/>
+<text class="t-term" x="18" y="50" style="font-size:14px">SELECT id, email, role FROM users</text>
+<text class="t-term" x="18" y="74" style="font-size:14px">WHERE email = <tspan class="t-ok" style="font-weight:700">?</tspan></text>
+<text class="t-term" x="18" y="98" style="font-size:14px">AND password_hash = <tspan class="t-ok" style="font-weight:700">?</tspan></text>
+<text class="t-s" x="8" y="130">2. The values, sent separately</text>
+<rect class="bx" x="6" y="138" width="408" height="36" rx="6"/><text class="t-s t-dim" x="18" y="161">waiting…</text>
+<text class="t-s" x="8" y="194">Shape fixed: one email check, one password check.</text>
+</svg>`],
+ ['Step 2: the attack text arrives on the other track, as one plain value.',`<svg viewBox="0 0 420 200" role="img" aria-label="Attack text arrives as a value">
+<text class="t-s" x="8" y="16">1. The SQL, with ? placeholders</text>
+<rect class="bx-dark" x="6" y="24" width="408" height="86" rx="8"/>
+<text class="t-term" x="18" y="50" style="font-size:14px">SELECT id, email, role FROM users</text>
+<text class="t-term" x="18" y="74" style="font-size:14px">WHERE email = <tspan class="t-ok" style="font-weight:700">?</tspan></text>
+<text class="t-term" x="18" y="98" style="font-size:14px">AND password_hash = <tspan class="t-ok" style="font-weight:700">?</tspan></text>
+<text class="t-s" x="8" y="130">2. The values, sent separately</text>
+<rect class="bx-info" x="6" y="138" width="408" height="36" rx="6"/><text class="t-m" x="18" y="162">["' OR '1'='1' --", "h$…"]</text>
+<text class="t-s" x="8" y="194">Data only. It cannot change the shape.</text>
+</svg>`],
+ ['Step 3: the database asks one honest question: "Is there a user whose email is literally <b>\' OR \'1\'=\'1\' --</b>?" There is not.',`<svg viewBox="0 0 420 200" role="img" aria-label="Database looks for that literal email">
+<text class="t-s" x="8" y="16">1. The SQL, with ? placeholders</text>
+<rect class="bx-dark" x="6" y="24" width="408" height="86" rx="8"/>
+<text class="t-term" x="18" y="50" style="font-size:14px">SELECT id, email, role FROM users</text>
+<text class="t-term" x="18" y="74" style="font-size:14px">WHERE email = <tspan class="t-warn">"' OR '1'='1' --"</tspan></text>
+<text class="t-term" x="18" y="98" style="font-size:14px">AND password_hash = <tspan class="t-warn">"h$…"</tspan></text>
+<text class="t-s" x="8" y="130">2. The values, sent separately</text>
+<rect class="bx-info" x="6" y="138" width="408" height="36" rx="6"/><text class="t-m" x="18" y="162">["' OR '1'='1' --", "h$…"]</text>
+<text class="t-s" x="8" y="194">Compared as text. No user has that email.</text>
+</svg>`],
+ ['Step 4: no rows, so <b>login()</b> returns <b>null</b>. The attack fails, and Ada with her real password still gets in.',`<svg viewBox="0 0 420 200" role="img" aria-label="Result null, attack fails">
+<text class="t-s" x="8" y="16">1. The SQL, with ? placeholders</text>
+<rect class="bx-dark" x="6" y="24" width="408" height="86" rx="8"/>
+<text class="t-term" x="18" y="50" style="font-size:14px">SELECT id, email, role FROM users</text>
+<text class="t-term" x="18" y="74" style="font-size:14px">WHERE email = <tspan class="t-ok" style="font-weight:700">?</tspan></text>
+<text class="t-term" x="18" y="98" style="font-size:14px">AND password_hash = <tspan class="t-ok" style="font-weight:700">?</tspan></text>
+<rect class="bx-ok" x="6" y="128" width="408" height="58" rx="8"/>${V.ic('shield',16,136,40,'ic-ok')}
+<text class="t-m" x="66" y="154" style="font-size:17px">result: null</text><text class="t-s" x="66" y="176">attack blocked, real logins still work</text>
+</svg>`]])}
+${V.rules(V.rh('Rules: break one and the hole is back'),
+ V.ok("email = ?","Placeholder, no quotes around it"),V.no("email = '?'","Quoted ? is just the text \"?\""),
+ V.ok("LIKE ?  with  ['%' + term + '%']","The % signs go in the value, not the SQL"),V.no("LIKE '%\" + term + \"%'","Still gluing user text into SQL"),
+ V.rh('Conventions'),
+ V.ok('every query, every time','Even "trusted" values: habits beat guesses'),V.ok('allowlist column names','A ? cannot stand in for a table or column name, so pick from a fixed list'))}
+${V.build(`<ol><li>Find each <code>+</code> that glues input into SQL.</li><li>Replace each value with <code>?</code>.</li><li>Move the values into an array, in order.</li><li>For search, put <code>'%' + term + '%'</code> in the array, not the SQL.</li><li>Run the attack again: it should return <code>null</code> or an empty list.</li><li>Check a real login still works.</li></ol>`)}
+${V.hook(`Code goes in the string, data goes in the array. The two never mix.`)}
+`)}
 
-<h4>The fix: parameterised queries</h4>
-<p>The root cause is that code and data travel <b>mixed together</b> in one string. The fix is to send them <b>separately</b>. You write the SQL with a <code>?</code> placeholder wherever a value goes, and you pass the values in a separate array:</p>
-<pre class="snip">db.query(
-  'SELECT id, email, role FROM users WHERE email = ? AND password_hash = ?',
-  [email, hash(password)]   // values, in the same order as the ? marks
-);</pre>
-<p>This is called a <b>parameterised query</b> (or a prepared statement). The database first reads and understands the SQL with its placeholders, so the shape of the query is fixed before it sees any user input. Then it plugs the values in as plain data. A quote in the email is just a quote character inside a text value. It can never close anything.</p>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="SQL and values travel separately to the database">
-<g text-anchor="middle">
-<rect class="bx" x="10" y="64" width="80" height="80" rx="8"/><text class="t-b" x="50" y="109">App</text>
-<text class="t-s t-info" x="210" y="22">code, fixed shape</text>
-<rect class="bx-info" x="112" y="30" width="196" height="36" rx="6"/><text class="t-m" x="210" y="53">email = ?</text>
-<text class="t-s t-warn" x="210" y="128">data, only ever a value</text>
-<rect class="bx-warn" x="112" y="136" width="196" height="36" rx="6"/><text class="t-m" x="210" y="159">' OR '1'='1' --</text>
-<rect class="bx-ok" x="330" y="64" width="80" height="80" rx="8"/><text class="t-b" x="370" y="109">DB</text>
-</g>
-<path class="ln" d="M90 90h8v-42h6"/><polygon class="ah" points="104,42 104,54 112,48"/>
-<path class="ln" d="M90 118h8v36h6"/><polygon class="ah" points="104,148 104,160 112,154"/>
-<path class="ln-ok" d="M308 48h10v40h4"/><polygon class="ah-ok" points="322,82 322,94 330,88"/>
-<path class="ln-ok" d="M308 154h10v-34h4"/><polygon class="ah-ok" points="322,114 322,126 330,120"/>
-<text class="t-s" x="210" y="198" text-anchor="middle">Nothing in the bottom lane can become code.</text>
-</svg><figcaption>With a parameterised query, the SQL with its question-mark placeholder travels in one lane and the user's input travels in another. The database fixes the query's shape first, then treats the input as a plain text value, so the attack string is simply an email that matches nobody.</figcaption></figure>
-<p>After the fix, the attack returns <code>null</code> because no user has the email <code>' OR '1'='1' --</code>, and Ada's real password still logs her in. That is what the second task checks.</p>
+${V.card(3,'Least privilege','give the app only the keys it needs',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="The app's key ring holds SELECT, INSERT and UPDATE keys. DROP and GRANT keys are removed">
+${V.ic('robot',14,40,70,'ic-a')}<text class="t-s" x="49" y="134" text-anchor="middle">app_user</text>
+<path class="ln" d="M90 76H120"/>
+<rect class="bx-ok" x="124" y="22" width="134" height="32" rx="6"/>${V.ic('key',130,25,26,'ic-ok')}<text class="t-m" x="162" y="44">SELECT</text>
+<rect class="bx-ok" x="124" y="62" width="134" height="32" rx="6"/>${V.ic('key',130,65,26,'ic-ok')}<text class="t-m" x="162" y="84">INSERT</text>
+<rect class="bx-ok" x="124" y="102" width="134" height="32" rx="6"/>${V.ic('key',130,105,26,'ic-ok')}<text class="t-m" x="162" y="124">UPDATE</text>
+<rect class="bx-bad" x="276" y="40" width="134" height="32" rx="6"/>${V.ic('cross',282,43,26,'ic-bad')}<text class="t-m" x="314" y="62">DROP</text>
+<rect class="bx-bad" x="276" y="84" width="134" height="32" rx="6"/>${V.ic('cross',282,87,26,'ic-bad')}<text class="t-m" x="314" y="106">GRANT</text>
+</svg><figcaption>If an injection ever slips through, it can only do what the app's database user is allowed to do.</figcaption></figure>
+${V.like(`<p>A cleaner gets a key to the offices, not to the safe. If someone steals the cleaner's key, the safe is still shut.</p>`)}
+${V.anat([[1,'GRANT'],' ',[2,'SELECT, INSERT, UPDATE'],' ',[3,'ON users'],' ',[4,'TO app_user'],';'],[
+ '<b>GRANT</b> hands out permissions.','<b>Only what the app does.</b> No <code>DROP</code>, no <code>DELETE</code> unless it really deletes.','<b>Which table.</b>','<b>Which database user.</b> A separate login just for the app, never the admin.'])}
+${V.hook(`Parameters close the door. Least privilege shrinks the room behind it.`)}
+`)}
 
-<h4>The same fix for <code>LIKE</code> searches</h4>
-<p><code>searchUsers()</code> uses <code>LIKE</code>, which matches text against a pattern. In a <code>LIKE</code> pattern, <code>%</code> means "any characters here", so <code>'%grace%'</code> matches any email containing "grace". The starter code glues the term between the percent signs inside the SQL string, which is injectable in exactly the same way.</p>
-<p>The fix is to build the <i>pattern</i> in JavaScript and pass the whole pattern as one value: the SQL says <code>LIKE ?</code>, and the value is the term with a percent sign added on each side. The percent signs still work as wildcards, because <code>LIKE</code> reads them from the value, but quotes and dashes in the term are now just characters to search for.</p>
-<div class="mistake"><b>Common mistake</b>Putting the placeholder inside quotes, like <code>LIKE '%?%'</code>. Inside quotes, <code>?</code> is just a question-mark character, not a placeholder, so your value is never used. Placeholders always stand alone: <code>LIKE ?</code>.</div>
-
-<h4>Why not just escape the quotes?</h4>
-<p>"Escaping" means adding a marker so a quote is treated as a literal character, for example doubling it. It sounds simpler, but it has a long history of failure: different databases use different rules, character encodings create surprising bypasses, numbers aren't quoted at all, and you only need to forget once. Parameters remove the whole problem, because the value never passes through the SQL parser. Use them every time, even when you think the input is safe.</p>
-<div class="mistake"><b>Common mistake</b>Parameterising the login query but not the search, the sort order or the admin report. One concatenated query anywhere is enough. Search your code for SQL strings that contain a <code>+</code> or a template-literal placeholder, and fix every one.</div>
-
-<h4>Limiting the damage: least privilege</h4>
-<p>Defence in depth applies here too. The database user your app connects as should only be allowed to do what the app needs, typically reading and writing certain tables. It should not be able to <code>DROP</code> (delete) tables or read unrelated databases. Then, if an injection ever slips through somewhere, the attacker inherits only those small powers. This idea, giving every account the least power it needs, is called <b>least privilege</b>.</p>
-
-<h4>Reading the errors you will hit</h4>
-<ul>
-<li>A <b>syntax error</b> mentioning an unrecognised token or an unterminated string, after typing a lone quote into a form, is a red flag: it means your input reached the SQL parser. On a real site, that is the first sign of an injectable query.</li>
-<li>If your fixed query returns nothing at all, check that the number of <code>?</code> marks matches the number of values, and that they are in the same order.</li>
-<li>If the second task still fails, look for any leftover <code>+ email</code> in the SQL string. The checker looks for concatenation, not just the result.</li>
-</ul>
-<div class="try"><b>Try it in your head</b>The search box glues the term into <code>email LIKE '%TERM%'</code>. What would the term <code>%' OR 1=1 --</code> do? The quote ends the pattern, <code>OR 1=1</code> makes every row match, and the dashes hide the leftover quote, so it lists every user. With <code>LIKE ?</code>, the same term is just a strange string to search for, and nothing matches.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Building SQL with string concatenation lets user input become SQL code. That is SQL injection.</li>
-<li><code>' OR '1'='1' --</code> closes the value, adds an always-true condition and comments out the rest.</li>
-<li>Parameterised queries send SQL and values separately: <code>?</code> in the SQL, values in an array, in order.</li>
-<li>For <code>LIKE</code>, build the pattern with the percent signs in JavaScript and pass it as one parameter.</li>
-<li>Prefer parameters to hand-escaping, and give the app's database user only the permissions it needs.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. What does <code>--</code> do in SQL? <i>Starts a comment, so the rest of the line is ignored.</i> 2. With <code>email = ?</code>, what happens to a quote typed by the user? <i>It is just a character in the value; it cannot end anything.</i> 3. Why not just escape quotes yourself? <i>It is easy to miss a case; parameters remove the problem completely.</i></div>
 `);
 
 explain('x3',`
-<h4>Why XSS is so dangerous</h4>
-<p>When a browser loads a web page, it trusts everything on that page. Any JavaScript in it runs with the full power of the site: it can read what the user sees, send requests as the user, and change the page. That is fine when all the JavaScript is yours.</p>
-<p><b>Cross-site scripting</b>, written <b>XSS</b>, happens when an attacker gets <i>their</i> JavaScript onto <i>your</i> page. It is injection again, the same root cause as SQL injection, but the "code" is HTML and JavaScript and the program that runs it is the visitor's browser. Once their script runs, it can act as the victim: post messages, change their email address, or send their private data to the attacker's server.</p>
-<div class="analogy"><b>Think of it like</b>A shop noticeboard where anyone can pin a card. Normally a card just shows text. XSS is a card that, when you read it, quietly picks your pocket. The noticeboard's job is to make sure every card can only ever be read, never act.</div>
+<p>Every comment box, profile name and chat message on the web is text from a stranger that other people's browsers will display. Show it the wrong way and that text can run as a program inside every visitor's browser.</p>
 
-<h4>How text becomes code: <code>innerHTML</code></h4>
-<p>A web page is built from <b>HTML</b>, made of tags like <code>&lt;li&gt;</code> for a list item or <code>&lt;img&gt;</code> for an image. In JavaScript, every element on the page has two ways to set its contents:</p>
-<ul>
-<li><code>element.innerHTML = text</code> tells the browser "this text is HTML: read the tags and build elements from them".</li>
-<li><code>element.textContent = text</code> tells the browser "this is just text: show the characters exactly as they are".</li>
-</ul>
-<p>The guestbook in this lesson uses <code>li.innerHTML = text</code>. So if someone posts a comment containing tags, the browser builds those tags. Here is the payload you will use:</p>
-<pre class="snip">&lt;img src=x onerror="document.title='hacked'"&gt;</pre>
-<p>Reading it piece by piece:</p>
-<ol>
-<li><code>&lt;img src=x&gt;</code> asks the browser to show an image from the address <code>x</code>, which doesn't exist.</li>
-<li><code>onerror="..."</code> is an <b>event handler</b>: JavaScript the browser runs when something happens, here when the image fails to load.</li>
-<li>The image fails immediately, so the browser runs <code>document.title='hacked'</code> and the tab title changes. A real attacker would run something far worse.</li>
-</ol>
-<p>Why an image and not a <code>&lt;script&gt;</code> tag? Browsers deliberately don't run script tags inserted with <code>innerHTML</code>. But event handlers like <code>onerror</code> on other tags do run, so attackers simply use those. Blocking the word "script" protects nothing.</p>
+${V.card(1,'What XSS is','someone else\'s script in your page',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A noticeboard note says: whoever reads this, hand over your wallet. A reader obeys.">
+<rect class="bx-warn" x="10" y="10" width="250" height="150" rx="10"/>
+<rect class="bx" x="30" y="30" width="96" height="56" rx="4"/><text class="t-s" x="78" y="62" text-anchor="middle">Lost cat</text>
+<rect class="bx" x="140" y="30" width="104" height="56" rx="4"/><text class="t-s" x="192" y="62" text-anchor="middle">Bake sale</text>
+<rect class="bx-bad" x="30" y="98" width="214" height="50" rx="4"/><text class="t-b t-bad" x="137" y="120" text-anchor="middle">Reader: hand over</text><text class="t-b t-bad" x="137" y="140" text-anchor="middle">your wallet!</text>
+${V.ic('person',300,40,70,'ic-info')}<path class="ln-d" d="M296 110 252 124"/>
+<text class="t-s" x="336" y="138" text-anchor="middle">the browser</text><text class="t-s" x="336" y="156" text-anchor="middle">obeys it</text>
+</svg><figcaption>Cross-site scripting: an attacker's note is pinned to your page, and the browser follows it as instructions.</figcaption></figure>
+${V.like(`<p>A school noticeboard where anyone can pin a note. Most notes are harmless. But imagine readers who obey every note: "Reader, hand your wallet to the person by the door." The browser is that reader. It runs any script that ends up in the page.</p>`)}
+${V.why(`<p>A page's HTML can contain JavaScript. If your code puts a user's text into the page <b>as HTML</b>, the user can write HTML that runs code. It is called <b>cross-site scripting</b> (XSS) because a script from someone else runs on your site, with your visitors' logins. Real attacks steal session tokens or post as the victim.</p>`)}
+${V.anat([[1,'li'],'.',[2,'innerHTML'],' ',[3,'='],' ',[4,'text'],';'],[
+ '<b>The element</b> you are filling.','<b>innerHTML.</b> "Read this as HTML and build whatever it describes." That includes images with code attached.','<b>Assignment.</b>','<b>The user\'s text.</b> Untrusted. Here, the danger.'])}
+${V.steps([
+ ['Someone posts a "comment" that is really HTML: an image tag with an <b>onerror</b> handler, which is code that runs if the image fails.',`<svg viewBox="0 0 420 190" role="img" aria-label="Payload typed in the comment box">
+<rect class="bx-warn" x="6" y="8" width="408" height="40" rx="6"/><text class="t-m" x="14" y="33" style="font-size:14px">&lt;img src=x onerror="document.title='hacked'"&gt;</text>
+<text class="t-m t-dim" x="14" y="78">li.innerHTML = text;</text>
+<rect class="bx-info" x="6" y="92" width="408" height="30" rx="6"/><text class="t" x="18" y="113">tab: Guestbook</text>
+<rect class="bx" x="6" y="122" width="408" height="62" rx="6"/><text class="t" x="18" y="150">• Hi! Lovely site.</text>
+</svg>`],
+ ['<b>innerHTML</b> reads the text as HTML, so the browser builds a real <b>&lt;img&gt;</b> element in the list.',`<svg viewBox="0 0 420 190" role="img" aria-label="innerHTML creates a real img element">
+<rect class="bx-warn" x="6" y="8" width="408" height="40" rx="6"/><text class="t-m" x="14" y="33" style="font-size:14px">&lt;img src=x onerror="document.title='hacked'"&gt;</text>
+<text class="t-m t-a" x="14" y="78" style="font-weight:700">li.innerHTML = text;</text>
+<rect class="bx-info" x="6" y="92" width="408" height="30" rx="6"/><text class="t" x="18" y="113">tab: Guestbook</text>
+<rect class="bx" x="6" y="122" width="408" height="62" rx="6"/><text class="t" x="18" y="150">• Hi! Lovely site.</text>
+<text class="t" x="18" y="174">•</text>${V.ic('file',32,156,24,'ic-warn')}<text class="t-s" x="64" y="174">a real image element</text>
+</svg>`],
+ ['The address <b>x</b> is not a real image, so loading fails and <b>onerror</b> fires. The browser runs the attacker\'s JavaScript.',`<svg viewBox="0 0 420 190" role="img" aria-label="Image fails to load, onerror runs">
+<rect class="bx-warn" x="6" y="8" width="408" height="40" rx="6"/><text class="t-m" x="14" y="33" style="font-size:14px">&lt;img src=x onerror="document.title='hacked'"&gt;</text>
+<text class="t-m t-dim" x="14" y="78">li.innerHTML = text;</text>
+<rect class="bx-info" x="6" y="92" width="408" height="30" rx="6"/><text class="t" x="18" y="113">tab: Guestbook</text>
+<rect class="bx" x="6" y="122" width="408" height="62" rx="6"/><text class="t" x="18" y="150">• Hi! Lovely site.</text>
+<text class="t" x="18" y="174">•</text>${V.ic('cross',32,156,24,'ic-bad')}<text class="t-bad" x="64" y="174" style="font-size:14px">load failed, so onerror runs</text>
+</svg>`],
+ ['The script changes the tab title to <b>hacked</b>. Harmless here, but a real attacker\'s script runs for <b>every</b> visitor who opens the page.',`<svg viewBox="0 0 420 190" role="img" aria-label="Tab title now says hacked">
+<rect class="bx-warn" x="6" y="8" width="408" height="40" rx="6"/><text class="t-m" x="14" y="33" style="font-size:14px">&lt;img src=x onerror="document.title='hacked'"&gt;</text>
+<text class="t-m t-dim" x="14" y="78">li.innerHTML = text;</text>
+<rect class="bx-bad" x="6" y="92" width="408" height="30" rx="6"/><text class="t-b t-bad" x="18" y="113">tab: hacked</text>
+<rect class="bx" x="6" y="122" width="408" height="62" rx="6"/><text class="t" x="18" y="150">• Hi! Lovely site.</text>
+${V.ic('warn',18,154,26,'ic-bad')}<text class="t-bad" x="52" y="174" style="font-size:14px">script ran in the visitor's browser</text>
+</svg>`]])}
+${V.hook(`innerHTML builds whatever the text describes. Untrusted text must never be a builder's plan.`)}
+`)}
 
-<h4>Stored, reflected and DOM-based XSS</h4>
-<p>XSS comes in a few flavours, named after how the attacker's text reaches the victim:</p>
-<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="Stored XSS and reflected XSS flows">
-<text class="t-b" x="10" y="20">Stored XSS</text>
+${V.card(2,'Escape it','show text as text',`
+<figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="Escaping: less-than becomes ampersand lt, greater-than becomes ampersand gt, and so on">
 <g text-anchor="middle">
-<rect class="bx-bad" x="10" y="30" width="86" height="38" rx="6"/><text class="t" x="53" y="54">Attacker</text>
-<rect class="bx" x="114" y="30" width="86" height="38" rx="6"/><text class="t" x="157" y="54">Database</text>
-<rect class="bx" x="218" y="30" width="86" height="38" rx="6"/><text class="t" x="261" y="54">Page</text>
-<rect class="bx-warn" x="322" y="30" width="88" height="38" rx="6"/><text class="t" x="366" y="54">Victim</text>
-<text class="t-s" x="53" y="88">1 posts it</text><text class="t-s" x="157" y="88">2 saves it</text><text class="t-s" x="261" y="88">3 shows it</text><text class="t-s" x="366" y="88">4 code runs</text>
-</g>
-<path class="ln-a" d="M96 49h10"/><polygon class="ah-a" points="106,43 106,55 114,49"/>
-<path class="ln-a" d="M200 49h10"/><polygon class="ah-a" points="210,43 210,55 218,49"/>
-<path class="ln-a" d="M304 49h10"/><polygon class="ah-a" points="314,43 314,55 322,49"/>
-<line class="ln-d" x1="10" y1="110" x2="410" y2="110"/>
-<text class="t-b" x="10" y="138">Reflected XSS</text>
-<g text-anchor="middle">
-<rect class="bx-bad" x="10" y="148" width="86" height="38" rx="6"/><text class="t" x="53" y="172">Attacker</text>
-<rect class="bx" x="114" y="148" width="86" height="38" rx="6"/><text class="t" x="157" y="172">Link</text>
-<rect class="bx" x="218" y="148" width="86" height="38" rx="6"/><text class="t" x="261" y="172">Server</text>
-<rect class="bx-warn" x="322" y="148" width="88" height="38" rx="6"/><text class="t" x="366" y="172">Victim</text>
-<text class="t-s" x="53" y="206">1 sends link</text><text class="t-s" x="157" y="206">2 victim clicks</text><text class="t-s" x="261" y="206">3 echoes it</text><text class="t-s" x="366" y="206">4 code runs</text>
-</g>
-<path class="ln-a" d="M96 167h10"/><polygon class="ah-a" points="106,161 106,173 114,167"/>
-<path class="ln-a" d="M200 167h10"/><polygon class="ah-a" points="210,161 210,173 218,167"/>
-<path class="ln-a" d="M304 167h10"/><polygon class="ah-a" points="314,161 314,173 322,167"/>
-</svg><figcaption>Stored XSS: the attacker posts a malicious comment, the site saves it, and every visitor who views the page runs the code. Reflected XSS: the attacker sends a link with code in it, the victim clicks, and the server copies that text straight back into the page.</figcaption></figure>
-<ul>
-<li><b>Stored XSS</b>: the payload is saved, for example in the comments table, and served to everyone who views the page. One post can hit thousands of visitors, which makes it the most dangerous kind.</li>
-<li><b>Reflected XSS</b>: the payload sits in a link, such as a search URL. The server copies the search term into the results page ("You searched for..."), so the victim's browser runs it. The attacker has to trick each victim into clicking.</li>
-<li><b>DOM-based XSS</b>: the unsafe step happens entirely in browser JavaScript, like this lesson's guestbook, which puts the comment into the page with <code>innerHTML</code> without any server involved. The "DOM" is the browser's live tree of page elements.</li>
-</ul>
-<p>The fix is the same for all three: never let user text be read as HTML.</p>
+<rect class="bx-warn" x="10" y="12" width="70" height="48" rx="6"/><text class="t-m" x="45" y="44" style="font-size:22px">&lt;</text>
+<rect class="bx-warn" x="92" y="12" width="70" height="48" rx="6"/><text class="t-m" x="127" y="44" style="font-size:22px">&gt;</text>
+<rect class="bx-warn" x="174" y="12" width="70" height="48" rx="6"/><text class="t-m" x="209" y="44" style="font-size:22px">&amp;</text>
+<rect class="bx-warn" x="256" y="12" width="70" height="48" rx="6"/><text class="t-m" x="291" y="44" style="font-size:22px">"</text>
+<rect class="bx-warn" x="338" y="12" width="70" height="48" rx="6"/><text class="t-m" x="373" y="44" style="font-size:22px">'</text>
+<path class="ln-a" d="M45 64V82M127 64V82M209 64V82M291 64V82M373 64V82"/>
+<rect class="bx-ok" x="10" y="88" width="70" height="40" rx="6"/><text class="t-m" x="45" y="114">&amp;lt;</text>
+<rect class="bx-ok" x="92" y="88" width="70" height="40" rx="6"/><text class="t-m" x="127" y="114">&amp;gt;</text>
+<rect class="bx-ok" x="174" y="88" width="70" height="40" rx="6"/><text class="t-m" x="209" y="114">&amp;amp;</text>
+<rect class="bx-ok" x="256" y="88" width="70" height="40" rx="6"/><text class="t-m" x="291" y="114" style="font-size:14px">&amp;quot;</text>
+<rect class="bx-ok" x="338" y="88" width="70" height="40" rx="6"/><text class="t-m" x="373" y="114">&amp;#39;</text>
+</g></svg><figcaption>Escaping swaps the five characters that have meaning in HTML for codes that just display the character.</figcaption></figure>
+${V.like(`<p>Putting a note in a clear plastic sleeve before pinning it up. People can read every word, but nobody can mistake it for an official instruction from the school.</p>`)}
+${V.why(`<p>Browsers need a way to show a real <code>&lt;</code> on screen without starting a tag. HTML <b>entities</b> such as <code>&amp;lt;</code> do that. Escaping user text turns every risky character into its entity, so the text is displayed, never built.</p>`)}
+${V.anat([[1,'li'],'.',[2,'textContent'],' = ',[3,'text'],';'],[
+ '<b>The element.</b>','<b>textContent.</b> "This is plain text. Do not read it as HTML." The browser handles the escaping for you.','<b>The user\'s text.</b> Shown exactly as typed, tags and all.'])}
+${V.steps([
+ ['The same attack text arrives. This time the code uses <b>textContent</b>.',`<svg viewBox="0 0 420 190" role="img" aria-label="Same payload, textContent used">
+<rect class="bx-warn" x="6" y="8" width="408" height="40" rx="6"/><text class="t-m" x="14" y="33" style="font-size:14px">&lt;img src=x onerror="document.title='hacked'"&gt;</text>
+<text class="t-m t-a" x="14" y="78" style="font-weight:700">li.textContent = text;</text>
+<rect class="bx-info" x="6" y="92" width="408" height="30" rx="6"/><text class="t" x="18" y="113">tab: Guestbook</text>
+<rect class="bx" x="6" y="122" width="408" height="62" rx="6"/><text class="t" x="18" y="150">• Hi! Lovely site.</text>
+</svg>`],
+ ['Behind the scenes, every <b>&lt;</b> and <b>&gt;</b> becomes <b>&amp;lt;</b> and <b>&amp;gt;</b>, and the quotes are made harmless. No tag can start.',`<svg viewBox="0 0 420 190" role="img" aria-label="Characters turned into entities">
+<rect class="bx-ok" x="6" y="8" width="408" height="40" rx="6"/><text class="t-m" x="14" y="33" style="font-size:14px"><tspan class="t-ok" style="font-weight:700">&amp;lt;</tspan>img src=x onerror=... <tspan class="t-ok" style="font-weight:700">&amp;gt;</tspan></text>
+<text class="t-m t-dim" x="14" y="78">li.textContent = text;</text>
+<rect class="bx-info" x="6" y="92" width="408" height="30" rx="6"/><text class="t" x="18" y="113">tab: Guestbook</text>
+<rect class="bx" x="6" y="122" width="408" height="62" rx="6"/><text class="t" x="18" y="150">• Hi! Lovely site.</text>
+</svg>`],
+ ['The page shows the comment as plain characters. No image, no onerror, no script. The tab still says <b>Guestbook</b>.',`<svg viewBox="0 0 420 190" role="img" aria-label="Comment shown as text, tab unchanged">
+<rect class="bx-ok" x="6" y="8" width="408" height="40" rx="6"/><text class="t-m" x="14" y="33" style="font-size:14px"><tspan class="t-ok" style="font-weight:700">&amp;lt;</tspan>img src=x onerror=... <tspan class="t-ok" style="font-weight:700">&amp;gt;</tspan></text>
+<text class="t-m t-dim" x="14" y="78">li.textContent = text;</text>
+<rect class="bx-ok" x="6" y="92" width="408" height="30" rx="6"/><text class="t-b t-ok" x="18" y="113">tab: Guestbook</text>
+<rect class="bx" x="6" y="122" width="408" height="62" rx="6"/><text class="t" x="18" y="150">• Hi! Lovely site.</text>
+<text class="t-m" x="18" y="174" style="font-size:14px">• &lt;img src=x onerror="document.t…</text>
+</svg>`]])}
+${V.rules(V.rh('Rules: break one and XSS is back'),
+ V.ok('el.textContent = text','Always text, never HTML'),V.no('el.innerHTML = text','Builds whatever the text describes'),
+ V.ok('&lt;p&gt;{comment}&lt;/p&gt;','React and Vue escape {} output for you'),V.no('dangerouslySetInnerHTML','The name is the warning: it turns escaping off'),
+ V.ok(".replace(/&amp;/g, '&amp;amp;') first","Escape &amp; before the others, or you double-escape"),V.ok('DOMPurify.sanitize(html)','If you truly must allow some HTML, clean it with a sanitiser'),
+ V.no('document.write(text)','Same danger as innerHTML'))}
+${V.build(`<ol><li>Find every <code>innerHTML</code> that receives user text.</li><li>Swap it for <code>textContent</code>.</li><li>Where you must build an HTML string, write <code>escapeHtml(s)</code> that replaces <code>&amp;</code> first, then <code>&lt; &gt; " '</code>.</li><li>Post the attack text again: it should appear as plain characters.</li></ol>`)}
+${V.hook(`Text in, text out. Let the browser build only what you wrote.`)}
+`)}
 
-<h4>The fix: treat user input as text</h4>
-<p>For the second task, change one line so the comment goes in with <code>textContent</code> instead of <code>innerHTML</code>. Now the browser shows the payload as the literal characters, angle brackets and all, and nothing runs.</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="The same payload through innerHTML and through textContent">
-<rect class="bx-warn" x="60" y="10" width="300" height="36" rx="6"/>
-<text class="t-m" x="210" y="33" text-anchor="middle">&lt;img src=x onerror=…&gt;</text>
-<path class="ln" d="M150 46v24"/><polygon class="ah" points="144,68 156,68 150,76"/>
-<path class="ln" d="M270 46v24"/><polygon class="ah" points="264,68 276,68 270,76"/>
-<g text-anchor="middle">
-<rect class="bx-bad" x="20" y="78" width="180" height="36" rx="6"/><text class="t-m" x="110" y="101">innerHTML</text>
-<rect class="bx-ok" x="220" y="78" width="180" height="36" rx="6"/><text class="t-m" x="310" y="101">textContent</text>
-<text class="t" x="110" y="142">builds an image</text>
-<text class="t" x="110" y="166">onerror fires</text>
-<text class="t-b t-bad" x="110" y="196">code runs</text>
-<text class="t" x="310" y="142">shows characters</text>
-<text class="t" x="310" y="166">nothing is built</text>
-<text class="t-b t-ok" x="310" y="196">safe text</text>
-</g>
-</svg><figcaption>The same comment goes two ways. Through innerHTML, the browser builds a real image element, its error handler fires and the attacker's code runs. Through textContent, the browser only displays the characters, so the comment appears on screen as harmless text.</figcaption></figure>
-<p>Modern frameworks do this for you. In React, writing <code>{comment}</code> inside JSX always inserts it as text, escaped automatically. Vue's double curly braces do the same. The danger is in the escape hatches: React's <code>dangerouslySetInnerHTML</code> and Vue's <code>v-html</code> deliberately switch that protection off. The name is a warning.</p>
+${V.card(3,'A second layer','CSP and httpOnly cookies',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="A browser with a shield: scripts from your own site pass, an inline script and a script from another site are blocked">
+<rect class="bx" x="150" y="10" width="260" height="140" rx="10"/>${V.ic('shield',160,54,56,'ic-a')}<text class="t-s" x="188" y="136" text-anchor="middle">CSP</text>
+<text class="t-b" x="230" y="34">Your browser</text>
+<rect class="bx-ok" x="10" y="16" width="130" height="34" rx="6"/><text class="t-m" x="20" y="39" style="font-size:14px">/app.js</text>
+<rect class="bx-bad" x="10" y="62" width="130" height="34" rx="6"/><text class="t-m" x="20" y="85" style="font-size:14px">inline onerror</text>
+<rect class="bx-bad" x="10" y="108" width="130" height="34" rx="6"/><text class="t-m" x="20" y="131" style="font-size:14px">evil.example</text>
+<path class="ln-ok" d="M144 33H300"/><polygon class="ah-ok" points="298,26 298,40 310,33"/>${V.ic('check',318,18,30,'ic-ok')}
+${V.ic('cross',226,64,30,'ic-bad')}${V.ic('cross',226,110,30,'ic-bad')}
+</svg><figcaption>A Content Security Policy tells the browser which scripts are allowed. Anything else is refused, even if an injection slips in.</figcaption></figure>
+${V.like(`<p>A guest list at the door. Even if someone sneaks a stranger into the queue, the bouncer only lets in names on the list.</p>`)}
+${V.anat([[1,'Content-Security-Policy'],': ',[2,'script-src'],' ',[3,"'self'"]],[
+ '<b>The header</b> your server sends with each page.','<b>Which kind of resource</b> the rule is about: scripts.','<b>Who is allowed.</b> <code>\'self\'</code> means your own site only. Inline scripts and <code>onerror=</code> attributes are blocked.'])}
+${V.rules(V.ok('escape first, CSP second','CSP is a backup, not a replacement'),V.ok('HttpOnly session cookie','JavaScript cannot read it, so a script cannot steal it'))}
+${V.hook(`Escape so it never runs. CSP so it still cannot run.`)}
+`)}
 
-<h4>Escaping, for when you must build HTML</h4>
-<p>Sometimes you really do need to build an HTML string, for example in an email template. Then you <b>escape</b> the user's text first: replace each character that has a special meaning in HTML with an <b>entity</b>, a code the browser displays as that character but never treats as markup.</p>
-<div class="tbl-wrap"><table><tr><th>Character</th><th>Entity</th><th>Why it is special</th></tr>
-<tr><td><code>&amp;</code> ampersand</td><td><code>&amp;amp;</code></td><td>Starts every entity</td></tr>
-<tr><td><code>&lt;</code> less than</td><td><code>&amp;lt;</code></td><td>Opens a tag</td></tr>
-<tr><td><code>&gt;</code> greater than</td><td><code>&amp;gt;</code></td><td>Closes a tag</td></tr>
-<tr><td><code>"</code> double quote</td><td><code>&amp;quot;</code></td><td>Ends a double-quoted attribute</td></tr>
-<tr><td><code>'</code> single quote</td><td><code>&amp;#39;</code></td><td>Ends a single-quoted attribute</td></tr></table></div>
-<p>Your <code>escapeHtml(s)</code> for the third task is a chain of five <code>.replace()</code> calls, each with a regular expression and the <code>g</code> flag so that <i>every</i> occurrence is replaced, not just the first. Order matters: replace <code>&amp;</code> <b>first</b>. If you replaced <code>&lt;</code> first, it would become <code>&amp;lt;</code>, and then the ampersand step would turn that into <code>&amp;amp;lt;</code>, which displays the wrong thing.</p>
-<div class="mistake"><b>Common mistake</b>Writing your own "blocklist" that strips the word <code>script</code> or the text <code>onerror</code>. Attackers have hundreds of variations: other tags, other events, odd capitalisation, encoded characters. Escape everything, or use a well-tested sanitiser such as DOMPurify when you must accept some HTML, like a rich-text editor's output.</div>
-
-<h4>Second layers: CSP and httpOnly cookies</h4>
-<p>Even careful teams slip up, so add layers that limit the damage:</p>
-<ul>
-<li><b>Content-Security-Policy</b> (CSP) is an HTTP header your server sends with each page. It tells the browser which scripts are allowed. A policy like <code>script-src 'self'</code> allows only script files from your own site and blocks inline scripts and inline event handlers such as <code>onerror="..."</code>. If an injection slips through, the browser refuses to run it. CSP is a backup, never a replacement for escaping.</li>
-<li><b>httpOnly cookies</b>: if your login session lives in a cookie marked <code>HttpOnly</code>, JavaScript cannot read it at all, so an XSS script can't steal the session and use it elsewhere. It can still act within the page while it runs, which is why escaping comes first. You'll meet cookie flags properly in the next lesson.</li>
-</ul>
-<div class="try"><b>Try it in your head</b>A profile page shows <code>&lt;p&gt;Hello, NAME&lt;/p&gt;</code>, built by gluing the user's display name into an HTML string. A user sets their name to <code>&lt;b&gt;Sam&lt;/b&gt;</code>. What appears? With no escaping, a bold "Sam": the tags worked, which proves the page is injectable. After escaping, the page shows the literal text with angle brackets, which is correct.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>XSS is injection into HTML: user text is read as markup, so an attacker's JavaScript runs in other people's browsers.</li>
-<li><code>innerHTML</code> builds tags from text; <code>textContent</code> shows text. Use <code>textContent</code>, or a framework's normal <code>{value}</code> output, for user data.</li>
-<li>Stored XSS is saved and served to everyone; reflected XSS comes from a link; DOM-based XSS happens in browser code. The fix is the same.</li>
-<li>When building HTML strings, escape <code>&amp;</code> first, then <code>&lt;</code>, <code>&gt;</code>, double and single quotes.</li>
-<li>Add a Content-Security-Policy and httpOnly cookies as second layers; avoid <code>dangerouslySetInnerHTML</code> with user data.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Which is safe for a user comment: <code>innerHTML</code> or <code>textContent</code>? <i>textContent.</i> 2. In React, is <code>&lt;p&gt;{comment}&lt;/p&gt;</code> safe? <i>Yes, React escapes it.</i> 3. Why escape <code>&amp;</code> before <code>&lt;</code>? <i>Otherwise the &amp; inside &amp;lt; gets escaped again.</i></div>
 `);
 
 explain('x4',`
-<h4>Why a website needs to "remember" you</h4>
-<p>The web runs on <b>HTTP</b>, and HTTP is <b>stateless</b>: every request your browser sends is handled on its own, as if the server had never seen you before. When you log in on one page and click to the next, that next request carries no memory of the login unless something in it proves who you are.</p>
-<p>So after a successful login the server hands your browser a kind of <b>visitor badge</b>, and the browser shows it on every later request. There are two popular kinds of badge: a <b>session ID</b> and a <b>JWT</b>. This lesson explains both, how a server can tell a real badge from a forged one, and how the password check at the very start should work.</p>
-<p>Two words first. <b>Authentication</b> means proving who you are, for example with a password. A <b>token</b> is any piece of data that stands in for that proof afterwards, so you don't have to type your password on every click.</p>
+<p>Logging in happens once, but the website has to remember you on every click after that. How it remembers you, and how it stores your password, decides whether a small leak becomes a disaster.</p>
 
-<h4>Badge type one: a session ID in a cookie</h4>
-<p>With sessions, the server creates a long random string, the <b>session ID</b>, and stores a record on its side: "session a1b2... belongs to user 42". It sends the ID to the browser in a <b>cookie</b>, a small named value the browser stores and automatically attaches to every request to that site. On each request, the server looks the ID up in its <b>session store</b> (memory, a database or Redis) to find out who you are.</p>
-<p>The ID itself means nothing; it is just a random key, like a cloakroom ticket. All the real information stays on the server. Logging out is easy: delete the record and the ticket is worthless.</p>
+${V.card(1,'Sessions','a wristband after the ticket check',`
+<figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="At a festival gate, a ticket is checked once and a wristband is given. The wristband gets you into each area">
+${V.ic('person',10,30,70,'ic-info')}<text class="t-s" x="45" y="112" text-anchor="middle">you</text>
+<rect class="bx-a" x="104" y="34" width="120" height="62" rx="8"/>${V.ic('card',112,42,44,'ic-a')}<text class="t-b" x="160" y="58">Ticket</text><text class="t-s" x="160" y="82">checked</text>
+<path class="ln-a" d="M228 65H262"/><polygon class="ah-a" points="260,58 260,72 272,65"/>
+<rect class="bx-ok" x="276" y="34" width="134" height="62" rx="31"/><text class="t-m" x="343" y="71" text-anchor="middle" style="font-size:17px">sid=7f3a</text>
+<text class="t-s" x="210" y="138" text-anchor="middle">Password checked once. The wristband does the rest.</text>
+</svg><figcaption>A session: you prove who you are once, then a random ID in a cookie identifies you on each request.</figcaption></figure>
+${V.like(`<p>At a festival, staff check your ticket once at the gate and put a wristband on you. After that, every stage just looks at the wristband. The session ID cookie is that wristband.</p>`)}
+${V.why(`<p>The web's protocol, HTTP, forgets everything between requests. Without a way to remember you, you would type your password on every page. Cookies were invented in 1994 so a site could hand the browser a small note to send back each time.</p>`)}
+${V.anat([[1,'Set-Cookie:'],' ',[2,'sid=7f3a9c'],'; ',[3,'HttpOnly'],'; ',[4,'Secure'],'; ',[5,'SameSite=Lax']],[
+ '<b>The header</b> the server sends to store a cookie.','<b>Name and value.</b> A long random session ID, not the user\'s details.','<b>HttpOnly.</b> Page JavaScript cannot read it, so an XSS script cannot steal it.','<b>Secure.</b> Only sent over HTTPS.','<b>SameSite.</b> Not sent on most requests started by other sites, which blocks many forged requests.'])}
+${V.steps([
+ ['You send your email and password once, over HTTPS.',`<svg viewBox="0 0 420 190" role="img" aria-label="Browser sends POST /login">
+${V.ic('laptop',12,14,56,'ic-info')}<text class="t-s" x="40" y="88" text-anchor="middle">Browser</text>
+${V.ic('server',352,14,56,'ic-info')}<text class="t-s" x="380" y="88" text-anchor="middle">Server</text>
+<rect class="bx-a" x="84" y="14" width="252" height="52" rx="6"/><text class="t-m" x="96" y="36" style="font-size:14px">POST /login</text><text class="t-m" x="96" y="57" style="font-size:14px">email + password</text>
+<path class="ln-a" d="M84 78H330"/><polygon class="ah-a" points="328,71 328,85 340,78"/>
+<rect class="bx" x="6" y="104" width="196" height="80" rx="6"/><text class="t-s" x="16" y="124">cookie jar</text>
+<rect class="bx" x="214" y="104" width="200" height="80" rx="6"/><text class="t-s" x="224" y="124">sessions table</text>
+</svg>`],
+ ['The server checks the password against its stored <b>hash</b>. It matches, so the server makes a new random session ID and remembers who it belongs to.',`<svg viewBox="0 0 420 190" role="img" aria-label="Server checks hash and stores session">
+${V.ic('laptop',12,14,56,'ic-info')}<text class="t-s" x="40" y="88" text-anchor="middle">Browser</text>
+${V.ic('server',352,14,56,'ic-ok')}<text class="t-s" x="380" y="88" text-anchor="middle">Server</text>
+<rect class="bx-ok" x="84" y="14" width="252" height="52" rx="6"/><text class="t-m" x="96" y="36" style="font-size:14px">hash matches ✓</text><text class="t-m" x="96" y="57" style="font-size:14px">new session id</text>
+<rect class="bx" x="6" y="104" width="196" height="80" rx="6"/><text class="t-s" x="16" y="124">cookie jar</text>
+<rect class="bx" x="214" y="104" width="200" height="80" rx="6"/><text class="t-s" x="224" y="124">sessions table</text>
+<rect class="bx-hl" x="224" y="134" width="180" height="36" rx="5"/><text class="t-m" x="234" y="158" style="font-size:14px">7f3a9c → user 42</text>
+</svg>`],
+ ['The reply carries <b>Set-Cookie</b>. Your browser stores the ID in its cookie jar.',`<svg viewBox="0 0 420 190" role="img" aria-label="Server replies with Set-Cookie">
+${V.ic('laptop',12,14,56,'ic-ok')}<text class="t-s" x="40" y="88" text-anchor="middle">Browser</text>
+${V.ic('server',352,14,56,'ic-info')}<text class="t-s" x="380" y="88" text-anchor="middle">Server</text>
+<rect class="bx-a" x="84" y="14" width="252" height="52" rx="6"/><text class="t-m" x="96" y="36" style="font-size:14px">200 OK</text><text class="t-m" x="96" y="57" style="font-size:14px">Set-Cookie: sid=7f3a9c</text>
+<path class="ln-a" d="M336 78H90"/><polygon class="ah-a" points="92,71 92,85 80,78"/>
+<rect class="bx" x="6" y="104" width="196" height="80" rx="6"/><text class="t-s" x="16" y="124">cookie jar</text>
+<rect class="bx-hl" x="16" y="134" width="176" height="36" rx="5"/><text class="t-m" x="26" y="158" style="font-size:14px">sid=7f3a9c</text>
+<rect class="bx" x="214" y="104" width="200" height="80" rx="6"/><text class="t-s" x="224" y="124">sessions table</text>
+<rect class="bx" x="224" y="134" width="180" height="36" rx="5"/><text class="t-m" x="234" y="158" style="font-size:14px">7f3a9c → user 42</text>
+</svg>`],
+ ['On every later request the browser sends the cookie automatically. The server looks up <b>7f3a9c</b> and knows it is user 42. No password needed.',`<svg viewBox="0 0 420 190" role="img" aria-label="Next request sends cookie, server looks it up">
+${V.ic('laptop',12,14,56,'ic-info')}<text class="t-s" x="40" y="88" text-anchor="middle">Browser</text>
+${V.ic('server',352,14,56,'ic-info')}<text class="t-s" x="380" y="88" text-anchor="middle">Server</text>
+<rect class="bx-a" x="84" y="14" width="252" height="52" rx="6"/><text class="t-m" x="96" y="36" style="font-size:14px">GET /orders</text><text class="t-m" x="96" y="57" style="font-size:14px">Cookie: sid=7f3a9c</text>
+<path class="ln-a" d="M84 78H330"/><polygon class="ah-a" points="328,71 328,85 340,78"/>
+<rect class="bx" x="6" y="104" width="196" height="80" rx="6"/><text class="t-s" x="16" y="124">cookie jar</text>
+<rect class="bx" x="16" y="134" width="176" height="36" rx="5"/><text class="t-m" x="26" y="158" style="font-size:14px">sid=7f3a9c</text>
+<rect class="bx" x="214" y="104" width="200" height="80" rx="6"/><text class="t-s" x="224" y="124">sessions table</text>
+<rect class="bx-hl" x="224" y="134" width="180" height="36" rx="5"/><text class="t-m" x="234" y="158" style="font-size:14px">7f3a9c → user 42</text>
+</svg>`],
+ ['Logging out deletes the row. The old cookie now points at nothing, so it is useless even if someone copied it.',`<svg viewBox="0 0 420 190" role="img" aria-label="Logout deletes the session">
+${V.ic('laptop',12,14,56,'ic-info')}<text class="t-s" x="40" y="88" text-anchor="middle">Browser</text>
+${V.ic('server',352,14,56,'ic-info')}<text class="t-s" x="380" y="88" text-anchor="middle">Server</text>
+<rect class="bx-a" x="84" y="14" width="252" height="52" rx="6"/><text class="t-m" x="96" y="36" style="font-size:14px">POST /logout</text><text class="t-m" x="96" y="57" style="font-size:14px">delete session</text>
+<path class="ln-a" d="M84 78H330"/><polygon class="ah-a" points="328,71 328,85 340,78"/>
+<rect class="bx" x="6" y="104" width="196" height="80" rx="6"/><text class="t-s" x="16" y="124">cookie jar</text>
+<rect class="bx" x="214" y="104" width="200" height="80" rx="6"/><text class="t-s" x="224" y="124">sessions table</text>
+<rect class="bx-bad" x="224" y="134" width="180" height="36" rx="5"/><text class="t-m t-dim" x="234" y="158" style="font-size:14px">7f3a9c → user 42</text><path class="ln-x" d="M230 152H398"/>
+</svg>`]])}
+${V.hook(`Check the ticket once, wear the wristband after. HttpOnly, Secure, SameSite.`)}
+`)}
 
-<h4>Badge type two: a JSON Web Token</h4>
-<p>A <b>JWT</b>, said "jot", takes the opposite approach. Instead of a meaningless key, the token <i>contains</i> the facts, such as "user 42, role user, expires at this time", plus a <b>signature</b> that proves the server issued it and nobody has changed it. The server doesn't need to look anything up; it just checks the signature.</p>
-<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="Session cookie flow compared with JWT flow">
-<text class="t-b" x="10" y="18">Session cookie</text>
-<g text-anchor="middle">
-<rect class="bx" x="10" y="28" width="110" height="52" rx="6"/><text class="t-b" x="65" y="50">Browser</text><text class="t-m" x="65" y="70">sid=a1b2</text>
-<rect class="bx" x="150" y="28" width="110" height="52" rx="6"/><text class="t-b" x="205" y="50">Server</text><text class="t-s" x="205" y="70">looks it up</text>
-<rect class="bx-info" x="290" y="28" width="120" height="52" rx="6"/><text class="t-b" x="350" y="50">Store</text><text class="t-s" x="350" y="70">a1b2 = user 42</text>
-</g>
-<path class="ln" d="M120 54h22"/><polygon class="ah" points="142,48 142,60 150,54"/>
-<path class="ln" d="M260 54h22"/><polygon class="ah" points="282,48 282,60 290,54"/>
-<line class="ln-d" x1="10" y1="104" x2="410" y2="104"/>
-<text class="t-b" x="10" y="130">JWT</text>
-<g text-anchor="middle">
-<rect class="bx" x="10" y="140" width="110" height="52" rx="6"/><text class="t-b" x="65" y="162">Browser</text><text class="t-s" x="65" y="182">token with data</text>
-<rect class="bx-ok" x="146" y="140" width="122" height="52" rx="6"/><text class="t-b" x="205" y="162">Server</text><text class="t-s" x="205" y="182">checks signature</text>
-<rect class="bx" x="290" y="140" width="120" height="52" rx="6" style="stroke-dasharray:5 4"/><text class="t-s" x="350" y="162">no lookup</text><text class="t-s" x="350" y="182">data is inside</text>
-</g>
-<path class="ln" d="M120 166h18"/><polygon class="ah" points="138,160 138,172 146,166"/>
-<text class="t-s" x="210" y="224" text-anchor="middle">Session: easy to revoke. JWT: no shared store needed.</text>
-</svg><figcaption>With a session, the browser sends a meaningless ID and the server looks it up in its session store to find the user. With a JWT, the browser sends a token that already contains the user's details, and the server only has to check the signature.</figcaption></figure>
-<p>Each has a trade-off. Sessions are simple and can be cancelled instantly, but every server needs access to the store. JWTs need no store, which suits systems with many servers, but a JWT stays valid until it expires even if you "log out", so you give them a short lifetime.</p>
+${V.card(2,'JWTs','a readable note with a tamper seal',`
+<figure class="fig"><svg viewBox="0 0 420 130" role="img" aria-label="A JWT has three parts separated by dots: header, payload and signature">
+<rect class="bx-info" x="6" y="14" width="118" height="44" rx="6"/><text class="t-m" x="65" y="42" text-anchor="middle">eyJhbG…</text>
+<text class="t-b" x="129" y="46" style="font-size:22px">.</text>
+<rect class="bx-a" x="140" y="14" width="140" height="44" rx="6"/><text class="t-m" x="210" y="42" text-anchor="middle">eyJzdW…</text>
+<text class="t-b" x="285" y="46" style="font-size:22px">.</text>
+<rect class="bx-ok" x="296" y="14" width="118" height="44" rx="6"/><text class="t-m" x="355" y="42" text-anchor="middle">3f9Kx…</text>
+<text class="t-s" x="65" y="82" text-anchor="middle">header</text><text class="t-s" x="210" y="82" text-anchor="middle">payload</text><text class="t-s" x="355" y="82" text-anchor="middle">signature</text>
+<text class="t-s" x="65" y="102" text-anchor="middle">which algorithm</text><text class="t-s" x="210" y="102" text-anchor="middle">who and until when</text><text class="t-s" x="355" y="102" text-anchor="middle">the seal</text>
+</svg><figcaption>A JSON Web Token: three base64url parts joined by dots.</figcaption></figure>
+${V.like(`<p>A postcard with a hologram sticker over the writing. Anyone who picks it up can read it. But change one word and the hologram is visibly broken. A JWT is <b>signed</b>, not <b>hidden</b>.</p>`)}
+${V.why(`<p>With sessions, the server must look up every ID in its table. A JWT carries the facts inside itself, plus a signature only the server can make. Any server holding the secret can check it without a lookup. The catch: you cannot easily cancel one before it expires.</p>`)}
+${V.anat([[1,'header'],'.',[2,'payload'],'.',[3,'signature']],[
+ '<b>Header.</b> JSON saying how it was signed, e.g. <code>{"alg":"HS256"}</code>, in base64url.',
+ '<b>Payload.</b> The claims: <code>sub</code> (user id), <code>role</code>, <code>exp</code> (expiry time in seconds). Base64url is an <i>encoding</i>, so anyone can decode it.',
+ '<b>Signature.</b> HMAC-SHA256 of <code>header.payload</code> using the server\'s secret key. Without the key nobody can make a matching one.'])}
+${V.steps([
+ ['The server receives a token and splits it at the two dots.',`<svg viewBox="0 0 420 200" role="img" aria-label="Token split into three parts">
+<rect class="bx-info" x="6" y="10" width="118" height="40" rx="6"/><text class="t-m" x="65" y="36" text-anchor="middle">header</text>
+<rect class="bx-a" x="140" y="10" width="140" height="40" rx="6"/><text class="t-m" x="210" y="36" text-anchor="middle">payload</text>
+<rect class="bx-ok" x="296" y="10" width="118" height="40" rx="6"/><text class="t-m" x="355" y="36" text-anchor="middle">3f9Kx…</text>
+<rect class="bx" x="6" y="64" width="408" height="62" rx="6"/><text class="t-s t-dim" x="18" y="100">decoded payload appears here</text>
+<rect class="bx" x="6" y="138" width="408" height="54" rx="6"/><text class="t-s t-dim" x="18" y="170">verdict</text>
+</svg>`],
+ ['It decodes the middle part. Anyone could do this, which is why you <b>never</b> put passwords or card numbers in a payload.',`<svg viewBox="0 0 420 200" role="img" aria-label="Payload decoded and readable">
+<rect class="bx-info" x="6" y="10" width="118" height="40" rx="6"/><text class="t-m" x="65" y="36" text-anchor="middle">header</text>
+<rect class="bx-hl" x="140" y="10" width="140" height="40" rx="6"/><text class="t-m" x="210" y="36" text-anchor="middle">payload</text>
+<rect class="bx-ok" x="296" y="10" width="118" height="40" rx="6"/><text class="t-m" x="355" y="36" text-anchor="middle">3f9Kx…</text>
+<rect class="bx" x="6" y="64" width="408" height="62" rx="6"/><text class="t-m" x="18" y="88" style="font-size:14px">{"sub":"42","role":"user",</text><text class="t-m" x="18" y="112" style="font-size:14px"> "exp":1791603600}</text>
+<rect class="bx" x="6" y="138" width="408" height="54" rx="6"/><text class="t-s" x="18" y="170">Readable by anyone: base64url is not encryption.</text>
+</svg>`],
+ ['It recomputes <b>HMAC(header.payload, SECRET)</b> and compares it with the signature part. They match, and <b>exp</b> is in the future. Accepted.',`<svg viewBox="0 0 420 200" role="img" aria-label="Recomputed signature matches">
+<rect class="bx-info" x="6" y="10" width="118" height="40" rx="6"/><text class="t-m" x="65" y="36" text-anchor="middle">header</text>
+<rect class="bx-a" x="140" y="10" width="140" height="40" rx="6"/><text class="t-m" x="210" y="36" text-anchor="middle">payload</text>
+<rect class="bx-hl" x="296" y="10" width="118" height="40" rx="6"/><text class="t-m" x="355" y="36" text-anchor="middle">3f9Kx…</text>
+<rect class="bx" x="6" y="64" width="408" height="62" rx="6"/><text class="t-m" x="18" y="88" style="font-size:14px">{"sub":"42","role":"user",</text><text class="t-m" x="18" y="112" style="font-size:14px"> "exp":1791603600}</text>
+<rect class="bx-ok" x="6" y="138" width="408" height="54" rx="6"/>${V.ic('check',14,146,36,'ic-ok')}<text class="t-m" x="58" y="171" style="font-size:14px">recomputed 3f9Kx… = 3f9Kx…  valid</text>
+</svg>`],
+ ['Someone edits the payload to say <b>"role":"admin"</b>. The recomputed signature is now different. Rejected: <b>null</b>.',`<svg viewBox="0 0 420 200" role="img" aria-label="Tampered payload, signature mismatch">
+<rect class="bx-info" x="6" y="10" width="118" height="40" rx="6"/><text class="t-m" x="65" y="36" text-anchor="middle">header</text>
+<rect class="bx-bad" x="140" y="10" width="140" height="40" rx="6"/><text class="t-m" x="210" y="36" text-anchor="middle">edited</text>
+<rect class="bx-ok" x="296" y="10" width="118" height="40" rx="6"/><text class="t-m" x="355" y="36" text-anchor="middle">3f9Kx…</text>
+<rect class="bx" x="6" y="64" width="408" height="62" rx="6"/><text class="t-m" x="18" y="88" style="font-size:14px">{"sub":"42","role":<tspan class="t-bad" style="font-weight:700">"admin"</tspan>,</text><text class="t-m" x="18" y="112" style="font-size:14px"> "exp":1791603600}</text>
+<rect class="bx-bad" x="6" y="138" width="408" height="54" rx="6"/>${V.ic('cross',14,146,36,'ic-bad')}<text class="t-m" x="58" y="171" style="font-size:14px">recomputed 9Qz1… ≠ 3f9Kx…  null</text>
+</svg>`],
+ ['A genuine but old token: the signature matches, but <b>exp</b> is not after now. Expired tokens are rejected too.',`<svg viewBox="0 0 420 200" role="img" aria-label="Expired token rejected">
+<rect class="bx-info" x="6" y="10" width="118" height="40" rx="6"/><text class="t-m" x="65" y="36" text-anchor="middle">header</text>
+<rect class="bx-a" x="140" y="10" width="140" height="40" rx="6"/><text class="t-m" x="210" y="36" text-anchor="middle">payload</text>
+<rect class="bx-ok" x="296" y="10" width="118" height="40" rx="6"/><text class="t-m" x="355" y="36" text-anchor="middle">8Lw2…</text>
+<rect class="bx" x="6" y="64" width="408" height="62" rx="6"/><text class="t-m" x="18" y="88" style="font-size:14px">{"sub":"42","role":"user",</text><text class="t-m" x="18" y="112" style="font-size:14px"> "exp":<tspan class="t-bad" style="font-weight:700">1791599940</tspan>}</text>
+<rect class="bx-bad" x="6" y="138" width="408" height="54" rx="6"/>${V.ic('clock',14,146,36,'ic-bad')}<text class="t-m" x="58" y="171" style="font-size:14px">exp ≤ now (1791600000)  null</text>
+</svg>`]])}
+${V.rules(V.rh('Rules: break one and tokens can be forged or stolen'),
+ V.ok('verify, then trust','Recompute the signature before reading any claim'),V.no('decode and trust','Decoding proves nothing; anyone can edit the payload'),
+ V.ok('check exp','Old tokens must stop working'),V.no('password in payload','The payload is readable by anyone holding the token'),
+ V.ok('HttpOnly cookie','Store tokens where page scripts cannot reach'),V.no('localStorage','Any XSS script can read it'))}
+${V.hook(`Readable by all, forgeable by none. Verify the seal, then check the clock.`)}
+`)}
 
-<h4>Inside a JWT: three parts and a dot between each</h4>
-<p>A JWT looks like gibberish, but it has a simple shape: <code>header.payload.signature</code>.</p>
-<ul>
-<li>The <b>header</b> is a little JSON object saying which signing method was used, here <code>HS256</code>.</li>
-<li>The <b>payload</b> is a JSON object with the <b>claims</b>, the facts about the user. In this lesson: <code>sub</code> (the "subject", the user's id, <code>"42"</code>), <code>role</code> and <code>exp</code> (the expiry time).</li>
-<li>The <b>signature</b> is the proof that the first two parts are genuine.</li>
-</ul>
-<p>The header and payload are written in <b>base64url</b>. Base64 is a way of writing any data using only letters, digits and a couple of symbols, so it can travel safely in URLs and headers. The "url" variant swaps <code>+</code> for <code>-</code> and <code>/</code> for <code>_</code>, and drops the <code>=</code> padding at the end. Crucially, this is <b>encoding, not encryption</b>: anyone can turn it back into JSON in one step. A JWT's payload is readable by anyone who holds the token.</p>
-<p>That gives you the first task. To decode the payload: split the token on the dots and take the middle part; swap <code>-</code> back to <code>+</code> and <code>_</code> back to <code>/</code> so it is ordinary base64; decode it with the browser's <code>atob()</code> ("ASCII to binary"), which gives you a JSON string; then <code>JSON.parse</code> it into an object.</p>
-<div class="mistake"><b>Common mistake</b>Putting secrets in the payload, like a password, card number or private note, because it "looks encrypted". It isn't. Put only identifiers and permissions in a JWT.</div>
+${V.card(3,'Password hashing','store a fingerprint, not the password',`
+<figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="A mincer: a steak goes in and mince comes out. You cannot turn mince back into steak">
+<rect class="bx-warn" x="10" y="46" width="100" height="56" rx="20"/><text class="t-b" x="60" y="80" text-anchor="middle">enigma</text>
+<path class="ln-a" d="M114 74H148"/><polygon class="ah-a" points="146,67 146,81 158,74"/>
+<rect class="bx-a" x="162" y="24" width="100" height="100" rx="12"/>${V.ic('gear',182,34,60,'ic-a')}<text class="t-s" x="212" y="114" text-anchor="middle">bcrypt</text>
+<path class="ln-a" d="M266 74H300"/><polygon class="ah-a" points="298,67 298,81 310,74"/>
+<rect class="bx-ok" x="314" y="46" width="98" height="56" rx="6"/><text class="t-m" x="363" y="80" text-anchor="middle" style="font-size:14px">$2b$12$…</text>
+<path class="ln-d" d="M363 108C363 140 60 140 60 108"/><text class="t-bad" x="212" y="146" text-anchor="middle" style="font-size:14px">no way back</text>
+</svg><figcaption>A hash is one-way, like a mincer. Steak becomes mince, but mince never becomes steak again.</figcaption></figure>
+${V.like(`<p>A mincer. You can turn steak into mince in a second, but you can never turn the mince back into the steak. To check a password, you mince the new attempt the same way and compare the mince.</p>`)}
+${V.why(`<p>Databases leak. If passwords are stored as typed, one leak opens every account, and people reuse passwords on other sites. Early sites used fast hashes like MD5, but modern graphics cards try billions of MD5 guesses a second. Slow password hashes such as <b>bcrypt</b> (1999) and <b>argon2</b> (2015) were designed to make each guess expensive.</p>`)}
+${V.anat([[1,'$2b$'],[2,'12$'],[3,'Xq3vR8sLp2Wn6yTb0cJe1u'],[4,'k9LmQ…']],[
+ '<b>Algorithm.</b> <code>2b</code> means bcrypt.','<b>Cost.</b> 12 means 2<sup>12</sup> rounds of work. Raise it as computers get faster.','<b>Salt.</b> 22 random characters, different for every user, so two people with the same password get different hashes.','<b>The hash itself.</b> The "mince". 31 characters.'])}
+${V.steps([
+ ['Sign-up: the password <b>enigma</b> is joined with a fresh random <b>salt</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="Password plus random salt">
+<rect class="bx-warn" x="6" y="20" width="120" height="44" rx="6"/><text class="t-m" x="66" y="48" text-anchor="middle">enigma</text>
+<text class="t-b" x="140" y="48" style="font-size:20px">+</text>
+<rect class="bx-info" x="160" y="20" width="120" height="44" rx="6"/><text class="t-m" x="220" y="48" text-anchor="middle">Xq3v…</text>
+<text class="t-s" x="220" y="84" text-anchor="middle">random salt</text>
+<rect class="bx" x="6" y="108" width="408" height="52" rx="6"/>${V.ic('db',14,114,40,'ic-info')}<text class="t-s t-dim" x="64" y="140">users table</text>
+</svg>`],
+ ['Both go through <b>bcrypt</b> with cost 12. It is slow on purpose: about a quarter of a second.',`<svg viewBox="0 0 420 170" role="img" aria-label="bcrypt produces a hash">
+<rect class="bx-warn" x="6" y="20" width="120" height="44" rx="6"/><text class="t-m" x="66" y="48" text-anchor="middle">enigma</text>
+<text class="t-b" x="140" y="48" style="font-size:20px">+</text>
+<rect class="bx-info" x="160" y="20" width="120" height="44" rx="6"/><text class="t-m" x="220" y="48" text-anchor="middle">Xq3v…</text>
+${V.ic('gear',300,16,52,'ic-a')}<text class="t-s" x="326" y="84" text-anchor="middle">slow hash</text>
+<rect class="bx" x="6" y="108" width="408" height="52" rx="6"/>${V.ic('db',14,114,40,'ic-info')}<text class="t-s t-dim" x="64" y="140">users table</text>
+</svg>`],
+ ['Only the result is saved. The password itself is thrown away and never stored.',`<svg viewBox="0 0 420 170" role="img" aria-label="Only the hash is stored">
+<rect class="bx-warn" x="6" y="20" width="120" height="44" rx="6"/><text class="t-m t-dim" x="66" y="48" text-anchor="middle">enigma</text><path class="ln-x" d="M14 50 118 34"/>
+<text class="t-s" x="66" y="84" text-anchor="middle">never stored</text>
+<rect class="bx-ok" x="6" y="108" width="408" height="52" rx="6"/>${V.ic('db',14,114,40,'ic-ok')}<text class="t-m" x="64" y="140" style="font-size:14px">alan | $2b$12$Xq3v…k9LmQ…</text>
+</svg>`],
+ ['Login: the typed password is hashed again, using the salt stored inside the hash. Same input, same result: <b>match</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="Login hash matches stored hash">
+<rect class="bx-warn" x="6" y="20" width="120" height="44" rx="6"/><text class="t-m" x="66" y="48" text-anchor="middle">enigma</text>
+<path class="ln-a" d="M130 42H164"/><polygon class="ah-a" points="162,35 162,49 174,42"/>
+<rect class="bx-a" x="178" y="20" width="160" height="44" rx="6"/><text class="t-m" x="258" y="48" text-anchor="middle" style="font-size:14px">$2b$12$Xq3v…</text>
+${V.ic('check',352,20,44,'ic-ok')}
+<rect class="bx-ok" x="6" y="108" width="408" height="52" rx="6"/>${V.ic('db',14,114,40,'ic-ok')}<text class="t-m" x="64" y="140" style="font-size:14px">alan | $2b$12$Xq3v…k9LmQ…</text>
+</svg>`],
+ ['If the table leaks, an attacker must guess. MD5 allows many <b>billions</b> of guesses a second on one graphics card; bcrypt at cost 12 allows a few <b>thousand</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="Guess speed: MD5 billions per second, bcrypt thousands">
+<text class="t-b" x="10" y="34">MD5</text><rect class="bx-bad" x="80" y="16" width="330" height="28" rx="4"/><text class="t-s" x="90" y="35">billions of guesses a second</text>
+<text class="t-b" x="10" y="84">bcrypt</text><rect class="bx-ok" x="80" y="66" width="10" height="28" rx="3"/><text class="t-s" x="100" y="85">a few thousand a second</text>
+<rect class="bx-ok" x="6" y="108" width="408" height="52" rx="6"/>${V.ic('db',14,114,40,'ic-ok')}<text class="t-m" x="64" y="140" style="font-size:14px">alan | $2b$12$Xq3v…k9LmQ…</text>
+</svg>`]])}
+${V.rules(V.rh('Rules: break one and a leak becomes a disaster'),
+ V.ok('argon2id or bcrypt','Slow, salted, built for passwords'),V.no('MD5, SHA-1, SHA-256 alone','Fast hashes: built for speed, which helps attackers'),
+ V.no('encrypting passwords','Encryption can be reversed with the key; hashing cannot'),V.no('your own hashing code','Use a well-known library, e.g. bcrypt or argon2 on npm'),
+ V.ok('compare with the library','bcrypt.compare(attempt, storedHash)'))}
+${V.hook(`Mince it slowly, salt it well, never keep the steak.`)}
+`)}
 
-<h4>Expiry: the <code>exp</code> claim</h4>
-<p><code>exp</code> is a <b>Unix timestamp</b>: the number of <i>seconds</i> since midnight on 1 January 1970, UTC. Computers use it because comparing two numbers is easy. The lesson gives you <code>NOW</code> in the same units. A token is expired when its <code>exp</code> is not in the future, meaning <code>exp</code> is less than or equal to now. That is all <code>isExpired</code> needs. (Watch the units in real code: JavaScript's <code>Date.now()</code> gives <i>milliseconds</i>, so divide by 1,000.)</p>
-
-<h4>The signature: how forgery is caught</h4>
-<p>The signature is made with <b>HMAC-SHA256</b>. <b>SHA-256</b> is a hash function: it turns any input into a 32-byte fingerprint, and changing even one character of the input changes the fingerprint completely. <b>HMAC</b> mixes a secret key into that process. The result: only someone who knows the <code>SECRET</code> can produce the right signature for a given header and payload.</p>
-<figure class="fig"><svg viewBox="0 0 420 250" role="img" aria-label="JWT parts and how the server verifies the signature">
-<g text-anchor="middle">
-<rect class="bx-info" x="10" y="10" width="120" height="40" rx="6"/><text class="t-b" x="70" y="35">header</text>
-<text class="t-b" x="140" y="35">.</text>
-<rect class="bx-a" x="150" y="10" width="120" height="40" rx="6"/><text class="t-b" x="210" y="35">payload</text>
-<text class="t-b" x="280" y="35">.</text>
-<rect class="bx-ok" x="290" y="10" width="120" height="40" rx="6"/><text class="t-b" x="350" y="35">signature</text>
-<text class="t-s" x="70" y="70">alg: HS256</text><text class="t-s" x="210" y="70">sub, role, exp</text><text class="t-s" x="350" y="70">the proof</text>
-<rect class="bx" x="10" y="96" width="300" height="36" rx="6"/><text class="t-m" x="160" y="119">HMAC(header.payload, SECRET)</text>
-<rect class="bx" x="10" y="170" width="200" height="36" rx="6"/><text class="t" x="110" y="193">Matches signature?</text>
-<rect class="bx-ok" x="260" y="148" width="150" height="34" rx="6"/><text class="t" x="335" y="170">yes: check exp</text>
-<rect class="bx-bad" x="260" y="198" width="150" height="34" rx="6"/><text class="t" x="335" y="220">no: reject</text>
-</g>
-<path class="ln" d="M110 132v30"/><polygon class="ah" points="104,162 116,162 110,170"/>
-<path class="ln-ok" d="M210 182h20v-17h22"/><polygon class="ah-ok" points="252,159 252,171 260,165"/>
-<path class="ln" d="M210 194h20v21h22"/><polygon class="ah" points="252,209 252,221 260,215"/>
-</svg><figcaption>A JWT is a header, a payload and a signature joined by dots. To verify it, the server recomputes the HMAC of the header and payload using its own secret. If the result matches the signature in the token, the token is genuine and the server then checks the expiry. If not, it rejects the token.</figcaption></figure>
-<p>Here is why tampering fails. The <code>TAMPERED</code> token in this lesson has had its payload swapped for one that says <code>"role":"admin"</code>, but it keeps the old signature. When the server recomputes the HMAC of the new header-and-payload, it gets a completely different value, so the comparison fails. The attacker can't make a matching signature without the secret. The same happens with the right token but the <b>wrong secret</b>.</p>
-<p>So <code>verifyJwt</code> does this, in order:</p>
-<ol>
-<li>Split the token into its three parts.</li>
-<li>Turn the secret into a key with <code>crypto.subtle.importKey</code>, telling it you want HMAC with SHA-256.</li>
-<li>Sign the text <code>header + '.' + body</code> with <code>crypto.subtle.sign</code>. You get raw bytes back.</li>
-<li>Base64url-encode those bytes the same way the token did, and compare with the signature part. Different? Return <code>null</code>.</li>
-<li>Only now decode the payload, and return <code>null</code> if it is expired. Otherwise return the payload.</li>
-</ol>
-<p><code>crypto.subtle</code> is the browser's built-in <b>Web Crypto API</b>. Its functions are <b>asynchronous</b>: they return a Promise, so you must <code>await</code> each one.</p>
-<div class="mistake"><b>Common mistake</b>Forgetting <code>await</code> before <code>crypto.subtle.sign</code>. You then base64-encode a Promise instead of the signature bytes, nothing ever matches, and every token, even the valid one, is rejected. If all your results are <code>null</code>, look for a missing <code>await</code>.</div>
-<div class="tip"><b>Tip</b>In real projects, use a well-tested library such as <code>jose</code> rather than hand-written checks. Always tell it which algorithm you expect, and never trust the <code>alg</code> written in the token's own header; old libraries were fooled by tokens claiming <code>"alg": "none"</code>.</div>
-
-<h4>Where the browser should keep the token</h4>
-<p>If you store a token in <code>localStorage</code>, any JavaScript on the page can read it, including an attacker's XSS script from the previous lesson. A cookie with the right flags is safer:</p>
-<ul>
-<li><code>HttpOnly</code>: JavaScript cannot read the cookie at all; only the browser sends it.</li>
-<li><code>Secure</code>: the cookie is only sent over HTTPS, never plain HTTP.</li>
-<li><code>SameSite=Lax</code> or <code>Strict</code>: the cookie is not sent on most requests started by other websites, which blocks a trick called cross-site request forgery.</li>
-</ul>
-
-<h4>Passwords: hash them, salt them, make it slow</h4>
-<p>None of this matters if passwords leak. Never store a password itself. Store a <b>hash</b>: a one-way scramble that can't be turned back into the password. At login you hash what the user typed and compare it with the stored hash.</p>
-<p>But a plain fast hash such as MD5 or SHA-256 isn't enough. Graphics cards can compute billions of them per second, so attackers who steal the database just hash every common password and look for matches. Two defences fix this:</p>
-<ul>
-<li>A <b>salt</b> is a random value generated for each user and stored next to their hash. It is mixed into the password before hashing, so two people with the same password get different hashes, and precomputed tables of common-password hashes become useless.</li>
-<li>A <b>slow</b> password-hashing algorithm, <b>bcrypt</b>, <b>scrypt</b> or <b>argon2</b> (argon2id is today's usual first choice), is deliberately expensive. A fraction of a second per login is unnoticeable for a user but makes guessing billions of passwords impractical.</li>
-</ul>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Same password with different salts gives different hashes">
-<g text-anchor="middle">
-<rect class="bx" x="10" y="20" width="84" height="38" rx="6"/><text class="t-m" x="52" y="44">enigma</text>
-<text class="t-b" x="106" y="44">+</text>
-<rect class="bx-info" x="118" y="20" width="76" height="38" rx="6"/><text class="t-m" x="156" y="44">Qx7f</text>
-<rect class="bx-a" x="214" y="20" width="96" height="38" rx="6"/><text class="t" x="262" y="44">slow hash</text>
-<rect class="bx-ok" x="330" y="20" width="80" height="38" rx="6"/><text class="t-m" x="370" y="44">9f2c…</text>
-<rect class="bx" x="10" y="90" width="84" height="38" rx="6"/><text class="t-m" x="52" y="114">enigma</text>
-<text class="t-b" x="106" y="114">+</text>
-<rect class="bx-info" x="118" y="90" width="76" height="38" rx="6"/><text class="t-m" x="156" y="114">k2Lm</text>
-<rect class="bx-a" x="214" y="90" width="96" height="38" rx="6"/><text class="t" x="262" y="114">slow hash</text>
-<rect class="bx-ok" x="330" y="90" width="80" height="38" rx="6"/><text class="t-m" x="370" y="114">41de…</text>
-<text class="t-s" x="52" y="150">password</text><text class="t-s" x="156" y="150">random salt</text><text class="t-s" x="262" y="150">argon2, bcrypt</text><text class="t-s" x="370" y="150">stored</text>
-<text class="t-s" x="210" y="186">Same password, different stored values.</text>
-</g>
-<path class="ln" d="M194 39h12"/><polygon class="ah" points="206,33 206,45 214,39"/>
-<path class="ln" d="M310 39h12"/><polygon class="ah" points="322,33 322,45 330,39"/>
-<path class="ln" d="M194 109h12"/><polygon class="ah" points="206,103 206,115 214,109"/>
-<path class="ln" d="M310 109h12"/><polygon class="ah" points="322,103 322,115 330,109"/>
-</svg><figcaption>Two users both choose the password enigma. Each gets a different random salt, and the password plus salt goes through a slow hashing algorithm. The stored results are completely different, so an attacker can't tell they share a password or look either one up in a precomputed table.</figcaption></figure>
-<p>You never write this maths yourself. A library such as <code>bcrypt</code> or <code>argon2</code> for Node creates the salt, stores it inside the result string, and gives you a "verify" function for logins.</p>
-
-<h4>Reading the errors you will hit</h4>
-<ul>
-<li><code>InvalidCharacterError</code> from <code>atob</code>: you passed it base64url without swapping <code>-</code> and <code>_</code> back, or you passed the whole token instead of the middle part.</li>
-<li><code>SyntaxError: Unexpected token</code> from <code>JSON.parse</code>: you decoded the wrong part, or the base64 step went wrong.</li>
-<li><code>verifyJwt</code> accepts the tampered token: you probably checked expiry or decoded the payload without comparing the signature first.</li>
-</ul>
-<div class="try"><b>Try it in your head</b>An attacker copies a valid token, decodes the payload, changes <code>"sub":"42"</code> to <code>"sub":"1"</code>, re-encodes it and sends it. What happens? The server recomputes the HMAC over the changed payload, gets a different value from the signature in the token, and rejects it. Reading the payload was easy; changing it undetected is not.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>HTTP is stateless, so after login the browser carries a badge: a session ID looked up on the server, or a self-contained JWT.</li>
-<li>A JWT is <code>header.payload.signature</code> in base64url. Anyone can read the payload: it is signed, not encrypted.</li>
-<li>Verify by recomputing HMAC-SHA256 over <code>header.payload</code> with the secret; reject mismatches, then reject expired tokens (<code>exp</code> in seconds).</li>
-<li>Keep tokens in <code>HttpOnly</code>, <code>Secure</code>, <code>SameSite</code> cookies, not <code>localStorage</code>.</li>
-<li>Store passwords as salted hashes from a slow algorithm: argon2, bcrypt or scrypt. Never plain text, MD5 or a bare SHA-256.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Can anyone read a JWT's payload? <i>Yes; it is only encoded. The signature just proves nobody changed it.</i> 2. Why does each user get a different salt? <i>So identical passwords give different hashes and cannot be cracked together.</i> 3. Which cookie flag stops page JavaScript reading the session ID? <i>HttpOnly.</i></div>
 `);
 
 explain('x5',`
-<h4>Who you are versus what you may do</h4>
-<p>Two words sound alike and get mixed up all the time, so let's pin them down:</p>
-<ul>
-<li><b>Authentication</b> answers "<i>who are you?</i>". Logging in with a password, or presenting a valid session or token, authenticates you. You did this in the previous lesson.</li>
-<li><b>Authorization</b> answers "<i>what are you allowed to do?</i>". Being logged in as Grace doesn't mean you may read Ada's invoices.</li>
-</ul>
-<p>Most apps get authentication right, because there is a login page and everyone tests it. Authorization is easy to forget, because nothing visibly breaks when it is missing. Everything works perfectly; it just works for the wrong people too. That is why <b>broken access control</b> sits at the top of the OWASP list.</p>
-<div class="analogy"><b>Think of it like</b>A hotel. The front desk checks your passport when you arrive: that is authentication. Your key card only opens your own room: that is authorization. A hotel that checks passports but gives everyone a key card that opens every room has the bug this lesson is about.</div>
+<p>Logging in proves who you are. It says nothing about what you are allowed to see. Forget that difference and anyone can read anyone's data by changing one number in a web address.</p>
 
-<h4>IDOR: changing a number in the URL</h4>
-<p>Look at the lesson's starter code. <code>getInvoice(req)</code> receives a request object with two parts: <code>req.user</code>, the logged-in user (or <code>null</code> if nobody is logged in), and <code>req.params.id</code>, the invoice number taken from the URL, as in <code>/invoices/1</code>. It finds the invoice with that id and returns it with status 200.</p>
-<p>Notice what it never asks: <i>does this invoice belong to this user?</i> So user <code>u2</code>, who owns invoice 2, can simply ask for invoice 1 and get it. This is an <b>insecure direct object reference</b>, or <b>IDOR</b>: the app uses an id straight from the request to fetch an object, with no ownership check.</p>
-<figure class="fig"><svg viewBox="0 0 420 236" role="img" aria-label="Changing the invoice id in the URL with and without an ownership check">
-<text class="t-s" x="10" y="16">u2 asks for their own invoice</text>
-<g text-anchor="middle">
-<rect class="bx" x="10" y="24" width="170" height="36" rx="6"/><text class="t-m" x="95" y="47">GET /invoices/2</text>
-<rect class="bx" x="206" y="24" width="120" height="36" rx="6"/><text class="t" x="266" y="47">owner: u2</text>
-<rect class="bx-ok" x="350" y="24" width="60" height="36" rx="6"/><text class="t-b" x="380" y="47">200</text>
-</g>
-<text class="t-s" x="10" y="92">u2 changes the id, no check</text>
-<g text-anchor="middle">
-<rect class="bx-warn" x="10" y="100" width="170" height="36" rx="6"/><text class="t-m" x="95" y="123">GET /invoices/1</text>
-<rect class="bx" x="206" y="100" width="120" height="36" rx="6"/><text class="t" x="266" y="123">owner: u1</text>
-<rect class="bx-bad" x="350" y="100" width="60" height="36" rx="6"/><text class="t-b" x="380" y="123">200</text>
-</g>
-<text class="t-s" x="10" y="168">same request, with an ownership check</text>
-<g text-anchor="middle">
-<rect class="bx-warn" x="10" y="176" width="170" height="36" rx="6"/><text class="t-m" x="95" y="199">GET /invoices/1</text>
-<rect class="bx" x="206" y="176" width="120" height="36" rx="6"/><text class="t" x="266" y="199">u1 is not u2</text>
-<rect class="bx-ok" x="350" y="176" width="60" height="36" rx="6"/><text class="t-b" x="380" y="199">403</text>
-</g>
-<path class="ln" d="M180 42h18"/><polygon class="ah" points="198,36 198,48 206,42"/><path class="ln" d="M326 42h16"/><polygon class="ah" points="342,36 342,48 350,42"/>
-<path class="ln" d="M180 118h18"/><polygon class="ah" points="198,112 198,124 206,118"/><path class="ln" d="M326 118h16"/><polygon class="ah" points="342,112 342,124 350,118"/>
-<path class="ln" d="M180 194h18"/><polygon class="ah" points="198,188 198,200 206,194"/><path class="ln" d="M326 194h16"/><polygon class="ah" points="342,188 342,200 350,194"/>
-</svg><figcaption>User u2 asks for invoice 2, which is theirs, and gets status 200. Then they change the id to 1. Without a check, the server finds invoice 1, owned by u1, and hands it over with status 200: a data leak. With an ownership check, the same request gets 403 Forbidden.</figcaption></figure>
-<p>The first task is to prove the bug. Call <code>getInvoice</code> with a fake request in which the user is <code>u2</code> and the id is <code>'1'</code>, and log the result. You'll see status 200 and amount 120, someone else's money.</p>
-<p>Note that <code>req.params.id</code> is the <b>string</b> <code>'1'</code>, because everything in a URL is text. The code uses <code>Number(req.params.id)</code> to turn it into the number 1 before comparing with the invoice ids. Keep that conversion when you edit.</p>
+${V.card(1,'Who you are vs what you may do','the hotel key card',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="Hotel: front desk checks your ID. Your key card opens room 12, not room 14">
+<rect class="bx-info" x="10" y="20" width="140" height="120" rx="10"/>${V.ic('person',46,30,64,'ic-info')}<text class="t-b" x="80" y="114" text-anchor="middle">Front desk</text><text class="t-s" x="80" y="132" text-anchor="middle">"Who are you?"</text>
+<path class="ln-a" d="M154 80H180"/><polygon class="ah-a" points="178,73 178,87 190,80"/>
+${V.ic('card',192,56,48,'ic-a')}
+<rect class="bx-ok" x="254" y="14" width="156" height="66" rx="8"/>${V.ic('door',262,20,52,'ic-ok')}<text class="t-b" x="324" y="44">Room 12</text><text class="t-s" x="324" y="66">yours: opens</text>
+<rect class="bx-bad" x="254" y="90" width="156" height="66" rx="8"/>${V.ic('door',262,96,52,'ic-bad')}<text class="t-b" x="324" y="120">Room 14</text><text class="t-s" x="324" y="142">not yours</text>
+</svg><figcaption>Authentication happens at the desk. Authorization happens at every door.</figcaption></figure>
+${V.like(`<p>In a hotel, the front desk checks your passport once: that is <b>authentication</b>. Your key card then opens room 12 but not room 14: that is <b>authorization</b>. A hotel whose cards opened every door would be a disaster, even if the desk checked passports perfectly.</p>`)}
+${V.why(`<p>Early web apps often checked "is someone logged in?" and stopped there. Broken access control is now number one on the OWASP Top 10, because that second question, "is this <b>theirs</b>?", is so easy to forget.</p>`)}
+${V.rules(V.rh('Which answer to send'),
+ V.ok('401 Unauthorized','Not logged in. (The name is old; it really means "unauthenticated".)'),V.ok('403 Forbidden','Logged in, but not allowed'),
+ V.ok('404 Not Found','It does not exist, or you choose to hide that it exists'),V.no('200 for someone else\'s data','The IDOR bug'))}
+${V.hook(`The desk asks "who are you?" Every door asks "is this yours?"`)}
+`)}
 
-<h4>The status codes you will return</h4>
-<p>An HTTP response carries a three-digit <b>status code</b> that tells the client what happened. Four matter here:</p>
-<div class="tbl-wrap"><table><tr><th>Code</th><th>Name</th><th>Use it when</th></tr>
-<tr><td>200</td><td>OK</td><td>Allowed, here is the data.</td></tr>
-<tr><td>401</td><td>Unauthorized</td><td>Nobody is logged in. Despite its name, it really means "not authenticated".</td></tr>
-<tr><td>403</td><td>Forbidden</td><td>Logged in, but not allowed to see this.</td></tr>
-<tr><td>404</td><td>Not Found</td><td>No such thing exists.</td></tr></table></div>
-<p>Some apps return 404 instead of 403 for other people's records, so an attacker can't even learn which ids exist. Both are acceptable; this lesson's tasks expect 403.</p>
+${V.card(2,'IDOR','change the number, see someone else\'s data',`
+<p><b>IDOR</b> stands for insecure direct object reference: the URL points straight at a record by its id, and the server never checks whose record it is.</p>
+${V.anat([[1,'const isOwner'],' = ',[2,'invoice.ownerId'],' === ',[3,'req.user.id'],';'],[
+ '<b>A clear name</b> for the yes/no answer.','<b>Who the record belongs to</b>, read from the database.','<b>Who is asking</b>, from the session. Never from the URL or the request body.'])}
+${V.steps([
+ ['User <b>u2</b> is logged in and opens their own invoice, number 2. The server returns it. All fine.',`<svg viewBox="0 0 420 190" role="img" aria-label="u2 gets own invoice 2">
+${V.ic('person',8,8,46,'ic-info')}<text class="t-b" x="58" y="38">u2</text>
+<rect class="bx" x="96" y="12" width="318" height="40" rx="20"/><text class="t-m" x="114" y="39" style="font-size:17px">GET /invoices/2</text>
+<rect class="bx" x="6" y="66" width="408" height="48" rx="6"/>${V.ic('server',14,72,36,'ic-info')}<text class="t-m" x="60" y="96" style="font-size:14px">find invoice 2 (owner u2)</text>
+<rect class="bx-ok" x="6" y="128" width="408" height="54" rx="6"/><text class="t-m" x="18" y="161">200 {id:2, owner:u2, £75}</text>
+</svg>`],
+ ['Curious, u2 changes the <b>2</b> in the address to <b>1</b>. Anyone can type any URL, or call the API with curl.',`<svg viewBox="0 0 420 190" role="img" aria-label="u2 changes the id to 1">
+${V.ic('person',8,8,46,'ic-info')}<text class="t-b" x="58" y="38">u2</text>
+<rect class="bx-warn" x="96" y="12" width="318" height="40" rx="20"/><text class="t-m" x="114" y="39" style="font-size:17px">GET /invoices/<tspan class="t-a" style="font-weight:700">1</tspan></text>
+<rect class="bx" x="6" y="66" width="408" height="48" rx="6"/>${V.ic('server',14,72,36,'ic-info')}<text class="t-s t-dim" x="60" y="96">waiting…</text>
+<rect class="bx" x="6" y="128" width="408" height="54" rx="6"/>
+</svg>`],
+ ['The buggy server finds invoice 1 and sends it back. It never asked whose it is. u2 now sees <b>u1\'s</b> £120 invoice.',`<svg viewBox="0 0 420 190" role="img" aria-label="Buggy server returns invoice 1 to u2">
+${V.ic('person',8,8,46,'ic-info')}<text class="t-b" x="58" y="38">u2</text>
+<rect class="bx-warn" x="96" y="12" width="318" height="40" rx="20"/><text class="t-m" x="114" y="39" style="font-size:17px">GET /invoices/<tspan class="t-a" style="font-weight:700">1</tspan></text>
+<rect class="bx" x="6" y="66" width="408" height="48" rx="6"/>${V.ic('server',14,72,36,'ic-info')}<text class="t-m" x="60" y="96" style="font-size:14px">find invoice 1 … no owner check</text>
+<rect class="bx-bad" x="6" y="128" width="408" height="54" rx="6"/><text class="t-m" x="18" y="161">200 {id:1, owner:<tspan class="t-bad" style="font-weight:700">u1</tspan>, £120}</text>
+</svg>`],
+ ['The fixed server compares the owner, <b>u1</b>, with the person asking, <b>u2</b>. They differ, so it answers <b>403 Forbidden</b>.',`<svg viewBox="0 0 420 190" role="img" aria-label="Fixed server returns 403">
+${V.ic('person',8,8,46,'ic-info')}<text class="t-b" x="58" y="38">u2</text>
+<rect class="bx-warn" x="96" y="12" width="318" height="40" rx="20"/><text class="t-m" x="114" y="39" style="font-size:17px">GET /invoices/<tspan class="t-a" style="font-weight:700">1</tspan></text>
+<rect class="bx-hl" x="6" y="66" width="408" height="48" rx="6"/>${V.ic('server',14,72,36,'ic-ok')}<text class="t-m" x="60" y="96" style="font-size:14px">owner u1 === user u2 ? no</text>
+<rect class="bx-ok" x="6" y="128" width="408" height="54" rx="6"/>${V.ic('shield',16,136,38,'ic-ok')}<text class="t-m" x="64" y="161">403 Forbidden</text>
+</svg>`],
+ ['And if nobody is logged in at all, the server stops at the first check with <b>401</b>, before it even looks up the invoice.',`<svg viewBox="0 0 420 190" role="img" aria-label="No user returns 401">
+${V.ic('person',8,8,46,'ic-bad')}<text class="t-b" x="58" y="38">?</text>
+<rect class="bx-warn" x="96" y="12" width="318" height="40" rx="20"/><text class="t-m" x="114" y="39" style="font-size:17px">GET /invoices/1</text>
+<rect class="bx-hl" x="6" y="66" width="408" height="48" rx="6"/>${V.ic('server',14,72,36,'ic-ok')}<text class="t-m" x="60" y="96" style="font-size:14px">req.user ? none</text>
+<rect class="bx-ok" x="6" y="128" width="408" height="54" rx="6"/>${V.ic('lock',16,136,38,'ic-ok')}<text class="t-m" x="64" y="161">401 Log in first</text>
+</svg>`]])}
+${V.rules(V.rh('Rules: break one and data leaks'),
+ V.ok('check on the server','On every request that touches a record'),V.no('hide the button','The UI is not security: attackers call the API directly'),
+ V.ok('req.user.id from the session','Who is asking comes from the login'),V.no('?userId=7 in the URL','The user can type any number'),
+ V.rh('Conventions'),
+ V.ok('deny by default','Return 403 unless a rule says yes'),V.ok('admins as an explicit rule','isOwner || isAdmin, written out'))}
+${V.hook(`Logged in is not allowed in. Check the owner, every time.`)}
+`)}
 
-<h4>Building the checks in the right order</h4>
-<p>The checks run as a short series of questions. Each one either stops the request with an error or lets it continue to the next:</p>
-<figure class="fig"><svg viewBox="0 0 420 270" role="img" aria-label="Authorization decision flow from 401 to 404 to 403 to 200">
-<g text-anchor="middle">
-<rect class="bx" x="70" y="8" width="200" height="34" rx="6"/><text class="t-b" x="170" y="30">Request arrives</text>
-<rect class="bx-info" x="70" y="62" width="200" height="34" rx="6"/><text class="t" x="170" y="84">Logged in?</text>
-<rect class="bx-info" x="70" y="116" width="200" height="34" rx="6"/><text class="t" x="170" y="138">Invoice exists?</text>
-<rect class="bx-info" x="70" y="170" width="200" height="34" rx="6"/><text class="t" x="170" y="192">Owner or admin?</text>
-<rect class="bx-ok" x="70" y="226" width="200" height="34" rx="6"/><text class="t-b" x="170" y="248">200, send it</text>
-<rect class="bx-bad" x="320" y="62" width="90" height="34" rx="6"/><text class="t-b" x="365" y="84">401</text>
-<rect class="bx-bad" x="320" y="116" width="90" height="34" rx="6"/><text class="t-b" x="365" y="138">404</text>
-<rect class="bx-bad" x="320" y="170" width="90" height="34" rx="6"/><text class="t-b" x="365" y="192">403</text>
-</g>
-<path class="ln" d="M170 42v12"/><polygon class="ah" points="164,54 176,54 170,62"/>
-<path class="ln" d="M170 96v12"/><polygon class="ah" points="164,108 176,108 170,116"/>
-<path class="ln" d="M170 150v12"/><polygon class="ah" points="164,162 176,162 170,170"/>
-<path class="ln-ok" d="M170 204v14"/><polygon class="ah-ok" points="164,218 176,218 170,226"/>
-<path class="ln" d="M270 79h42"/><polygon class="ah" points="312,73 312,85 320,79"/>
-<path class="ln" d="M270 133h42"/><polygon class="ah" points="312,127 312,139 320,133"/>
-<path class="ln" d="M270 187h42"/><polygon class="ah" points="312,181 312,193 320,187"/>
-<text class="t-s" x="295" y="72" text-anchor="middle">no</text><text class="t-s" x="295" y="126" text-anchor="middle">no</text><text class="t-s" x="295" y="180" text-anchor="middle">no</text>
-<text class="t-s" x="182" y="214">yes</text>
-</svg><figcaption>Check in order. No user: 401. No such invoice: 404. A user who is neither the owner nor an admin: 403. Only a request that passes every check gets 200 and the data.</figcaption></figure>
-<ol>
-<li><b>Logged in?</b> If <code>req.user</code> is <code>null</code>, return 401 straight away. This must come first, because the later checks read <code>req.user.id</code>, and reading a property of <code>null</code> crashes with a <code>TypeError</code>.</li>
-<li><b>Exists?</b> Find the invoice. If there is none, return 404.</li>
-<li><b>Allowed?</b> Work out two true-or-false values: is the invoice's <code>ownerId</code> equal to <code>req.user.id</code>, and is the user's <code>role</code> equal to <code>'admin'</code>? If neither is true, return 403.</li>
-<li>Otherwise return 200 with the invoice.</li>
-</ol>
-<p>Giving the two checks names like <code>isOwner</code> and <code>isAdmin</code> makes the rule read almost like English: "if not owner and not admin, forbidden". A <b>role</b> is simply a label on the user that grants a set of powers; checking the role is called role-based access control.</p>
+${V.card(3,'Lists and roles','filter before you send',`
+<figure class="fig"><svg viewBox="0 0 420 120" role="img" aria-label="A sieve lets only the user's own invoices through">
+<rect class="bx" x="10" y="14" width="80" height="40" rx="6"/><text class="t-m" x="50" y="40" text-anchor="middle">1 u1</text>
+<rect class="bx" x="10" y="64" width="80" height="40" rx="6"/><text class="t-m" x="50" y="90" text-anchor="middle">2 u2</text>
+<rect class="bx" x="100" y="14" width="80" height="40" rx="6"/><text class="t-m" x="140" y="40" text-anchor="middle">3 u1</text>
+<path class="ln-a" d="M196 60H230"/><polygon class="ah-a" points="228,53 228,67 240,60"/>
+<rect class="bx-a" x="244" y="30" width="60" height="60" rx="30"/>${V.ic('search',256,42,36,'ic-a')}
+<path class="ln-ok" d="M308 60H330"/><polygon class="ah-ok" points="328,53 328,67 340,60"/>
+<rect class="bx-ok" x="344" y="14" width="66" height="40" rx="6"/><text class="t-m" x="377" y="40" text-anchor="middle">1</text>
+<rect class="bx-ok" x="344" y="64" width="66" height="40" rx="6"/><text class="t-m" x="377" y="90" text-anchor="middle">3</text>
+</svg><figcaption>List endpoints leak too. Filter to the user's own rows on the server, before the response leaves.</figcaption></figure>
+${V.steps([
+ ['The buggy list returns <b>every</b> invoice to whoever asks.',`<svg viewBox="0 0 420 130" role="img" aria-label="All three invoices returned">
+<text class="t-b" x="10" y="26">Asking: u1</text>
+<rect class="bx-bad" x="10" y="44" width="126" height="64" rx="8"/><text class="t-m" x="73" y="72" text-anchor="middle">#1 u1</text><text class="t-s" x="73" y="96" text-anchor="middle">£120</text>
+<rect class="bx-bad" x="147" y="44" width="126" height="64" rx="8"/><text class="t-m" x="210" y="72" text-anchor="middle">#2 u2</text><text class="t-s" x="210" y="96" text-anchor="middle">£75</text>
+<rect class="bx-bad" x="284" y="44" width="126" height="64" rx="8"/><text class="t-m" x="347" y="72" text-anchor="middle">#3 u1</text><text class="t-s" x="347" y="96" text-anchor="middle">£300</text>
+</svg>`],
+ ['Fixed: a member gets only rows where <b>ownerId</b> is their id. u1 sees invoices 1 and 3.',`<svg viewBox="0 0 420 130" role="img" aria-label="u1 sees 1 and 3">
+<text class="t-b" x="10" y="26">Asking: u1 (member)</text>
+<rect class="bx-ok" x="10" y="44" width="126" height="64" rx="8"/><text class="t-m" x="73" y="72" text-anchor="middle">#1 u1</text><text class="t-s" x="73" y="96" text-anchor="middle">£120</text>
+<rect class="bx" x="147" y="44" width="126" height="64" rx="8"/><text class="t-m t-dim" x="210" y="72" text-anchor="middle">#2 u2</text><text class="t-s t-dim" x="210" y="96" text-anchor="middle">hidden</text>
+<rect class="bx-ok" x="284" y="44" width="126" height="64" rx="8"/><text class="t-m" x="347" y="72" text-anchor="middle">#3 u1</text><text class="t-s" x="347" y="96" text-anchor="middle">£300</text>
+</svg>`],
+ ['An <b>admin</b> role is a deliberate rule: admins see all three.',`<svg viewBox="0 0 420 130" role="img" aria-label="Admin sees all">
+<text class="t-b" x="10" y="26">Asking: boss (admin)</text>
+<rect class="bx-ok" x="10" y="44" width="126" height="64" rx="8"/><text class="t-m" x="73" y="72" text-anchor="middle">#1 u1</text><text class="t-s" x="73" y="96" text-anchor="middle">£120</text>
+<rect class="bx-ok" x="147" y="44" width="126" height="64" rx="8"/><text class="t-m" x="210" y="72" text-anchor="middle">#2 u2</text><text class="t-s" x="210" y="96" text-anchor="middle">£75</text>
+<rect class="bx-ok" x="284" y="44" width="126" height="64" rx="8"/><text class="t-m" x="347" y="72" text-anchor="middle">#3 u1</text><text class="t-s" x="347" y="96" text-anchor="middle">£300</text>
+</svg>`]])}
+${V.build(`<ol><li>First line of each handler: no <code>req.user</code>? Return 401.</li><li>Look up the record; missing? Return 404.</li><li>Work out <code>isOwner</code> and <code>isAdmin</code>.</li><li>Neither? Return 403.</li><li>For lists, <code>filter</code> by owner unless the user is an admin.</li></ol>`)}
+${V.hook(`401: who are you? 403: not yours. 404: nothing here.`)}
+`)}
 
-<h4>Lists leak too</h4>
-<p><code>listInvoices</code> has the same bug in a bigger form: it returns <i>everyone's</i> invoices. The fix is to <b>filter</b>: an admin sees all of them, everyone else sees only those whose <code>ownerId</code> matches their own id. JavaScript's array method <code>.filter()</code> keeps the items for which your test returns true. And of course, no user means 401 here as well.</p>
-<p>Real apps apply the same idea in the database query itself, with a <code>WHERE owner_id = ?</code> clause, so other people's rows are never even loaded.</p>
-<div class="mistake"><b>Common mistake</b>"The UI only shows links to your own invoices, so it's fine." Hiding a button protects nothing. Anyone can send requests directly with tools like <code>curl</code> or the browser's developer tools, using any id they like. Every permission check must run on the server, on every request.</div>
-<div class="mistake"><b>Common mistake</b>Relying on hard-to-guess ids, such as long random UUIDs, instead of checks. Random ids make guessing harder, but ids leak through shared links, logs and emails. They are a nice extra layer, never the fix. Also remember that reading is not the only action: the same ownership check belongs on update and delete endpoints.</div>
-
-<h4>Reading the results you will see</h4>
-<ul>
-<li><code>TypeError: Cannot read properties of null (reading 'id')</code>: you checked ownership before checking that a user is logged in.</li>
-<li>The owner gets 403 on their own invoice: you are probably comparing the wrong fields, or comparing a number with a string. Here both <code>ownerId</code> and <code>req.user.id</code> are strings like <code>'u1'</code>.</li>
-<li>The admin gets 403: your condition requires being the owner <i>and</i> an admin. The rule is "owner <i>or</i> admin".</li>
-</ul>
-<div class="try"><b>Try it in your head</b>A user with id <code>'u1'</code> and role <code>'member'</code> asks for invoice 2, which belongs to <code>'u2'</code>. Walk the flow: logged in, yes; exists, yes; owner, no; admin, no. Result: 403. Now an admin asks for invoice 99: logged in, yes; exists, no. Result: 404, before the role is even checked.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Authentication is who you are; authorization is what you may do. Being logged in is not permission.</li>
-<li>IDOR: the server fetches an object by the id in the request without checking it belongs to the user.</li>
-<li>Check in order: no user gives 401, missing object gives 404, not owner or admin gives 403, otherwise 200.</li>
-<li>Filter list endpoints to what the user may see; admins are the exception.</li>
-<li>All checks happen on the server for every request; hiding links in the UI is not security.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Logged in, but asking for someone else's invoice: which status? <i>403 (or 404 to hide that it exists).</i> 2. The app only shows links to your own invoices. Is that enough? <i>No; anyone can call the API with any id.</i> 3. Where should "who is asking" come from? <i>The session, never the URL.</i></div>
 `);
 
 explain('x6',`
-<h4>Why "hygiene" matters</h4>
-<p>The previous lessons covered bugs in your own code. This one covers three habits that protect everything around it: keeping <b>secrets</b> out of your code, keeping your <b>dependencies</b> (other people's code) up to date, and sending <b>security headers</b> that tell browsers to be careful. None of them is glamorous, but skipping them causes a huge share of real breaches, because bots check for exactly these mistakes automatically.</p>
-<p>In this lesson you are reviewing a small online shop in <code>~/shop</code> before launch. You'll hunt down a leaked key, move it somewhere safe and fix a vulnerable package.</p>
+<p>Some of the biggest breaches were not clever hacks. Someone pushed a password to GitHub, or forgot to update a library. This lesson is the boring, vital housekeeping that stops those.</p>
 
-<h4>What a secret is, and why it doesn't belong in code</h4>
-<p>A <b>secret</b> is any value that grants access: an API key, a database password, a token for a payment provider. The shop's <code>src/config.js</code> contains <code>stripeKey: 'sk_live_51Hx...'</code>. Stripe is a payment company, and a key starting <code>sk_live_</code> is a live <b>secret key</b>: whoever has it can act on the shop's real Stripe account, including creating refunds.</p>
-<p>Code gets copied everywhere: into Git history, onto every teammate's laptop, into CI logs, screenshots and support tickets. If the repository is ever public, even for a minute, bots that scan GitHub around the clock may find the key within minutes. So secrets must live <i>outside</i> the code and be handed to the program when it runs.</p>
+${V.card(1,'Secrets out of code','keys live in the environment',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="A house key taped to the front door versus a key kept in a locked box only the owner opens">
+<rect class="bx-bad" x="10" y="10" width="190" height="140" rx="10"/>${V.ic('door',30,24,80,'ic-bad')}${V.ic('key',112,48,40,'ic-bad')}
+<text class="t-m" x="105" y="130" text-anchor="middle" style="font-size:14px">config.js</text>
+<rect class="bx-ok" x="220" y="10" width="190" height="140" rx="10"/>${V.ic('lock',240,30,64,'ic-ok')}${V.ic('key',320,44,40,'ic-ok')}
+<text class="t-m" x="315" y="130" text-anchor="middle" style="font-size:14px">.env (ignored)</text>
+</svg><figcaption>A key in your code is a key taped to the front door. Everyone who sees the code sees the key.</figcaption></figure>
+${V.like(`<p>Taping your house key to the front door is convenient and terrible. Code gets copied into Git history, screenshots, laptops and public repos. Keep the key in a locked box (an environment variable) that only the running app opens.</p>`)}
+${V.why(`<p>Bots scan every public GitHub push for strings that look like API keys, and use them within minutes. An <b>environment variable</b> is a named value given to the program when it starts, outside the code. Locally it comes from a <code>.env</code> file that Git ignores; in production your hosting platform holds it.</p>`)}
+${V.anat([[1,'stripeKey'],': ',[2,'process.env'],'.',[3,'STRIPE_KEY'],',' ],[
+ '<b>The setting</b> your code needs.','<b>process.env</b> is Node\'s object of environment variables.','<b>The variable name.</b> By convention UPPER_SNAKE_CASE.'])}
+${V.steps([
+ ['Hunt first. <b>grep -rn</b> searches every file (<b>r</b>ecursive) and shows line <b>n</b>umbers. It finds a live key in the code.',`<svg viewBox="0 0 420 180" role="img" aria-label="grep finds sk_live in config.js">
+<rect class="bx-dark" x="6" y="8" width="408" height="84" rx="8"/>
+<text class="t-term" x="18" y="36" style="font-size:14px">$ grep -rn "sk_live" .</text>
+<text class="t-term t-warn" x="18" y="62" style="font-size:14px">./src/config.js:3:</text>
+<text class="t-term" x="18" y="82" style="font-size:14px">  stripeKey: 'sk_live_51Hx…',</text>
+<rect class="bx-bad" x="6" y="106" width="130" height="66" rx="6"/>${V.ic('file',14,114,30,'ic-bad')}<text class="t-m" x="50" y="134" style="font-size:14px">config</text><text class="t-s" x="14" y="162">key inside</text>
+<rect class="bx" x="145" y="106" width="130" height="66" rx="6"/>${V.ic('file',153,114,30,'ic-info')}<text class="t-m" x="189" y="134" style="font-size:14px">.env</text><text class="t-s t-dim" x="153" y="162">missing</text>
+<rect class="bx" x="284" y="106" width="130" height="66" rx="6"/>${V.ic('file',291,116,26,'ic-info')}<text class="t-m" x="323" y="134" style="font-size:14px">.gitignore</text><text class="t-s" x="292" y="162">node_modules</text>
+</svg>`],
+ ['Move it. The key goes into <b>.env</b>, and the code reads <b>process.env.STRIPE_KEY</b> instead.',`<svg viewBox="0 0 420 180" role="img" aria-label="Key moved to .env, code reads process.env">
+<rect class="bx-dark" x="6" y="8" width="408" height="84" rx="8"/>
+<text class="t-term" x="18" y="36" style="font-size:14px">// src/config.js</text>
+<text class="t-term t-ok" x="18" y="62" style="font-size:14px">  stripeKey: process.env.STRIPE_KEY,</text>
+<text class="t-term t-dim" x="18" y="82" style="font-size:14px">// .env: STRIPE_KEY=sk_live_51Hx…</text>
+<rect class="bx-ok" x="6" y="106" width="130" height="66" rx="6"/>${V.ic('file',14,114,30,'ic-ok')}<text class="t-m" x="50" y="134" style="font-size:14px">config</text><text class="t-s" x="14" y="162">no secret</text>
+<rect class="bx-hl" x="145" y="106" width="130" height="66" rx="6"/>${V.ic('file',153,114,30,'ic-a')}<text class="t-m" x="189" y="134" style="font-size:14px">.env</text><text class="t-s" x="153" y="162">holds the key</text>
+<rect class="bx" x="284" y="106" width="130" height="66" rx="6"/>${V.ic('file',291,116,26,'ic-info')}<text class="t-m" x="323" y="134" style="font-size:14px">.gitignore</text><text class="t-s" x="292" y="162">node_modules</text>
+</svg>`],
+ ['Lock it. Add <b>.env</b> to <b>.gitignore</b>, so Git never commits it.',`<svg viewBox="0 0 420 180" role="img" aria-label=".env added to .gitignore">
+<rect class="bx-dark" x="6" y="8" width="408" height="84" rx="8"/>
+<text class="t-term" x="18" y="36" style="font-size:14px">$ echo ".env" &gt;&gt; .gitignore</text>
+<text class="t-term" x="18" y="62" style="font-size:14px">$ cat .gitignore</text>
+<text class="t-term t-ok" x="18" y="82" style="font-size:14px">node_modules  .env</text>
+<rect class="bx-ok" x="6" y="106" width="130" height="66" rx="6"/>${V.ic('file',14,114,30,'ic-ok')}<text class="t-m" x="50" y="134" style="font-size:14px">config</text><text class="t-s" x="14" y="162">no secret</text>
+<rect class="bx-ok" x="145" y="106" width="130" height="66" rx="6"/>${V.ic('lock',153,114,30,'ic-ok')}<text class="t-m" x="189" y="134" style="font-size:14px">.env</text><text class="t-s" x="153" y="162">never pushed</text>
+<rect class="bx-hl" x="284" y="106" width="130" height="66" rx="6"/>${V.ic('file',291,116,26,'ic-a')}<text class="t-m" x="323" y="134" style="font-size:14px">.gitignore</text><text class="t-s" x="292" y="162">+ .env</text>
+</svg>`],
+ ['Already pushed? Then assume it was copied. <b>Rotate</b> it: revoke the old key at Stripe and put a new one in .env. Deleting the commit is not enough.',`<svg viewBox="0 0 420 180" role="img" aria-label="Old key revoked, new key issued">
+<rect class="bx-bad" x="6" y="8" width="196" height="84" rx="8"/>${V.ic('key',16,22,40,'ic-bad')}${V.ic('cross',60,22,40,'ic-bad')}<text class="t-b" x="16" y="82">old key: revoked</text>
+<rect class="bx-ok" x="218" y="8" width="196" height="84" rx="8"/>${V.ic('key',228,22,40,'ic-ok')}${V.ic('check',272,22,40,'ic-ok')}<text class="t-b" x="228" y="82">new key: in .env</text>
+<rect class="bx-ok" x="6" y="106" width="130" height="66" rx="6"/>${V.ic('file',14,114,30,'ic-ok')}<text class="t-m" x="50" y="134" style="font-size:14px">config</text><text class="t-s" x="14" y="162">no secret</text>
+<rect class="bx-ok" x="145" y="106" width="130" height="66" rx="6"/>${V.ic('lock',153,114,30,'ic-ok')}<text class="t-m" x="189" y="134" style="font-size:14px">.env</text><text class="t-s" x="153" y="162">new key</text>
+<rect class="bx-ok" x="284" y="106" width="130" height="66" rx="6"/>${V.ic('file',291,116,26,'ic-ok')}<text class="t-m" x="323" y="134" style="font-size:14px">.gitignore</text><text class="t-s" x="292" y="162">+ .env</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('process.env.STRIPE_KEY','Read secrets from the environment'),V.no("'sk_live_…' in code","Ends up in Git history forever"),
+ V.ok('.env in .gitignore','Before your first commit'),V.no('delete commit and move on','Rotate first; the key may already be copied'),
+ V.no('NEXT_PUBLIC_STRIPE_KEY','Public prefixes are bundled into browser code'),V.ok('.env.example','Commit the names with blank values, so teammates know what to set'))}
+${V.hook(`Hunt it, move it, ignore it, and if it ever escaped, rotate it.`)}
+`)}
 
-<h4>Step 1: find the secret with <code>grep</code></h4>
-<p><code>grep</code> searches files for text. Three options make it ideal for this hunt:</p>
-<pre class="snip">grep -rn "sk_live" .
-# -r  search recursively, through every folder inside
-# -n  show the line number of each match
-# .   start from the current folder</pre>
-<p>Each match prints as <code>file:line:text</code>, so <code>./src/config.js:3:  stripeKey: 'sk_live_...'</code> tells you exactly where to look. On a real project you would search for several patterns, such as <code>sk_live</code>, <code>password</code> and <code>secret</code>, and tools like GitHub secret scanning or gitleaks do this automatically.</p>
+${V.card(2,'Dependencies','your app is mostly other people\'s code',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A tower: your code is a small box on top of many package boxes. One package near the bottom has a bug">
+<rect class="bx-a" x="160" y="8" width="100" height="34" rx="5"/><text class="t-b" x="210" y="31" text-anchor="middle">your code</text>
+<rect class="bx" x="110" y="48" width="96" height="34" rx="5"/><text class="t-m" x="158" y="71" text-anchor="middle" style="font-size:14px">express</text>
+<rect class="bx" x="214" y="48" width="96" height="34" rx="5"/><text class="t-m" x="262" y="71" text-anchor="middle" style="font-size:14px">lodash</text>
+<rect class="bx" x="60" y="88" width="96" height="34" rx="5"/><rect class="bx" x="162" y="88" width="96" height="34" rx="5"/><rect class="bx-bad" x="264" y="88" width="96" height="34" rx="5"/>${V.ic('bug',298,90,30,'ic-bad')}
+<rect class="bx" x="10" y="128" width="96" height="34" rx="5"/><rect class="bx" x="112" y="128" width="96" height="34" rx="5"/><rect class="bx" x="214" y="128" width="96" height="34" rx="5"/><rect class="bx" x="316" y="128" width="96" height="34" rx="5"/>
+</svg><figcaption>Two packages you chose pull in dozens more. A hole in any of them is a hole in your app.</figcaption></figure>
+${V.like(`<p>A house built from parts bought from many suppliers. If one supplier recalls a faulty lock, you need to know it is in your house and swap it.</p>`)}
+${V.why(`<p>Published holes get a public ID, a <b>CVE</b>. <code>npm audit</code> compares your installed versions with a database of these advisories. Dependabot and Renovate watch for you and open pull requests with updates.</p>`)}
+${V.steps([
+ ['<b>npm audit</b> checks every installed package against known advisories. lodash 4.17.15 has published holes.',`<svg viewBox="0 0 420 150" role="img" aria-label="npm audit reports lodash vulnerability">
+<rect class="bx-dark" x="6" y="8" width="408" height="134" rx="8"/>
+<text class="t-term" x="18" y="36" style="font-size:14px">$ npm audit</text>
+<text class="t-term t-bad" x="18" y="64" style="font-size:14px">lodash  &lt;4.17.21</text>
+<text class="t-term" x="18" y="88" style="font-size:14px">Severity: high</text>
+<text class="t-term t-dim" x="18" y="112" style="font-size:14px">fix available via \`npm audit fix\`</text>
+</svg>`],
+ ['<b>npm audit fix</b> upgrades to the nearest safe version that your package.json allows.',`<svg viewBox="0 0 420 150" role="img" aria-label="npm audit fix updates lodash">
+<rect class="bx-dark" x="6" y="8" width="408" height="134" rx="8"/>
+<text class="t-term" x="18" y="36" style="font-size:14px">$ npm audit fix</text>
+<text class="t-term" x="18" y="64" style="font-size:14px">lodash 4.17.15 <tspan class="t-ok">→ 4.17.21</tspan></text>
+<text class="t-term t-dim" x="18" y="88" style="font-size:14px">changed 1 package</text>
+</svg>`],
+ ['Run the audit again to prove it. Then run your tests, because any update can change behaviour.',`<svg viewBox="0 0 420 150" role="img" aria-label="npm audit finds 0 vulnerabilities">
+<rect class="bx-dark" x="6" y="8" width="408" height="134" rx="8"/>
+<text class="t-term" x="18" y="36" style="font-size:14px">$ npm audit</text>
+<text class="t-term t-ok" x="18" y="64" style="font-size:14px">found 0 vulnerabilities</text>
+<text class="t-term t-dim" x="18" y="92" style="font-size:14px">$ npm test</text>
+</svg>`]])}
+${V.rules(V.ok('npm audit in CI','Fail the build on high-severity advisories'),V.ok('Dependabot / Renovate','Automatic update pull requests'),
+ V.no('npm audit fix --force blindly','It can jump major versions and break your app'),V.ok('commit package-lock.json','Everyone installs the exact same versions'))}
+${V.hook(`You ship what you install. Audit, fix, retest.`)}
+`)}
 
-<h4>Step 2: move it into an environment variable</h4>
-<p>An <b>environment variable</b> is a named value that the operating system hands to a program when it starts. Every program gets its own set. In Node.js you read them through <code>process.env</code>, so <code>process.env.STRIPE_KEY</code> is the value of the variable called <code>STRIPE_KEY</code>.</p>
-<p>The code now only contains the <i>name</i> of the secret, never the value:</p>
-<pre class="snip">export const config = {
-  port: 3000,
-  stripeKey: process.env.STRIPE_KEY,   // value comes from outside the code
-};</pre>
-<p>Where does the value come from? On your own machine, from a file called <code>.env</code> in the project folder, with one <code>NAME=value</code> per line. Node can load it with <code>node --env-file=.env app.js</code> (Node 20.6 and later), or with the popular <code>dotenv</code> package. In production, your hosting platform has a settings page for environment variables, and the <code>.env</code> file never leaves your laptop.</p>
-<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="Where the secret lives and how it reaches the code">
-<g text-anchor="middle">
-<rect class="bx-warn" x="10" y="14" width="130" height="40" rx="6"/><text class="t" x="75" y="39">.env (laptop)</text>
-<rect class="bx-warn" x="10" y="82" width="130" height="40" rx="6"/><text class="t" x="75" y="107">host settings</text>
-<rect class="bx-info" x="170" y="48" width="130" height="40" rx="6"/><text class="t-m" x="235" y="73">process.env</text>
-<rect class="bx" x="330" y="48" width="80" height="40" rx="6"/><text class="t" x="370" y="73">config.js</text>
-</g>
-<path class="ln" d="M140 34h14v26h8"/><polygon class="ah" points="162,54 162,66 170,60"/>
-<path class="ln" d="M140 102h14v-26h8"/><polygon class="ah" points="162,70 162,82 170,76"/>
-<path class="ln" d="M300 68h22"/><polygon class="ah" points="322,62 322,74 330,68"/>
-<line class="ln-d" x1="10" y1="146" x2="410" y2="146"/>
-<text class="t-b" x="10" y="172">What Git stores</text>
-<g text-anchor="middle">
-<rect class="bx-ok" x="10" y="182" width="190" height="38" rx="6"/><text class="t" x="105" y="206">code, .gitignore</text>
-<rect class="bx-bad" x="220" y="182" width="190" height="38" rx="6"/><text class="t" x="315" y="206">never .env</text>
-</g>
-</svg><figcaption>The secret's value lives in a .env file on your laptop, or in your host's settings in production. Either way it arrives in the running program through process.env, and config.js only refers to it by name. Git stores the code and the .gitignore file, but never the .env file.</figcaption></figure>
-<p>For the second task, edit <code>src/config.js</code> (for example with <code>nano</code>, a simple terminal text editor) and create <code>.env</code> containing the key. A quick way to create a one-line file is <code>echo "STRIPE_KEY=..." &gt; .env</code>. A single <code>&gt;</code> writes the text into the file, replacing anything already there.</p>
+${V.card(3,'Security headers','instructions stapled to every page',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="A response envelope carrying four header stamps: HSTS, CSP, frame-ancestors, nosniff">
+<rect class="bx" x="6" y="6" width="408" height="178" rx="10"/>${V.ic('mail',16,14,34,'ic-a')}<text class="t-b" x="58" y="38">HTTP response headers</text>
+<rect class="bx-info" x="16" y="52" width="388" height="28" rx="5"/><text class="t-m" x="26" y="72" style="font-size:14px">Strict-Transport-Security</text>
+<rect class="bx-info" x="16" y="84" width="388" height="28" rx="5"/><text class="t-m" x="26" y="104" style="font-size:14px">Content-Security-Policy</text>
+<rect class="bx-info" x="16" y="116" width="388" height="28" rx="5"/><text class="t-m" x="26" y="136" style="font-size:14px">frame-ancestors 'none' (in CSP)</text>
+<rect class="bx-info" x="16" y="148" width="388" height="28" rx="5"/><text class="t-m" x="26" y="168" style="font-size:14px">X-Content-Type-Options: nosniff</text>
+</svg><figcaption>Headers are short instructions your server sends with every response. The browser enforces them.</figcaption></figure>
+${V.like(`<p>Care labels sewn into clothes: "wash at 30, do not tumble dry". The garment cannot follow them itself, but whoever handles it will. Headers are care labels for your pages, and the browser follows them.</p>`)}
+${V.anat([[1,'Strict-Transport-Security'],': ',[2,'max-age=31536000'],'; ',[3,'includeSubDomains']],[
+ '<b>HSTS.</b> "Only ever talk to me over HTTPS."','<b>How long to remember</b>, in seconds. 31,536,000 is one year.','<b>Also for</b> every subdomain, like <code>shop.example.com</code>.'])}
+${V.rules(V.rh('Which header stops what'),
+ V.ok('Strict-Transport-Security','Downgrades to plain HTTP'),V.ok('Content-Security-Policy','Limits which scripts may run (XSS damage)'),
+ V.ok("frame-ancestors 'none'","Clickjacking: your page hidden in another site's frame. Older: X-Frame-Options: DENY"),V.ok('X-Content-Type-Options: nosniff','Browsers guessing a file is a script'),
+ V.no('CORS as API security','CORS only tells browsers who may read responses. curl ignores it; you still need login checks'))}
+${V.hook(`HSTS for the road, CSP for scripts, frame-ancestors for frames, nosniff for files.`)}
+`)}
 
-<h4>Step 3: make Git ignore <code>.env</code></h4>
-<p><code>.gitignore</code> lists files Git should never track. The shop's version only ignores <code>node_modules</code>. Add a line containing <code>.env</code>. Use <code>&gt;&gt;</code> this time: a double arrow <b>appends</b> to the end of the file instead of replacing it, so the existing <code>node_modules</code> line survives. Then <code>cat .gitignore</code> to check both lines are there.</p>
-<div class="tip"><b>Tip</b>Teams often commit a file called <code>.env.example</code> listing the variable names with blank or fake values. New developers copy it to <code>.env</code> and fill in their own keys, and nobody has to guess which variables the app needs.</div>
-
-<h4>If a secret was ever committed: rotate it</h4>
-<p>Moving the key out of the code fixes the future, not the past. Git keeps every old version of every file, so the key is still in the history, and if it was pushed, copies may already exist. The only real fix is to <b>rotate</b> it: go to the provider (here Stripe's dashboard), revoke the old key so it stops working, and create a new one for your <code>.env</code> and host settings. Cleaning the history with tools like <code>git filter-repo</code> comes afterwards and is optional tidying. Making the repository private or deleting the commit does not un-leak anything.</p>
-<div class="mistake"><b>Common mistake</b>Thinking "I deleted the line and pushed again, so it's gone." The old commit still contains the key, and anyone who cloned or scraped the repository has it. Assume a pushed secret is compromised and rotate it immediately.</div>
-
-<h4>Step 4: audit your dependencies</h4>
-<p>Your <code>package.json</code> lists two <b>dependencies</b>, packages your app installs from npm: <code>express</code> and <code>lodash</code>. Each of those has dependencies of its own, so a typical app really runs hundreds of packages written by strangers. This web of other people's code is your <b>software supply chain</b>, and a hole anywhere in it is a hole in your app.</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="Dependency tree with one vulnerable package flagged by the advisory database">
-<g text-anchor="middle">
-<rect class="bx" x="150" y="8" width="120" height="36" rx="6"/><text class="t-b" x="210" y="31">shop</text>
-<rect class="bx" x="20" y="80" width="150" height="36" rx="6"/><text class="t" x="95" y="103">express 4.21</text>
-<rect class="bx-bad" x="240" y="80" width="170" height="36" rx="6"/><text class="t" x="325" y="103">lodash 4.17.15</text>
-<rect class="bx" x="10" y="160" width="100" height="32" rx="6"/><text class="t-s" x="60" y="181">body-parser</text>
-<rect class="bx" x="120" y="160" width="80" height="32" rx="6"/><text class="t-s" x="160" y="181">cookie</text>
-<rect class="bx-info" x="240" y="160" width="170" height="32" rx="6"/><text class="t-s" x="325" y="181">advisory database</text>
-<text class="t-s" x="105" y="212">and many more</text>
-</g>
-<path class="ln" d="M190 44v18h-95v18"/><path class="ln" d="M230 44v18h95v18"/>
-<path class="ln" d="M95 116v22h-35v22"/><path class="ln" d="M95 116v22h65v22"/>
-<path class="ln-d" d="M325 160v-44"/>
-<text class="t-s t-bad" x="333" y="142">known hole</text>
-</svg><figcaption>The shop depends on express and lodash, and express depends on many more packages. npm audit compares every installed version against a public advisory database of known vulnerabilities, and flags lodash version 4.17.15 as having a known hole.</figcaption></figure>
-<p><code>npm audit</code> checks every installed package version against a public database of security advisories. Run it and it reports that <code>lodash</code> below version 4.17.21 has critical vulnerabilities, with links to the advisories, and says "fix available via npm audit fix". <code>npm audit fix</code> then upgrades the package to a safe version where it can do so without breaking changes. Run <code>npm audit</code> again to confirm "found 0 vulnerabilities". The task expects that order: audit, fix, audit again.</p>
-<p>On real projects, turn on <b>Dependabot</b> or <b>Renovate</b> so pull requests for security updates arrive automatically, and run your tests before merging them. Pinning an old version forever, as the shop did with <code>"lodash": "4.17.15"</code>, means never receiving fixes.</p>
-
-<h4>Step 5: security headers</h4>
-<p>Every HTTP response carries <b>headers</b>, named lines of metadata sent before the page itself. A few headers switch on protections that browsers already have built in:</p>
-<div class="tbl-wrap"><table><tr><th>Header</th><th>What it tells the browser</th></tr>
-<tr><td><code>Strict-Transport-Security</code></td><td>"Only ever talk to this site over HTTPS, for the next N seconds." Stops attackers downgrading you to plain HTTP. Often called HSTS.</td></tr>
-<tr><td><code>Content-Security-Policy</code></td><td>Which sources of scripts, styles and images are allowed. Limits the damage of XSS.</td></tr>
-<tr><td><code>X-Frame-Options: DENY</code> or CSP <code>frame-ancestors 'none'</code></td><td>"Don't let other sites show this page inside a frame." Stops <b>clickjacking</b>, where your page is hidden under a fake button on another site.</td></tr>
-<tr><td><code>X-Content-Type-Options: nosniff</code></td><td>"Trust the declared file type; don't guess." Stops an uploaded text file being run as a script.</td></tr></table></div>
-<p>In an Express app, the <code>helmet</code> package sets sensible versions of these in one line. You can see any site's headers with <code>curl -I https://example.com</code>.</p>
-<p>One header family is often misunderstood: <b>CORS</b>, cross-origin resource sharing. An <b>origin</b> is the scheme, host and port of a site, like <code>https://shop.example</code>. By default, a browser won't let JavaScript on one origin read responses from another. CORS headers on your API relax that rule for origins you list. It is a <i>browser</i> rule only: it doesn't stop <code>curl</code> or another server from calling your API. Authentication and authorization do that.</p>
-<div class="try"><b>Try it in your head</b>You run <code>echo ".env" &gt; .gitignore</code> by mistake, with a single arrow. What is in <code>.gitignore</code> now? Only <code>.env</code>: the single arrow replaced the file, so <code>node_modules</code> is no longer ignored and thousands of package files may get committed. Use <code>&gt;&gt;</code> to append.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Find hardcoded secrets with <code>grep -rn</code>, then read them from <code>process.env</code> instead of writing them in code.</li>
-<li>Keep values in an ignored <code>.env</code> locally and in your host's settings in production; add <code>.env</code> to <code>.gitignore</code> with <code>&gt;&gt;</code>.</li>
-<li>A secret that was ever committed must be rotated: revoke it and issue a new one.</li>
-<li>Run <code>npm audit</code>, fix with <code>npm audit fix</code>, and automate updates with Dependabot or Renovate.</li>
-<li>Send HSTS, CSP, frame protection and <code>nosniff</code> headers; CORS is a browser rule, not API protection.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. A live key was pushed last week. First step? <i>Rotate it: revoke and replace.</i> 2. What does <code>npm audit</code> compare? <i>Your installed versions against known advisories.</i> 3. Does CORS stop someone calling your API with curl? <i>No. Only authentication does.</i></div>
 `);
