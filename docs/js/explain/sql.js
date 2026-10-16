@@ -220,7 +220,7 @@ ${V.anat([[1,'SELECT name, price'],' ',[2,'FROM products'],'\n',[3,'WHERE price 
 <p><b>Watch the database run it.</b> You <i>write</i> SELECT first, but the database <i>runs</i> FROM first. Follow the numbered chips.</p>
 ${V.steps([
  ['<b>1. FROM products.</b> The database fetches the whole table. (Six of the eleven products are shown.)',qf(0,P6,{al:'Six products'})],
- ['<b>2. WHERE price &lt; 50.</b> Every row is tested. The keyboard (89) and the monitor (229) fail, so they drop out.',qf(1,P6,{al:'Keyboard and monitor struck out',x:[0,3],dr:[0,3],rc:{0:'bx-bad',3:'bx-bad'}})],
+ ['<b>2. WHERE</b> keeps only prices under 50. Every row is tested. The keyboard (89) and the monitor (229) fail, so they drop out.',qf(1,P6,{al:'Keyboard and monitor struck out',x:[0,3],dr:[0,3],rc:{0:'bx-bad',3:'bx-bad'}})],
  ['<b>3. SELECT name, price.</b> Only now are the columns picked. category fades. This is why a nickname made with AS cannot be used in WHERE: it does not exist yet.',qf(2,P4,{al:'Four rows left, category column faded',dc:[1]})],
  ['<b>4. ORDER BY price DESC.</b> The rows are sorted, highest price first: 45, 39, 25, 18.',qf(3,PS,{al:'Rows sorted by price descending',dc:[1],hc:[2]})],
  ['<b>5. LIMIT 3.</b> Only the first three rows are sent back. The answer: speaker, hub, mouse.',qf(4,PS,{al:'Only the first three rows kept',dc:[1],dr:[3]})+''] ])}
