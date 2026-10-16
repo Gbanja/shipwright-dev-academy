@@ -805,7 +805,7 @@ ${V.steps([
 <text class="t-term t-ok" x="32" y="84" style="font-size:14px">display: flex;</text>
 <text class="t-term" x="18" y="140" style="font-size:14px">}</text>
 <rect class="bx" x="218" y="8" width="196" height="144" rx="8"/>
-<text class="t t-info" x="230" y="50">Work</text><text class="t t-info" x="266" y="50">About</text><text class="t t-info" x="311" y="50">Contact</text>
+<text class="t t-info" x="230" y="50">Work</text><text class="t t-info" x="272" y="50">About</text><text class="t t-info" x="322" y="50">Contact</text>
 </svg>`],
  ['<b>gap: 16px</b> puts equal space between the items. A menu bar, with no margins to fiddle with.',`<svg viewBox="0 0 420 160" role="img" aria-label="Items in a row with gaps">
 <rect class="bx-dark" x="6" y="8" width="200" height="144" rx="8"/>
@@ -1150,7 +1150,7 @@ ${V.ic('check',230,40,36,'ic-ok')}<text class="t-b t-ok" x="274" y="64">1 insert
 <rect class="bx-bad" x="10" y="70" width="190" height="30" rx="5"/><text class="t" x="44" y="90">Learn JSX</text>
 <rect class="bx-bad" x="10" y="106" width="190" height="30" rx="5"/><text class="t" x="44" y="126">Learn props</text>
 <rect class="bx-bad" x="10" y="142" width="190" height="30" rx="5"/><text class="t" x="44" y="162">Learn state</text>
-${V.ic('cross',230,40,36,'ic-bad')}<text class="t-b t-bad" x="274" y="64">4 rewrites</text><text class="t-s" x="230" y="100">position 0 changed, 1 changed...</text>
+${V.ic('cross',230,40,36,'ic-bad')}<text class="t-b t-bad" x="274" y="64">4 rewrites</text><text class="t-s" x="230" y="100">every position</text><text class="t-s" x="230" y="120">looks changed</text>
 </svg>`]])}
 ${V.rules(V.rh('Rules'),
  V.ok('key={item.id}','Stable and unique among siblings'),V.no('key={Math.random()}','A new key every render: React rebuilds every row'),
@@ -1921,107 +1921,123 @@ ${V.hook(`Animate a little, chart a lot, and always respect "reduce motion".`)}
 `);
 
 explain('f9',`
-<h4>Why look beyond React?</h4>
-<p>React is the most common frontend library in job adverts, which is why most of this track uses it. But it is not the only good answer. <b>Vue</b> and <b>Svelte</b> are popular, well-supported alternatives, and you will meet them at companies, in open-source projects and in job listings, especially Vue in parts of Europe and Asia.</p>
-<p>There is a second, bigger reason to look. Seeing the same ideas in a different syntax shows you which parts are <i>React</i> and which parts are simply <i>how frontend works</i>. Components, props, state, events and lists exist in all three. Once you can spot them, a new framework is a new accent, not a new language.</p>
-<div class="tbl-wrap"><table><tr><th>Idea</th><th>React</th><th>Vue</th><th>Svelte 5</th></tr>
-<tr><td>Show a value</td><td><code>{count}</code></td><td><code>{{ count }}</code></td><td><code>{count}</code></td></tr>
-<tr><td>State</td><td><code>useState(0)</code></td><td><code>ref(0)</code></td><td><code>$state(0)</code></td></tr>
-<tr><td>Click</td><td><code>onClick={…}</code></td><td><code>@click="…"</code></td><td><code>onclick={…}</code></td></tr>
-<tr><td>List</td><td><code>items.map(…)</code></td><td><code>v-for</code></td><td><code>{#each}</code></td></tr>
-<tr><td>Full-stack framework</td><td>Next.js</td><td>Nuxt</td><td>SvelteKit</td></tr></table></div>
+<p>React is not the only way to build a web app. Vue and Svelte power big sites too. The good news: once you know components, props, state and events, they are mostly new spelling for ideas you already have.</p>
 
-<h4>A Vue app from the ground up</h4>
-<p>Open the starter code. Vue splits a component into two parts: an HTML <b>template</b> that describes what to show, and JavaScript that provides the data. Here the template is the HTML inside <code>&lt;div id="app"&gt;</code>, and the script sets things up:</p>
-<pre class="snip">const { createApp, ref } = Vue;
+${V.card(1,'Same ideas, different spelling','one counter, three frameworks',`
+<figure class="fig"><svg viewBox="0 0 420 175" role="img" aria-label="A counter in React, Vue and Svelte: each makes state, shows it and changes it on click, with different spelling">
+<rect class="bx-info" x="8" y="10" width="128" height="154" rx="8"/><text class="t-b" x="72" y="36" text-anchor="middle">React</text>
+<text class="t-m" x="72" y="74" text-anchor="middle" style="font-size:14px">useState(0)</text><text class="t-m" x="72" y="106" text-anchor="middle" style="font-size:14px">{count}</text><text class="t-m" x="72" y="138" text-anchor="middle" style="font-size:14px">onClick</text>
+<rect class="bx-ok" x="146" y="10" width="128" height="154" rx="8"/><text class="t-b" x="210" y="36" text-anchor="middle">Vue</text>
+<text class="t-m" x="210" y="74" text-anchor="middle" style="font-size:14px">ref(0)</text><text class="t-m" x="210" y="106" text-anchor="middle" style="font-size:14px">{{ count }}</text><text class="t-m" x="210" y="138" text-anchor="middle" style="font-size:14px">@click</text>
+<rect class="bx-a" x="284" y="10" width="128" height="154" rx="8"/><text class="t-b" x="348" y="36" text-anchor="middle">Svelte</text>
+<text class="t-m" x="348" y="74" text-anchor="middle" style="font-size:14px">$state(0)</text><text class="t-m" x="348" y="106" text-anchor="middle" style="font-size:14px">{count}</text><text class="t-m" x="348" y="138" text-anchor="middle" style="font-size:14px">onclick</text>
+</svg><figcaption>Each row is the same idea: make state, show it, change it on a click. Only the spelling differs.</figcaption></figure>
+${V.like(`<p>Saying hello in different languages: "Hello", "Bonjour", "Hola". The meaning is the same; you just learn the new words. Components, props, state and events are the meaning.</p>`)}
+${V.why(`<p>In 2014 Evan You, who had worked with Google's Angular, built <b>Vue</b> to be lighter and friendlier, with plain HTML templates. In 2016 Rich Harris built <b>Svelte</b> as a <b>compiler</b>: it does its work when you build the app, so less code runs in the browser.</p>`)}
+${V.rules(V.rh('How they differ'),
+ V.ok('React: JSX + virtual DOM','Re-runs components and compares the results'),V.ok('Vue: templates + reactivity','Knows exactly which parts read each value'),
+ V.ok('Svelte: a compiler','Turns components into plain JavaScript at build time'),V.ok('Next.js / Nuxt / SvelteKit','The full-stack framework for each one'),
+ V.rh('Choosing'),
+ V.ok('team, ecosystem, jobs','Pick by who maintains it and who you can hire'),V.no('newest or most GitHub stars','Hype is not a requirement'))}
+${V.hook(`New spelling, same story: state, show, change.`)}
+`)}
 
-createApp({
-  setup() {
-    const title = ref('Frameworks');   // reactive state
-    return { title };                   // expose to template
-  },
-}).mount('#app');                       // take over #app</pre>
-<ol>
-<li><code>createApp({ … })</code> creates a Vue application from a component definition.</li>
-<li><code>setup()</code> runs once when the component starts. It creates the state and returns an object of everything the template is allowed to use. Forget to return something and the template cannot see it.</li>
-<li><code>.mount('#app')</code> tells Vue to take control of the element with id <code>app</code>, read the template inside it, and keep it up to date.</li>
-</ol>
-<p>In the template, double curly braces show a value: <code>&lt;h1&gt;{{ title }}&lt;/h1&gt;</code>. That is called <b>interpolation</b>, and people often call the braces "mustaches".</p>
+${V.card(2,'Vue: templates and directives','HTML with superpowers',`
+<figure class="fig"><svg viewBox="0 0 420 165" role="img" aria-label="A reactive value count is wired to the places in the template that use it">
+<rect class="bx-warn" x="10" y="50" width="130" height="60" rx="8"/><text class="t-m" x="75" y="76" text-anchor="middle" style="font-size:14px">count</text><text class="t-m" x="75" y="98" text-anchor="middle" style="font-size:14px">= ref(0)</text>
+<path class="ln-a" d="M144 70C190 70 190 40 228 40M144 90C190 90 190 120 228 120"/>
+<rect class="bx" x="230" y="20" width="180" height="40" rx="8"/><text class="t-m" x="240" y="45" style="font-size:14px">{{ count }}</text><text class="t-s" x="340" y="45">reads it</text>
+<rect class="bx" x="230" y="100" width="180" height="40" rx="8"/><text class="t-m" x="240" y="125" style="font-size:14px">@click</text><text class="t-s" x="320" y="125">changes it</text>
+</svg><figcaption>Vue tracks which parts of the template read each reactive value. Change the value and only those parts update.</figcaption></figure>
+${V.like(`<p>A spreadsheet. Type a new number in one cell and every formula that uses that cell updates by itself. A Vue <code>ref</code> is that cell.</p>`)}
+${V.anat([[1,'&lt;button'],' ',[2,'@click'],'=',[3,'"count++"'],'&gt;Clicked ',[4,'{{ count }}'],' times&lt;/button&gt;'],[
+ '<b>A plain HTML tag.</b> Vue templates are HTML.',
+ '<b>@click.</b> Short for <code>v-on:click</code>: run this when clicked.',
+ '<b>An expression.</b> A little JavaScript, written in quotes.',
+ '<b>Double curly braces.</b> Show a value in the text. Called interpolation.'])}
+${V.steps([
+ ['count is 0. Vue renders the template and remembers that this text reads <b>count</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="count 0, button shows 0">
+<rect class="bx-warn" x="10" y="20" width="130" height="50" rx="8"/><text class="t-m" x="75" y="51" text-anchor="middle">count: 0</text>
+<rect class="bx" x="200" y="20" width="210" height="50" rx="10"/><text class="t" x="305" y="51" text-anchor="middle">Clicked 0 times</text>
+<path class="ln-d" d="M144 45H196"/>
+<text class="t-s" x="10" y="110">Vue noted: this text depends on count</text>
+</svg>`],
+ ['You click. <b>count++</b> writes to the ref. Vue notices the write straight away.',`<svg viewBox="0 0 420 170" role="img" aria-label="count++ changes count to 1">
+<rect class="bx-hl" x="10" y="20" width="130" height="50" rx="8"/><text class="t-m" x="75" y="51" text-anchor="middle">count: 1</text>
+<rect class="bx-a" x="200" y="20" width="210" height="50" rx="10"/><text class="t" x="305" y="51" text-anchor="middle">Clicked 0 times</text>
+<path class="ln-d" d="M144 45H196"/>
+<text class="t-m t-a" x="10" y="110">count++</text>
+</svg>`],
+ ['Vue updates only the text that depends on count. Nothing else is re-run.',`<svg viewBox="0 0 420 170" role="img" aria-label="Text updated to 1">
+<rect class="bx-warn" x="10" y="20" width="130" height="50" rx="8"/><text class="t-m" x="75" y="51" text-anchor="middle">count: 1</text>
+<rect class="bx-ok" x="200" y="20" width="210" height="50" rx="10"/><text class="t" x="305" y="51" text-anchor="middle">Clicked <tspan class="t-ok" style="font-weight:700">1</tspan> times</text>
+<path class="ln-a" d="M144 45H196"/>
+<text class="t-s" x="10" y="110">only this text changed</text>
+</svg>`],
+ ['<b>v-model</b> wires an input both ways. Typing changes the ref, and the ref changes everything that reads it, like the heading.',`<svg viewBox="0 0 420 170" role="img" aria-label="v-model: typing updates title and heading">
+<rect class="bx-warn" x="10" y="60" width="130" height="50" rx="8"/><text class="t-m" x="75" y="91" text-anchor="middle" style="font-size:14px">title</text>
+<rect class="bx" x="200" y="14" width="210" height="44" rx="6"/><text class="t-b" x="214" y="43" style="font-size:20px">My stack</text>
+<rect class="bx-hl" x="200" y="110" width="210" height="40" rx="6"/><text class="t" x="214" y="136">My stack|</text>
+<path class="ln-a" d="M196 128H160V100H144"/><path class="ln-a" d="M144 72H170V36H196"/>
+<text class="t-s" x="214" y="166">input v-model="title"</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('v-for="fw in frameworks" :key="fw.name"','Repeat an element; give each a key'),V.ok(':key','Short for v-bind:key: the value is JavaScript, not text'),
+ V.ok('count.value++ in script','Inside setup, a ref needs .value'),V.ok('{{ count }} in template','In the template, Vue unwraps it for you'),
+ V.no('forgetting to return it from setup','The template can only use what setup returns'))}
+${V.hook(`@ for events, : for values, v-for for lists, v-model for two-way. A ref is a spreadsheet cell.`)}
+`)}
 
-<h4>ref: a reactive box</h4>
-<p><code>ref(0)</code> creates a <b>ref</b>: a small box holding a value, which Vue watches. In JavaScript you read and change the value through <code>.value</code>, as in <code>count.value++</code>. In the template, Vue unwraps it for you, so you just write <code>count</code>.</p>
-<p>Here is the big difference from React. In React, when state changes, the whole component function runs again and React compares the old and new output. Vue instead records which components read which refs. When a ref changes, Vue knows exactly who depends on it and updates only those, and because Vue compiles your template ahead of time, it already knows which parts of the HTML can change, so the patch touches just them. This tracking is called <b>reactivity</b>, and it is finer-grained than React's approach. (Vue still uses a virtual DOM inside, as the quick reference notes, but it does far less comparing.)</p>
-<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="React re-runs the whole component function on a state change; Vue updates only the template parts that read the changed ref">
-<text class="t-b" x="105" y="20" text-anchor="middle">React</text><text class="t-b" x="315" y="20" text-anchor="middle">Vue</text>
-<path class="ln-d" d="M210 10v210"/>
-<rect class="bx-warn" x="20" y="34" width="170" height="36" rx="6"/><text class="t" x="105" y="58" text-anchor="middle">setCount(1)</text>
-<path class="ln" d="M105 70v14"/><polygon class="ah" points="99,82 111,82 105,90"/>
-<rect class="bx-a" x="20" y="92" width="170" height="60" rx="6"/><text class="t-b" x="105" y="116" text-anchor="middle">whole function</text><text class="t" x="105" y="138" text-anchor="middle">runs again</text>
-<path class="ln" d="M105 152v14"/><polygon class="ah" points="99,164 111,164 105,172"/>
-<rect class="bx-ok" x="20" y="174" width="170" height="40" rx="6"/><text class="t" x="105" y="199" text-anchor="middle">compare, patch DOM</text>
-<rect class="bx-warn" x="230" y="34" width="170" height="36" rx="6"/><text class="t" x="315" y="58" text-anchor="middle">count++</text>
-<path class="ln" d="M315 70v14"/><polygon class="ah" points="309,82 321,82 315,90"/>
-<rect class="bx" x="230" y="92" width="170" height="122" rx="6"/>
-<rect class="bx" x="244" y="104" width="142" height="28" rx="4"/><text class="t-m" x="256" y="123">h1: title</text>
-<rect class="bx-ok" x="244" y="140" width="142" height="28" rx="4"/><text class="t-m" x="256" y="159">button: count</text>
-<rect class="bx" x="244" y="176" width="142" height="28" rx="4"/><text class="t-m" x="256" y="195">ul: list</text>
-</svg><figcaption>Two ways to react to a change. In React, calling the setter runs the whole component function again, and React compares the result with the previous one before patching the DOM. In Vue, changing count updates only what reads count, here the button text; the heading and the list are not touched.</figcaption></figure>
-<p>Both approaches work well in practice. The point is to understand that "re-render everything and compare" and "track and update precisely" are two different designs for the same goal.</p>
+${V.card(3,'Svelte: the compiler','the framework disappears',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="A .svelte file goes through the compiler at build time and comes out as small plain JavaScript that updates the page directly">
+${V.ic('file',10,20,60,'ic-a')}<text class="t-m" x="40" y="104" text-anchor="middle" style="font-size:14px">.svelte</text>
+<path class="ln-a" d="M76 50H112"/><polygon class="ah-a" points="110,43 110,57 122,50"/>
+<rect class="bx-warn" x="126" y="14" width="130" height="80" rx="8"/>${V.ic('gear',170,22,42,'ic-warn')}<text class="t-b" x="191" y="84" text-anchor="middle">compiler</text>
+<path class="ln-a" d="M260 50H296"/><polygon class="ah-a" points="294,43 294,57 306,50"/>
+${V.ic('file',312,28,44,'ic-ok')}${V.ic('globe',356,30,40,'ic-info')}
+<text class="t-s" x="360" y="104" text-anchor="middle">small plain JS</text>
+<text class="t-s" x="210" y="140" text-anchor="middle">all of this happens when you build, before anyone visits</text>
+</svg><figcaption>Svelte does its work at build time. The browser receives plain JavaScript that changes exactly the right parts of the page, with no virtual DOM to compare.</figcaption></figure>
+${V.like(`<p>A translator who translates a book once, before printing, instead of standing beside every reader translating aloud. React and Vue ship a helper that works while the page runs; Svelte translates ahead of time.</p>`)}
+${V.anat(['&lt;script&gt; let count = ',[1,'$state(0)'],'; &lt;/script&gt;\n&lt;button ',[2,'onclick={() =&gt; count++}'],'&gt;\n  Clicked ',[3,'{count}'],' times\n&lt;/button&gt;'],[
+ '<b>A rune.</b> Svelte 5 marks reactive state with <code>$state</code>. The compiler sees it and wires up updates.',
+ '<b>An event attribute.</b> In Svelte 5 it is a normal attribute, onclick.',
+ '<b>Single braces</b> show a value, as in JSX.'])}
+${V.steps([
+ ['You write <b>Counter.svelte</b>: script, markup and styles in one file.',`<svg viewBox="0 0 420 165" role="img" aria-label="The source file">
+<rect class="bx-dark" x="6" y="8" width="408" height="110" rx="8"/>
+<text class="t-term" x="18" y="36" style="font-size:14px">let count = $state(0);</text>
+<text class="t-term" x="18" y="64" style="font-size:14px">&lt;button onclick={() =&gt; count++}&gt;</text>
+<text class="t-term" x="18" y="92" style="font-size:14px">  Clicked {count} times&lt;/button&gt;</text>
+<text class="t-b t-a" x="10" y="150">1. write</text>
+</svg>`],
+ ['At build time the <b>compiler</b> reads it and works out exactly what can change: only the number inside the button.',`<svg viewBox="0 0 420 165" role="img" aria-label="Compiler analyses the file">
+<rect class="bx-dark" x="6" y="8" width="408" height="110" rx="8"/>
+<text class="t-term t-dim" x="18" y="36" style="font-size:14px">let count = $state(0);</text>
+<text class="t-term t-dim" x="18" y="64" style="font-size:14px">&lt;button onclick={() =&gt; count++}&gt;</text>
+<text class="t-term t-dim" x="18" y="92" style="font-size:14px">  Clicked <tspan class="t-a" style="opacity:1">{count}</tspan> times&lt;/button&gt;</text>
+${V.ic('gear',360,60,44,'ic-warn')}
+<text class="t-b t-a" x="10" y="150">2. compile</text>
+</svg>`],
+ ['It writes plain JavaScript that, roughly, makes the button once and later sets just that text when count changes.',`<svg viewBox="0 0 420 165" role="img" aria-label="Output: plain JavaScript">
+<rect class="bx-ok" x="6" y="8" width="408" height="110" rx="8"/>
+<text class="t-m" x="18" y="36" style="font-size:14px">// roughly what comes out</text>
+<text class="t-m" x="18" y="64" style="font-size:14px">button.addEventListener('click', ...)</text>
+<text class="t-m" x="18" y="92" style="font-size:14px">text.data = count</text>
+<text class="t-b t-a" x="10" y="150">3. plain JS</text>
+</svg>`],
+ ['In the browser a click changes count, and the generated code updates that one text node directly. No framework runtime compares trees.',`<svg viewBox="0 0 420 165" role="img" aria-label="The browser updates the text directly">
+<rect class="bx-ok" x="100" y="20" width="220" height="56" rx="10"/><text class="t" x="210" y="54" text-anchor="middle">Clicked <tspan class="t-ok" style="font-weight:700">1</tspan> times</text>
+${V.ic('check',190,86,36,'ic-ok')}
+<text class="t-b t-a" x="10" y="150">4. run</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('let count = $state(0)','Svelte 5: state is marked with a rune'),V.no('plain let in Svelte 5','Without $state the compiler does not make it reactive (Svelte 4 worked differently)'),
+ V.rh('Conventions'),
+ V.ok('learn React deeply first','It has the most jobs; the concepts carry over to the others'))}
+${V.build(`<ol><li>Create a <code>count</code> ref starting at 0 in setup and return it.</li><li>Add a button that increases it with <code>@click</code> and shows it with double curly braces.</li><li>Make an array of three frameworks and return it; render it with <code>v-for</code> and a <code>:key</code>.</li><li>Add an input with <code>v-model</code> bound to the title, and watch the heading change as you type.</li></ol>`)}
+${V.hook(`React re-runs, Vue tracks, Svelte compiles. Same ideas underneath.`)}
+`)}
 
-<h4>Directives: special attributes in the template</h4>
-<p>Vue adds behaviour to HTML through <b>directives</b>, attributes that start with <code>v-</code> or a shorthand symbol. Their values are JavaScript expressions.</p>
-<p><b>Events with <code>@click</code>.</b> <code>@click</code> is short for <code>v-on:click</code>. Its value can be a small statement that runs on each click:</p>
-<pre class="snip">&lt;button @click="count++"&gt;Clicked {{ count }} times&lt;/button&gt;</pre>
-<p>For this to work, create <code>count</code> with <code>ref(0)</code> in <code>setup</code> and add it to the returned object. In the template, <code>count++</code> changes the ref's value directly, because Vue unwraps it.</p>
-<p><b>Lists with <code>v-for</code>.</b> Put it on the element you want repeated:</p>
-<pre class="snip">&lt;li v-for="fw in frameworks" :key="fw.name"&gt;{{ fw.name }}&lt;/li&gt;</pre>
-<p>Read it as "one <code>li</code> for each <code>fw</code> in <code>frameworks</code>". The array lives in <code>setup</code> and must be returned like everything else. <code>:key</code> plays exactly the role <code>key</code> played in React's lists: a stable, unique identity for each item. The colon is short for <code>v-bind:</code>, which means "this attribute's value is a JavaScript expression, not plain text". Without the colon, every item's key would be the literal string <code>fw.name</code>.</p>
-<p><b>Two-way binding with <code>v-model</code>.</b> In React, connecting an input to state takes a value prop and a change handler. Vue does both with one directive:</p>
-<pre class="snip">&lt;input v-model="title"&gt;</pre>
-<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="v-model links an input and a ref both ways, and the heading reading the ref updates too">
-<rect class="bx-info" x="20" y="60" width="120" height="44" rx="8"/><text class="t-m" x="80" y="87" text-anchor="middle">input</text>
-<rect class="bx-warn" x="230" y="60" width="170" height="44" rx="8"/><text class="t-m" x="315" y="87" text-anchor="middle">title (ref)</text>
-<path class="ln-a" d="M140 72h80"/><polygon class="ah-a" points="218,66 218,78 228,72"/>
-<path class="ln-ok" d="M230 92h-80"/><polygon class="ah-ok" points="152,86 152,98 142,92"/>
-<text class="t-s t-a" x="185" y="56" text-anchor="middle">typing</text>
-<text class="t-s t-ok" x="185" y="124" text-anchor="middle">code change</text>
-<path class="ln" d="M315 104v26"/><polygon class="ah" points="309,128 321,128 315,136"/>
-<rect class="bx-ok" x="230" y="138" width="170" height="36" rx="8"/><text class="t-m" x="315" y="161" text-anchor="middle">h1 shows title</text>
-<text class="t-s" x="80" y="30" text-anchor="middle">v-model links</text><text class="t-s" x="80" y="46" text-anchor="middle">both directions</text>
-</svg><figcaption>v-model ties an input to a ref in both directions. Typing in the box updates title, and changing title in code updates the box. Because the heading also reads title, it changes as you type.</figcaption></figure>
-<p>Typing updates <code>title</code>; changing <code>title</code> in code updates the box. Since the heading shows <code>{{ title }}</code>, it changes letter by letter as you type, which is exactly what the third task checks.</p>
-<p>There are more directives you will meet soon: <code>v-if</code> shows an element only when a condition is true, like <code>&amp;&amp;</code> in JSX, and <code>:class</code> sets classes from an expression.</p>
-<div class="mistake"><b>Common mistake</b>Creating state in <code>setup</code> but not returning it. The template then sees nothing, and Vue logs a warning that a property was accessed during render but is not defined. Every name the template uses must be in the object <code>setup</code> returns.</div>
-<div class="mistake"><b>Common mistake</b>Writing <code>key="fw.name"</code> without the colon. That passes the text "fw.name" as every item's key. Remember: colon means "evaluate this as JavaScript".</div>
-
-<h4>Svelte: the framework that compiles away</h4>
-<p>React and Vue both ship a <b>runtime</b>: library code downloaded into the user's browser that does the work of tracking changes and updating the DOM. <b>Svelte</b> takes a different route. It is a <b>compiler</b>: a tool that runs on your computer when you build the app, reads your components, and turns them into plain JavaScript that updates exactly the right DOM nodes directly. There is no virtual DOM to compare, and much less framework code reaches the browser.</p>
-<pre class="snip">&lt;script&gt;
-  let count = $state(0);     // Svelte 5 "rune": reactive state
-&lt;/script&gt;
-
-&lt;button onclick={() =&gt; count++}&gt;Clicked {count} times&lt;/button&gt;</pre>
-<p>A <code>.svelte</code> file looks like an HTML page: a script, your markup, and optionally a style block whose CSS only applies to that component. Since Svelte 5, reactive state is declared with <b>runes</b>, special compiler instructions that start with a dollar sign, such as <code>$state</code>. To the compiler, <code>count++</code> means "update the number in the button". Older Svelte code makes every top-level <code>let</code> reactive without a rune, so you will see both styles online.</p>
-<p>The trade-offs: very small, fast output and code that feels close to plain HTML, against a smaller ecosystem and job market than React's.</p>
-
-<h4>How to choose a framework</h4>
-<p>Arguments online about the "best" framework generate a lot of heat. Professionals choose with practical questions:</p>
-<ul>
-<li><b>The team.</b> What does the team already know? Retraining costs months.</li>
-<li><b>The ecosystem.</b> Are there mature libraries for what you need: forms, charts, UI kits, testing?</li>
-<li><b>Hiring.</b> Can you find developers who know it? React has the largest pool.</li>
-<li><b>The project.</b> A tiny widget on a slow phone network benefits from Svelte's small output. A huge app with many teams may benefit from React's size of ecosystem.</li>
-</ul>
-<p>Not GitHub stars, not novelty. And whichever you pick, the fundamentals you have learnt, components, one-way data flow, state, effects and accessible HTML, carry straight over.</p>
-<div class="try"><b>Try it in your head</b>In Vue, <code>setup</code> returns <code>{ title }</code> but the template uses <code>{{ count }}</code>. What happens? count is undefined in the template, so nothing shows and Vue warns about it; count must be created with ref and returned. And what is the Vue equivalent of React's <code>items.map(i =&gt; &lt;li key={i.id}&gt;…)</code>? An <code>li</code> with <code>v-for="i in items"</code> and <code>:key="i.id"</code>.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Components, props, state, events and lists exist in every framework; only the syntax differs.</li>
-<li>Vue: <code>createApp</code> with a <code>setup</code> that returns state, mounted onto an element; <code>{{ }}</code> shows values.</li>
-<li><code>ref()</code> is a reactive box; Vue updates only the template parts that read it.</li>
-<li>Directives: <code>@click</code> for events, <code>v-for</code> with <code>:key</code> for lists, <code>v-model</code> for two-way input binding.</li>
-<li>Svelte is a compiler: components become plain JavaScript with no virtual DOM shipped; Svelte 5 uses runes like <code>$state</code>.</li>
-<li>Choose by team, ecosystem, hiring and project needs, not hype.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. What is <code>@click</code> short for? <i>v-on:click.</i> 2. In Vue's setup script, how do you change a ref called count? <i>count.value++ (no .value in the template).</i> 3. Why does Svelte ship less code to the browser? <i>It is a compiler: the work happens at build time.</i></div>
 `);
