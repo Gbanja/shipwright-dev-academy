@@ -1663,100 +1663,129 @@ ${V.hook(`Browser checks are a kindness, server checks are the lock.`)}
 `);
 
 explain('f8',`
-<h4>Why write tests for a UI?</h4>
-<p>Every time you change code, something that used to work might quietly break. You could click through every page after every change to check, but that gets slow and boring, and you will skip it on a busy day. That is exactly the day something breaks.</p>
-<p>An <b>automated test</b> is a small program that checks your code for you. It does what a user would do, like clicking Increment twice, and then checks what appears, like "Count: 2". Run all your tests after each change and in seconds you know whether anything broke. Teams usually run them automatically on every change before it can be merged.</p>
-<p><b>React Testing Library</b> (RTL) is the standard tool for testing React components. Its guiding rule is worth memorising: <i>the more your tests resemble the way your software is used, the more confidence they give you.</i></p>
+<p>Every time you change code, something else might quietly break. Tests are little robots that click through your app in a second and shout when it does. React Testing Library makes those robots behave like real users.</p>
 
-<h4>The shape of a test</h4>
-<p>A test runner, such as Vitest or Jest in real projects, finds your tests, runs each one and reports which passed. In this sandbox the preview plays that role. Each test is written like this:</p>
-<pre class="snip">test('starts at zero', () =&gt; {
-  render(&lt;Counter /&gt;);                        // arrange
-  const heading = screen.getByRole('heading'); // find
-  expect(heading.textContent).toBe('Count: 0');  // assert
-});</pre>
-<p><code>test</code> takes two arguments: a <b>name</b> that describes the behaviour in plain words, and a <b>function</b> holding the steps. If every step runs without an error, the test passes. If any step throws an error, it fails, and the runner shows you which line and why.</p>
-<p>Almost every UI test follows the same three-step pattern, often called <b>Arrange, Act, Assert</b>:</p>
-<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="Arrange, Act, Assert: render the component, fire a click, expect the text">
-<g text-anchor="middle">
-<rect class="bx-info" x="10" y="20" width="120" height="66" rx="8"/><text class="t-b" x="70" y="46">1. Arrange</text><text class="t-s" x="70" y="70">render it</text>
-<rect class="bx-warn" x="150" y="20" width="120" height="66" rx="8"/><text class="t-b" x="210" y="46">2. Act</text><text class="t-s" x="210" y="70">click, type</text>
-<rect class="bx-ok" x="290" y="20" width="120" height="66" rx="8"/><text class="t-b" x="350" y="46">3. Assert</text><text class="t-s" x="350" y="70">check screen</text>
-</g>
-<path class="ln" d="M130 53h12M270 53h12"/><polygon class="ah" points="140,47 140,59 150,53"/><polygon class="ah" points="280,47 280,59 290,53"/>
-<rect class="bx-dark" x="10" y="106" width="400" height="74" rx="8"/>
-<text class="t-term" x="22" y="130">render(&lt;Counter /&gt;)</text>
-<text class="t-term" x="22" y="150">fireEvent.click(button)</text>
-<text class="t-term" x="22" y="170">expect(text).toBe('Count: 1')</text>
-</svg><figcaption>The three steps of a UI test. Arrange: render the component. Act: do what a user does, such as clicking a button. Assert: check that the screen now shows what it should.</figcaption></figure>
+${V.card(1,'Test like a user','arrange, act, assert',`
+<figure class="fig"><svg viewBox="0 0 420 175" role="img" aria-label="A test robot looks at what the user sees, a heading and buttons, and ignores the hidden internals like state variable names and class names">
+${V.ic('robot',10,40,60,'ic-a')}${V.ic('search',58,20,36,'ic-a')}
+<rect class="bx" x="104" y="14" width="160" height="146" rx="8"/>
+<text class="t-b" x="118" y="46" style="font-size:18px">Count: 0</text>
+<rect class="bx-a" x="118" y="62" width="120" height="34" rx="6"/><text class="t" x="178" y="84" text-anchor="middle">Increment</text>
+<rect class="bx" x="118" y="106" width="120" height="34" rx="6"/><text class="t" x="178" y="128" text-anchor="middle">Reset</text>
+<rect class="ln-d" x="280" y="14" width="130" height="146" rx="8"/>
+${V.ic('lock',325,22,40,'ic-p')}
+<text class="t-m t-dim" x="292" y="92" style="font-size:14px">useState</text><text class="t-m t-dim" x="292" y="116" style="font-size:14px">.btn-blue</text><text class="t-m t-dim" x="292" y="140" style="font-size:14px">count var</text>
+</svg><figcaption>The test looks at what a user can see and do: text, headings, buttons. It ignores the internals, so you can rewrite them freely and the test still passes if the app still works.</figcaption></figure>
+${V.like(`<p>A mystery shopper. They test a shop by walking in and buying something, exactly like a customer. They never open the till or read the stock database. If the shopping works, the shop works.</p>`)}
+${V.why(`<p>Older tools let tests poke at a component's insides, such as its state variables. Then a harmless rewrite broke dozens of tests even though the app worked fine. In 2018 Kent C. Dodds released React Testing Library with one rule: <i>the more your tests resemble the way your software is used, the more confidence they give you.</i></p>`)}
+${V.anat([[1,"test('likes go up when clicked', () =&gt; {"],'\n  ',[2,'render(&lt;LikeButton /&gt;);'],'\n  ',[3,"fireEvent.click(screen.getByRole('button', { name: 'Like' }));"],'\n  ',[4,"expect(screen.getByText('Likes: 1')).toBeTruthy();"],'\n});'],[
+ '<b>test.</b> A name that describes the behaviour, then the steps.',
+ '<b>Arrange.</b> Draw the component on a pretend screen.',
+ '<b>Act.</b> Find the button the way a user would, and click it.',
+ '<b>Assert.</b> Check what is now on the screen. If it is not there, the test fails.'])}
+<p><b>Watch the test run</b> against a pretend screen.</p>
+${V.steps([
+ ['<b>Arrange.</b> render draws LikeButton onto a pretend screen in memory. No browser window opens.',`<svg viewBox="0 0 420 190" role="img" aria-label="render draws the component">
+<rect class="bx-dark" x="6" y="8" width="256" height="150" rx="8"/>
+<text class="t-a" x="12" y="40" style="font-size:13px">&#9654;</text><text class="t-term" x="26" y="40" style="font-size:14px">render(&lt;LikeButton /&gt;)</text>
+<text class="t-term t-dim" x="26" y="72" style="font-size:14px">getByRole('button', ...)</text>
+<text class="t-term t-dim" x="26" y="104" style="font-size:14px">fireEvent.click(btn)</text>
+<text class="t-term t-dim" x="26" y="136" style="font-size:14px">expect('Likes: 1')</text>
+<rect class="bx" x="272" y="8" width="142" height="150" rx="8"/>
+<text class="t-b" x="286" y="46">Likes: 0</text><rect class="bx" x="286" y="64" width="100" height="34" rx="6"/><text class="t" x="336" y="86" text-anchor="middle">Like</text>
+<text class="t-b t-a" x="6" y="182">ARRANGE</text>
+</svg>`],
+ ['<b>Find.</b> getByRole looks for a button whose accessible name is "Like", the same way a screen reader would.',`<svg viewBox="0 0 420 190" role="img" aria-label="getByRole finds the Like button">
+<rect class="bx-dark" x="6" y="8" width="256" height="150" rx="8"/>
+<text class="t-term t-dim" x="26" y="40" style="font-size:14px">render(&lt;LikeButton /&gt;)</text>
+<text class="t-a" x="12" y="72" style="font-size:13px">&#9654;</text><text class="t-term" x="26" y="72" style="font-size:14px">getByRole('button', ...)</text>
+<text class="t-term t-dim" x="26" y="104" style="font-size:14px">fireEvent.click(btn)</text>
+<text class="t-term t-dim" x="26" y="136" style="font-size:14px">expect('Likes: 1')</text>
+<rect class="bx" x="272" y="8" width="142" height="150" rx="8"/>
+<text class="t-b" x="286" y="46">Likes: 0</text><rect class="bx-hl" x="286" y="64" width="100" height="34" rx="6"/><text class="t" x="336" y="86" text-anchor="middle">Like</text>
+${V.ic('search',300,108,36,'ic-a')}
+<text class="t-b t-a" x="6" y="182">ARRANGE</text>
+</svg>`],
+ ['<b>Act.</b> fireEvent.click clicks it. Its state changes and it re-renders: "Likes: 1".',`<svg viewBox="0 0 420 190" role="img" aria-label="Click: likes become 1">
+<rect class="bx-dark" x="6" y="8" width="256" height="150" rx="8"/>
+<text class="t-term t-dim" x="26" y="40" style="font-size:14px">render(&lt;LikeButton /&gt;)</text>
+<text class="t-term t-dim" x="26" y="72" style="font-size:14px">getByRole('button', ...)</text>
+<text class="t-a" x="12" y="104" style="font-size:13px">&#9654;</text><text class="t-term" x="26" y="104" style="font-size:14px">fireEvent.click(btn)</text>
+<text class="t-term t-dim" x="26" y="136" style="font-size:14px">expect('Likes: 1')</text>
+<rect class="bx" x="272" y="8" width="142" height="150" rx="8"/>
+<text class="t-b" x="286" y="46">Likes: 1</text><rect class="bx-a" x="286" y="64" width="100" height="34" rx="6"/><text class="t" x="336" y="86" text-anchor="middle">Like</text>
+<text class="t-b t-a" x="6" y="182">ACT</text>
+</svg>`],
+ ['<b>Assert.</b> expect checks the screen for "Likes: 1". It is there, so the test passes.',`<svg viewBox="0 0 420 190" role="img" aria-label="Assertion passes">
+<rect class="bx-dark" x="6" y="8" width="256" height="150" rx="8"/>
+<text class="t-term t-dim" x="26" y="40" style="font-size:14px">render(&lt;LikeButton /&gt;)</text>
+<text class="t-term t-dim" x="26" y="72" style="font-size:14px">getByRole('button', ...)</text>
+<text class="t-term t-dim" x="26" y="104" style="font-size:14px">fireEvent.click(btn)</text>
+<text class="t-a" x="12" y="136" style="font-size:13px">&#9654;</text><text class="t-term" x="26" y="136" style="font-size:14px">expect('Likes: 1')</text>
+<rect class="bx-ok" x="272" y="8" width="142" height="150" rx="8"/>
+<text class="t-b" x="286" y="46">Likes: 1</text><rect class="bx" x="286" y="64" width="100" height="34" rx="6"/><text class="t" x="336" y="86" text-anchor="middle">Like</text>
+${V.ic('check',318,108,40,'ic-ok')}
+<text class="t-b t-ok" x="6" y="182">ASSERT: PASS</text>
+</svg>`],
+ ['If the button were broken and the screen still said "Likes: 0", the test would <b>fail</b> and tell you what it expected and what it found.',`<svg viewBox="0 0 420 190" role="img" aria-label="If broken, the assertion fails">
+<rect class="bx-dark" x="6" y="8" width="256" height="150" rx="8"/>
+<text class="t-term t-bad" x="18" y="40" style="font-size:14px">&#10007; likes go up when</text><text class="t-term t-bad" x="18" y="62" style="font-size:14px">  clicked</text>
+<text class="t-term" x="18" y="98" style="font-size:14px">Unable to find an</text><text class="t-term" x="18" y="120" style="font-size:14px">element with the text:</text><text class="t-term" x="18" y="142" style="font-size:14px">Likes: 1</text>
+<rect class="bx-bad" x="272" y="8" width="142" height="150" rx="8"/>
+<text class="t-b" x="286" y="46">Likes: 0</text><rect class="bx" x="286" y="64" width="100" height="34" rx="6"/><text class="t" x="336" y="86" text-anchor="middle">Like</text>
+${V.ic('cross',318,108,40,'ic-bad')}
+<text class="t-b t-bad" x="6" y="182">ASSERT: FAIL</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('render inside each test','Every test starts with a fresh screen'),V.no('checking count === 2','State is an internal detail; check the text the user sees'),
+ V.rh('Conventions'),
+ V.ok("test('resets to zero', ...)",'Name the behaviour, not the function'),V.ok('userEvent in real projects','@testing-library/user-event acts even more like a real person than fireEvent'),
+ V.ok('jest-dom matchers','toBeInTheDocument() reads nicely in real projects'))}
+${V.hook(`Arrange, act, assert. Test what the user sees, never how it works inside.`)}
+`)}
 
-<h4>render and screen</h4>
-<p><code>render(&lt;Counter /&gt;)</code> draws the component into a pretend page. Tests usually run without a visible browser, in a simulated DOM called jsdom, but the component cannot tell the difference: it gets real DOM elements, real events and real state updates.</p>
-<p><code>screen</code> is an object representing that whole page. You use its <b>queries</b> to find elements, the way a person scanning the screen would.</p>
+${V.card(2,'Finding elements','queries, best first',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="Query priority ladder: getByRole first, then getByLabelText, then getByText, and getByTestId as a last resort">
+<rect class="bx-ok" x="10" y="10" width="400" height="36" rx="6"/><text class="t-b" x="24" y="34">1</text><text class="t-m" x="48" y="34">getByRole</text><text class="t-s" x="250" y="34">buttons, headings, links</text>
+<rect class="bx-ok" x="10" y="52" width="360" height="36" rx="6"/><text class="t-b" x="24" y="76">2</text><text class="t-m" x="48" y="76">getByLabelText</text><text class="t-s" x="250" y="76">form fields</text>
+<rect class="bx" x="10" y="94" width="320" height="36" rx="6"/><text class="t-b" x="24" y="118">3</text><text class="t-m" x="48" y="118">getByText</text><text class="t-s" x="210" y="118">plain text</text>
+<rect class="bx-warn" x="10" y="136" width="280" height="36" rx="6"/><text class="t-b" x="24" y="160">4</text><text class="t-m" x="48" y="160">getByTestId</text><text class="t-s" x="176" y="160">last resort</text>
+</svg><figcaption>Prefer the queries that match how people find things: by role and name first. A test id is invisible to users, so it is the last resort.</figcaption></figure>
+${V.like(`<p>Finding a friend in a crowd. Best: "the one in the red football shirt with number 9" (role and name). Worse: a secret sticker you put on their back (a test id). It works, but no real person would ever look for that.</p>`)}
+${V.anat([[1,'screen'],[2,'.getByRole'],'(',[3,"'button'"],', ',[4,"{ name: 'Increment' }"],')'],[
+ '<b>screen.</b> Everything currently rendered.',
+ '<b>getByRole.</b> Find exactly one element with this role, or fail.',
+ '<b>The role.</b> What the element is: button, heading, link, textbox, checkbox...',
+ '<b>The accessible name.</b> For a button, its visible text.'])}
+${V.steps([
+ ['The screen holds a heading and two buttons. <b>getByRole("button")</b> alone matches two, which is an error: getBy expects exactly one.',`<svg viewBox="0 0 420 170" role="img" aria-label="Role button matches two elements">
+<rect class="bx" x="10" y="14" width="250" height="36" rx="6"/><text class="t-s" x="22" y="37">heading</text><text class="t" x="100" y="37">Count: 0</text>
+<rect class="bx-hl" x="10" y="58" width="250" height="36" rx="6"/><text class="t-s" x="22" y="81">button</text><text class="t" x="100" y="81">Increment</text>
+<rect class="bx-hl" x="10" y="102" width="250" height="36" rx="6"/><text class="t-s" x="22" y="125">button</text><text class="t" x="100" y="125">Reset</text>
+<text class="t-m t-a" x="276" y="70" style="font-size:14px">role: button</text><text class="t-b t-bad" x="276" y="104">2 matches</text>
+</svg>`],
+ ['Add the name: <b>{ name: "Increment" }</b>. Now exactly one matches, and you get that element back.',`<svg viewBox="0 0 420 170" role="img" aria-label="Role and name match one">
+<rect class="bx" x="10" y="14" width="250" height="36" rx="6"/><text class="t-s" x="22" y="37">heading</text><text class="t" x="100" y="37">Count: 0</text>
+<rect class="bx-ok" x="10" y="58" width="250" height="36" rx="6"/><text class="t-s" x="22" y="81">button</text><text class="t-b" x="100" y="81">Increment</text>
+<rect class="bx" x="10" y="102" width="250" height="36" rx="6"/><text class="t-s t-dim" x="22" y="125">button</text><text class="t t-dim" x="100" y="125">Reset</text>
+<text class="t-m t-a" x="276" y="60" style="font-size:14px">role: button</text><text class="t-m t-a" x="276" y="82" style="font-size:14px">name: Increment</text><text class="t-b t-ok" x="276" y="114">1 match</text>
+</svg>`],
+ ['Ask for a name that does not exist, like "Add", and getByRole <b>throws</b> straight away, listing the roles it could see. If your test cannot find the button, a screen-reader user might not either.',`<svg viewBox="0 0 420 170" role="img" aria-label="No match throws an error">
+<rect class="bx" x="10" y="14" width="250" height="36" rx="6"/><text class="t-s" x="22" y="37">heading</text><text class="t" x="100" y="37">Count: 0</text>
+<rect class="bx" x="10" y="58" width="250" height="36" rx="6"/><text class="t-s" x="22" y="81">button</text><text class="t" x="100" y="81">Increment</text>
+<rect class="bx" x="10" y="102" width="250" height="36" rx="6"/><text class="t-s" x="22" y="125">button</text><text class="t" x="100" y="125">Reset</text>
+<text class="t-m t-a" x="276" y="60" style="font-size:14px">name: Add</text><text class="t-b t-bad" x="276" y="92">0 matches</text>${V.ic('cross',276,104,32,'ic-bad')}<text class="t-s t-bad" x="314" y="125">throws</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('getBy...','Exactly one, or the test fails'),V.ok('queryBy...','Returns null when missing: use it to check something is NOT there'),
+ V.ok('findBy...','Waits for something that appears later, like data after a fetch (use await)'),V.ok('getAllBy...','When you expect several'),
+ V.rh('Conventions'),
+ V.no("container.querySelector('.btn')",'Tied to class names: breaks on a harmless restyle'))}
+${V.build(`<ol><li>Copy the existing test's shape: render the Counter first.</li><li>Find the Increment button by role and name.</li><li>Click it twice with <code>fireEvent.click</code>.</li><li>Expect the heading's text to show the new count.</li><li>Write a second test that clicks Increment, then Reset, and expects zero. Run them all.</li></ol>`)}
+${V.hook(`Find it like a person would: role and name first, test id last.`)}
+`)}
 
-<h4>Finding things by role</h4>
-<p>Every element has a <b>role</b>: what kind of thing it is to assistive technology such as a screen reader. Many roles come automatically from the HTML tag:</p>
-<div class="tbl-wrap"><table><tr><th>HTML</th><th>Role</th><th>Its accessible name</th></tr>
-<tr><td><code>&lt;button&gt;Increment&lt;/button&gt;</code></td><td><code>button</code></td><td>Increment (its text)</td></tr>
-<tr><td><code>&lt;h2&gt;Count: 0&lt;/h2&gt;</code></td><td><code>heading</code></td><td>Count: 0</td></tr>
-<tr><td><code>&lt;a href="…"&gt;Home&lt;/a&gt;</code></td><td><code>link</code></td><td>Home</td></tr>
-<tr><td><code>&lt;input&gt;</code> inside a label</td><td><code>textbox</code></td><td>the label's text</td></tr></table></div>
-<p>The <b>accessible name</b> is what a screen reader would announce for that element, usually its visible text or its label. <code>screen.getByRole('button', { name: 'Increment' })</code> means "find the button that a screen reader would call Increment".</p>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="The Counter as screen readers see it: a heading and two buttons; getByRole with name Increment matches one button">
-<rect class="bx" x="10" y="10" width="230" height="190" rx="8"/>
-<text class="t-s" x="125" y="32" text-anchor="middle">what assistive tech sees</text>
-<rect class="bx-info" x="26" y="46" width="198" height="40" rx="6"/><text class="t" x="38" y="71">heading: Count: 0</text>
-<rect class="bx-ok" x="26" y="96" width="198" height="40" rx="6"/><text class="t" x="38" y="121">button: Increment</text>
-<rect class="bx" x="26" y="146" width="198" height="40" rx="6"/><text class="t" x="38" y="171">button: Reset</text>
-<rect class="bx-dark" x="262" y="80" width="148" height="74" rx="8"/>
-<text class="t-term" x="274" y="104">getByRole(</text><text class="t-term" x="274" y="124"> 'button',</text><text class="t-term" x="274" y="144"> name: …)</text>
-<path class="ln-ok" d="M262 116h-30"/><polygon class="ah-ok" points="234,110 234,122 224,116"/>
-</svg><figcaption>The Counter as a screen reader sees it: a heading called Count 0 and two buttons called Increment and Reset. A query for the button role alone would match two elements. Adding the name Increment narrows it to exactly one.</figcaption></figure>
-<p>Why prefer roles over CSS classes or ids? Three reasons:</p>
-<ul>
-<li><b>It tests what users experience.</b> Users never see your class names. They see a button labelled Increment.</li>
-<li><b>It survives refactoring.</b> Rename a class or restructure the markup and the test still passes, as long as the user sees the same thing.</li>
-<li><b>It checks accessibility for free.</b> If <code>getByRole</code> cannot find your button, a screen-reader user probably cannot either. An icon button with no text and no label fails the query, which tells you to fix it.</li>
-</ul>
-<p>When roles do not fit, fall back in this order: <code>getByLabelText</code> for form fields, <code>getByText</code> for plain text such as <code>screen.getByText('Count: 0')</code>, and <code>getByTestId</code> only as a last resort.</p>
-
-<h4>Acting and asserting</h4>
-<p><code>fireEvent.click(element)</code> sends a click event to the element, exactly as a real click would, so its <code>onClick</code> runs, state changes and React re-renders. In real projects many teams use the companion library <code>@testing-library/user-event</code>, which simulates whole interactions more realistically (a click includes the mouse moving, pressing and releasing). <code>fireEvent</code> is what this sandbox provides, and it is fine for clicks.</p>
-<p>Then <code>expect(value)</code> wraps the actual value, and a <b>matcher</b> compares it with what you expected:</p>
-<ul>
-<li><code>.toBe('Count: 2')</code> passes only if the value is exactly that.</li>
-<li><code>.toBeTruthy()</code> passes if the value counts as true, for example an element that was found.</li>
-</ul>
-<p>Re-query after acting. Find the heading again, or read its <code>textContent</code> after the clicks, so you see the updated text.</p>
-
-<h4>Each test starts fresh</h4>
-<p>Every test should <code>render</code> its own component. Between tests the library removes what was rendered, so state never leaks from one test into the next. That is why the Reset test must click Increment itself first: it starts from a brand-new Counter at zero, not from wherever the previous test left off. Tests that depend on each other break in confusing ways when run in a different order.</p>
-<p>For the tasks:</p>
-<ol>
-<li>An "increments" test: render, find the Increment button by role and name, click it twice, then expect the heading text to be "Count: 2". Put the word increment in the test name, since the checker looks for it.</li>
-<li>A "resets" test: render, click Increment, click Reset, expect "Count: 0".</li>
-<li>Keep the starting test, so three tests pass.</li>
-</ol>
-<div class="mistake"><b>Common mistake</b><code>screen.getByRole('button')</code> with no name on a component with two buttons. <code>getBy</code> queries demand exactly one match, so this fails with "Found multiple elements with the role button". Add <code>{ name: 'Increment' }</code> to say which one.</div>
-<div class="mistake"><b>Common mistake</b>Testing implementation details: reaching for the <code>count</code> state variable, or a class name. A test like that breaks when you refactor, even though users notice nothing. Test what is on the screen.</div>
-
-<h4>Reading a failing test</h4>
-<ul>
-<li><b>"Unable to find an accessible element with the role button and name Incremnt"</b>: nothing matched. Check the spelling of the name, which must match the visible text. The error also prints the roles it did find, which is a great clue.</li>
-<li><b>"Expected: Count: 2, Received: Count: 1"</b>: the code ran but the screen showed something else. Did you click twice? Did you query the right element?</li>
-<li><b>"render is not defined"</b>: a missing import. Here <code>render</code>, <code>screen</code> and <code>fireEvent</code> are provided; in a real project you import them from <code>@testing-library/react</code>.</li>
-</ul>
-<p>The other query families are worth knowing: <code>queryBy…</code> returns <code>null</code> instead of throwing when nothing matches, which is how you check that something is <i>not</i> there, and <code>findBy…</code> returns a promise that waits for an element to appear, for content that loads later.</p>
-<div class="try"><b>Try it in your head</b>A test renders Counter, clicks Increment three times and then Reset once. What should the heading say? Count: 0. And why would <code>screen.getByText('Count: 3')</code> fail at that point? Because no element shows that text any more, and getBy queries throw when they find nothing.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>A UI test renders a component, acts like a user and asserts on what appears: arrange, act, assert.</li>
-<li>Find elements with <code>screen.getByRole</code> and an accessible name first; fall back to label, text, and test ids last.</li>
-<li><code>fireEvent.click</code> triggers real handlers; <code>expect(…).toBe(…)</code> checks the result.</li>
-<li>Each test renders its own fresh component, so tests never depend on each other.</li>
-<li>Test behaviour users can see, not internal state or class names; a role query that fails often points to an accessibility problem.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Which query for a Save button? <i>getByRole('button', { name: 'Save' }).</i> 2. You want to check an error message is NOT shown. getBy or queryBy? <i>queryBy: it returns null instead of throwing.</i> 3. You rename a state variable and nothing else. Should a good RTL test break? <i>No: the user sees no difference.</i></div>
 `);
 
 explain('f7',`
