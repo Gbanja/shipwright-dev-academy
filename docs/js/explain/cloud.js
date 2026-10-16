@@ -108,7 +108,7 @@ ${V.card(1,'EC2','an always-on shop',`
 <figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A shop open 24 hours with lights on and a meter running, even with no customers">
 <polygon class="bx-a" points="40,46 150,8 260,46"/><rect class="bx" x="40" y="46" width="220" height="116"/>
 <rect class="bx-ok" x="60" y="60" width="96" height="34" rx="6"/><text class="t-b t-ok" x="108" y="83" text-anchor="middle">OPEN</text>
-${V.ic('door',176,60,60,'ic-a')}${V.ic('server',72,104,48,'ic-info')}<text class="t-m" x="150" y="152" text-anchor="middle" style="font-size:14px">t3.micro</text>
+${V.ic('door',176,60,60,'ic-a')}${V.ic('server',56,104,48,'ic-info')}<text class="t-m" x="160" y="140" text-anchor="middle" style="font-size:14px">t3.micro</text>
 ${V.ic('clock',290,14,54,'ic-a')}<text class="t-b" x="317" y="92" text-anchor="middle">24/7</text>
 <rect class="bx-bad" x="282" y="108" width="132" height="54" rx="8"/><text class="t-m t-bad" x="348" y="132" text-anchor="middle" style="font-size:14px">meter on</text><text class="t" x="348" y="152" text-anchor="middle" style="font-size:14px">even if empty</text>
 </svg><figcaption>An EC2 instance is a virtual server you rent. It runs, and costs money, every second until you stop it, whether anyone visits or not.</figcaption></figure>
@@ -122,8 +122,8 @@ ${V.anat([[1,'aws ec2 run-instances'],' ',[2,'--image-id ami-0abc...'],' ',[3,'-
 ${V.steps([
  ['You launch it. AWS prepares the machine: the state is <b>pending</b>.',lifeF(0,'aws ec2 run-instances ...','on','Pending')],
  ['A few seconds later it is <b>running</b>. <code>describe-instances</code> shows it, with its ID and IP address.',lifeF(1,'aws ec2 describe-instances','on','Running')],
- ['If you <b>stop</b> it, the computer switches off but its disk is kept, and the disk still costs a little.',lifeF(2,'aws ec2 stop-instances --instance-ids i-05a8...','disk','Stopped')],
- ['<b>Terminate</b> deletes it for good, disk included. Billing ends.',lifeF(3,'aws ec2 terminate-instances --instance-ids i-05a8...','none','Terminated')]])}
+ ['If you <b>stop</b> it, the computer switches off but its disk is kept, and the disk still costs a little.',lifeF(2,'aws ec2 stop-instances ...','disk','Stopped')],
+ ['<b>Terminate</b> deletes it for good, disk included. Billing ends.',lifeF(3,'aws ec2 terminate-instances ...','none','Terminated')]])}
 ${V.rules(V.rh('Rules'),V.ok('create-key-pair first','run-instances fails if the key name does not exist'),V.no('stopped = free','A stopped instance still bills for its disk'),
  V.rh('Conventions'),V.ok('t3.micro','Start small: you can resize later'),V.ok('terminate when done','Forgotten servers are the classic surprise bill'))}
 ${V.hook(`EC2 is a shop: open all day, rent all day. Terminate what you don't use.`)}
@@ -151,7 +151,7 @@ ${V.steps([
  ['Quiet time. No copies of your function exist, and you pay nothing.',lamF(0,'nobody','$ (no requests)','Nothing running')],
  ['An event arrives: <code>{"name":"Ada"}</code>. Lambda starts a copy and calls your handler. The first start takes a little longer; this is called a <b>cold start</b>.',lamF(1,'1 request','event: {"name":"Ada"}','One copy runs')],
  ['The handler returns. The answer goes back.',lamF(1,'1 request','{"message":"Hello, Ada!"}','The function returns')],
- ['Sale day: thousands of requests arrive at once. Lambda simply runs many copies side by side.',lamF(10,'5,000 req/min','scaling out automatically...','Many copies run')],
+ ['Sale day: thousands of requests arrive at once. Lambda simply runs many copies side by side.',lamF(10,'5,000/min','scaling out automatically...','Many copies run')],
  ['Traffic drops and the copies are cleared away. You paid only for the work done.',lamF(0,'nobody','billed: requests + run time only','Back to zero')]])}
 ${V.rules(V.rh('Rules'),V.ok('--handler index.handler','Must match the file name and the exported name'),V.no('a 2-hour job','Each run is limited to 15 minutes'),
  V.ok('zip function.zip index.js','Code is uploaded as a zip'),V.ok('--cli-binary-format raw-in-base64-out','AWS CLI v2 needs this to send plain JSON with invoke'))}
@@ -171,6 +171,86 @@ ${V.hook(`Always-on shop: pay rent. Pop-up stall: pay per customer.`)}
 `)}
 
 <div class="try"><b>Try it in your head</b>1. An API gets 10 requests a minute, and 5,000 during a monthly sale. EC2 or Lambda? <i>Lambda.</i> 2. You stopped an instance. Are you paying anything? <i>Yes, for its disk. Terminate to stop paying.</i> 3. What does <code>--handler index.handler</code> point at? <i>The handler export in index.js.</i></div>
+`);
+
+const bucketSvg=(x,items,lock)=>`<path class="${lock?'bx-info':'bx'}" d="M${x} 76H${x+170}L${x+152} 190H${x+18}Z"/><ellipse class="${lock?'bx-info':'bx'}" cx="${x+85}" cy="76" rx="85" ry="12"/>${items.map((n,i)=>V.ic('file',x+28+i*60,104,44,'ic-ok')+`<text class="t-m" x="${x+50+i*60}" y="174" text-anchor="middle" style="font-size:14px">${n}</text>`).join('')}${lock?V.ic('lock',x+140,50,30,'ic-info'):''}`;
+const s3F=(lines,items,right,label)=>`<svg viewBox="0 0 420 200" role="img" aria-label="${label}">
+<rect class="bx-dark" x="8" y="4" width="404" height="${lines.length*22+12}" rx="8"/>${lines.map((l,i)=>`<text class="t-term" x="18" y="${24+i*22}" style="font-size:14px">${l}</text>`).join('')}
+${bucketSvg(8,items,false)}
+${right.map(([t,c],i)=>`<text class="t-m ${c||''}" x="200" y="${104+i*26}" style="font-size:14px">${t}</text>`).join('')}
+</svg>`;
+const preF=(cmd,link,who,code,banner,label)=>`<svg viewBox="0 0 420 200" role="img" aria-label="${label}">
+<rect class="bx-dark" x="8" y="4" width="404" height="34" rx="8"/><text class="t-term" x="18" y="27" style="font-size:14px">$ ${cmd}</text>
+${V.ic('person',8,56,56,who?'ic-p':'ic-info')}<text class="t" x="36" y="132" text-anchor="middle" style="font-size:14px">${who||'stranger'}</text>
+<rect class="${link?'bx-warn':'bx'}" x="80" y="60" width="210" height="60" rx="8"/>${link?`<text class="t-m" x="92" y="84" style="font-size:14px">logo.png?X-Amz-</text><text class="t-m" x="92" y="108" style="font-size:14px">Signature=9f3c...</text>`:'<text class="t t-dim" x="185" y="96" text-anchor="middle" style="font-size:14px">no link</text>'}
+${V.ic('folder',318,50,64,'ic-info')}${V.ic('lock',362,94,28,'ic-info')}<text class="t" x="350" y="136" text-anchor="middle" style="font-size:14px">private bucket</text>
+<rect class="${code===200?'bx-ok':code?'bx-bad':'bx-info'}" x="8" y="150" width="404" height="42" rx="8"/><text class="t-b ${code===200?'t-ok':code?'t-bad':'t-info'}" x="20" y="177">${banner}</text>
+</svg>`;
+
+explain('c3',`
+<p>Apps are full of files: profile pictures, uploads, backups. They also need a database that never loses data. The cloud gives you both without you looking after a single disk.</p>
+
+${V.card(1,'S3 buckets','unlimited storage for files',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="A bucket named you-portfolio-assets-2026 holding objects logo.png and index.html, each found by its key">
+<text class="t-m" x="93" y="34" text-anchor="middle" style="font-size:14px">s3://you-portfolio-</text><text class="t-m" x="93" y="54" text-anchor="middle" style="font-size:14px">assets-2026</text>
+${bucketSvg(8,['logo','index'],false)}
+<text class="t-b" x="210" y="96">object = file + key</text>
+<text class="t-m" x="210" y="126" style="font-size:14px">key: logo.png</text>
+<text class="t-m" x="210" y="152" style="font-size:14px">key: index.html</text>
+<text class="t" x="210" y="184" style="font-size:14px">private by default</text>
+</svg><figcaption>S3 (Simple Storage Service) keeps files, called objects, in containers called buckets. Each object is found by its key, its name inside the bucket.</figcaption></figure>
+${V.like(`<p>A cloakroom with an endless rail. You hand over your coat (the file) and get a ticket with its name (the key). Show the ticket and you get exactly that coat back, years later.</p>`)}
+${V.why(`<p>Storing files on your own server means the disk fills up, breaks or is lost with the server. S3, launched in 2006, stores each file on several devices in several data centres, so losing one is almost impossible. It is designed for 99.999999999% durability ("eleven nines").</p>`)}
+${V.anat([[1,'aws s3 cp'],' ',[2,'logo.png'],' ',[3,'s3://'],[4,'you-portfolio-assets-2026'],[5,'/']],[
+ '<b>Copy.</b> Works like the Linux <code>cp</code>, but one side can be S3.',
+ '<b>Source.</b> The file on your computer.',
+ '<b>S3 address.</b> Means "inside S3".',
+ '<b>Bucket name.</b>',
+ '<b>Key prefix.</b> A trailing slash keeps the same file name: the key becomes <code>logo.png</code>.'])}
+${V.steps([
+ ['<code>mb</code> (make bucket) creates an empty bucket.',s3F(['$ aws s3 mb s3://you-portfolio-assets-2026'],[],[['make_bucket:','t-ok'],['you-portfolio-'],['assets-2026']],'Bucket created')],
+ ['<code>cp</code> uploads the file. It becomes an object with the key logo.png.',s3F(['$ aws s3 cp logo.png','    s3://you-portfolio-assets-2026/'],['logo'],[['upload:','t-ok'],['logo.png']],'File uploaded')],
+ ['<code>ls</code> lists what is inside, with sizes and dates.',s3F(['$ aws s3 ls s3://you-portfolio-assets-2026'],['logo'],[['2026-10-15'],['logo.png','t-ok']],'Bucket listed')]])}
+${V.rules(V.rh('Bucket name rules'),V.ok('you-portfolio-assets-2026','Lowercase letters, numbers and hyphens, 3 to 63 characters'),
+ V.no('Photos_2026','No capitals, no underscores'),V.no('s3://photos','Names are global across every AWS account: "photos" was taken long ago'),
+ V.rh('Convention'),V.ok('project-purpose-year','Prefix with your project or organisation so the name is unique'))}
+${V.hook(`Bucket is the rail, key is the ticket, object is the coat.`)}
+`)}
+
+${V.card(2,'Presigned URLs','a ticket that expires',`
+${V.like(`<p>A cinema ticket. It gets one person into one film, and after the showing it is worthless. Nobody needs a key to the whole cinema.</p>`)}
+${V.why(`<p>Thousands of data leaks came from buckets made public by mistake. Since 2023, new buckets block public access by default. When someone needs one file, you give them a temporary signed link instead.</p>`)}
+${V.steps([
+ ['A stranger tries to download the logo directly. The bucket is private, so S3 says <b>403 Access Denied</b>.',preF('curl https://...s3.amazonaws.com/logo.png','','',403,'403 Access Denied','Private bucket refuses')],
+ ['You create a <b>presigned URL</b>: a link with a secret signature and an expiry time baked in.',preF('aws s3 presign ... --expires-in 600',1,'you',0,'Link valid for 600 seconds','A signed link is created')],
+ ['You send the link to a friend. S3 checks the signature and the time, then hands over the file.',preF('curl "https://...logo.png?X-Amz-..."',1,'friend',200,'200 OK: here is logo.png','The friend downloads it')],
+ ['Eleven minutes later the same link fails. Nothing to clean up.',preF('curl "https://...logo.png?X-Amz-..."',1,'friend',403,'403: Request has expired','The link has expired')]])}
+${V.rules(V.ok('--expires-in 600','Seconds: 600 is 10 minutes'),V.no('making the bucket public','Anyone could list and download everything'))}
+${V.hook(`Private bucket, temporary ticket.`)}
+`)}
+
+${V.card(3,'Managed databases','a database with a caretaker',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="An RDS Postgres database inside a private network, with AWS doing backups, updates and failover">
+<rect class="ln-d" x="6" y="6" width="210" height="158" rx="10"/><text class="t-s" x="18" y="28" style="font-size:14px">private network</text>
+${V.ic('db',60,40,80,'ic-info')}<text class="t-b" x="100" y="146" text-anchor="middle">Postgres</text>
+${V.ic('robot',236,10,50,'ic-ok')}<text class="t-b t-ok" x="296" y="42">AWS does:</text>
+<text class="t" x="240" y="86" style="font-size:14px">nightly backups</text>
+<text class="t" x="240" y="112" style="font-size:14px">security updates</text>
+<text class="t" x="240" y="138" style="font-size:14px">swap to a spare if</text><text class="t" x="240" y="158" style="font-size:14px">a machine dies</text>
+</svg><figcaption>RDS (Relational Database Service) runs Postgres or MySQL for you. You use the database; AWS does the chores.</figcaption></figure>
+${V.like(`<p>Renting a flat with a caretaker instead of owning a house. You live there; someone else fixes the boiler and checks the smoke alarms.</p>`)}
+${V.anat([[1,'aws rds create-db-instance'],' ',[2,'--engine postgres'],' ',[3,'--db-instance-class db.t3.micro'],' ',[4,'--manage-master-user-password']],[
+ '<b>Create.</b> Start a new managed database. Give it a name with <code>--db-instance-identifier</code>.',
+ '<b>Engine.</b> Which database software.',
+ '<b>Size.</b> Database sizes start with <code>db.</code>',
+ '<b>Password.</b> AWS creates the admin password and keeps it in Secrets Manager, so it is never typed or committed.'])}
+${V.rules(V.rh('Rules'),V.ok('private network only','Only your app servers can reach it'),V.no('port 5432 open to the internet','Bots will start guessing passwords at once'),
+ V.rh('Which store?'),V.ok('S3','Files: uploads, images, backups'),V.ok('EBS','The disk attached to one EC2 server'),V.ok('RDS','Tables of data your app queries'))}
+${V.build(`<ol><li><code>aws s3 mb</code> with a unique name.</li><li><code>aws s3 cp</code> the logo, then <code>aws s3 ls</code>.</li><li><code>aws s3 presign</code> with <code>--expires-in 600</code>.</li><li><code>aws rds create-db-instance</code> with postgres, db.t3.micro, 20 GB and a managed password.</li><li><code>aws rds describe-db-instances</code> until it says available.</li></ol>`)}
+${V.hook(`Files in buckets, rows in RDS, and neither on the open internet.`)}
+`)}
+
+<div class="try"><b>Try it in your head</b>1. Why can <code>aws s3 mb s3://photos</code> fail on a brand-new account? <i>Bucket names are global, and it is taken.</i> 2. How long is <code>--expires-in 600</code>? <i>10 minutes.</i> 3. Where should the production database live? <i>In a private network, reachable only by your app.</i></div>
 `);
 
 }

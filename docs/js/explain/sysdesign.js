@@ -120,82 +120,75 @@ ${V.hook(`Memory is a whisper, disk is a walk, the network is a flight.`)}
 `);
 
 explain('k2',`
-<h4>Launch day: when one server is not enough</h4>
-<p>Your app gets featured, and traffic jumps to <b>1,500 requests per second</b>. "Requests per second", often written rps, is the standard way to measure load: how many questions arrive at your servers every second. In this lesson's simulator, one app server can handle about <b>400</b>. You do not need a calculator to see the problem: the server receives almost four times what it can process.</p>
-<p>What happens then is not a gentle slowdown. Requests pile up waiting, each one waits longer than the last, and soon clients give up with timeouts. Users see errors. This lesson is about the two ways to add capacity, why one of them wins at scale, and how to work out exactly how many servers you need.</p>
+<p>Your app is featured on the news and traffic jumps from a trickle to 1,500 requests a second. One server can handle about 400. This lesson is how real sites survive that moment.</p>
 
-<h4>Vertical scaling: a bigger machine</h4>
-<p><b>Vertical scaling</b>, also called scaling up, means replacing your server with a more powerful one: more CPU cores, more memory. It is attractive because nothing else changes. Your code, your deployment and your database connection stay exactly the same.</p>
-<p>It has two hard limits. First, there is a ceiling: the biggest machine you can rent is only so big, and the largest sizes cost far more per unit of power. Second, it is still <b>one machine</b>. If it crashes, or you need to restart it to install an update, the whole site is down.</p>
+${V.card(1,'Vertical or horizontal','a bigger oven or more chefs',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Vertical scaling: one huge server. Horizontal scaling: five smaller servers">
+<rect class="bx" x="8" y="8" width="196" height="186" rx="10"/><text class="t-b" x="106" y="32" text-anchor="middle">Vertical: bigger</text>
+${V.ic('server',56,46,100,'ic-warn')}<text class="t" x="106" y="168" text-anchor="middle">1 huge machine</text><text class="t-s" x="106" y="186" text-anchor="middle">has a size limit, can still die</text>
+<rect class="bx" x="216" y="8" width="196" height="186" rx="10"/><text class="t-b" x="314" y="32" text-anchor="middle">Horizontal: more</text>
+${V.ic('server',234,48,46,'ic-ok')}${V.ic('server',290,48,46,'ic-ok')}${V.ic('server',346,48,46,'ic-ok')}${V.ic('server',262,100,46,'ic-ok')}${V.ic('server',318,100,46,'ic-ok')}
+<text class="t" x="314" y="168" text-anchor="middle">many small machines</text><text class="t-s" x="314" y="186" text-anchor="middle">add more, survive a failure</text>
+</svg><figcaption>Vertical scaling buys a bigger machine. Horizontal scaling adds more machines that share the work.</figcaption></figure>
+${V.like(`<p>A busy café. You could buy one enormous oven (vertical), but there is a biggest oven money can buy, and if it breaks nobody eats. Or you hire more chefs with normal ovens (horizontal): add chefs as you get busier, and if one is ill the others keep cooking.</p>`)}
+${V.why(`<p>A <b>single point of failure</b> is one part whose failure stops everything. One server, however big, is exactly that. Horizontal scaling removes it, but now something has to decide which server gets each request. That is the load balancer.</p>`)}
+${V.hook(`Bigger has a ceiling. More has a spare.`)}
+`)}
 
-<h4>Horizontal scaling: more machines</h4>
-<p><b>Horizontal scaling</b>, or scaling out, means running several ordinary servers side by side, each a copy of your app. Need more capacity? Add another copy. One crashes? The others carry on.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Vertical scaling makes one server bigger; horizontal scaling adds more servers of the same size">
-<text class="t-b" x="100" y="22" text-anchor="middle">vertical</text><text class="t-b" x="310" y="22" text-anchor="middle">horizontal</text>
-<rect class="bx" x="30" y="130" width="40" height="44" rx="4"/><text class="t-s" x="50" y="157" text-anchor="middle">app</text>
-<path class="ln" d="M76 152h18"/><polygon class="ah" points="92,146 92,158 100,152"/>
-<rect class="bx-a" x="106" y="60" width="76" height="114" rx="6"/><text class="t-b" x="144" y="114" text-anchor="middle">BIG</text><text class="t-s" x="144" y="134" text-anchor="middle">app</text>
-<text class="t-s t-bad" x="106" y="194" text-anchor="middle">still one machine</text>
-<line class="ln-d" x1="210" y1="10" x2="210" y2="195"/>
-<rect class="bx-ok" x="232" y="130" width="40" height="44" rx="4"/><rect class="bx-ok" x="282" y="130" width="40" height="44" rx="4"/><rect class="bx-ok" x="332" y="130" width="40" height="44" rx="4"/><rect class="bx-ok" x="382" y="130" width="30" height="44" rx="4"/>
-<g text-anchor="middle"><text class="t-s" x="252" y="157">app</text><text class="t-s" x="302" y="157">app</text><text class="t-s" x="352" y="157">app</text><text class="t-s" x="397" y="157">+</text></g>
-<rect class="bx-info" x="262" y="56" width="96" height="40" rx="8"/><text class="t" x="310" y="81" text-anchor="middle">balancer</text>
-<path class="ln" d="M290 96L256 126"/><path class="ln" d="M310 96v30"/><path class="ln" d="M330 96L350 126"/>
-<text class="t-s t-ok" x="320" y="194" text-anchor="middle">add more as needed</text>
-</svg><figcaption>Left: vertical scaling swaps a small server for a big one, but it is still a single machine that can fail. Right: horizontal scaling keeps servers the same size and adds more of them behind a load balancer, which shares the traffic between them.</figcaption></figure>
-<div class="analogy"><b>Think of it like</b>A busy shop. Vertical scaling is training your one shop assistant to work twice as fast; there is a limit, and if they are ill, the shop shuts. Horizontal scaling is hiring more assistants, with someone at the door sending each customer to whoever is free.</div>
+${V.card(2,'Load balancers','the host who seats the guests',`
+${V.like(`<p>The host at a restaurant door. Guests never pick a waiter; the host sends each party to whichever section has room. If a waiter goes home ill, the host simply stops seating people in that section.</p>`)}
+${V.why(`<p>Users all type the same address. The load balancer (nginx, HAProxy, or a cloud one such as AWS Elastic Load Balancing) owns that address, spreads requests over the servers behind it, and checks their health so it never sends anyone to a dead one. It also lets you update servers one at a time with no downtime.</p>`)}
+${V.steps([
+ ['Request 1 arrives. The load balancer sends it to <b>server A</b>.',`<svg viewBox="0 0 420 200" role="img" aria-label="Request 1 to A">
+${V.ic('people',8,60,60,'ic-a')}<text class="t-b" x="38" y="140" text-anchor="middle">users</text><rect class="bx-info" x="110" y="64" width="90" height="52" rx="10"/><text class="t-b" x="155" y="88" text-anchor="middle">load</text><text class="t-b" x="155" y="106" text-anchor="middle">balancer</text><path class="ln" d="M70 90H98"/><polygon class="ah" points="96,84 96,96 108,90"/><rect class="bx-hl" x="250" y="14" width="162" height="44" rx="8"/>${V.ic('server',258,20,32,'ic-a')}<text class="t-b" x="296" y="42">server A</text><text class="t-m t-a" x="400" y="42" text-anchor="end">1</text><path class="ln-a" d="M202 90L246 36"/><rect class="bx" x="250" y="70" width="162" height="44" rx="8"/>${V.ic('server',258,76,32,'')}<text class="t-b" x="296" y="98">server B</text><path class="ln-d" d="M202 90L246 92"/><rect class="bx" x="250" y="126" width="162" height="44" rx="8"/>${V.ic('server',258,132,32,'')}<text class="t-b" x="296" y="154">server C</text><path class="ln-d" d="M202 90L246 148"/><text class="t" x="10" y="190">round robin: A, B, C, A...</text>
+</svg>`],
+ ['Requests 2 and 3 go to <b>B</b> and <b>C</b>. Taking turns like this is called round robin.',`<svg viewBox="0 0 420 200" role="img" aria-label="Requests 2 and 3 to B and C">
+${V.ic('people',8,60,60,'ic-a')}<text class="t-b" x="38" y="140" text-anchor="middle">users</text><rect class="bx-info" x="110" y="64" width="90" height="52" rx="10"/><text class="t-b" x="155" y="88" text-anchor="middle">load</text><text class="t-b" x="155" y="106" text-anchor="middle">balancer</text><path class="ln" d="M70 90H98"/><polygon class="ah" points="96,84 96,96 108,90"/><rect class="bx" x="250" y="14" width="162" height="44" rx="8"/>${V.ic('server',258,20,32,'')}<text class="t-b" x="296" y="42">server A</text><text class="t-m t-a" x="400" y="42" text-anchor="end">1</text><path class="ln-d" d="M202 90L246 36"/><rect class="bx" x="250" y="70" width="162" height="44" rx="8"/>${V.ic('server',258,76,32,'')}<text class="t-b" x="296" y="98">server B</text><text class="t-m t-a" x="400" y="98" text-anchor="end">2</text><path class="ln-d" d="M202 90L246 92"/><rect class="bx-hl" x="250" y="126" width="162" height="44" rx="8"/>${V.ic('server',258,132,32,'ic-a')}<text class="t-b" x="296" y="154">server C</text><text class="t-m t-a" x="400" y="154" text-anchor="end">3</text><path class="ln-a" d="M202 90L246 148"/><text class="t" x="10" y="190">each server gets a fair share</text>
+</svg>`],
+ ['Every few seconds the balancer runs a <b>health check</b> on each server. Server B stops answering, so it is taken out of the rotation.',`<svg viewBox="0 0 420 200" role="img" aria-label="Server B fails its health check">
+${V.ic('people',8,60,60,'ic-a')}<text class="t-b" x="38" y="140" text-anchor="middle">users</text><rect class="bx-info" x="110" y="64" width="90" height="52" rx="10"/><text class="t-b" x="155" y="88" text-anchor="middle">load</text><text class="t-b" x="155" y="106" text-anchor="middle">balancer</text><path class="ln" d="M70 90H98"/><polygon class="ah" points="96,84 96,96 108,90"/><rect class="bx" x="250" y="14" width="162" height="44" rx="8"/>${V.ic('server',258,20,32,'')}<text class="t-b" x="296" y="42">server A</text><text class="t-m t-a" x="400" y="42" text-anchor="end">1</text><path class="ln-d" d="M202 90L246 36"/><rect class="bx-bad" x="250" y="70" width="162" height="44" rx="8"/>${V.ic('server',258,76,32,'ic-bad')}<text class="t-b" x="296" y="98">server B</text><path class="ln-x" d="M388 78 404 106M404 78 388 106"/><path class="ln-d" d="M202 90L246 92"/><rect class="bx" x="250" y="126" width="162" height="44" rx="8"/>${V.ic('server',258,132,32,'')}<text class="t-b" x="296" y="154">server C</text><text class="t-m t-a" x="400" y="154" text-anchor="end">3</text><path class="ln-d" d="M202 90L246 148"/><text class="t" x="10" y="190">health check: B failed</text>
+</svg>`],
+ ['Requests 4 and 5 go to <b>A</b> and <b>C</b>. Users notice nothing. With one server, this failure would have taken the whole site down.',`<svg viewBox="0 0 420 200" role="img" aria-label="Requests 4 and 5 skip B">
+${V.ic('people',8,60,60,'ic-a')}<text class="t-b" x="38" y="140" text-anchor="middle">users</text><rect class="bx-info" x="110" y="64" width="90" height="52" rx="10"/><text class="t-b" x="155" y="88" text-anchor="middle">load</text><text class="t-b" x="155" y="106" text-anchor="middle">balancer</text><path class="ln" d="M70 90H98"/><polygon class="ah" points="96,84 96,96 108,90"/><rect class="bx-hl" x="250" y="14" width="162" height="44" rx="8"/>${V.ic('server',258,20,32,'ic-a')}<text class="t-b" x="296" y="42">server A</text><text class="t-m t-a" x="400" y="42" text-anchor="end">1 4</text><path class="ln-a" d="M202 90L246 36"/><rect class="bx-bad" x="250" y="70" width="162" height="44" rx="8"/>${V.ic('server',258,76,32,'ic-bad')}<text class="t-b" x="296" y="98">server B</text><path class="ln-x" d="M388 78 404 106M404 78 388 106"/><path class="ln-d" d="M202 90L246 92"/><rect class="bx" x="250" y="126" width="162" height="44" rx="8"/>${V.ic('server',258,132,32,'')}<text class="t-b" x="296" y="154">server C</text><text class="t-m t-a" x="400" y="154" text-anchor="end">3 5</text><path class="ln-d" d="M202 90L246 148"/><text class="t" x="10" y="190">no single point of failure</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('at least 2 servers','One server behind a balancer is still a single point of failure'),V.ok('health checks','e.g. GET /health every few seconds'),
+ V.ok('round robin or least connections','Common ways to choose the next server'),V.no('one balancer, no backup','Managed cloud balancers are built to be redundant for you'))}
+${V.hook(`The host seats guests and skips the sick waiter.`)}
+`)}
 
-<h4>The load balancer</h4>
-<p>Several servers raise a question: which one does a user talk to? Users only know one address, such as <code>shop.example.com</code>. The answer is a <b>load balancer</b>: a component that sits in front of the servers, receives every request at that one address, and forwards each to one of the servers behind it.</p>
-<p>How does it choose? The simplest rule is <b>round robin</b>: server 1, then 2, then 3, then back to 1. Smarter rules pick the server with the fewest requests in progress. Load balancers also run <b>health checks</b>: every few seconds they ask each server "are you alive?", usually by requesting a simple status URL, and stop sending traffic to any server that fails to answer.</p>
-<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="A load balancer spreads requests across four servers and skips one that has failed">
-<rect class="bx-info" x="10" y="90" width="76" height="44" rx="8"/><text class="t-b" x="48" y="117" text-anchor="middle">Users</text>
-<path class="ln-a" d="M86 112h22"/><polygon class="ah-a" points="106,106 106,118 114,112"/>
-<rect class="bx-a" x="116" y="80" width="96" height="64" rx="8"/><text class="t-b" x="164" y="108" text-anchor="middle">Load</text><text class="t-b" x="164" y="128" text-anchor="middle">balancer</text>
-<rect class="bx-ok" x="290" y="14" width="110" height="38" rx="6"/><rect class="bx-ok" x="290" y="66" width="110" height="38" rx="6"/><rect class="bx-bad" x="290" y="118" width="110" height="38" rx="6"/><rect class="bx-ok" x="290" y="170" width="110" height="38" rx="6"/>
-<g text-anchor="middle"><text class="t" x="345" y="38">App 1</text><text class="t" x="345" y="90">App 2</text><text class="t t-bad" x="345" y="142">App 3 down</text><text class="t" x="345" y="194">App 4</text></g>
-<path class="ln-ok" d="M212 98L282 36"/><polygon class="ah-ok" points="277,31 284,41 290,30"/>
-<path class="ln-ok" d="M212 106L282 86"/><polygon class="ah-ok" points="279,80 282,92 290,84"/>
-<path class="ln-d" d="M212 120L282 136"/><text class="t-s t-bad" x="246" y="121" text-anchor="middle">skipped</text>
-<path class="ln-ok" d="M212 128L282 188"/><polygon class="ah-ok" points="276,192 284,183 290,193"/>
-</svg><figcaption>Users send every request to the load balancer, which forwards each one to a healthy app server. App 3 has failed its health check, so the balancer skips it and shares the traffic between apps 1, 2 and 4. Users never notice.</figcaption></figure>
-<p>This is how horizontal scaling removes the <b>single point of failure</b>: any one part whose failure takes the whole system down. With one server, that server is a single point of failure. With four behind a balancer, losing one costs a quarter of your capacity, not your whole site. It also makes deployments safe, because you can update servers one at a time while the others keep serving. (Real setups run the load balancer itself as a redundant pair, or use a managed one from a cloud provider, so it is not a single point of failure either.)</p>
-<div class="mistake"><b>Common mistake</b>Adding servers but keeping state on them. If server 1 stores a user's login in its memory and the balancer sends their next click to server 2, they are suddenly logged out. This is why the previous lesson insisted on stateless servers: put sessions in a shared store such as Redis or the database. "Sticky sessions", which pin a user to one server, hide the problem but bring back the single point of failure for that user.</div>
+${V.card(3,'Headroom','never run at 100%',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Waiting time stays low until about 75 percent busy, then rises steeply towards 100 percent">
+<path class="ln" d="M40 10V170H404"/><path class="ln-a" style="stroke-width:3" d="M40 160C200 156 280 140 320 110S360 30 372 12"/><path class="ln-d" d="M310 170V118"/><text class="t-b t-ok" x="306" y="188" text-anchor="end">75%: safe peak</text><text class="t-b t-bad" x="404" y="188" text-anchor="end">100%</text><text class="t-s" x="48" y="22">waiting time</text><text class="t" x="60" y="140">queues stay short</text><text class="t-b t-bad" x="232" y="40">queues explode</text>
+</svg><figcaption>As a server gets close to 100% busy, requests queue up and waiting time shoots up. Teams plan for about 70 to 80% at the busiest moment.</figcaption></figure>
+${V.like(`<p>Supermarket tills. If tills are busy half the time, you walk straight up. If they are busy 99% of the time, any small rush creates a long queue that takes ages to clear. That queue is what users feel as a slow website.</p>`)}
+${V.anat([[1,'1500 rps'],' ÷ ',[2,'400 rps per server'],' ÷ ',[3,'0.75'],' ≈ ',[4,'5 servers']],[
+ '<b>Peak traffic.</b> Requests per second at the busiest moment.',
+ '<b>Capacity</b> of one server, measured with a load test.',
+ '<b>Target utilisation.</b> Aim for 75% busy, leaving headroom for spikes.',
+ '<b>Round up.</b> 1500 ÷ 400 = 3.75, ÷ 0.75 = 5.'])}
+${V.hook(`Size for the peak, then leave a quarter spare.`)}
+`)}
 
-<h4>Why you never run servers at 100%</h4>
-<p>If one server handles 400 rps, is 4 servers for 1,600 rps of capacity enough for 1,500 rps? On paper, yes. In practice, no, and the reason is <b>queueing</b>.</p>
-<p>Requests do not arrive evenly. They come in random clumps. When a server is lightly used, a clump is absorbed quickly. When it is nearly full, every clump creates a queue, and the queue barely shrinks before the next clump arrives. As a result, waiting time does not grow steadily with how busy a server is; it explodes as you approach 100%.</p>
-<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="Waiting time stays low until a server is about 70 per cent busy, then climbs steeply towards 100 per cent">
-<rect class="bx-ok" x="281" y="30" width="33" height="160"/>
-<text class="t-s t-ok" x="297" y="24" text-anchor="middle">aim here</text>
-<line class="ln" x1="50" y1="20" x2="50" y2="190"/><line class="ln" x1="50" y1="190" x2="390" y2="190"/>
-<polyline class="ln-a" fill="none" points="50,190 149,183 215,173 248,165 281,152 298,140 314,123 331,95 340,68 347,40 350,21"/>
-<line class="ln-d" x1="380" y1="20" x2="380" y2="190"/>
-<g text-anchor="middle"><text class="t-s" x="50" y="208">0%</text><text class="t-s" x="215" y="208">50%</text><text class="t-s" x="380" y="208">100%</text><text class="t-s" x="215" y="226">how busy the server is</text></g>
-<text class="t-s" x="58" y="34">waiting time</text>
-</svg><figcaption>How long requests wait as a server gets busier. Up to about half busy, waiting barely changes. Past about 80 per cent it climbs steeply, and near 100 per cent it shoots off the chart. The green band, 70 to 80 per cent, is where teams aim to run at peak.</figcaption></figure>
-<p>So teams plan for <b>headroom</b>: spare capacity. A common target is about <b>70 to 80% busy at peak</b>, often written as a target utilisation of 0.75. That leaves room for clumps, for a server failing, and for traffic you did not predict.</p>
+${V.card(4,'Sticky trouble: sessions','keep servers forgetful',`
+${V.steps([
+ ['Ada logs in. The request lands on <b>server A</b>, which stores "Ada is logged in" in its own memory.',`<svg viewBox="0 0 420 205" role="img" aria-label="Session stored in server A memory">
+${V.ic('person',10,64,52,'ic-a')}<rect class="bx" x="130" y="20" width="150" height="56" rx="8"/>${V.ic('server',138,30,36,'')}<text class="t-b" x="182" y="54">server A</text><rect class="bx" x="130" y="110" width="150" height="56" rx="8"/>${V.ic('server',138,120,36,'')}<text class="t-b" x="182" y="144">server B</text><path class="ln-a" d="M66 48H116"/><polygon class="ah-a" points="114,42 114,54 126,48"/><rect class="bx-ok" x="300" y="24" width="112" height="48" rx="8"/><text class="t-s" x="356" y="42" text-anchor="middle">in A's memory</text><text class="t-m" x="356" y="62" text-anchor="middle">Ada: in</text><text class="t" x="10" y="196">log in: works</text>
+</svg>`],
+ ['Her next click is sent to <b>server B</b>. B has never heard of her, so she is logged out. Annoying, and very common.',`<svg viewBox="0 0 420 205" role="img" aria-label="Server B does not know Ada">
+${V.ic('person',10,64,52,'ic-a')}<rect class="bx" x="130" y="20" width="150" height="56" rx="8"/>${V.ic('server',138,30,36,'')}<text class="t-b" x="182" y="54">server A</text><rect class="bx" x="130" y="110" width="150" height="56" rx="8"/>${V.ic('server',138,120,36,'')}<text class="t-b" x="182" y="144">server B</text><path class="ln" d="M66 138H116"/><polygon class="ah" points="114,132 114,144 126,138"/><rect class="bx-ok" x="300" y="24" width="112" height="48" rx="8"/><text class="t-s" x="356" y="42" text-anchor="middle">in A's memory</text><text class="t-m" x="356" y="62" text-anchor="middle">Ada: in</text><rect class="bx-bad" x="300" y="114" width="112" height="48" rx="8"/><text class="t-b t-bad" x="356" y="144" text-anchor="middle">who are you?</text><text class="t-b t-bad" x="10" y="196">next click: logged out</text>
+</svg>`],
+ ['The fix: keep sessions in a <b>shared store</b> such as Redis. Every server reads the same session, so the servers stay stateless.',`<svg viewBox="0 0 420 205" role="img" aria-label="Sessions in shared Redis">
+${V.ic('person',10,64,52,'ic-a')}<rect class="bx" x="130" y="20" width="150" height="56" rx="8"/>${V.ic('server',138,30,36,'')}<text class="t-b" x="182" y="54">server A</text><rect class="bx" x="130" y="110" width="150" height="56" rx="8"/>${V.ic('server',138,120,36,'')}<text class="t-b" x="182" y="144">server B</text><path class="ln" d="M66 138H116"/><polygon class="ah" points="114,132 114,144 126,138"/><rect class="bx-ok" x="318" y="66" width="94" height="68" rx="8"/>${V.ic('db',326,74,30,'ic-ok')}<text class="t-b" x="376" y="96" text-anchor="middle">Redis</text><text class="t-m" x="365" y="124" text-anchor="middle">Ada: in</text><path class="ln-ok" d="M282 48L316 84M282 138L316 116"/><text class="t-b t-ok" x="10" y="196">any server can read it</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('sessions in Redis or the database','Any server can handle any request'),V.no('sticky sessions forever','Pinning users to one server breaks when it dies'),
+ V.ok('stateless app servers','Then adding a server is just "start one more"'))}
+${V.build(`<ol><li>Run the load test first and read the app load: why is it failing?</li><li>Turn on the load balancer and add servers until no requests fail.</li><li>Keep adding until p95 latency, the time 95% of requests beat, is under 200 ms.</li><li>Check the monthly cost and trim any server you do not need.</li></ol>`)}
+${V.hook(`If a server remembers you, it is a trap. Keep memory in a shared store.`)}
+`)}
 
-<h4>Worked example: how many servers?</h4>
-<p>The formula combines everything above:</p>
-<pre class="snip">servers needed = peak rps ÷ capacity per server ÷ target utilisation
-               = 1500 ÷ 400 ÷ 0.75
-               = 3.75 ÷ 0.75
-               = 5</pre>
-<p>Read it in two steps. 1,500 ÷ 400 = 3.75 servers would be exactly 100% busy. Dividing by 0.75 adds the headroom, giving 5. Always round <b>up</b>: you cannot run three quarters of a server.</p>
-<p>The simulator agrees. With a load balancer and 4 app servers, they run about 94% busy: nothing fails outright, but queues build and the slowest requests take far longer than the 200 ms goal. With 5 servers they run about 75% busy, and p95 latency drops well under 200 ms. <b>p95</b> means the 95th percentile: 95 out of 100 requests are at least this fast. Teams watch it instead of the average because the average hides the slow requests that users actually complain about.</p>
-<p>Cost matters too. In the simulator, a load balancer costs $20 a month and each app server $40, on top of the database. Five servers and a balancer fit comfortably inside the $350 budget. Real system design is always this balance: fast enough, reliable enough, and affordable.</p>
-<div class="mistake"><b>Common mistake</b>Turning up the app server count without switching on the load balancer. Without one, all traffic still goes to a single server, and the extra machines sit idle while you pay for them. The simulator's notes warn you when this happens.</div>
-<div class="try"><b>Try it in your head</b>Traffic grows to 2,400 rps, and each server still handles 400. How many servers at a 0.75 target? 2,400 ÷ 400 = 6, and 6 ÷ 0.75 = 8 servers.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Vertical scaling buys a bigger machine: simple, but it has a ceiling and is still a single point of failure.</li>
-<li>Horizontal scaling adds more machines behind a load balancer, which spreads requests and skips unhealthy servers.</li>
-<li>Servers must be stateless for this to work: keep sessions in a shared store.</li>
-<li>Waiting time explodes near 100% busy, so aim for about 75% at peak.</li>
-<li>Servers needed ≈ peak rps ÷ capacity per server ÷ target utilisation, rounded up.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Peak is 2,000 rps and a server handles 500. How many at 75% target? <i>2000 ÷ 500 ÷ 0.75 ≈ 5.3, so 6.</i> 2. What does a health check do? <i>Takes dead servers out of rotation.</i> 3. Why can one big server be risky? <i>It is a single point of failure.</i></div>
 `);
 
 explain('k3',`

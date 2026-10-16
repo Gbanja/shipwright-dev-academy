@@ -918,23 +918,23 @@ ${V.anat([[1,'expect'],'(',[2,'applyDiscount(1000, 25)'],')',[3,'.toBe'],'(',[4,
   });
 });</pre>
 ${V.steps([
- ['The test calls <b>applyDiscount(1000, 25)</b>. The function runs and returns its answer.',`<svg viewBox="0 0 420 150" role="img" aria-label="The function returns 750">
+ ['The test calls <b>applyDiscount(1000, 25)</b>. The function runs and returns its answer.',`<svg viewBox="0 0 420 160" role="img" aria-label="The function returns 750">
 ${CP(6,8,408,['expect(applyDiscount(1000, 25)).toBe(750);'],0,14,30)}
 <text class="t-s" x="16" y="78">actual</text><rect class="bx" x="16" y="88" width="100" height="44" rx="6"/><text class="t-m" x="66" y="116" text-anchor="middle" style="font-size:17px">750</text>
 </svg>`],
- ['<b>toBe(750)</b> compares actual with expected. They match, so the test passes and shows a tick.',`<svg viewBox="0 0 420 150" role="img" aria-label="750 equals 750, pass">
+ ['<b>toBe(750)</b> compares actual with expected. They match, so the test passes and shows a tick.',`<svg viewBox="0 0 420 160" role="img" aria-label="750 equals 750, pass">
 ${CP(6,8,408,['expect(applyDiscount(1000, 25)).toBe(750);'],0,14,30)}
 <text class="t-s" x="16" y="78">actual</text><rect class="bx-ok" x="16" y="88" width="100" height="44" rx="6"/><text class="t-m" x="66" y="116" text-anchor="middle" style="font-size:17px">750</text>
 <text class="t-b" x="150" y="116">=</text>
 <text class="t-s" x="180" y="78">expected</text><rect class="bx-ok" x="180" y="88" width="100" height="44" rx="6"/><text class="t-m" x="230" y="116" text-anchor="middle" style="font-size:17px">750</text>
 ${V.ic('check',310,90,40,'ic-ok')}
 </svg>`],
- ['If a bug made it return <b>75</b>, the test fails and Vitest prints both values, so you see at once what went wrong.',`<svg viewBox="0 0 420 150" role="img" aria-label="75 is not 750, fail">
+ ['If a bug made it return <b>75</b>, the test fails and Vitest prints both values, so you see at once what went wrong.',`<svg viewBox="0 0 420 160" role="img" aria-label="75 is not 750, fail">
 ${CP(6,8,408,['expect(applyDiscount(1000, 25)).toBe(750);'],0,14,30)}
 <text class="t-s" x="16" y="78">actual</text><rect class="bx-bad" x="16" y="88" width="100" height="44" rx="6"/><text class="t-m" x="66" y="116" text-anchor="middle" style="font-size:17px">75</text>
 <text class="t-b t-bad" x="146" y="116">≠</text>
 <text class="t-s" x="180" y="78">expected</text><rect class="bx" x="180" y="88" width="100" height="44" rx="6"/><text class="t-m" x="230" y="116" text-anchor="middle" style="font-size:17px">750</text>
-${V.ic('cross',310,90,40,'ic-bad')}<text class="t-bad" x="16" y="146" style="font-size:13px">AssertionError: expected 75 to be 750</text>
+${V.ic('cross',310,90,40,'ic-bad')}<text class="t-bad" x="16" y="154" style="font-size:13px">AssertionError: expected 75 to be 750</text>
 </svg>`]])}
 ${V.rules(V.rh('Rules'),
  V.no('expect(applyDiscount(1000, 150)).toThrow()','The error is thrown before expect can catch it, so the test crashes'),V.ok('expect(() =&gt; applyDiscount(1000, 150)).toThrow()','Wrap a throwing call in an arrow function'),
@@ -944,30 +944,30 @@ ${V.hook(`Expect the actual to be the expected: <code>expect(actual).toBe(expect
 `)}
 
 ${V.card(2,'Red, green, refactor','the TDD traffic light',`
-<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A loop of three lights: red, write a failing test; green, make it pass; refactor, tidy up">
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="A loop of three lights: red, write a failing test; green, make it pass; refactor, tidy up">
 <circle class="bx-bad" cx="70" cy="64" r="44"/><text class="t-b t-bad" x="70" y="70" text-anchor="middle" style="font-size:18px">Red</text>
 <circle class="bx-ok" cx="210" cy="64" r="44"/><text class="t-b t-ok" x="210" y="70" text-anchor="middle" style="font-size:18px">Green</text>
 <circle class="bx-info" cx="350" cy="64" r="44"/><text class="t-b" x="350" y="70" text-anchor="middle" style="font-size:16px">Refactor</text>
 ${AR(116,64,162,64,'-a')}${AR(256,64,302,64,'-a')}
-<path class="ln-a" d="M350 110C350 150 70 150 70 120"/><polygon class="ah-a" points="63,122 77,122 70,110"/>
+<path class="ln-a" d="M384 92C420 190 0 190 36 106"/><polygon class="ah-a" points="29,112 43,114 38,98"/>
 <text class="t-s" x="70" y="132" text-anchor="middle">failing test</text><text class="t-s" x="210" y="132" text-anchor="middle">simplest code</text><text class="t-s" x="350" y="132" text-anchor="middle">tidy, still green</text>
 </svg><figcaption>Test-driven development goes round this loop in small steps: a failing test, the simplest code that passes, then a clean-up while the tests stay green.</figcaption></figure>
 ${V.like(`<p>Writing the exam questions before you revise. The questions tell you exactly what you need to know, and when you can answer them all you stop. No wasted work, and you can prove you are done.</p>`)}
 ${V.why(`<p>Tests written afterwards tend to test whatever the code happens to do. Writing the test first (Kent Beck popularised this as <b>test-driven development</b>, TDD, around 2002) forces you to decide what "correct" means before you build, and a test you have seen fail is a test you know can catch a bug.</p>`)}
 ${V.steps([
- ['<b>Red.</b> Write a test for <b>applyDiscount</b> before the function exists. Run it: it fails. Good: the test can catch a problem.',`<svg viewBox="0 0 420 190" role="img" aria-label="Red: the new test fails">
+ ['<b>Red.</b> Write a test for <b>applyDiscount</b> before the function exists. Run it: it fails. Good: the test can catch a problem.',`<svg viewBox="0 0 420 222" role="img" aria-label="Red: the new test fails">
 ${TR([['formats whole amounts','ok'],['formats pence','ok'],['takes 25% off','bad']],['// applyDiscount is not written yet'],'r')}
 </svg>`],
- ['<b>Green.</b> Write the simplest code that passes. Not clever, not complete: just enough.',`<svg viewBox="0 0 420 190" role="img" aria-label="Green: the test passes">
+ ['<b>Green.</b> Write the simplest code that passes. Not clever, not complete: just enough.',`<svg viewBox="0 0 420 222" role="img" aria-label="Green: the test passes">
 ${TR([['formats whole amounts','ok'],['formats pence','ok'],['takes 25% off','ok']],['return price - (price * percent) / 100;'],'g')}
 </svg>`],
- ['<b>Refactor.</b> Tidy up: clear names, round to whole pence. Run again. Still green, so nothing broke.',`<svg viewBox="0 0 420 190" role="img" aria-label="Refactor: still green">
+ ['<b>Refactor.</b> Tidy up: clear names, round to whole pence. Run again. Still green, so nothing broke.',`<svg viewBox="0 0 420 222" role="img" aria-label="Refactor: still green">
 ${TR([['formats whole amounts','ok'],['formats pence','ok'],['takes 25% off','ok']],['return Math.round(price * (1 - percent / 100));'],'b')}
 </svg>`],
- ['<b>Red again</b>, for an <b>edge case</b>: a discount over 100% should throw. The code does not check yet, so the new test fails.',`<svg viewBox="0 0 420 190" role="img" aria-label="Edge case test fails">
+ ['<b>Red again</b>, for an <b>edge case</b>: a discount over 100% should throw. The code does not check yet, so the new test fails.',`<svg viewBox="0 0 420 222" role="img" aria-label="Edge case test fails">
 ${TR([['formats whole amounts','ok'],['formats pence','ok'],['takes 25% off','ok'],['rejects over 100%','bad']],["expect(() =&gt; applyDiscount(1000, 150))",'  .toThrow(\'between 0 and 100\');'],'r')}
 </svg>`],
- ['<b>Green.</b> Add the check that throws an error with that message. Every test passes, and the edge case is now guarded for ever.',`<svg viewBox="0 0 420 190" role="img" aria-label="All tests pass">
+ ['<b>Green.</b> Add the check that throws an error with that message. Every test passes, and the edge case is now guarded for ever.',`<svg viewBox="0 0 420 222" role="img" aria-label="All tests pass">
 ${TR([['formats whole amounts','ok'],['formats pence','ok'],['takes 25% off','ok'],['rejects over 100%','ok']],['if (percent &lt; 0 || percent &gt; 100)','  throw new Error(\'… between 0 and 100\');'],'g')}
 </svg>`]])}
 ${V.rules(V.no('Writing the code first, then a test that copies it','The test just repeats the code, bugs included'),V.ok('See it fail first','Proves the test can actually catch a mistake'),
