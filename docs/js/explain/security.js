@@ -255,7 +255,7 @@ ${V.rules(V.rh('Rules: break one and the hole is back'),
  V.rh('Conventions'),
  V.ok('every query, every time','Even "trusted" values: habits beat guesses'),V.ok('allowlist column names','A ? cannot stand in for a table or column name, so pick from a fixed list'))}
 ${V.build(`<ol><li>Find each <code>+</code> that glues input into SQL.</li><li>Replace each value with <code>?</code>.</li><li>Move the values into an array, in order.</li><li>For search, put <code>'%' + term + '%'</code> in the array, not the SQL.</li><li>Run the attack again: it should return <code>null</code> or an empty list.</li><li>Check a real login still works.</li></ol>`)}
-${V.hook(`Code goes in the string, data goes in the array. Never the twain shall meet.`)}
+${V.hook(`Code goes in the string, data goes in the array. The two never mix.`)}
 `)}
 
 ${V.card(3,'Least privilege','give the app only the keys it needs',`
@@ -691,7 +691,7 @@ ${V.steps([
 <text class="t-term" x="18" y="82" style="font-size:14px">  stripeKey: 'sk_live_51Hx…',</text>
 <rect class="bx-bad" x="6" y="106" width="130" height="66" rx="6"/>${V.ic('file',14,114,30,'ic-bad')}<text class="t-m" x="50" y="134" style="font-size:14px">config</text><text class="t-s" x="14" y="162">key inside</text>
 <rect class="bx" x="145" y="106" width="130" height="66" rx="6"/>${V.ic('file',153,114,30,'ic-info')}<text class="t-m" x="189" y="134" style="font-size:14px">.env</text><text class="t-s t-dim" x="153" y="162">missing</text>
-<rect class="bx" x="284" y="106" width="130" height="66" rx="6"/>${V.ic('file',292,114,30,'ic-info')}<text class="t-m" x="328" y="134" style="font-size:14px">.gitignore</text><text class="t-s" x="292" y="162">node_modules</text>
+<rect class="bx" x="284" y="106" width="130" height="66" rx="6"/>${V.ic('file',291,116,26,'ic-info')}<text class="t-m" x="323" y="134" style="font-size:14px">.gitignore</text><text class="t-s" x="292" y="162">node_modules</text>
 </svg>`],
  ['Move it. The key goes into <b>.env</b>, and the code reads <b>process.env.STRIPE_KEY</b> instead.',`<svg viewBox="0 0 420 180" role="img" aria-label="Key moved to .env, code reads process.env">
 <rect class="bx-dark" x="6" y="8" width="408" height="84" rx="8"/>
@@ -700,7 +700,7 @@ ${V.steps([
 <text class="t-term t-dim" x="18" y="82" style="font-size:14px">// .env: STRIPE_KEY=sk_live_51Hx…</text>
 <rect class="bx-ok" x="6" y="106" width="130" height="66" rx="6"/>${V.ic('file',14,114,30,'ic-ok')}<text class="t-m" x="50" y="134" style="font-size:14px">config</text><text class="t-s" x="14" y="162">no secret</text>
 <rect class="bx-hl" x="145" y="106" width="130" height="66" rx="6"/>${V.ic('file',153,114,30,'ic-a')}<text class="t-m" x="189" y="134" style="font-size:14px">.env</text><text class="t-s" x="153" y="162">holds the key</text>
-<rect class="bx" x="284" y="106" width="130" height="66" rx="6"/>${V.ic('file',292,114,30,'ic-info')}<text class="t-m" x="328" y="134" style="font-size:14px">.gitignore</text><text class="t-s" x="292" y="162">node_modules</text>
+<rect class="bx" x="284" y="106" width="130" height="66" rx="6"/>${V.ic('file',291,116,26,'ic-info')}<text class="t-m" x="323" y="134" style="font-size:14px">.gitignore</text><text class="t-s" x="292" y="162">node_modules</text>
 </svg>`],
  ['Lock it. Add <b>.env</b> to <b>.gitignore</b>, so Git never commits it.',`<svg viewBox="0 0 420 180" role="img" aria-label=".env added to .gitignore">
 <rect class="bx-dark" x="6" y="8" width="408" height="84" rx="8"/>
@@ -709,14 +709,14 @@ ${V.steps([
 <text class="t-term t-ok" x="18" y="82" style="font-size:14px">node_modules  .env</text>
 <rect class="bx-ok" x="6" y="106" width="130" height="66" rx="6"/>${V.ic('file',14,114,30,'ic-ok')}<text class="t-m" x="50" y="134" style="font-size:14px">config</text><text class="t-s" x="14" y="162">no secret</text>
 <rect class="bx-ok" x="145" y="106" width="130" height="66" rx="6"/>${V.ic('lock',153,114,30,'ic-ok')}<text class="t-m" x="189" y="134" style="font-size:14px">.env</text><text class="t-s" x="153" y="162">never pushed</text>
-<rect class="bx-hl" x="284" y="106" width="130" height="66" rx="6"/>${V.ic('file',292,114,30,'ic-a')}<text class="t-m" x="328" y="134" style="font-size:14px">.gitignore</text><text class="t-s" x="292" y="162">+ .env</text>
+<rect class="bx-hl" x="284" y="106" width="130" height="66" rx="6"/>${V.ic('file',291,116,26,'ic-a')}<text class="t-m" x="323" y="134" style="font-size:14px">.gitignore</text><text class="t-s" x="292" y="162">+ .env</text>
 </svg>`],
  ['Already pushed? Then assume it was copied. <b>Rotate</b> it: revoke the old key at Stripe and put a new one in .env. Deleting the commit is not enough.',`<svg viewBox="0 0 420 180" role="img" aria-label="Old key revoked, new key issued">
 <rect class="bx-bad" x="6" y="8" width="196" height="84" rx="8"/>${V.ic('key',16,22,40,'ic-bad')}${V.ic('cross',60,22,40,'ic-bad')}<text class="t-b" x="16" y="82">old key: revoked</text>
 <rect class="bx-ok" x="218" y="8" width="196" height="84" rx="8"/>${V.ic('key',228,22,40,'ic-ok')}${V.ic('check',272,22,40,'ic-ok')}<text class="t-b" x="228" y="82">new key: in .env</text>
 <rect class="bx-ok" x="6" y="106" width="130" height="66" rx="6"/>${V.ic('file',14,114,30,'ic-ok')}<text class="t-m" x="50" y="134" style="font-size:14px">config</text><text class="t-s" x="14" y="162">no secret</text>
 <rect class="bx-ok" x="145" y="106" width="130" height="66" rx="6"/>${V.ic('lock',153,114,30,'ic-ok')}<text class="t-m" x="189" y="134" style="font-size:14px">.env</text><text class="t-s" x="153" y="162">new key</text>
-<rect class="bx-ok" x="284" y="106" width="130" height="66" rx="6"/>${V.ic('file',292,114,30,'ic-ok')}<text class="t-m" x="328" y="134" style="font-size:14px">.gitignore</text><text class="t-s" x="292" y="162">+ .env</text>
+<rect class="bx-ok" x="284" y="106" width="130" height="66" rx="6"/>${V.ic('file',291,116,26,'ic-ok')}<text class="t-m" x="323" y="134" style="font-size:14px">.gitignore</text><text class="t-s" x="292" y="162">+ .env</text>
 </svg>`]])}
 ${V.rules(V.rh('Rules'),
  V.ok('process.env.STRIPE_KEY','Read secrets from the environment'),V.no("'sk_live_…' in code","Ends up in Git history forever"),

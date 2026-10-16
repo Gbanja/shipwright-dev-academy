@@ -498,4 +498,393 @@ ${V.hook(`The layout is the frame, the page is the picture, and Link swaps the p
 
 <div class="try"><b>Try it in your head</b>1. Which file serves <code>/contact</code>? <i>app/contact/page.tsx.</i> 2. At <code>/blog/dune</code>, what is params.slug? <i>'dune'.</i> 3. Why use Link instead of a? <i>It swaps the page without reloading the whole site, so the layout stays.</i></div>
 `);
+
+/* n4 helpers: kitchen (server) on the left, table (browser) on the right. */
+const KT=(hs,hb)=>'<rect class="'+(hs||'bx')+'" x="6" y="8" width="150" height="170" rx="12"/><text class="t-b" x="81" y="32" text-anchor="middle">Server</text><text class="t-s" x="81" y="50" text-anchor="middle">the kitchen</text>'+V.ic('server',18,62,44,'ic-p')+V.ic('db',94,62,44,'ic-info')+V.ic('key',58,118,36,'ic-warn')+'<text class="t-s" x="40" y="172" text-anchor="middle">code</text><text class="t-s" x="116" y="122" text-anchor="middle">data</text><text class="t-s" x="122" y="172" text-anchor="middle">secrets</text>'+
+ '<rect class="'+(hb||'bx')+'" x="264" y="8" width="150" height="170" rx="12"/><text class="t-b" x="339" y="32" text-anchor="middle">Browser</text><text class="t-s" x="339" y="50" text-anchor="middle">the table</text>'+V.ic('laptop',305,58,68,'ic-a');
+/* tree for the use-client card. cls: [page, list, button] box classes */
+const CT=(c,ptxt,btxt)=>'<rect class="'+c[0]+'" x="100" y="10" width="220" height="40" rx="8"/><text class="t-m" x="210" y="36" text-anchor="middle">'+ptxt+'</text><path class="ln" d="M170 50 110 86M250 50 310 86"/><rect class="'+c[1]+'" x="30" y="86" width="160" height="40" rx="8"/><text class="t-m" x="110" y="112" text-anchor="middle">ProjectList</text><rect class="'+c[2]+'" x="230" y="86" width="160" height="40" rx="8"/><text class="t-m" x="310" y="112" text-anchor="middle">'+btxt+'</text>';
+
+explain('n4',`
+<p>Modern Next.js asks one question about every component: does this run in the kitchen or at the table? Get it right and your pages load fast, keep secrets safe and send far less code to phones.</p>
+
+${V.card(1,'Server Components','cooked in the kitchen, served as a plate',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="The server, with code, data and secrets, sends a finished HTML plate and a tiny bit of JavaScript for the like button to the browser">
+${KT('bx-info','bx')}
+${AR(162,80,258,80,'-ok')}<text class="t-b" x="210" y="70" text-anchor="middle">HTML</text>
+${AR(162,130,258,130,'-a')}<text class="t-s" x="210" y="120" text-anchor="middle">tiny JS</text><text class="t-s" x="210" y="152" text-anchor="middle">(like button)</text>
+</svg><figcaption>By default every component runs on the server. It can read the database and secret keys, then sends finished HTML. Only interactive pieces send JavaScript.</figcaption></figure>
+${V.like(`<p>A restaurant. The <b>kitchen</b> (the server) has the fridge (the database), the recipes and the till keys (secrets). Diners never walk in there. They get a finished <b>plate</b> (HTML) at the <b>table</b> (the browser). Only things you touch at the table, like the call-waiter buzzer, need to work at the table.</p>`)}
+${V.why(`<p>For years React sent the whole app's JavaScript to the browser and fetched data from there, which made phones slow and forced you to build an API for every query. React Server Components, adopted by the Next.js App Router in 2023, run on the server by default: they fetch data directly and send zero JavaScript for themselves.</p>`)}
+${V.anat(['export default ',[1,'async'],' function Home() {\n  const projects = ',[2,'await getProjects()'],';\n  return ',[3,'&lt;ul&gt;{projects.map(…)}&lt;/ul&gt;'],';\n}'],[
+ '<b>async.</b> Server Components may be async functions, which client components cannot.',
+ '<b>Direct data access.</b> Waits for the data right here, on the server. No fetch to your own API, no loading spinner code.',
+ '<b>The plate.</b> The JSX is turned into HTML on the server and sent to the browser.'])}
+<p><b>Watch one page load.</b> Follow the order from the kitchen to the table.</p>
+${V.steps([
+ ['The browser asks for the home page. The request goes to the kitchen.',`<svg viewBox="0 0 420 190" role="img" aria-label="Browser requests the page">
+${KT('bx','bx-hl')}
+${AR(258,90,162,90,'-a')}<text class="t-m" x="210" y="80" text-anchor="middle">GET /</text>
+</svg>`],
+ ['The server runs <b>Home()</b>. It reaches <b>await getProjects()</b> and reads the database directly. Secrets stay here and never travel.',`<svg viewBox="0 0 420 190" role="img" aria-label="Server reads the database">
+${KT('bx-hl','bx')}
+<text class="t-m t-a" x="210" y="84" text-anchor="middle" style="font-size:14px">await</text><text class="t-m t-a" x="210" y="104" text-anchor="middle" style="font-size:13px">getProjects</text>
+</svg>`],
+ ['It turns the data into HTML, a finished plate, and sends it. Alongside goes a small bundle of JavaScript: only the code for the like button.',`<svg viewBox="0 0 420 190" role="img" aria-label="HTML and tiny JS travel to the browser">
+${KT('bx-info','bx')}
+${AR(162,80,258,80,'-ok')}<text class="t-b" x="210" y="70" text-anchor="middle">HTML</text>
+${AR(162,130,258,130,'-a')}<text class="t-s" x="210" y="120" text-anchor="middle">tiny JS</text>
+</svg>`],
+ ['The page appears straight away. Then the small script <b>hydrates</b> the button: it attaches the click handler so the button comes alive.',`<svg viewBox="0 0 420 190" role="img" aria-label="Browser shows the page, button hydrates">
+${KT('bx','bx-ok')}
+<rect class="bx-a" x="296" y="134" width="86" height="34" rx="17"/><text class="t-b" x="339" y="157" text-anchor="middle">Like 0</text>
+</svg>`],
+ ['You click <b>Like</b>. The count goes from 0 to 1 entirely at the table, in the browser. The kitchen is not even asked.',`<svg viewBox="0 0 420 190" role="img" aria-label="Clicking like updates in the browser only">
+${KT('bx','bx-ok')}
+<rect class="bx-hl" x="296" y="134" width="86" height="34" rx="17"/><text class="t-b" x="339" y="157" text-anchor="middle">Like 1</text>
+<text class="t-s t-dim" x="210" y="100" text-anchor="middle">no request</text>
+</svg>`]])}
+${V.rules(V.ok('Fetch data in a Server Component','Direct, secure, no extra API'),V.no('NEXT_PUBLIC_STRIPE_SECRET','The NEXT_PUBLIC_ prefix copies a value into browser code anyone can read. Keep secrets unprefixed and server-only'),
+ V.ok('export default async function Page()','Only Server Components can be async'))}
+${V.hook(`Cook in the kitchen, serve a plate. Only the buzzer needs to work at the table.`)}
+`)}
+
+${V.card(2,'"use client"','marking what must work at the table',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A component tree: Page and ProjectList on the server, LikeButton a client leaf">
+${CT(['bx-info','bx-info','bx-a'],'Page','LikeButton')}
+<text class="t-s" x="110" y="146" text-anchor="middle">server</text><text class="t-s" x="310" y="146" text-anchor="middle">'use client'</text>
+${V.ic('server',2,92,26,'ic-info')}${V.ic('laptop',392,92,26,'ic-a')}
+</svg><figcaption>Keep the tree on the server and make only the small interactive leaves client components. Here only LikeButton ships JavaScript.</figcaption></figure>
+${V.like(`<p>The waiter's order pad. Most dishes are cooked in the kitchen, but anything finished at the table, like flambéing or grating cheese, is marked on the pad so the right kit goes out to the table. <code>'use client'</code> is that mark.</p>`)}
+${V.why(`<p>Some things can only happen in a browser: remembering a click (<code>useState</code>), reacting to it (<code>onClick</code>), or using <code>window</code>. A server sends a plate and is gone, so it cannot react to a click. The directive tells Next.js which files must also be sent to the browser. (Client components still render once on the server for the first HTML, then come alive in the browser.)</p>`)}
+${V.anat([[1,"'use client';"],'\nimport { useState } from \'react\';\n\n',[2,'export default function LikeButton()'],' {\n  const [n, setN] = ',[3,'useState(0)'],';\n  return &lt;button ',[4,'onClick'],'={…}&gt;Like {n}&lt;/button&gt;;\n}'],[
+ '<b>The directive.</b> The very first line of the file, above the imports. This file and everything it imports become client code.',
+ '<b>A normal component</b>, in its own file such as <code>components/LikeButton.tsx</code>.',
+ '<b>State</b>: memory that lives in the browser.',
+ '<b>An event handler</b>: reacts to clicks in the browser.'])}
+${V.steps([
+ ['The starter puts <b>useState</b> straight into the page. Pages are server components, so the build stops: this hook only works in a Client Component.',`<svg viewBox="0 0 420 170" role="img" aria-label="useState in a server page fails">
+${CT(['bx-bad','bx','bx'],'Page + useState','button')}
+<text class="t-bad" x="210" y="156" text-anchor="middle" style="font-size:14px">useState only works in a Client Component</text>
+</svg>`],
+ ['Quick but wrong fix: put <b>\'use client\'</b> on the page. The error goes, but now the whole page ships to the browser and it cannot be async or read the database.',`<svg viewBox="0 0 420 170" role="img" aria-label="Whole page becomes client code">
+${CT(['bx-warn','bx-warn','bx-warn'],"'use client' Page",'button')}
+<text class="t-warn" x="210" y="156" text-anchor="middle" style="font-size:14px">everything ships to the browser</text>
+</svg>`],
+ ['Right fix: move only the button into its own file marked <b>\'use client\'</b>. The page stays on the server, can be async and awaits the projects, and only the small button ships.',`<svg viewBox="0 0 420 170" role="img" aria-label="Only LikeButton is a client component">
+${CT(['bx-info','bx-info','bx-ok'],'async Page','LikeButton')}
+<text class="t-ok" x="210" y="156" text-anchor="middle" style="font-size:14px">server tree, one small client leaf</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.no("import … ; 'use client';",'The directive must be the first line, before any import'),V.no('async function LikeButton() in a client file','Client components cannot be async'),
+ V.no('onClick in a server component','Event handlers and hooks need a client component'),V.ok('&lt;LikeButton /&gt; inside a server page','Server components can render client components'),
+ V.rh('Conventions'),V.ok('Keep client components small','Push them to the leaves of the tree so less JavaScript ships'))}
+${V.build(`<ol><li>Run the starter and read the build error.</li><li>Create <code>components/LikeButton.tsx</code>, put the directive on line 1, and move the state and button into it.</li><li>Import it into the page and render it.</li><li>Make the page <code>async</code>, await the projects and list them.</li></ol>`)}
+${V.hook(`Server by default. Click, state or window? Mark that leaf <code>'use client'</code>.`)}
+`)}
+
+<div class="try"><b>Try it in your head</b>1. Can a component with <code>onClick</code> be a server component? <i>No: it must be a client component.</i> 2. Where does an unmarked <code>app/page.tsx</code> run? <i>On the server. It can be async and sends no JS for itself.</i> 3. Why not mark the whole page <code>'use client'</code>? <i>It ships everything to the browser and loses direct, secure data access.</i></div>
+`);
+
+/* n5 helper: browser with a form and message list on the left, server on the right. */
+const SA=(o)=>'<rect class="'+(o.b||'bx')+'" x="6" y="8" width="170" height="184" rx="12"/><text class="t-b" x="18" y="32">Browser</text>'+
+ '<rect class="'+(o.in||'bx')+'" x="18" y="44" width="96" height="32" rx="5"/><text class="t-m" x="28" y="66" style="font-size:14px">'+(o.txt||'')+'</text><rect class="'+(o.btn||'bx-a')+'" x="120" y="44" width="46" height="32" rx="5"/><text class="t-b" x="143" y="65" text-anchor="middle" style="font-size:14px">Post</text>'+
+ '<text class="t" x="18" y="108">• Hello</text><text class="t" x="18" y="132">• Welcome</text>'+(o.newMsg?'<rect class="bx-ok" x="14" y="140" width="110" height="26" rx="5"/><text class="t" x="18" y="159">• Hi!</text>':'')+
+ '<rect class="'+(o.s||'bx')+'" x="250" y="8" width="164" height="184" rx="12"/><text class="t-b" x="262" y="32">Server</text>'+
+ '<rect class="'+(o.fn||'bx')+'" x="262" y="44" width="140" height="40" rx="6"/><text class="t-m" x="332" y="69" text-anchor="middle" style="font-size:14px">postMessage()</text>'+V.ic('db',300,112,52,'ic-info')+(o.dbNew?'<text class="t-m t-ok" x="362" y="146" style="font-size:14px">+Hi!</text>':'')+(o.extra||'');
+
+explain('n5',`
+<p>Showing data is half of an app. The other half is changing it: posting a message, saving a form, answering a phone app. Next.js gives you two tools, one for your own forms and one for everyone else.</p>
+
+${V.card(1,'Server Actions','a letter box straight to the right desk',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="A form in the browser posts straight to the postMessage function on the server, which saves to the database and sends back a fresh page">
+${SA({txt:'Hi!',newMsg:true,s:'bx-info',fn:'bx-ok',dbNew:true})}
+<path class="ln-a" d="M180 60H246"/><polygon class="ah-a" points="246,53 246,67 256,60"/>${V.ic('mail',196,24,30,'ic-a')}
+<path class="ln-ok" d="M246 150H186"/><polygon class="ah-ok" points="186,143 186,157 176,150"/><text class="t-s" x="213" y="176" text-anchor="middle">fresh page</text>
+</svg><figcaption>The form posts straight to a function on the server. It saves the message, refreshes the page data, and the browser gets the updated page back.</figcaption></figure>
+${V.like(`<p>A letter box in an office wall labelled with one person's name. You drop your note in and it lands on exactly that person's desk. No receptionist, no switchboard: that is the API you no longer have to build.</p>`)}
+${V.why(`<p>Before, saving a form meant writing an API route, then browser code to <code>fetch</code> it, handle errors and refresh the page. React 19 and Next.js made <b>Server Actions</b> stable in 2024: you pass a server function straight to <code>&lt;form action&gt;</code>. It even works before the page's JavaScript has loaded, because it is an ordinary HTML form post.</p>`)}
+${V.anat(['async function postMessage(',[1,'formData: FormData'],') {\n  ',[2,"'use server';"],'\n  addMessage(String(',[3,"formData.get('text')"],'));\n  ',[4,"revalidatePath('/')"],';\n}\n&lt;form ',[5,'action={postMessage}'],'&gt;&lt;input name="text" /&gt;…&lt;/form&gt;'],[
+ '<b>The form data.</b> Every field in the form, packed up by the browser.',
+ '<b>The directive.</b> Marks this function as callable from the browser but run on the server.',
+ '<b>Read one field</b> by its <code>name</code>. It can be null, so wrap it in <code>String(…)</code> or check it.',
+ '<b>Refresh.</b> Tells Next.js the data on <code>/</code> changed, so the page is rendered again with the new message.',
+ '<b>Wire it up.</b> The form submits to the function. No <code>fetch</code>, no API URL.'])}
+<p><b>Watch the round trip.</b> One press of the button, five moments.</p>
+${V.steps([
+ ['You type <b>Hi!</b> and press Post. The browser packs every named field into FormData.',`<svg viewBox="0 0 420 200" role="img" aria-label="User types Hi! and presses Post">
+${SA({txt:'Hi!',in:'bx-hl',btn:'bx-hl',b:'bx'})}
+</svg>`],
+ ['The form is sent to the server as a POST request carrying <b>text=Hi!</b>. This is a normal form post, so it works even without JavaScript.',`<svg viewBox="0 0 420 200" role="img" aria-label="The form data travels to the server">
+${SA({txt:'Hi!'})}
+<path class="ln-a" d="M180 60H246"/><polygon class="ah-a" points="246,53 246,67 256,60"/>${V.ic('mail',196,22,32,'ic-a')}<text class="t-s" x="213" y="86" text-anchor="middle">text=Hi!</text>
+</svg>`],
+ ['On the server, <b>postMessage</b> runs. <b>formData.get(\'text\')</b> gives \'Hi!\', and addMessage saves it.',`<svg viewBox="0 0 420 200" role="img" aria-label="postMessage saves Hi! to the database">
+${SA({txt:'Hi!',fn:'bx-hl',dbNew:true})}
+</svg>`],
+ ['<b>revalidatePath(\'/\')</b> marks the home page\'s data as out of date, so Next.js renders the page again with the new list.',`<svg viewBox="0 0 420 200" role="img" aria-label="revalidatePath re-renders the page">
+${SA({txt:'Hi!',fn:'bx-ok',dbNew:true,s:'bx-hl',extra:V.ic('repeat',340,150,32,'ic-a')})}
+</svg>`],
+ ['The fresh page comes back and <b>Hi!</b> appears in the list. You wrote no fetch call and no API.',`<svg viewBox="0 0 420 200" role="img" aria-label="The updated page shows Hi!">
+${SA({txt:'',newMsg:true,fn:'bx-ok',dbNew:true,b:'bx-ok'})}
+<path class="ln-ok" d="M246 150H186"/><polygon class="ah-ok" points="186,143 186,157 176,150"/>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.no('&lt;input id="text"&gt;','FormData uses the name attribute; without name="text", get(\'text\') is null'),V.ok("'use server'",'First line of the function body, or the top of a file of actions'),
+ V.no('Trusting the input','An action is a public endpoint anyone can call: validate the data and check who is logged in'),
+ V.rh('Conventions'),V.ok('createPost, deleteTodo','Name actions with a verb'),V.ok('revalidatePath after writes','Otherwise the page may keep showing the old data'))}
+${V.hook(`Form to function, function to database, revalidate, fresh page back.`)}
+`)}
+
+${V.card(2,'Route handlers','a service hatch for other apps',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A phone app and another server call the route file, which answers with JSON">
+${V.ic('phone',14,16,46,'ic-info')}<text class="t-s" x="37" y="78" text-anchor="middle">mobile app</text>
+${V.ic('server',14,96,46,'ic-p')}<text class="t-s" x="37" y="158" text-anchor="middle">webhook</text>
+<path class="ln-a" d="M66 40 146 74M66 120 146 92"/>
+<rect class="bx-a" x="150" y="50" width="134" height="64" rx="8"/><text class="t-m" x="217" y="78" text-anchor="middle" style="font-size:14px">api/messages/</text><text class="t-m" x="217" y="100" text-anchor="middle" style="font-size:14px">route.ts</text>
+${AR(290,82,322,82,'-ok')}
+<rect class="bx-dark" x="326" y="44" width="88" height="76" rx="8"/><text class="t-term" x="338" y="72" style="font-size:14px">[{ "id":</text><text class="t-term" x="338" y="94" style="font-size:14px">  1, … }]</text>
+</svg><figcaption>A route handler is a URL that returns data, usually JSON, instead of a page. Anything that speaks HTTP can call it.</figcaption></figure>
+${V.like(`<p>The service hatch at the back of a restaurant. Diners come through the front door and get a full meal (pages). Delivery drivers knock at the hatch and get a packed box (JSON). Same kitchen, different door.</p>`)}
+${V.anat(['// app/api/messages/route.ts\nexport async function ',[1,'POST'],'(',[2,'req: Request'],') {\n  const { text } = await req.json();\n  if (!text)\n    return NextResponse.json({ error: … }, ',[3,'{ status: 400 }'],');\n  …\n  return NextResponse.json(msg, { ',[4,'status: 201'],' });\n}'],[
+ '<b>The HTTP method</b>, exported by name in capitals: <code>GET</code>, <code>POST</code>, <code>PUT</code>, <code>DELETE</code>.',
+ '<b>The incoming request</b>: the standard web Request, with headers and body.',
+ '<b>An error status.</b> 400 means "your request was wrong". Return early so nothing is saved.',
+ '<b>Status code.</b> 201 means "created". GET answers default to 200, "OK".'])}
+${V.steps([
+ ['An app sends <b>POST</b> with an empty body. The handler finds no text and answers <b>400</b>.',`<svg viewBox="0 0 420 150" role="img" aria-label="POST without text returns 400">
+${V.ic('phone',8,20,44,'ic-info')}<text class="t-m" x="60" y="40" style="font-size:14px">POST {}</text>
+${AR(60,56,264,56,'-a')}
+<rect class="bx" x="270" y="30" width="96" height="52" rx="8"/><text class="t-m" x="318" y="61" text-anchor="middle" style="font-size:14px">route.ts</text>
+<rect class="bx-bad" x="60" y="100" width="300" height="38" rx="8"/><text class="t-m" x="72" y="125" style="font-size:14px">400 { "error": "text required" }</text>
+</svg>`],
+ ['It tries again with <b>{"text":"Hi"}</b>. The handler saves it and answers <b>201 Created</b> with the new message as JSON.',`<svg viewBox="0 0 420 150" role="img" aria-label="POST with text returns 201">
+${V.ic('phone',8,20,44,'ic-info')}<text class="t-m" x="60" y="40" style="font-size:14px">POST {"text":"Hi"}</text>
+${AR(60,56,264,56,'-a')}
+<rect class="bx-ok" x="270" y="30" width="96" height="52" rx="8"/><text class="t-m" x="318" y="61" text-anchor="middle" style="font-size:14px">route.ts</text>
+<rect class="bx-ok" x="60" y="100" width="300" height="38" rx="8"/><text class="t-m" x="72" y="125" style="font-size:14px">201 { "id": 3, "text": "Hi" }</text>
+</svg>`],
+ ['A <b>GET</b> to the same URL runs the GET function instead, and returns every message with status <b>200</b>.',`<svg viewBox="0 0 420 150" role="img" aria-label="GET returns all messages">
+${V.ic('phone',8,20,44,'ic-info')}<text class="t-m" x="60" y="40" style="font-size:14px">GET</text>
+${AR(60,56,264,56,'-a')}
+<rect class="bx-ok" x="270" y="30" width="96" height="52" rx="8"/><text class="t-m" x="318" y="61" text-anchor="middle" style="font-size:14px">route.ts</text>
+<rect class="bx-ok" x="60" y="100" width="300" height="38" rx="8"/><text class="t-m" x="72" y="125" style="font-size:14px">200 [ {…}, {…}, {…} ]</text>
+</svg>`]])}
+${V.rules(V.no('export async function post()','Method names must be capitals: POST'),V.ok('app/api/messages/route.ts','The file must be called route.ts (or route.js)'),
+ V.no('page.tsx and route.ts in one folder','One URL cannot be both a page and an API'),V.ok('await req.json()','Reading the body is asynchronous'))}
+${V.hook(`Your own forms use actions. Everyone else knocks at <code>route.ts</code>.`)}
+`)}
+
+${V.card(3,'Static or dynamic','a printed menu or cooked to order',`
+${V.steps([
+ ['You run <b>next build</b>. It goes through every route and decides how each will be served.',`<svg viewBox="0 0 420 200" role="img" aria-label="next build starts">
+${CP(6,8,408,['$ next build','Route (app)','┌ ○ /','├ ○ /about','├ ƒ /api/messages','└ ƒ /dashboard'],0,14,26)}
+</svg>`],
+ ['<b>○ Static</b>: pages that look the same for everyone are rendered once, now, and saved. Like a printed menu, they are ready instantly.',`<svg viewBox="0 0 420 200" role="img" aria-label="Static routes highlighted">
+${CP(6,8,240,['$ next build','Route (app)','┌ ○ /','├ ○ /about','├ ƒ /api/messages','└ ƒ /dashboard'],2,14,26)}
+${V.ic('book',290,30,60,'ic-ok')}<text class="t-b t-ok" x="320" y="116" text-anchor="middle">○ static</text><text class="t-s" x="320" y="140" text-anchor="middle">built once</text>
+</svg>`],
+ ['<b>ƒ Dynamic</b>: pages that read cookies, headers or search params, like a dashboard for the logged-in user, are cooked to order on every request.',`<svg viewBox="0 0 420 200" role="img" aria-label="Dynamic routes highlighted">
+${CP(6,8,240,['$ next build','Route (app)','┌ ○ /','├ ○ /about','├ ƒ /api/messages','└ ƒ /dashboard'],5,14,26)}
+${V.ic('clock',290,30,60,'ic-a')}<text class="t-b t-a" x="320" y="116" text-anchor="middle">ƒ dynamic</text><text class="t-s" x="320" y="140" text-anchor="middle">per request</text>
+</svg>`]])}
+${V.like(`<p>A café prints its standard menu once in the morning (static), but makes your sandwich when you order it, because only you know what you want in it (dynamic).</p>`)}
+${V.rules(V.ok('About page','Same for everyone: static'),V.ok('Dashboard reading cookies()','Different per visitor: dynamic'),V.ok('next build, then read the table','The symbols tell you how each route will be served'))}
+${V.build(`<ol><li>Write an action with the directive, read the field by its name, save it and revalidate <code>/</code>; pass it to the form's <code>action</code>.</li><li>Create <code>app/api/messages/route.ts</code> exporting <code>GET</code> that returns the messages with <code>NextResponse.json</code>.</li><li>Add <code>POST</code>: 400 when the text is missing, 201 with the new message otherwise.</li><li>Run <code>next build</code> in the terminal and find the ○ and ƒ symbols.</li></ol>`)}
+${V.hook(`Same for everyone? Print it once (○). Depends on who is asking? Cook it each time (ƒ).`)}
+`)}
+
+<div class="try"><b>Try it in your head</b>1. What does <code>formData.get('text')</code> read? <i>The field whose name attribute is "text".</i> 2. Which status means "created"? <i>201.</i> 3. Is a page that reads the session cookie static or dynamic? <i>Dynamic (ƒ): it differs per visitor.</i></div>
+`);
+
+/* n6 helpers: a Post table. cols: show the published column; rows: [id,title,pub,cls] */
+const PT=(x,y,pubCol,rows,hl)=>{let s='<rect class="'+(hl||'bx')+'" x="'+x+'" y="'+y+'" width="'+(pubCol?266:170)+'" height="'+(34+rows.length*30)+'" rx="8"/><text class="t-b" x="'+(x+10)+'" y="'+(y+22)+'" style="font-size:14px">id</text><text class="t-b" x="'+(x+44)+'" y="'+(y+22)+'" style="font-size:14px">title</text>'+(pubCol?'<text class="t-b t-ok" x="'+(x+170)+'" y="'+(y+22)+'" style="font-size:14px">published</text>':'')+'<path class="ln" d="M'+x+' '+(y+30)+'h'+(pubCol?266:170)+'"/>';
+ rows.forEach((r,i)=>{const ry=y+52+i*30;if(r[3])s+='<rect class="'+r[3]+'" x="'+(x+3)+'" y="'+(ry-19)+'" width="'+(pubCol?260:164)+'" height="26" rx="4"/>';s+='<text class="t-m'+(r[4]?' t-dim':'')+'" x="'+(x+12)+'" y="'+ry+'" style="font-size:14px">'+r[0]+'</text><text class="t-m'+(r[4]?' t-dim':'')+'" x="'+(x+44)+'" y="'+ry+'" style="font-size:14px">'+r[1]+'</text>'+(pubCol?'<text class="t-m'+(r[4]?' t-dim':'')+'" x="'+(x+170)+'" y="'+ry+'" style="font-size:14px">'+r[2]+'</text>':'')});return s};
+
+explain('n6',`
+<p>Almost every real app stores data in a database, and the database speaks SQL, not TypeScript. Prisma is the translator: you describe your data once, and it builds the tables and gives you typed, autocompleting queries.</p>
+
+${V.card(1,'Schema to database','a blueprint the builders follow',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="A blueprint of model Post with id, title and createdAt becomes a Post table in the database">
+<rect class="bx-info" x="6" y="8" width="196" height="150" rx="10"/>${V.ic('file',14,16,26,'ic-info')}<text class="t-s" x="46" y="34">schema.prisma</text>
+<text class="t-m" x="18" y="66" style="font-size:14px">model Post {</text>
+<text class="t-m" x="30" y="92" style="font-size:14px">id        Int</text>
+<text class="t-m" x="30" y="116" style="font-size:14px">title     String</text>
+<text class="t-m" x="30" y="140" style="font-size:14px">createdAt DateTime</text>
+${AR(208,84,236,84,'-a')}<text class="t-s" x="222" y="110" text-anchor="middle">migrate</text>
+${V.ic('db',300,8,40,'ic-info')}<text class="t-b" x="346" y="34">Post</text>
+<rect class="bx" x="242" y="54" width="172" height="104" rx="8"/>
+<text class="t-b" x="252" y="76" style="font-size:14px">id</text><text class="t-b" x="282" y="76" style="font-size:14px">title</text><text class="t-b" x="356" y="76" style="font-size:14px">created</text>
+<path class="ln" d="M242 84h172"/>
+<text class="t-m" x="254" y="108" style="font-size:14px">1</text><text class="t-m" x="282" y="108" style="font-size:14px">Hello</text><text class="t-m" x="356" y="108" style="font-size:14px">10-12</text>
+<text class="t-m" x="254" y="138" style="font-size:14px">2</text><text class="t-m" x="282" y="138" style="font-size:14px">Ideas</text><text class="t-m" x="356" y="138" style="font-size:14px">10-14</text>
+</svg><figcaption>You write the blueprint (a model in schema.prisma). A migration turns it into a real table: one column per field, one row per post.</figcaption></figure>
+${V.like(`<p>An architect's blueprint and a building crew. You never lay bricks yourself: you change the drawing, and the crew compares it with the building and does only the work needed. Every job sheet is filed, so the next site can be built exactly the same way.</p>`)}
+${V.why(`<p>Writing SQL by hand for every table and query is slow and nothing checks that your code matches the tables. An <b>ORM</b> (object-relational mapper) maps tables to objects in your language. Prisma, first released in 2019, became the most popular ORM for TypeScript because the schema gives you types for free.</p>`)}
+${V.anat([[1,'published'],' ',[2,'Boolean'],' ',[3,'@default(false)']],[
+ '<b>Field name.</b> Becomes a column. camelCase by convention.',
+ '<b>Prisma type.</b> <code>Int</code>, <code>String</code>, <code>Boolean</code>, <code>DateTime</code> and more. Each maps to a database column type and a TypeScript type.',
+ '<b>Attribute.</b> Extra rules with <code>@</code>: <code>@default(false)</code> gives new rows a value, <code>@id</code> marks the primary key, <code>@default(autoincrement())</code> counts 1, 2, 3.'])}
+<p><b>Watch a migration.</b> You add one field and run <code>npx prisma migrate dev --name add_published</code>.</p>
+${V.steps([
+ ['You add a line to the blueprint: <b>published Boolean @default(false)</b>. The database has not changed yet.',`<svg viewBox="0 0 420 210" role="img" aria-label="New field added to the schema">
+${CP(6,8,408,['model Post {','  id     Int    @id @default(autoincrement())','  title  String','  published Boolean @default(false)','}'],3,13,24)}
+<text class="t-s" x="8" y="168">schema.prisma</text>
+</svg>`],
+ ['<b>migrate dev</b> compares the blueprint with the real database and finds one difference: the table has no published column.',`<svg viewBox="0 0 420 210" role="img" aria-label="Prisma finds the difference">
+${PT(6,8,false,[['1','Hello'],['2','Draft']])}
+${V.ic('search',190,40,44,'ic-a')}
+<rect class="bx-warn" x="246" y="30" width="168" height="60" rx="8"/><text class="t-s" x="258" y="54">missing column:</text><text class="t-m" x="258" y="78" style="font-size:14px">published</text>
+</svg>`],
+ ['It writes the change as SQL in a new, dated <b>migration file</b>, named after your <b>--name</b>.',`<svg viewBox="0 0 420 210" role="img" aria-label="A migration SQL file is written">
+${V.ic('file',8,8,32,'ic-info')}<text class="t-m" x="44" y="22" style="font-size:13px">prisma/migrations/</text><text class="t-m" x="44" y="40" style="font-size:13px">20261015120000_add_published/migration.sql</text>
+${CP(6,52,408,['ALTER TABLE "Post"','  ADD COLUMN "published" BOOLEAN','  NOT NULL DEFAULT false;'],-1,14,26)}
+</svg>`],
+ ['It runs that SQL on your database. The new column appears, and existing rows get the default, <b>false</b>.',`<svg viewBox="0 0 420 210" role="img" aria-label="The table gains a published column">
+${PT(6,8,true,[['1','Hello','false'],['2','Draft','false']],'bx-ok')}
+${V.ic('check',290,36,44,'ic-ok')}
+</svg>`],
+ ['Finally the <b>Prisma Client</b> is generated again from the schema, so <b>post.published</b> now autocompletes in your code as a boolean.',`<svg viewBox="0 0 420 210" role="img" aria-label="The typed client knows about published">
+${CP(6,8,408,['const posts = await prisma.post.findMany();','posts[0].published   // boolean'],1,14,28)}
+${V.ic('gear',12,90,40,'ic-a')}<text class="t-m" x="60" y="116" style="font-size:14px">npx prisma generate</text>
+<text class="t-s" x="60" y="140">(run by migrate dev in Prisma 6 and earlier)</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.no('Editing the production database by hand','The change is in no file, so dev, CI and production drift apart'),V.ok('Every change is a migration','Committed to Git and applied the same way everywhere'),
+ V.no('Editing a migration that already ran','Make a new migration instead'),V.ok('npx prisma migrate deploy','Applies committed migrations in production'),
+ V.rh('Conventions'),V.ok('model Post','Models are PascalCase and singular'),V.ok('--name add_published','Name each migration after what it changes'))}
+${V.hook(`Change the blueprint, migrate, commit. Never lay bricks by hand.`)}
+`)}
+
+${V.card(2,'Typed queries','an order ticket for the database',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="Your code hands an order ticket with where and orderBy to Prisma, which fetches matching rows from the database">
+${V.ic('laptop',8,40,56,'ic-a')}<text class="t-s" x="36" y="120" text-anchor="middle">your code</text>
+<rect class="bx-warn" x="80" y="20" width="150" height="104" rx="6"/><text class="t-b" x="92" y="42" style="font-size:14px">ticket</text><text class="t-m" x="92" y="70" style="font-size:14px">where:</text><text class="t-m" x="104" y="90" style="font-size:14px">published</text><text class="t-m" x="92" y="114" style="font-size:14px">orderBy: id↓</text>
+${AR(236,72,272,72,'-a')}
+${V.ic('robot',278,40,56,'ic-p')}<text class="t-s" x="306" y="120" text-anchor="middle">Prisma</text>
+${V.ic('db',356,40,56,'ic-info')}<text class="t-s" x="384" y="120" text-anchor="middle">database</text>
+<text class="t" x="210" y="164" text-anchor="middle">SQL goes out, typed Post objects come back</text>
+</svg><figcaption>You fill in a ticket as a plain object. Prisma writes the SQL, runs it, and hands back objects with the right TypeScript type.</figcaption></figure>
+${V.anat(['await ',[1,'prisma.post'],'.',[2,'findMany'],'({\n  ',[3,'where: { published: true }'],',\n  ',[4,"orderBy: { id: 'desc' }"],'\n});'],[
+ '<b>The model.</b> Model <code>Post</code> becomes <code>prisma.post</code>, lowercase.',
+ '<b>The operation.</b> <code>findMany</code> (a list), <code>findUnique</code> (one by id), <code>create</code>, <code>update</code>, <code>delete</code>.',
+ '<b>Filter.</b> Only rows matching this. Like SQL WHERE.',
+ '<b>Sort.</b> <code>\'desc\'</code> means newest (highest id) first.'])}
+${V.steps([
+ ['The table holds three posts. One is a draft: published is false.',`<svg viewBox="0 0 420 160" role="img" aria-label="Three rows in the table">
+${PT(6,8,true,[['1','Hello','true'],['2','Draft','false'],['3','Launch','true']])}
+</svg>`],
+ ['<b>where: { published: true }</b> keeps only matching rows. The draft is filtered out.',`<svg viewBox="0 0 420 160" role="img" aria-label="Draft row filtered out">
+${PT(6,8,true,[['1','Hello','true','bx-ok'],['2','Draft','false','',1],['3','Launch','true','bx-ok']])}
+<path class="ln-x" d="M14 86H262"/>
+</svg>`],
+ ['<b>orderBy: { id: \'desc\' }</b> sorts what is left, highest id first. You get back a typed list: <b>Post[]</b>.',`<svg viewBox="0 0 420 160" role="img" aria-label="Result sorted 3 then 1">
+${PT(6,8,true,[['3','Launch','true','bx-ok'],['1','Hello','true','bx-ok']])}
+<text class="t-m t-ok" x="290" y="70" style="font-size:16px;font-weight:700">→ Post[]</text>
+</svg>`]])}
+<p>Writing works the same way: <code>await prisma.post.create({ data: { title: 'Hello' } })</code>. Call it from a server action, then revalidate the page.</p>
+${V.rules(V.no('prisma.Post.findMany()','The client uses the lowercase model name'),V.no('prisma.post.create({ title: \'Hi\' })','The values go inside data: { … }'),
+ V.no('const posts = prisma.post.findMany()','Forgot await: you get a Promise, not posts'),V.ok('In server code only','Prisma talks to the database: use it in server components and actions'))}
+${V.build(`<ol><li>Run your first migration with a <code>--name</code> and watch the migration file appear.</li><li>List posts with <code>findMany</code> in the page, and add a form whose server action calls <code>create</code>.</li><li>Add a boolean field with a default to the model, then run a second migration.</li><li>Add a <code>where</code> so only published posts show. Create one and check it stays hidden.</li></ol>`)}
+${V.hook(`Schema is the blueprint, migrations are the job sheets, the client is the waiter with your order.`)}
+`)}
+
+<div class="try"><b>Try it in your head</b>1. Model <code>Comment</code>: what is the client property? <i>prisma.comment.</i> 2. You added a field to the schema. What next? <i>Run a new migration and commit it.</i> 3. Why does an old post show published = false? <i>The @default(false) filled in existing rows.</i></div>
+`);
+
+/* n7 helpers: browser (left) and server (right) for login; door scene for middleware. */
+const LG=(o)=>'<rect class="'+(o.b||'bx')+'" x="6" y="8" width="160" height="176" rx="12"/><text class="t-b" x="18" y="32">Browser</text>'+
+ '<rect class="bx" x="18" y="44" width="136" height="28" rx="5"/><text class="t-m" x="26" y="64" style="font-size:13px">ada@example.com</text><rect class="bx" x="18" y="80" width="136" height="28" rx="5"/><text class="t-m" x="26" y="100" style="font-size:14px">'+(o.pw||'••••••••')+'</text>'+
+ (o.cookie?V.ic('card',22,120,40,'ic-ok')+'<text class="t-m t-ok" x="68" y="146" style="font-size:14px">session</text>':'')+(o.msg||'')+
+ '<rect class="'+(o.s||'bx')+'" x="254" y="8" width="160" height="176" rx="12"/><text class="t-b" x="266" y="32">Server</text>'+V.ic('db',266,44,40,'ic-info')+'<text class="t-s" x="312" y="62">stored hash</text><text class="t-m" x="312" y="82" style="font-size:13px">$2b$12$Xa…</text>'+(o.srv||'');
+const DOOR=(o)=>V.ic(o.who||'person',8,40,60,o.wc||'ic-info')+(o.cookie?V.ic('card',52,94,30,'ic-ok'):'')+'<text class="t-m" x="8" y="30" style="font-size:14px">'+o.url+'</text>'+
+ '<rect class="'+(o.mb||'bx-warn')+'" x="140" y="20" width="110" height="130" rx="10"/>'+V.ic('shield',170,36,50,'ic-warn')+'<text class="t-m" x="195" y="112" text-anchor="middle" style="font-size:13px">middleware</text>'+
+ '<rect class="'+(o.db||'bx')+'" x="300" y="20" width="114" height="130" rx="10"/>'+V.ic(o.dic||'lock',332,44,50,o.dcl||'ic-p')+'<text class="t-m" x="357" y="128" text-anchor="middle" style="font-size:13px">/dashboard</text>'+(o.extra||'');
+
+explain('n7',`
+<p>Every app with accounts has to answer one question on every request: who is this? Get it wrong and strangers read other people's data. This lesson shows the moving parts that libraries like Auth.js and Clerk handle for you.</p>
+
+${V.card(1,'Logging in','swap a password for a wristband',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="At the ticket desk a person proves who they are once and gets a wristband labelled session, with three safety stamps: httpOnly, secure and sameSite">
+${V.ic('person',10,40,70,'ic-info')}<text class="t-s" x="45" y="130" text-anchor="middle">you</text>
+${AR(90,74,126,74,'-a')}<text class="t-s" x="108" y="60" text-anchor="middle">password</text>
+<rect class="bx-info" x="134" y="30" width="96" height="92" rx="10"/>${V.ic('lock',160,44,44,'ic-info')}<text class="t-s" x="182" y="112" text-anchor="middle">check once</text>
+${AR(236,74,268,74,'-ok')}
+<rect class="bx-ok" x="276" y="44" width="138" height="56" rx="28"/>${V.ic('card',288,54,36,'ic-ok')}<text class="t-m" x="332" y="78" style="font-size:14px">session</text>
+<text class="t-m" x="6" y="164" style="font-size:14px">httpOnly</text><text class="t-m" x="134" y="164" style="font-size:14px">secure</text><text class="t-m" x="262" y="164" style="font-size:14px">sameSite</text>
+</svg><figcaption>You prove who you are once, with your password. The server gives the browser a session cookie, and the browser shows it on every later request.</figcaption></figure>
+${V.like(`<p>A festival wristband. At the gate you show your ticket and ID once, and they snap a band on your wrist. After that, staff just glance at the band. It cannot be slipped off and handed to someone else easily, and it only works at this festival.</p>`)}
+${V.why(`<p>The web forgets you between requests: each one arrives as a stranger. Typing a password on every click is impossible, so after one check the server sets a <b>cookie</b>, a small named value the browser stores and sends back automatically. Passwords themselves are never stored, only a <b>hash</b>: a scrambled fingerprint (made with bcrypt or argon2) that cannot be turned back into the password.</p>`)}
+${V.anat(['cookies().set(',[1,"'session'"],', ',[2,'sessionId'],', {\n  ',[3,'httpOnly: true'],', ',[4,'secure: true'],', ',[5,"sameSite: 'lax'"],'\n});'],[
+ '<b>Cookie name.</b>',
+ '<b>Value.</b> In real apps a long random ID or a signed token, never a password.',
+ '<b>httpOnly.</b> JavaScript on the page cannot read it, so an XSS bug (attacker script running in your page) cannot steal it.',
+ '<b>secure.</b> Only sent over HTTPS, so nobody on the café Wi-Fi can read it.',
+ '<b>sameSite.</b> Not sent when another site tries to trigger requests to yours, which blocks most CSRF attacks.'])}
+${V.steps([
+ ['You submit the login form. The email and password go to a server action over HTTPS.',`<svg viewBox="0 0 420 190" role="img" aria-label="Login form posts to the server">
+${LG({b:'bx-hl'})}
+${AR(170,90,250,90,'-a')}${V.ic('mail',192,52,32,'ic-a')}
+</svg>`],
+ ['The server finds the <b>stored hash</b> for that email, hashes what you typed the same way, and compares the two fingerprints.',`<svg viewBox="0 0 420 190" role="img" aria-label="Server compares hashes">
+${LG({s:'bx-hl',srv:'<text class="t-m" x="312" y="118" style="font-size:13px">hash(typed)</text><text class="t-b" x="334" y="142" text-anchor="middle">=?</text>'})}
+</svg>`],
+ ['If they differ, it answers <b>"Wrong email or password"</b>. It never says which one was wrong, so attackers cannot test which emails have accounts.',`<svg viewBox="0 0 420 190" role="img" aria-label="Wrong password message">
+${LG({pw:'••••',msg:'<text class="t-bad" x="18" y="140" style="font-size:13px">Wrong email</text><text class="t-bad" x="18" y="160" style="font-size:13px">or password</text>',srv:V.ic('cross',312,110,40,'ic-bad')})}
+</svg>`],
+ ['If they match, the server sets the <b>session cookie</b> with all three safety flags, then calls <b>redirect(\'/dashboard\')</b>.',`<svg viewBox="0 0 420 190" role="img" aria-label="Server sets the cookie">
+${LG({s:'bx-ok',srv:V.ic('check',312,110,40,'ic-ok')})}
+${AR(250,140,170,140,'-ok')}<text class="t-s" x="210" y="130" text-anchor="middle">Set-Cookie</text>
+</svg>`],
+ ['The browser keeps the wristband and sends it automatically with every request to your site. Scripts on the page cannot read it.',`<svg viewBox="0 0 420 190" role="img" aria-label="Browser now holds the cookie">
+${LG({cookie:true,b:'bx-ok'})}
+${AR(170,160,250,160,'-ok')}<text class="t-s" x="210" y="150" text-anchor="middle">every request</text>
+</svg>`]])}
+${V.rules(V.rh('Security musts'),
+ V.no('password === user.password','Never store or compare plain passwords: compare hashes'),V.ok('bcrypt / argon2','Slow hashing on purpose, so guessing is expensive'),
+ V.no('"No account with that email"','Leaks which emails exist. Say "Wrong email or password"'),V.ok('httpOnly, secure, sameSite','Set all three on session cookies'),
+ V.rh('Version note'),V.ok('(await cookies()).set(…)','Next.js 15 and later: cookies() is async. This sandbox follows Next 14'))}
+${V.hook(`Check the password once, hand out a wristband, and make it httpOnly, secure and sameSite.`)}
+`)}
+
+${V.card(2,'Middleware','a bouncer at the door',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="A visitor walks to the dashboard door and a bouncer called middleware checks for a wristband first">
+${DOOR({url:'GET /dashboard',cookie:true})}
+${AR(84,84,134,84,'-a')}${AR(256,84,294,84,'-ok')}
+</svg><figcaption>Middleware runs before the page, for every URL that matches. No wristband, no entry: it sends you to /login instead.</figcaption></figure>
+${V.like(`<p>A bouncer at the door of the VIP room. He does not cook or serve. He checks one thing, your wristband, before you get anywhere near the room, and points you back to the ticket desk if you have none.</p>`)}
+${V.anat(['export function middleware(',[1,'request: NextRequest'],') {\n  if (!',[2,"request.cookies.get('session')"],')\n    return ',[3,"NextResponse.redirect(new URL('/login', request.url))"],';\n  return ',[4,'NextResponse.next()'],';\n}\nexport const config = { ',[5,"matcher: ['/dashboard/:path*']"],' };'],[
+ '<b>The incoming request</b>, before any page runs.',
+ '<b>Check the wristband.</b> Is there a session cookie?',
+ '<b>Turn them away.</b> Redirect to /login. <code>new URL</code> builds a full address from the current one.',
+ '<b>Let them in.</b> Carry on to the page as normal.',
+ '<b>Which doors to guard.</b> <code>:path*</code> means /dashboard and everything under it.'])}
+${V.steps([
+ ['A visitor with no cookie asks for <b>/dashboard</b>. The URL matches the matcher, so middleware runs first.',`<svg viewBox="0 0 420 160" role="img" aria-label="Visitor without cookie reaches middleware">
+${DOOR({url:'GET /dashboard',mb:'bx-hl'})}
+${AR(84,84,134,84,'-a')}
+</svg>`],
+ ['No session cookie, so it returns a <b>redirect to /login</b>. The dashboard code never runs.',`<svg viewBox="0 0 420 160" role="img" aria-label="Redirect to login">
+${DOOR({url:'→ /login',mb:'bx-bad',wc:'ic-bad'})}
+${AR(134,120,84,120,'')}<text class="t-bad" x="108" y="146" text-anchor="middle" style="font-size:14px">307</text>
+</svg>`],
+ ['After logging in, the browser sends the cookie. Middleware finds it and calls <b>NextResponse.next()</b>: the dashboard renders.',`<svg viewBox="0 0 420 160" role="img" aria-label="With cookie the dashboard opens">
+${DOOR({url:'GET /dashboard',cookie:true,mb:'bx-ok',db:'bx-ok',dic:'unlock',dcl:'ic-ok'})}
+${AR(84,84,134,84,'-a')}${AR(256,84,294,84,'-ok')}
+</svg>`],
+ ['<b>Log out</b> deletes the cookie. Ask for /dashboard again and the bouncer sends you to /login once more.',`<svg viewBox="0 0 420 160" role="img" aria-label="After logout the visitor is redirected again">
+${DOOR({url:'GET /dashboard',mb:'bx-bad',extra:'<text class="t-s" x="8" y="150">cookie deleted</text>'})}
+${AR(84,84,134,84,'-a')}
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.no("matcher: ['/dashboard']",'Guards only that exact page, not /dashboard/settings'),V.ok("matcher: ['/dashboard/:path*']",'Guards the page and everything below it'),
+ V.no('Checking only in middleware','Also check the session where the data is read. A 2025 Next.js bug let attackers skip middleware entirely'),
+ V.rh('Conventions'),V.ok('Auth.js, Clerk, Supabase Auth','In real projects use a proven library: it handles expiry, rotation, OAuth and CSRF'),
+ V.ok('proxy.ts','Next.js 16 renamed middleware.ts to proxy.ts (export function proxy). Same idea'))}
+${V.build(`<ol><li>Create <code>middleware.ts</code> in the project root that redirects to /login when there is no session cookie, with a matcher for the dashboard.</li><li>Build the login page: its server action checks the password, sets an httpOnly cookie and redirects to /dashboard.</li><li>Show "Wrong email or password" when the check fails.</li><li>Add a log out action that deletes the cookie and redirects to /login.</li></ol>`)}
+${V.hook(`Login hands out the wristband. Middleware is the bouncer. Logout cuts the band off.`)}
+`)}
+
+<div class="try"><b>Try it in your head</b>1. Why httpOnly? <i>Scripts on the page cannot read the cookie, so an XSS bug cannot steal the session.</i> 2. Does middleware run for <code>/about</code> with the matcher above? <i>No: only /dashboard and below.</i> 3. What does the server store instead of passwords? <i>A slow hash, made with bcrypt or argon2.</i></div>
+`);
 }

@@ -241,7 +241,7 @@ ${V.card(2,'Loops','for counts, foreach walks the list',`
 <circle class="dot" cx="30" cy="97" r="5"/><circle class="dot" cx="390" cy="97" r="5"/>
 <rect class="bx-info" x="34" y="32" width="96" height="52" rx="6"/><text class="t-m" x="82" y="64" text-anchor="middle" style="font-size:17px">bread</text>
 <rect class="bx-info" x="140" y="32" width="96" height="52" rx="6"/><text class="t-m" x="188" y="64" text-anchor="middle" style="font-size:17px">milk</text>
-<rect class="bx-hl" x="246" y="32" width="96" height="52" rx="6"/><text class="t-m" x="294" y="64" text-anchor="middle" style="font-size:17px">eggs</text>
+<rect class="bx-warn" x="246" y="32" width="96" height="52" rx="6"/><text class="t-m" x="294" y="64" text-anchor="middle" style="font-size:17px">eggs</text>
 ${V.ic('robot',350,20,56,'ic-a')}
 <text class="t-m" x="34" y="138" style="font-size:16px">foreach ($items as $item)</text>
 <text class="t-s" x="34" y="164">one turn per item, in order, then stop</text>
@@ -671,449 +671,522 @@ ${V.hook(`If the list of allowed values is fixed, make it an enum, not a string.
 `);
 
 explain('h3',`
-<h4>Why PHP needs a package manager</h4>
-<p>As soon as a project grows past one file, two problems appear.</p>
-<ol>
-<li><b>Loading your own files.</b> Each class lives in its own file. Before PHP can use a class, the file that defines it must be loaded, traditionally with a line like <code>require 'src/Models/Product.php';</code>. With fifty classes you need fifty of those lines, in the right order, and one wrong path breaks everything.</li>
-<li><b>Using other people's code.</b> Nobody writes their own logging, email sending or date handling from scratch. Thousands of free, tested libraries exist. But downloading them by hand, keeping track of versions, and making sure your teammate has exactly the same versions is a nightmare.</li>
-</ol>
-<p><b>Composer</b> solves both. It is PHP's <b>package manager</b>: a command-line tool that downloads libraries (called <b>packages</b> or <b>dependencies</b>) and generates an <b>autoloader</b>, a small piece of code that loads each class file automatically the first time you use it. Packages come from <b>Packagist</b>, the public directory at packagist.org. Every Laravel and Symfony project starts with Composer.</p>
+<p>No professional writes everything from scratch. Logging, payments, emails, dates: someone has already built and tested them. <b>Composer</b> is how a PHP project borrows that code safely and finds every class it needs without a pile of <code>require</code> lines.</p>
 
-<h4>Namespaces: surnames for classes</h4>
-<p>Before autoloading makes sense, you need <b>namespaces</b>. Two libraries might both have a class called <code>Logger</code>. A namespace is like a surname that keeps them apart: <code>Monolog\\Logger</code> and <code>App\\Logger</code> are different classes. The parts are separated by backslashes.</p>
-<p>Look at the two files this lesson gives you in <code>~/shop</code>:</p>
-<pre class="snip">// src/Models/Product.php
-namespace App\\Models;       // everything below lives in App\\Models
-class Product { ... }       // full name: App\\Models\\Product
+${V.card(1,'Composer installs packages','a shopping list and a receipt',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="composer.json is a shopping list, a truck from Packagist delivers packages into the vendor folder, and composer.lock is the receipt with exact versions">
+${V.ic('list',10,20,60,'ic-info')}<text class="t-m" x="40" y="104" text-anchor="middle" style="font-size:14px">composer.json</text>
+<text class="t-s" x="40" y="124" text-anchor="middle">what you want</text>
+${V.ic('globe',176,8,40,'ic-a')}<text class="t-s" x="222" y="34">Packagist</text>
+${V.ic('truck',150,50,70,'ic-a')}
+<path class="ln-a" d="M88 70H142"/><polygon class="ah-a" points="140,63 140,77 150,70"/>
+<path class="ln-ok" d="M226 86H282"/><polygon class="ah-ok" points="280,79 280,93 292,86"/>
+${V.ic('folder',300,40,76,'ic-ok')}<text class="t-m" x="338" y="134" text-anchor="middle" style="font-size:14px">vendor/</text>
+${V.ic('file',146,124,40,'ic-warn')}<text class="t-m" x="192" y="146" style="font-size:14px">composer.lock</text>
+<text class="t-s" x="192" y="168">exact versions</text>
+</svg><figcaption>composer.json says what you need. Composer downloads it from Packagist, the public PHP package catalogue, into vendor/, and writes the exact versions it chose into composer.lock.</figcaption></figure>
+${V.like(`<p><b>composer.json</b> is your shopping list ("milk, any brand from version 3"). <b>composer.lock</b> is the receipt: exactly which carton you got. Hand someone the receipt and they can buy the identical shopping.</p>`)}
+${V.why(`<p>Before Composer arrived in 2012, PHP developers downloaded zip files by hand and copied them into projects. Versions drifted, updates were scary, and nobody knew what was installed. Composer made it one command, and the lock file made every computer identical.</p>`)}
+${V.anat([[1,'composer'],' ',[2,'require'],' ',[3,'monolog'],[4,'/'],[5,'monolog']],[
+ '<b>The tool.</b> Composer is a command-line program.',
+ '<b>Command.</b> "Add this package to my project". <code>install</code> and <code>update</code> are its siblings.',
+ '<b>Vendor name.</b> The person or organisation who publishes it.',
+ '<b>Slash</b> between vendor and package. Always both parts.',
+ '<b>Package name.</b> Monolog is the most used PHP logging library.'])}
+${V.steps([
+ ['You run <b>composer require monolog/monolog</b>. Composer asks Packagist which versions exist and which work with your PHP.',`<svg viewBox="0 0 420 170" role="img" aria-label="Composer asks Packagist for monolog">
+<rect class="bx-dark" x="10" y="10" width="400" height="34" rx="6"/><text class="t-term" x="20" y="33" style="font-size:14px">$ composer require monolog/monolog</text>
+${V.ic('globe',30,64,50,'ic-a')}<text class="t-s" x="20" y="134">Packagist</text>
+<path class="ln-a" d="M90 90H150"/><text class="t-s" x="160" y="94">which versions fit?</text>
+<rect class="ln-d" x="300" y="56" width="110" height="100" rx="8"/><text class="t-m" x="355" y="80" text-anchor="middle" style="font-size:14px">vendor/</text>
+</svg>`],
+ ['It downloads the newest version that fits, plus anything Monolog itself needs, into the <b>vendor/</b> folder.',`<svg viewBox="0 0 420 170" role="img" aria-label="Packages are downloaded into vendor">
+<rect class="bx-dark" x="10" y="10" width="400" height="34" rx="6"/><text class="t-term" x="20" y="33" style="font-size:14px">$ composer require monolog/monolog</text>
+${V.ic('globe',30,64,50,'ic-a')}<text class="t-s" x="20" y="134">Packagist</text>
+${V.ic('truck',150,62,60,'ic-a')}<path class="ln-ok" d="M218 92H286"/><polygon class="ah-ok" points="284,85 284,99 296,92"/>
+<rect class="bx-ok" x="300" y="56" width="110" height="100" rx="8"/><text class="t-m" x="355" y="80" text-anchor="middle" style="font-size:14px">vendor/</text>
+<text class="t-s" x="312" y="108">monolog/</text><text class="t-s" x="312" y="132">psr/log/</text>
+</svg>`],
+ ['It adds a version rule such as <b>"^3.9"</b> (3.9 or newer, but below 4) to composer.json, and the exact version to <b>composer.lock</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="composer.json and composer.lock are updated">
+<rect class="bx-dark" x="10" y="10" width="400" height="34" rx="6"/><text class="t-term" x="20" y="33" style="font-size:14px">$ composer require monolog/monolog</text>
+<rect class="bx-info" x="10" y="56" width="196" height="100" rx="8"/><text class="t-m" x="20" y="80" style="font-size:14px">composer.json</text>
+<text class="t-m" x="20" y="112" style="font-size:14px">"monolog/monolog":</text><text class="t-m t-a" x="20" y="136" style="font-size:14px">"^3.9"</text>
+<rect class="bx-warn" x="214" y="56" width="196" height="100" rx="8"/><text class="t-m" x="224" y="80" style="font-size:14px">composer.lock</text>
+<text class="t-s" x="224" y="112">monolog: exact</text><text class="t-s" x="224" y="136">psr/log: exact</text>
+</svg>`],
+ ['Finally it rebuilds <b>vendor/autoload.php</b>, so your code can use the new classes straight away.',`<svg viewBox="0 0 420 170" role="img" aria-label="The autoloader is regenerated">
+<rect class="bx-dark" x="10" y="10" width="400" height="34" rx="6"/><text class="t-term" x="20" y="33" style="font-size:14px">$ composer require monolog/monolog</text>
+<rect class="bx-ok" x="10" y="56" width="400" height="100" rx="8"/>${V.ic('book',24,70,60,'ic-ok')}
+<text class="t-m" x="100" y="96" style="font-size:16px">vendor/autoload.php</text>
+<text class="t-s" x="100" y="124">Generating autoload files</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('composer install','Teammates and servers: installs exactly what the lock file says'),V.no('composer update on a server','Picks new versions; do it on purpose on your own machine'),
+ V.no('editing files in vendor/','Your changes are wiped on the next install'),
+ V.rh('Conventions: what goes in Git'),
+ V.ok('composer.json + composer.lock','Commit both, so everyone gets the same versions'),V.no('vendor/','Add it to .gitignore; it can always be rebuilt'))}
+${V.hook(`json is the list, lock is the receipt, vendor is the delivery you never commit.`)}
+`)}
 
-// index.php
-use App\\Models\\Product;    // "when I say Product, I mean this one"
-$p = new Product('Keyboard', 49.5);</pre>
-<p>The <code>namespace</code> line gives every class in that file its surname. The <code>use</code> line in another file is a shortcut: it lets you write the short name <code>Product</code> instead of the full <code>App\\Models\\Product</code> every time. <code>use</code> does <b>not</b> load anything. It only tells PHP what a name means.</p>
+${V.card(2,'Autoloading','the library catalogue',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="A reader asks for App Models Product. The catalogue card maps App to src. The librarian fetches src/Models/Product.php from the shelf">
+${V.ic('person',10,30,56,'ic-info')}
+<rect class="bx-info" x="72" y="16" width="190" height="40" rx="8"/><text class="t-m" x="167" y="42" text-anchor="middle" style="font-size:14px">App\\Models\\Product</text>
+<rect class="bx-warn" x="72" y="74" width="190" height="56" rx="6"/>${V.ic('card',80,82,38,'ic-warn')}
+<text class="t-m" x="126" y="100" style="font-size:14px">App\\ &#10140; src/</text><text class="t-s" x="126" y="120">catalogue card</text>
+<path class="ln-a" d="M262 102H296"/><polygon class="ah-a" points="294,95 294,109 306,102"/>
+${V.ic('book',314,40,80,'ic-ok')}
+<rect class="bx-ok" x="10" y="150" width="400" height="40" rx="8"/><text class="t-m" x="210" y="176" text-anchor="middle" style="font-size:16px">src/Models/Product.php</text>
+</svg><figcaption>You ask for a class by its full name. The autoloader checks its catalogue rule, turns the name into a file path, and loads that file. You never write require for your own classes again.</figcaption></figure>
+${V.like(`<p>A library. You do not wander every shelf: you give the librarian a title, they check the <b>catalogue</b>, and fetch the book from the right shelf. The autoloader is the librarian, the PSR-4 rule is the catalogue.</p>`)}
+${V.why(`<p>Big projects have hundreds of class files. Writing <code>require 'src/Models/Product.php';</code> for each one was slow, easy to forget, and loaded files you did not need. PHP added autoloading, and the community agreed one shared catalogue rule, <b>PSR-4</b>, so every package finds classes the same way.</p>`)}
+${V.anat(['"autoload": { "psr-4": { ',[1,'"App\\\\"'],': ',[2,'"src/"'],' } }'],[
+ '<b>Namespace prefix.</b> Any class whose full name starts with <code>App\\</code>. JSON needs the backslash written twice.',
+ '<b>Folder.</b> Where those classes live, relative to composer.json.'])}
+${V.steps([
+ ['index.php says <b>new Product(...)</b>. Thanks to <b>use App\\Models\\Product;</b>, PHP knows its full name, but the class has not been loaded yet.',`<svg viewBox="0 0 420 180" role="img" aria-label="PHP needs the class App Models Product">
+<rect class="bx-dark" x="10" y="10" width="400" height="60" rx="6"/>
+<text class="t-term" x="20" y="34" style="font-size:14px">use App\\Models\\Product;</text>
+<text class="t-term" x="20" y="58" style="font-size:14px">$p = new Product('Keyboard', 49.5);</text>
+<rect class="bx-hl" x="10" y="86" width="400" height="40" rx="6"/><text class="t-m" x="210" y="112" text-anchor="middle" style="font-size:16px">App\\Models\\Product</text>
+<text class="t-s" x="210" y="160" text-anchor="middle">Not loaded yet. Ask the autoloader.</text>
+</svg>`],
+ ['The autoloader checks its catalogue. The name starts with <b>App\\</b>, and the rule says App\\ lives in <b>src/</b>. So it swaps the prefix.',`<svg viewBox="0 0 420 180" role="img" aria-label="App prefix becomes src">
+<rect class="bx-dark" x="10" y="10" width="400" height="60" rx="6"/>
+<text class="t-term t-dim" x="20" y="34" style="font-size:14px">use App\\Models\\Product;</text>
+<text class="t-term t-dim" x="20" y="58" style="font-size:14px">$p = new Product('Keyboard', 49.5);</text>
+<rect class="bx" x="10" y="86" width="400" height="40" rx="6"/><text class="t-m" x="210" y="112" text-anchor="middle" style="font-size:16px"><tspan class="t-bad">App\\</tspan>Models\\Product</text>
+<rect class="bx" x="10" y="134" width="400" height="40" rx="6"/><text class="t-m" x="210" y="160" text-anchor="middle" style="font-size:16px"><tspan class="t-ok">src/</tspan>Models\\Product</text>
+</svg>`],
+ ['Backslashes become folder slashes and <b>.php</b> goes on the end: <b>src/Models/Product.php</b>.',`<svg viewBox="0 0 420 180" role="img" aria-label="The path becomes src/Models/Product.php">
+<rect class="bx-dark" x="10" y="10" width="400" height="60" rx="6"/>
+<text class="t-term t-dim" x="20" y="34" style="font-size:14px">use App\\Models\\Product;</text>
+<text class="t-term t-dim" x="20" y="58" style="font-size:14px">$p = new Product('Keyboard', 49.5);</text>
+<rect class="bx" x="10" y="86" width="400" height="40" rx="6"/><text class="t-m" x="210" y="112" text-anchor="middle" style="font-size:16px">src/Models<tspan class="t-bad">\\</tspan>Product</text>
+<rect class="bx-ok" x="10" y="134" width="400" height="40" rx="6"/><text class="t-m" x="210" y="160" text-anchor="middle" style="font-size:16px">src/Models/Product<tspan class="t-ok">.php</tspan></text>
+</svg>`],
+ ['The file is loaded, the class now exists, and <b>new</b> builds the object. The script prints <b>Keyboard ($49.50)</b>.',`<svg viewBox="0 0 420 180" role="img" aria-label="The object is built and the script prints Keyboard 49.50">
+<rect class="bx-dark" x="10" y="10" width="400" height="60" rx="6"/>
+<text class="t-term t-dim" x="20" y="34" style="font-size:14px">use App\\Models\\Product;</text>
+<text class="t-a" x="10" y="58" style="font-size:12px">&#9654;</text><text class="t-term" x="20" y="58" style="font-size:14px">$p = new Product('Keyboard', 49.5);</text>
+<rect class="bx-ok" x="10" y="86" width="400" height="40" rx="6"/>${V.ic('check',18,92,28,'ic-ok')}<text class="t-m" x="56" y="112" style="font-size:15px">src/Models/Product.php loaded</text>
+<rect class="bx-dark" x="10" y="134" width="400" height="40" rx="6"/><text class="t-term" x="20" y="160" style="font-size:16px">Keyboard ($49.50)</text>
+</svg>`]])}
+${V.rules(V.rh('Rules: the catalogue only works if names match'),
+ V.ok('namespace App\\Models;','In src/Models/Product.php: the namespace mirrors the folders'),V.no('src/models/product.php','Wrong capitals: fails on Linux servers, which care about case'),
+ V.no('no require of vendor/autoload.php','"Failed to open stream" or "Class not found"'),V.ok('require __DIR__ . \'/vendor/autoload.php\';','Once, at the top of your entry file'),
+ V.ok('composer dump-autoload','Run after you change the autoload rules in composer.json'),
+ V.rh('Conventions'),
+ V.ok('App\\ =&gt; src/','Laravel uses App\\ =&gt; app/; same idea'),V.ok('one class per file','File name = class name + .php'))}
+${V.build(`<ol><li>Run <code>php index.php</code> and read the error: vendor/autoload.php does not exist yet.</li><li>Run <code>composer init</code> to create composer.json, with a PSR-4 rule mapping App\\ to src/.</li><li>Run <code>composer dump-autoload</code> to build the autoloader, then run the script again.</li><li>Add Monolog with <code>composer require</code>.</li><li>Create a <code>Logger</code>, push a <code>StreamHandler</code> to <code>php://stdout</code>, and call <code>-&gt;info('Product created')</code>.</li></ol>`)}
+${V.hook(`Full name in, file path out: prefix to folder, backslash to slash, add .php.`)}
+`)}
 
-<h4>The first error: no autoloader yet</h4>
-<p>The top of <code>index.php</code> says:</p>
-<pre class="snip">require __DIR__ . '/vendor/autoload.php';</pre>
-<p><code>require</code> means "load and run this other PHP file, and stop with a fatal error if it is missing". <code>__DIR__</code> is a built-in constant holding the folder the current file sits in, so the path works no matter where you run the script from. The file <code>vendor/autoload.php</code> is the one Composer generates. In this lesson it does not exist yet, so running <code>php index.php</code> fails with an error about failing to open <code>vendor/autoload.php</code>. On real PHP you would see "Failed to open stream: No such file or directory" followed by "Failed opening required". The fix is never to create that file by hand: you let Composer build it.</p>
-
-<h4>composer.json and the PSR-4 rule</h4>
-<p>Every Composer project has a file called <code>composer.json</code> in its root folder. It is written in JSON, a simple text format of keys and values in curly braces. It records two things: which packages the project needs, and how to find your own classes.</p>
-<pre class="snip">{
-    "name": "you/shop",
-    "require": {},
-    "autoload": {
-        "psr-4": { "App\\\\": "src/" }
-    }
-}</pre>
-<p>The <code>autoload</code> section uses a standard called <b>PSR-4</b>, agreed by the PHP community so every project finds classes the same way. The rule <code>"App\\\\": "src/"</code> says: "classes whose name starts with <code>App\\</code> live in the <code>src/</code> folder". The backslash is written twice because in JSON a single backslash starts a special code, so <code>\\\\</code> stands for one real backslash.</p>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="PSR-4 turns the class name App Models Product into the path src/Models/Product.php">
-<text class="t-s" x="190" y="16" text-anchor="middle">class name</text>
-<rect class="bx-a" x="40" y="24" width="80" height="40" rx="6"/><text class="t-m" x="80" y="50" text-anchor="middle">App\\</text>
-<rect class="bx-info" x="120" y="24" width="110" height="40" rx="6"/><text class="t-m" x="175" y="50" text-anchor="middle">Models\\</text>
-<rect class="bx-ok" x="230" y="24" width="110" height="40" rx="6"/><text class="t-m" x="285" y="50" text-anchor="middle">Product</text>
-<path class="ln-a" d="M80 64L62 112"/><polygon class="ah-a" points="56,110 68,112 60,120"/>
-<path class="ln" d="M175 64L157 112"/><polygon class="ah" points="151,110 163,112 155,120"/>
-<path class="ln-ok" d="M285 64V112"/><polygon class="ah-ok" points="279,112 291,112 285,120"/>
-<text class="t-s" x="296" y="96">add .php</text>
-<rect class="bx-a" x="20" y="120" width="80" height="40" rx="6"/><text class="t-m" x="60" y="146" text-anchor="middle">src/</text>
-<rect class="bx-info" x="100" y="120" width="110" height="40" rx="6"/><text class="t-m" x="155" y="146" text-anchor="middle">Models/</text>
-<rect class="bx-ok" x="210" y="120" width="150" height="40" rx="6"/><text class="t-m" x="285" y="146" text-anchor="middle">Product.php</text>
-<text class="t-s" x="210" y="184" text-anchor="middle">The prefix App\\ is swapped for src/</text>
-<text class="t-s" x="210" y="202" text-anchor="middle">The rest of the name becomes folders and a file</text>
-</svg><figcaption>How PSR-4 finds a file. The prefix App backslash is replaced by the folder src. Each remaining part of the name becomes a folder, and the last part, the class name, becomes the file name with .php added.</figcaption></figure>
-<p>Work through it for <code>App\\Models\\Product</code>:</p>
-<ol>
-<li>Does the name start with a known prefix? Yes, <code>App\\</code>, which maps to <code>src/</code>.</li>
-<li>Remove the prefix. What remains is <code>Models\\Product</code>.</li>
-<li>Turn the backslashes into forward slashes: <code>Models/Product</code>.</li>
-<li>Add <code>.php</code> and put the folder in front: <code>src/Models/Product.php</code>.</li>
-</ol>
-<p>So the rule only works if your files follow it: one class per file, the file named exactly like the class, and folders matching the namespace. On Linux servers file names are case-sensitive, so <code>product.php</code> will not be found for the class <code>Product</code>.</p>
-<p>To create <code>composer.json</code>, run <code>composer init</code>. On a real machine it asks a series of questions (package name, description, dependencies, and whether to add a PSR-4 mapping). The <code>--name you/shop</code> option answers the name question up front. This sandbox skips the questions and adds the <code>App\\</code> to <code>src/</code> rule for you. On a real machine Composer suggests a namespace based on the package name, such as <code>You\\Shop\\</code>, so you would type <code>App</code> instead, or edit the file afterwards.</p>
-
-<h4>Generating the autoloader</h4>
-<p><code>composer dump-autoload</code> reads the <code>autoload</code> section and writes the <code>vendor/</code> folder with <code>vendor/autoload.php</code> inside it. Once that file exists, here is what happens when <code>index.php</code> runs:</p>
-<ol>
-<li><code>require</code> loads <code>vendor/autoload.php</code>, which registers Composer's autoloader with PHP.</li>
-<li>PHP reaches <code>new Product(...)</code>. Thanks to <code>use</code>, it knows this means <code>App\\Models\\Product</code>, but that class is not loaded yet.</li>
-<li>Instead of failing, PHP asks the autoloader. The autoloader applies the PSR-4 rule, finds <code>src/Models/Product.php</code>, and loads it.</li>
-<li>The class now exists, the object is built, and the script prints <code>Keyboard ($49.50)</code>.</li>
-</ol>
-<p>Files are only loaded when a class is first used, so big projects stay fast. You need to run <code>dump-autoload</code> again whenever you change the <code>autoload</code> section of <code>composer.json</code>. Adding a new class file inside an existing mapped folder does not need it: the PSR-4 rule simply finds the new file.</p>
-
-<h4>Installing a package: <code>composer require</code></h4>
-<p>Now for other people's code. <b>Monolog</b> is the most popular PHP logging library, and Laravel uses it internally. Packages are named <code>vendor/package</code>, where "vendor" means the publisher, so Monolog is <code>monolog/monolog</code>. One command does all the work:</p>
-<pre class="snip">composer require monolog/monolog</pre>
-<p>Behind the scenes Composer:</p>
-<ol>
-<li>adds <code>"monolog/monolog": "^3.7"</code> (or whatever is current) to the <code>require</code> section of <code>composer.json</code>;</li>
-<li>works out exact versions of Monolog and anything Monolog itself needs;</li>
-<li>writes those exact versions into <code>composer.lock</code>;</li>
-<li>downloads the code into <code>vendor/</code> and regenerates the autoloader, so Monolog's classes load automatically too.</li>
-</ol>
-<p>The caret in <code>^3.7</code> is a <b>version constraint</b>: "3.7 or any newer 3.x version, but not 4.0". Major version numbers change when a library makes breaking changes, so the caret accepts safe updates and refuses risky ones.</p>
-<figure class="fig"><svg viewBox="0 0 420 236" role="img" aria-label="composer.json and composer.lock are committed, vendor is ignored">
-<rect class="bx-ok" x="20" y="10" width="190" height="50" rx="8"/><text class="t-m" x="115" y="32" text-anchor="middle">composer.json</text><text class="t-s" x="115" y="52" text-anchor="middle">ranges you asked for</text>
-<path class="ln" d="M115 60V82"/><polygon class="ah" points="109,82 121,82 115,90"/><text class="t-s" x="126" y="80">resolve</text>
-<rect class="bx-ok" x="20" y="90" width="190" height="50" rx="8"/><text class="t-m" x="115" y="112" text-anchor="middle">composer.lock</text><text class="t-s" x="115" y="132" text-anchor="middle">exact versions</text>
-<path class="ln" d="M115 140V162"/><polygon class="ah" points="109,162 121,162 115,170"/><text class="t-s" x="126" y="160">download</text>
-<rect class="bx-warn" x="20" y="170" width="190" height="50" rx="8"/><text class="t-m" x="115" y="192" text-anchor="middle">vendor/</text><text class="t-s" x="115" y="212" text-anchor="middle">the library code</text>
-<path class="ln-d" d="M210 35H280M210 115H280M210 195H280"/>
-<text class="t-b t-ok" x="290" y="40">commit</text>
-<text class="t-b t-ok" x="290" y="120">commit</text>
-<text class="t-b t-bad" x="290" y="200">ignore</text>
-<text class="t-s" x="290" y="220">in .gitignore</text>
-</svg><figcaption>composer.json holds the version ranges you asked for. Composer resolves them into exact versions in composer.lock, then downloads the code into vendor. The first two files go into Git; vendor is listed in .gitignore because anyone can rebuild it.</figcaption></figure>
-<p>Using the library then looks like any other class: add <code>use Monolog\\Logger;</code> and <code>use Monolog\\Handler\\StreamHandler;</code> at the top, create a logger with a channel name such as <code>'app'</code>, attach a handler that says where messages go (<code>'php://stdout'</code> means "straight to the terminal"), and call a method named after the severity level, such as <code>info()</code>. Monolog prints each message with a timestamp, the channel and level (<code>app.INFO</code>), your message, and any extra details you passed as an array.</p>
-
-<h4>What goes into Git: lock file yes, vendor no</h4>
-<ul>
-<li><b>Commit <code>composer.json</code></b>: it says what the project needs.</li>
-<li><b>Commit <code>composer.lock</code></b>: it pins the exact versions. When a teammate or server runs <code>composer install</code>, Composer reads the lock file and installs precisely those versions, so everyone runs identical code.</li>
-<li><b>Ignore <code>vendor/</code></b>: it is large, it is generated, and <code>composer install</code> recreates it anywhere.</li>
-</ul>
-<p>Know the difference between the commands: <code>composer install</code> follows the lock file exactly; <code>composer update</code> looks for newer versions within your ranges and rewrites the lock file; <code>composer require</code> adds a new package.</p>
-<div class="mistake"><b>Common mistake</b>Changing the namespace or moving a file without matching the PSR-4 rule, then getting <b>Class "App\\Models\\Product" not found</b>. Check three things: the <code>namespace</code> line in the file, the folder path, and the exact file name with its capital letters.</div>
-<div class="mistake"><b>Common mistake</b>Editing files inside <code>vendor/</code> to fix a library. The next <code>composer install</code> wipes your change. Fix it in your own code, or contribute the fix to the library.</div>
-
-<h4>Reading the errors you will hit</h4>
-<ul>
-<li><b>Failed opening required 'vendor/autoload.php'</b>: the autoloader has not been generated. Run <code>composer install</code> or <code>composer dump-autoload</code>.</li>
-<li><b>Composer could not find a composer.json file</b>: you are in the wrong folder, or have not run <code>composer init</code>.</li>
-<li><b>Could not find a matching version of package</b>: the package name is misspelt or does not exist on Packagist.</li>
-</ul>
-<div class="try"><b>Try it in your head</b>With the rule <code>"App\\\\": "src/"</code>, where must the class <code>App\\Services\\Mailer</code> live? Strip <code>App\\</code>, turn <code>Services\\Mailer</code> into <code>Services/Mailer</code>, add <code>.php</code> and the folder: <code>src/Services/Mailer.php</code>.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Composer downloads packages from Packagist into <code>vendor/</code> and generates <code>vendor/autoload.php</code>.</li>
-<li>Namespaces are surnames for classes; <code>use</code> creates a short name and loads nothing.</li>
-<li>PSR-4 maps a namespace prefix to a folder, so <code>App\\Models\\Product</code> lives in <code>src/Models/Product.php</code>.</li>
-<li><code>composer dump-autoload</code> rebuilds the autoloader; <code>composer require vendor/package</code> adds a library.</li>
-<li>Commit <code>composer.json</code> and <code>composer.lock</code>; ignore <code>vendor/</code> and rebuild it with <code>composer install</code>.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. With <code>"App\\\\": "src/"</code>, where does <code>App\\Mail\\Welcome</code> live? <i>src/Mail/Welcome.php.</i> 2. A teammate clones your repo. Which command recreates vendor/? <i>composer install.</i> 3. Should vendor/ be committed? <i>No. Commit composer.json and composer.lock.</i></div>
 `);
 
 explain('h4',`
-<h4>Why PHP needs a database</h4>
-<p>Everything a PHP script holds in variables disappears when the request ends. The next visitor starts with a blank slate. To remember users, orders and posts between requests, you need somewhere permanent to keep them. That is a <b>database</b>: a program that stores data on disk and answers questions about it quickly and safely, even when many people use it at once.</p>
-<p>Most PHP apps use a <b>relational database</b> such as MySQL, MariaDB, PostgreSQL or SQLite. Data lives in <b>tables</b>, which are like spreadsheets: each <b>row</b> is one record (one user), and each <b>column</b> is one field (name, email, role). You talk to the database in <b>SQL</b>, a language of short commands:</p>
-<pre class="snip">SELECT id, name FROM users;                        -- read rows
-SELECT * FROM users WHERE email = 'ada@example.com';  -- only matching rows
-INSERT INTO users (name, email) VALUES ('Linus', 'l@x.com');  -- add a row</pre>
-<p>(In SQL, two dashes start a comment, like <code>//</code> in PHP.) This lesson's database already holds a <code>users</code> table with three people in it. Its <code>email</code> column is marked <b>UNIQUE</b>, which means the database refuses a second row with the same email.</p>
+<p>Almost every website stores its users, orders and posts in a database. The way PHP talks to that database decides whether a stranger can read everyone's data with one clever line typed into a login box. This lesson teaches the safe way, every time.</p>
 
-<h4>PDO: one way to talk to many databases</h4>
-<p><b>PDO</b> stands for PHP Data Objects. It is the database layer built into PHP, and it works the same way whichever database sits behind it. Laravel's database code is built on top of it. You start by creating a connection object:</p>
-<pre class="snip">$pdo = new PDO('mysql:host=localhost;dbname=shop', 'shop_user', 'secret');
-$pdo-&gt;setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-$pdo-&gt;setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);</pre>
-<p>Line by line:</p>
-<ul>
-<li>The first argument is the <b>DSN</b> (data source name): which kind of database (<code>mysql</code>), which computer it runs on (<code>localhost</code> means this same machine) and which database to use (<code>shop</code>). Then come a username and a password. In a real app these come from a settings file or environment variables, never typed into code you commit.</li>
-<li><code>ERRMODE_EXCEPTION</code> tells PDO to <b>throw an exception</b> when something goes wrong. An exception is PHP's way of stopping normal flow and shouting "this failed", which you can catch and handle. It has been the default since PHP 8.0, but setting it explicitly is a common habit that makes the intent clear.</li>
-<li><code>FETCH_ASSOC</code> makes every row come back as an associative array, like <code>['id' =&gt; 1, 'name' =&gt; 'Ada Lovelace', ...]</code>, keyed by column name. You learned to work with those in the arrays lesson.</li>
-</ul>
-<p>The <code>::</code> in <code>PDO::ATTR_ERRMODE</code> reads a <b>constant</b>, a fixed named value that belongs to the class itself rather than to one object.</p>
-<div class="tip"><b>Tip</b>The DSN here says <code>mysql</code>, but the lesson's sandbox quietly runs SQLite in your browser. Your PDO code is exactly the same either way, which is the whole point of PDO.</div>
+${V.card(1,'PDO','one plug, many databases',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="PHP connects through a PDO adapter to MySQL, PostgreSQL or SQLite">
+<rect class="bx-a" x="10" y="56" width="96" height="64" rx="8"/><text class="t-b" x="58" y="94" text-anchor="middle" style="font-size:18px">PHP</text>
+<path class="ln" style="stroke-width:3" d="M106 88H140"/>
+<rect class="bx-warn" x="140" y="50" width="100" height="76" rx="10"/>${V.ic('chip',166,56,48,'ic-warn')}<text class="t-b" x="190" y="118" text-anchor="middle">PDO</text>
+<path class="ln" style="stroke-width:3" d="M240 88 290 34M240 88H290M240 88 290 142"/>
+${V.ic('db',292,10,44,'ic-info')}<text class="t" x="342" y="38">MySQL</text>
+${V.ic('db',292,66,44,'ic-info')}<text class="t" x="342" y="94">PostgreSQL</text>
+${V.ic('db',292,122,44,'ic-info')}<text class="t" x="342" y="150">SQLite</text>
+</svg><figcaption>PDO (PHP Data Objects) gives PHP one way of talking to many databases. Change one connection string and the rest of your code stays the same.</figcaption></figure>
+${V.like(`<p>A travel adapter. Your charger has one plug; the adapter lets it fit the sockets of many countries. PDO is the adapter between your PHP and whichever database the project uses.</p>`)}
+${V.why(`<p>PHP once had a different set of functions for every database, each with its own names and habits. Switching database meant rewriting everything. PDO arrived in PHP 5.1 (2005) with one shared API, and Laravel's database layer is built on top of it.</p>`)}
+${V.anat([['new PDO(\''],[1,'mysql'],[2,':host=localhost'],[3,';dbname=shop'],'\', ',[4,'\'shop_user\', \'secret\''],')'],[
+ '<b>Driver.</b> Which kind of database: <code>mysql</code>, <code>pgsql</code> or <code>sqlite</code>.',
+ '<b>Host.</b> The computer the database runs on.',
+ '<b>Database name.</b> One server can hold many databases.',
+ '<b>Username and password.</b> In real projects they come from environment settings, never typed into code.'])}
+${V.rules(V.rh('Rules'),
+ V.ok('PDO::ERRMODE_EXCEPTION','Errors throw exceptions you can catch (the default since PHP 8; set it anyway)'),
+ V.ok('PDO::FETCH_ASSOC','Rows come back as arrays keyed by column name'),
+ V.no('\'secret\' committed to Git','Passwords belong in a .env file or server settings'),
+ V.rh('Conventions'),
+ V.ok('one $pdo per request','Connect once and pass it to the functions that need it'))}
+${V.hook(`One adapter, many sockets: PDO.`)}
+`)}
 
-<h4>Reading rows</h4>
-<p>For a fixed query with no outside input, <code>query()</code> runs the SQL straight away and returns a <b>statement</b> object holding the results. <code>fetchAll()</code> then gives you every row as an array of arrays:</p>
-<pre class="snip">$users = $pdo-&gt;query('SELECT id, name, email FROM users ORDER BY id')-&gt;fetchAll();
-// $users[0] is ['id' =&gt; 1, 'name' =&gt; 'Ada Lovelace', 'email' =&gt; ...]</pre>
-<p>Notice the two arrows in a row: <code>query()</code> returns a statement, and <code>-&gt;fetchAll()</code> is called on that result straight away. Because <code>$users</code> is an ordinary PHP array, <code>count($users)</code> tells you how many rows came back. That is the first task.</p>
+${V.card(2,'Prepared statements','a form with boxes, not a glued note',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Left: a ransom-style note where user text is glued into the command. Right: a form with a separate box where user text can only ever be data">
+<text class="t-b t-bad" x="10" y="20">Glued string</text>
+<rect class="bx-bad" x="10" y="30" width="196" height="120" rx="8"/>
+<text class="t-m" x="20" y="60" style="font-size:14px">WHERE email =</text>
+<rect class="bx" x="20" y="72" width="176" height="30" rx="3" transform="rotate(-3 20 72)"/><text class="t-m t-bad" x="28" y="94" style="font-size:14px">'' OR '1'='1'</text>
+<text class="t-s" x="20" y="136">text became code</text>
+<text class="t-b t-ok" x="222" y="20">Prepared</text>
+<rect class="bx-ok" x="214" y="30" width="196" height="120" rx="8"/>
+<text class="t-m" x="224" y="60" style="font-size:14px">WHERE email =</text>
+<rect class="bx-info" x="224" y="72" width="176" height="30" rx="4"/><text class="t-m" x="232" y="93" style="font-size:14px">:email</text>
+${V.ic('shield',366,108,36,'ic-ok')}
+<text class="t-s" x="224" y="136">box only holds data</text>
+<text class="t-s" x="210" y="186" text-anchor="middle">Same input. Only one is safe.</text>
+</svg><figcaption>Gluing user input into SQL lets that input rewrite your command. A placeholder is a fixed box: whatever goes in is only ever a value.</figcaption></figure>
+${V.like(`<p>A bank form has a box marked "amount". Whatever you write in it is treated as an amount, even if you write "and give me the vault". Gluing input into SQL is like letting customers write directly onto the cashier's instruction sheet.</p>`)}
+${V.why(`<p><b>SQL injection</b> has been one of the most damaging web attacks for over 25 years, behind huge data leaks. Prepared statements fix it at the root: the database receives the query's shape first and the values afterwards, so a value can never change the shape.</p>`)}
+<p><b>Watch the attack work on glued SQL.</b></p>
+${V.steps([
+ ['The code glues whatever is in the email box straight into the SQL text. With a normal email, the query finds one user.',`<svg viewBox="0 0 420 196" role="img" aria-label="Normal email finds one user">
+<text class="t-s" x="10" y="18">Email box on the login form</text>
+<rect class="bx" x="10" y="26" width="400" height="36" rx="6"/><text class="t-m" x="20" y="50" style="font-size:15px">ada@example.com</text>
+<rect class="bx-dark" x="10" y="74" width="400" height="66" rx="6"/>
+<text class="t-term" x="20" y="98" style="font-size:14px">SELECT * FROM users</text>
+<text class="t-term" x="20" y="126" style="font-size:14px">WHERE email = '<tspan class="t-ok">ada@example.com</tspan>'</text>
+<rect class="bx-ok" x="10" y="152" width="400" height="38" rx="6"/><text class="t" x="20" y="177">1 row: Ada Lovelace</text>
+</svg>`],
+ ['An attacker types <b>\' OR \'1\'=\'1</b> instead of an email. It starts with a quote mark on purpose.',`<svg viewBox="0 0 420 196" role="img" aria-label="Attacker types quote OR 1 equals 1">
+<text class="t-s" x="10" y="18">Email box on the login form</text>
+<rect class="bx-warn" x="10" y="26" width="400" height="36" rx="6"/><text class="t-m t-bad" x="20" y="50" style="font-size:15px">' OR '1'='1</text>${V.ic('person',370,28,32,'ic-bad')}
+<rect class="bx-dark" x="10" y="74" width="400" height="66" rx="6"/>
+<text class="t-term" x="20" y="98" style="font-size:14px">SELECT * FROM users</text>
+<text class="t-term" x="20" y="126" style="font-size:14px">WHERE email = '<tspan class="t-dim">$email</tspan>'</text>
+<rect class="ln-d" x="10" y="152" width="400" height="38" rx="6"/>
+</svg>`],
+ ['After gluing, the attacker\'s quote <b>closes the text early</b>. <b>OR \'1\'=\'1\'</b> is now part of the SQL code, and 1 always equals 1.',`<svg viewBox="0 0 420 196" role="img" aria-label="The glued query now has an always-true condition">
+<text class="t-s" x="10" y="18">Email box on the login form</text>
+<rect class="bx-warn" x="10" y="26" width="400" height="36" rx="6"/><text class="t-m t-bad" x="20" y="50" style="font-size:15px">' OR '1'='1</text>
+<rect class="bx-dark" x="10" y="74" width="400" height="66" rx="6"/>
+<text class="t-term" x="20" y="98" style="font-size:14px">SELECT * FROM users</text>
+<text class="t-term" x="20" y="126" style="font-size:14px">WHERE email = '<tspan class="t-bad">' OR '1'='1</tspan>'</text>
+<rect class="ln-d" x="10" y="152" width="400" height="38" rx="6"/><text class="t-b t-bad" x="20" y="177">condition is true for every row</text>
+</svg>`],
+ ['The database obeys and returns <b>every user</b>. On a login form, that can mean logging in as the first user, often the admin.',`<svg viewBox="0 0 420 196" role="img" aria-label="Every user is leaked">
+<text class="t-s" x="10" y="18">Email box on the login form</text>
+<rect class="bx-warn" x="10" y="26" width="400" height="36" rx="6"/><text class="t-m t-bad" x="20" y="50" style="font-size:15px">' OR '1'='1</text>
+<rect class="bx-dark" x="10" y="74" width="400" height="66" rx="6"/>
+<text class="t-term" x="20" y="98" style="font-size:14px">SELECT * FROM users</text>
+<text class="t-term" x="20" y="126" style="font-size:14px">WHERE email = '<tspan class="t-bad">' OR '1'='1</tspan>'</text>
+<rect class="bx-bad" x="10" y="152" width="400" height="38" rx="6"/>${V.ic('warn',16,156,30,'ic-bad')}<text class="t-b" x="54" y="177">3 rows: Ada, Grace, Alan. Leaked!</text>
+</svg>`]])}
+<p><b>Now the same attack against a prepared statement.</b></p>
+${V.steps([
+ ['<b>prepare()</b> sends the SQL with a placeholder, <b>:email</b>, and no data. The database reads it and fixes its shape: "compare email to <b>one value</b>".',`<svg viewBox="0 0 420 196" role="img" aria-label="The query shape is sent first">
+<rect class="bx-dark" x="10" y="10" width="270" height="66" rx="6"/>
+<text class="t-term" x="20" y="36" style="font-size:14px">SELECT * FROM users</text>
+<text class="t-term" x="20" y="64" style="font-size:14px">WHERE email = <tspan class="t-ok">:email</tspan></text>
+<path class="ln-a" d="M284 42H330"/><polygon class="ah-a" points="328,35 328,49 340,42"/>
+${V.ic('db',346,12,60,'ic-info')}
+<rect class="ln-d" x="10" y="92" width="270" height="44" rx="6"/><text class="t-s" x="20" y="119">value: not sent yet</text>
+<rect class="ln-d" x="10" y="150" width="400" height="40" rx="6"/>
+</svg>`],
+ ['<b>execute()</b> sends the value <b>separately</b>, like a parcel with a label. The attacker\'s text travels as data.',`<svg viewBox="0 0 420 196" role="img" aria-label="The value travels separately">
+<rect class="bx-dark" x="10" y="10" width="270" height="66" rx="6"/>
+<text class="t-term t-dim" x="20" y="36" style="font-size:14px">SELECT * FROM users</text>
+<text class="t-term t-dim" x="20" y="64" style="font-size:14px">WHERE email = :email</text>
+${V.ic('db',346,12,60,'ic-info')}
+<rect class="bx-info" x="10" y="92" width="270" height="44" rx="6"/>${V.ic('box',16,96,34,'ic-info')}<text class="t-m t-bad" x="58" y="120" style="font-size:15px">' OR '1'='1</text>
+<path class="ln-a" d="M284 114 340 66"/><polygon class="ah-a" points="332,64 344,62 340,74"/>
+<rect class="ln-d" x="10" y="150" width="400" height="40" rx="6"/>
+</svg>`],
+ ['The database drops the parcel into the <b>:email</b> slot as plain text. It looks for a user whose email is literally <b>\' OR \'1\'=\'1</b>. The quotes are just characters.',`<svg viewBox="0 0 420 196" role="img" aria-label="The value is compared as plain text">
+<rect class="bx-dark" x="10" y="10" width="270" height="66" rx="6"/>
+<text class="t-term t-dim" x="20" y="36" style="font-size:14px">SELECT * FROM users</text>
+<text class="t-term" x="20" y="64" style="font-size:14px">WHERE email = <tspan class="t-ok">[data]</tspan></text>
+${V.ic('shield',346,12,60,'ic-ok')}
+<rect class="bx-info" x="10" y="92" width="400" height="44" rx="6"/><text class="t-s" x="20" y="119">email equals the text</text><text class="t-m" x="190" y="120" style="font-size:15px">' OR '1'='1</text>
+<rect class="ln-d" x="10" y="150" width="400" height="40" rx="6"/>
+</svg>`],
+ ['Nobody has that email, so the result is <b>0 rows</b>. The attack is blocked, and you did not have to spot it.',`<svg viewBox="0 0 420 196" role="img" aria-label="Zero rows, attack blocked">
+<rect class="bx-dark" x="10" y="10" width="270" height="66" rx="6"/>
+<text class="t-term t-dim" x="20" y="36" style="font-size:14px">SELECT * FROM users</text>
+<text class="t-term t-dim" x="20" y="64" style="font-size:14px">WHERE email = :email</text>
+${V.ic('shield',346,12,60,'ic-ok')}
+<rect class="bx-info" x="10" y="92" width="400" height="44" rx="6"/><text class="t-s" x="20" y="119">email equals the text</text><text class="t-m" x="190" y="120" style="font-size:15px">' OR '1'='1</text>
+<rect class="bx-ok" x="10" y="150" width="400" height="40" rx="6"/>${V.ic('check',16,155,30,'ic-ok')}<text class="t-b" x="54" y="176">0 rows. Attack blocked.</text>
+</svg>`]])}
+${V.anat(['$stmt = $pdo-&gt;',[1,'prepare'],'(\'... WHERE email = ',[2,':email'],'\');\n$stmt-&gt;',[3,'execute'],'(',[4,'[\'email\' =&gt; $email]'],');\n$user = $stmt-&gt;',[5,'fetch'],'();'],[
+ '<b>prepare.</b> Sends the SQL shape, with placeholders, and gets back a statement object.',
+ '<b>Named placeholder.</b> A labelled empty box. <code>?</code> is the unnamed kind, filled in order.',
+ '<b>execute.</b> Sends the values. You can run the same statement again with new values.',
+ '<b>Values array.</b> Keys match the placeholder names, without the colon.',
+ '<b>fetch.</b> One row as an array, or <code>false</code> if nothing matched.'])}
+${V.rules(V.rh('Rules: security musts'),
+ V.no('"... WHERE email = \'$email\'"','Never put a variable inside SQL text'),V.ok('WHERE email = :email','A placeholder for every value'),
+ V.no('\':email\'','No quotes round a placeholder; they make it literal text'),V.no('ORDER BY :column','Placeholders hold values only, not table or column names: check those against an allow-list'),
+ V.rh('Conventions'),
+ V.ok(':email or ?','Pick one style per query; do not mix them'),V.ok('escaping by hand','Not needed, and easy to get wrong. Let placeholders do it'))}
+${V.hook(`Shape first, data second. Glue makes code; boxes keep data.`)}
+`)}
 
-<h4>The danger: building SQL out of user input</h4>
-<p>Now suppose you want one user by email, and the email comes from a login form. The obvious approach is to glue the input into the SQL text:</p>
-<pre class="snip">// NEVER do this
-$pdo-&gt;query("SELECT * FROM users WHERE email = '$email'");</pre>
-<p>This works for honest input. But the database receives one long string and cannot tell which parts you wrote and which parts the visitor typed. So a visitor can type SQL. Watch what happens when someone enters <code>' OR '1'='1</code> as their email:</p>
-<figure class="fig"><svg viewBox="0 0 420 280" role="img" aria-label="String building lets input become SQL; a prepared statement keeps it as data">
-<text class="t-b t-bad" x="10" y="20">Gluing text together</text>
-<rect class="bx-bad" x="10" y="30" width="400" height="44" rx="6"/>
-<text class="t-m" x="210" y="57" text-anchor="middle">WHERE email = '' OR '1'='1'</text>
-<text class="t-s t-bad" x="210" y="94" text-anchor="middle">The input became SQL: every row matches</text>
-<text class="t-b t-ok" x="10" y="130">Prepared statement</text>
-<rect class="bx-ok" x="10" y="140" width="220" height="40" rx="6"/><text class="t-m" x="120" y="165" text-anchor="middle">email = :email</text>
-<rect class="bx-info" x="250" y="140" width="160" height="40" rx="6"/><text class="t-m" x="330" y="165" text-anchor="middle">' OR '1'='1</text>
-<path class="ln-ok" d="M120 180L186 208"/><polygon class="ah-ok" points="182,202 188,213 192,204"/>
-<path class="ln" d="M330 180L244 208"/><polygon class="ah" points="238,204 242,213 248,202"/>
-<text class="t-s" x="64" y="204" text-anchor="middle">SQL first</text>
-<text class="t-s" x="368" y="204" text-anchor="middle">value later</text>
-<rect class="bx" x="140" y="214" width="140" height="36" rx="6"/><text class="t-b" x="210" y="237" text-anchor="middle">Database</text>
-<text class="t-s t-ok" x="210" y="272" text-anchor="middle">The input is only data: no email matches it</text>
-</svg><figcaption>Top: when the input is glued into the SQL, its quote marks end the email text early and the words OR one equals one become part of the query, so every user matches. Bottom: a prepared statement sends the SQL first and the value separately, so the database only ever compares emails with that odd text.</figcaption></figure>
-<p>Step by step, the glued query becomes <code>WHERE email = '' OR '1'='1'</code>. The visitor's first quote mark closed the email text early. The rest, <code>OR '1'='1'</code>, is now SQL, and because one always equals one, the condition is true for every row. The attacker gets every user. With other inputs they could read other tables or delete data. This attack is called <b>SQL injection</b>, and it has been behind some of the largest data breaches in history.</p>
+${V.card(3,'Reading, adding and catching errors','fetch, lastInsertId and try/catch',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="A users table. A new row, Linus, gets id 4. A second Ada with an email already taken bounces off the unique lock">
+<rect class="bx" x="10" y="10" width="260" height="30" rx="4"/><text class="t-b" x="22" y="31">id</text><text class="t-b" x="66" y="31">email</text>
+<text class="t-m" x="22" y="62">1</text><text class="t-m" x="66" y="62" style="font-size:14px">ada@example.com</text>
+<text class="t-m" x="22" y="90">2</text><text class="t-m" x="66" y="90" style="font-size:14px">grace@example.com</text>
+<text class="t-m" x="22" y="118">3</text><text class="t-m" x="66" y="118" style="font-size:14px">alan@example.com</text>
+<rect class="bx-ok" x="10" y="128" width="260" height="30" rx="4"/><text class="t-m" x="22" y="149">4</text><text class="t-m" x="66" y="149" style="font-size:14px">linus@example.com</text>
+<path class="bx-a" d="M282 130H370L382 143 370 156H282Z"/><text class="t-m" x="326" y="148" text-anchor="middle" style="font-size:14px">new id 4</text>
+<rect class="bx-bad" x="290" y="20" width="120" height="60" rx="6"/><text class="t-s" x="350" y="44" text-anchor="middle">ada@... again</text>${V.ic('lock',334,48,28,'ic-bad')}
+<text class="t-bad" x="350" y="104" text-anchor="middle" style="font-size:14px">UNIQUE: refused</text>
+<text class="t-s" x="10" y="188">INSERT adds a row; a duplicate email throws a PDOException</text>
+</svg><figcaption>Inserting gives the new row the next id, which lastInsertId() reads back. The email column is UNIQUE, so a second account with the same email is refused with an exception you can catch.</figcaption></figure>
+${V.like(`<p>Signing up at a gym: you get the next membership number. Try to sign up twice with the same email and the desk says no, politely, instead of the whole gym shutting down. <code>try/catch</code> is that polite desk.</p>`)}
+${V.anat([[1,'try'],' { createUser($pdo, ...); }\n',[2,'catch'],' (',[3,'PDOException $e'],') {\n    echo "',[4,'email already taken'],'";\n}'],[
+ '<b>try</b>: run this, but be ready for trouble.',
+ '<b>catch</b> runs only if something inside try threw an exception.',
+ '<b>The type</b> to catch, and a variable holding the details.',
+ '<b>A friendly message</b> for the user, instead of a crash.'])}
+${V.rules(V.rh('Rules'),
+ V.ok('return $user ?: null;','fetch() gives false when nothing matches; turn it into null for a ?array return type'),
+ V.ok('(int) $pdo-&gt;lastInsertId()','It returns a string; cast it to match an int return type'),
+ V.no('echo $e-&gt;getMessage();','Raw database errors can reveal table names to attackers. Log them, show a simple message'),
+ V.rh('Conventions'),
+ V.ok('fetchAll() for lists','Every row as an array of arrays'),V.ok('SELECT id, name, email','Name the columns you need instead of *'))}
+${V.build(`<ol><li>Run a fixed query with <code>$pdo-&gt;query(...)-&gt;fetchAll()</code> and print <code>count($users) . " users"</code>. No user input, so no placeholder needed.</li><li>Write <code>findUserByEmail</code>: prepare with <code>:email</code>, execute with the array, return the fetched row or null.</li><li>Write <code>createUser</code>: prepare an INSERT with two <code>?</code> placeholders, execute with <code>[$name, $email]</code>, return the new id.</li><li>Wrap a duplicate insert in <code>try/catch (PDOException $e)</code> and print a friendly message.</li></ol>`)}
+${V.hook(`fetch one, fetchAll many, lastInsertId for the new one, catch the clash.`)}
+`)}
 
-<h4>Prepared statements: the SQL and the data travel separately</h4>
-<p>The fix is a <b>prepared statement</b>. You send the SQL with <b>placeholders</b>, marked gaps where values will go, and send the values in a separate step. It happens in three moves:</p>
-<figure class="fig"><svg viewBox="0 0 420 136" role="img" aria-label="Three steps: prepare, execute, fetch">
-<text class="t-b" x="70" y="18" text-anchor="middle">1</text><text class="t-b" x="210" y="18" text-anchor="middle">2</text><text class="t-b" x="350" y="18" text-anchor="middle">3</text>
-<rect class="bx-a" x="10" y="28" width="120" height="44" rx="6"/><text class="t-m" x="70" y="55" text-anchor="middle">prepare()</text>
-<path class="ln" d="M130 50H142"/><polygon class="ah" points="142,44 142,56 150,50"/>
-<rect class="bx-info" x="150" y="28" width="120" height="44" rx="6"/><text class="t-m" x="210" y="55" text-anchor="middle">execute()</text>
-<path class="ln" d="M270 50H282"/><polygon class="ah" points="282,44 282,56 290,50"/>
-<rect class="bx-ok" x="290" y="28" width="120" height="44" rx="6"/><text class="t-m" x="350" y="55" text-anchor="middle">fetch()</text>
-<text class="t-s" x="70" y="94" text-anchor="middle">SQL with gaps</text>
-<text class="t-s" x="210" y="94" text-anchor="middle">fill the gaps</text>
-<text class="t-s" x="350" y="94" text-anchor="middle">read a row</text>
-<text class="t-s" x="210" y="126" text-anchor="middle">$stmt holds the prepared query between the steps</text>
-</svg><figcaption>A prepared statement in three steps. Prepare sends the SQL with gaps and gets back a statement. Execute fills the gaps with your values. Fetch reads the resulting rows one at a time.</figcaption></figure>
-<pre class="snip">$stmt = $pdo-&gt;prepare('SELECT id, name, email FROM users WHERE email = :email');
-$stmt-&gt;execute(['email' =&gt; $email]);   // the value goes here
-$user = $stmt-&gt;fetch();                 // one row, or false if none</pre>
-<p>The database reads and plans the query <b>before</b> it ever sees the value. When the value arrives, it can only fill the gap as data. Quote marks in it are just characters to compare, so the injection attempt simply finds no user with that strange email.</p>
-<p>There are two placeholder styles. <b>Named</b> placeholders start with a colon, like <code>:email</code>, and you pass an associative array whose keys match the names. <b>Positional</b> placeholders are question marks, and you pass a plain list in the same order: <code>prepare('INSERT INTO users (name, email) VALUES (?, ?)')</code> then <code>execute([$name, $email])</code>. Pick one style per query; you cannot mix them.</p>
-<p><code>fetch()</code> returns the next row, or <code>false</code> when there are no rows left. A function that looks up one user should therefore promise <code>?array</code>: the question mark makes the type <b>nullable</b>, meaning "an array, or <code>null</code>". A neat way to convert the <code>false</code> into <code>null</code> is <code>return $user ?: null;</code>. The <code>?:</code> operator gives the left side if it counts as true, otherwise the right side.</p>
-
-<h4>Inserting rows and getting the new id</h4>
-<p>Inserting uses exactly the same prepare and execute steps. Most tables have an <code>id</code> column that the database numbers automatically, so after inserting you often want to know which number the new row received. <code>$pdo-&gt;lastInsertId()</code> tells you. It returns the id as a <b>string</b>, though, so a function promising <code>: int</code> should convert it with <code>(int)</code>, which is called a <b>cast</b>: <code>return (int) $pdo-&gt;lastInsertId();</code>.</p>
-
-<h4>When the database says no: catching exceptions</h4>
-<p>Try to insert a second user with <code>ada@example.com</code> and the UNIQUE rule refuses. Because of <code>ERRMODE_EXCEPTION</code>, PDO throws a <code>PDOException</code>. If nothing catches it, your script stops with a fatal error. To handle it, wrap the risky code in <code>try</code> and say what to do in <code>catch</code>:</p>
-<pre class="snip">try {
-    // code that might fail
-} catch (PDOException $e) {
-    // runs only if a PDOException was thrown above
-    echo "Could not create user\\n";
-}</pre>
-<p>PHP runs the <code>try</code> block. If an exception of that type is thrown, it jumps straight to the <code>catch</code> block, with the exception in <code>$e</code>; <code>$e-&gt;getMessage()</code> holds the database's explanation. If nothing is thrown, the <code>catch</code> block is skipped. Show visitors a friendly message and write the technical details to a log, because raw database errors can reveal your table structure to an attacker.</p>
-<div class="mistake"><b>Common mistake</b>Putting quotes around a placeholder: <code>WHERE email = ':email'</code>. Inside quotes it is no longer a placeholder, just the literal text ":email", so nothing matches and PDO may complain about a parameter that is not defined. Placeholders are always bare.</div>
-<div class="mistake"><b>Common mistake</b>Trying to use a placeholder for a table or column name, such as <code>ORDER BY :column</code>. Placeholders only stand in for <b>values</b>. If a column name must vary, check it against a fixed list of allowed names in PHP first.</div>
-
-<h4>Reading the errors you will hit</h4>
-<ul>
-<li><b>SQLSTATE[23000]: Integrity constraint violation</b>: a rule such as UNIQUE was broken. SQLite words it "UNIQUE constraint failed: users.email"; MySQL says "Duplicate entry".</li>
-<li><b>SQLSTATE[HY093]: Invalid parameter number</b>: the placeholders and the values you passed to <code>execute()</code> do not match up.</li>
-<li><b>no such table</b> or <b>Table doesn't exist</b>: a typo in the table name, or the wrong database.</li>
-</ul>
-<div class="try"><b>Try it in your head</b>A search box runs <code>$pdo-&gt;prepare('SELECT * FROM users WHERE name = ?')</code> and then <code>execute([$search])</code>. A visitor types <code>x'; DROP TABLE users; --</code>. What happens? Nothing bad: the whole text is compared as a name, no user has that name, and you get zero rows.</div>
-
-<h4>Recap</h4>
-<ul>
-<li><code>new PDO($dsn, $user, $pass)</code> connects; set <code>ERRMODE_EXCEPTION</code> and <code>FETCH_ASSOC</code> straight after.</li>
-<li>Gluing input into SQL allows SQL injection, where the input turns into commands.</li>
-<li>Prepared statements send SQL with placeholders (<code>:email</code> or <code>?</code>) first and the values separately via <code>execute()</code>.</li>
-<li><code>fetch()</code> gives one row or <code>false</code>, <code>fetchAll()</code> gives all rows, and <code>lastInsertId()</code> gives the new id as a string.</li>
-<li>Wrap risky database calls in <code>try</code> and <code>catch (PDOException $e)</code>, and show users a friendly message.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Is <code>"WHERE id = $id"</code> safe if $id came from the URL? <i>No. Use a placeholder.</i> 2. What does fetch() return when no row matches? <i>false.</i> 3. Can a placeholder stand for a column name? <i>No, only for values.</i></div>
 `);
 
 explain('h5',`
-<h4>Why use a framework</h4>
-<p>Every web app needs the same plumbing: work out which code should handle each URL, read and write the database, fill HTML templates, check form input and defend against common attacks. You could build all of that yourself with the PHP you know. It would take months, and your homemade security would probably have holes.</p>
-<p>A <b>framework</b> is a ready-made structure that already does the plumbing. You fill in the parts that make your app unique. <b>Laravel</b> is the most popular PHP framework. Its big idea is <b>convention over configuration</b>: if you put files where Laravel expects and name them the way it expects, things connect by themselves, without long settings files.</p>
-<div class="tbl-wrap"><table><tr><th>Folder or file</th><th>What lives there</th></tr>
-<tr><td><code>routes/web.php</code></td><td>Which code answers which URL</td></tr>
-<tr><td><code>app/Models/</code></td><td>Model classes, one per database table</td></tr>
-<tr><td><code>database/migrations/</code></td><td>Step-by-step instructions to build tables</td></tr>
-<tr><td><code>database/seeders/</code></td><td>Code that fills tables with starter data</td></tr>
-<tr><td><code>resources/views/</code></td><td>Blade templates that become HTML</td></tr></table></div>
-<p>This lesson's <code>blog</code> project has all of these, apart from the views, which you create.</p>
+<p>Laravel is the most popular PHP framework: a ready-made structure where every kind of code has its own place. Learn the path one request takes through it, <b>route, controller, model, view</b>, and you can find your way around any Laravel app.</p>
 
-<h4>The journey of a request</h4>
-<p>When someone visits <code>/posts</code>, the request passes through the pieces in a fixed order. Keep this picture in mind for the rest of the lesson:</p>
-<figure class="fig"><svg viewBox="0 0 420 256" role="img" aria-label="A request goes to the route, the model and database, the Blade view, and back as HTML">
-<rect class="bx-info" x="140" y="10" width="170" height="36" rx="6"/><text class="t-m" x="225" y="33" text-anchor="middle">GET /posts</text>
-<text class="t-s" x="130" y="33" text-anchor="end">browser asks</text>
-<path class="ln" d="M225 46v6"/><polygon class="ah" points="219,52 231,52 225,60"/>
-<rect class="bx-a" x="140" y="60" width="170" height="36" rx="6"/><text class="t-m" x="225" y="83" text-anchor="middle">routes/web.php</text>
-<text class="t-s" x="130" y="83" text-anchor="end">route matches</text>
-<path class="ln" d="M225 96v6"/><polygon class="ah" points="219,102 231,102 225,110"/>
-<rect class="bx" x="140" y="110" width="170" height="36" rx="6"/><text class="t" x="225" y="133" text-anchor="middle">Post model</text>
-<text class="t-s" x="130" y="133" text-anchor="end">model queries</text>
-<path class="ln" d="M318 128H332"/><polygon class="ah" points="318,122 318,134 310,128"/><polygon class="ah" points="332,122 332,134 340,128"/>
-<rect class="bx" x="340" y="110" width="72" height="36" rx="6"/><text class="t-s" x="376" y="133" text-anchor="middle">database</text>
-<path class="ln" d="M225 146v6"/><polygon class="ah" points="219,152 231,152 225,160"/>
-<rect class="bx-warn" x="140" y="160" width="170" height="36" rx="6"/><text class="t" x="225" y="183" text-anchor="middle">Blade view</text>
-<text class="t-s" x="130" y="183" text-anchor="end">view renders</text>
-<path class="ln-ok" d="M225 196v6"/><polygon class="ah-ok" points="219,202 231,202 225,210"/>
-<rect class="bx-ok" x="140" y="210" width="170" height="36" rx="6"/><text class="t" x="225" y="233" text-anchor="middle">HTML page</text>
-<text class="t-s" x="130" y="233" text-anchor="end">sent back</text>
-</svg><figcaption>The request for slash posts first meets the routes file, which picks the code to run. That code asks the Post model for data, and the model talks to the database. The data is handed to a Blade view, which produces the HTML page that goes back to the browser.</figcaption></figure>
-<p>This split has a name, <b>MVC</b>: <b>M</b>odels handle data, <b>V</b>iews handle what the page looks like, and <b>C</b>ontrollers decide what to do for each request. In this lesson small functions inside the routes file play the controller role. Bigger apps move them into controller classes, which you will do in the next lesson.</p>
+${V.card(1,'The journey of a request','route, controller, model, view',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="A request passes four stations: the route signpost, the controller, the model with the database, and the view that makes HTML">
+<rect class="bx-a" x="6" y="20" width="96" height="104" rx="8"/>${V.ic('sign',30,28,48,'ic-a')}<text class="t-b" x="54" y="96" text-anchor="middle">Route</text><text class="t-s" x="54" y="116" text-anchor="middle">which URL?</text>
+<rect class="bx-info" x="110" y="20" width="96" height="104" rx="8"/>${V.ic('person',134,28,48,'ic-info')}<text class="t-b" x="158" y="96" text-anchor="middle">Controller</text><text class="t-s" x="158" y="116" text-anchor="middle">decides</text>
+<rect class="bx-warn" x="214" y="20" width="96" height="104" rx="8"/>${V.ic('db',238,28,48,'ic-warn')}<text class="t-b" x="262" y="96" text-anchor="middle">Model</text><text class="t-s" x="262" y="116" text-anchor="middle">gets data</text>
+<rect class="bx-ok" x="318" y="20" width="96" height="104" rx="8"/>${V.ic('file',342,28,48,'ic-ok')}<text class="t-b" x="366" y="96" text-anchor="middle">View</text><text class="t-s" x="366" y="116" text-anchor="middle">makes HTML</text>
+<path class="ln-a" d="M20 150H400"/><polygon class="ah-a" points="398,143 398,157 410,150"/>
+<text class="t-m" x="10" y="180" style="font-size:14px">GET /posts</text><text class="t-m" x="410" y="180" text-anchor="end" style="font-size:14px">HTML page</text>
+</svg><figcaption>Every request walks the same line of stations. Each station has one job, so you always know which file to open.</figcaption></figure>
+${V.like(`<p>A restaurant. The <b>host</b> at the door reads your booking and sends you to a table (route). The <b>waiter</b> takes your order and coordinates (controller). The <b>pantry</b> supplies ingredients (model and database). The <b>plating</b> makes it look good (view).</p>`)}
+${V.why(`<p>Early PHP sites mixed SQL, logic and HTML in one file, and big sites became impossible to change. The <b>MVC</b> pattern (Model, View, Controller) splits those jobs. Taylor Otwell released Laravel in 2011 to make MVC in PHP pleasant, with sensible defaults for everything.</p>`)}
+${V.anat([[1,'Route::get'],'(',[2,"'/posts'"],', ',[3,'[PostController::class, \'index\']'],');'],[
+ '<b>HTTP method.</b> <code>get</code> for reading pages. Others: <code>post</code>, <code>patch</code>, <code>delete</code>.',
+ '<b>URL path</b> this route answers.',
+ '<b>What to run:</b> a controller class and method. Small apps, like this lesson\'s, can put a <code>function () { ... }</code> here instead.'])}
+${V.steps([
+ ['The browser asks for <b>GET /posts</b>. Laravel reads <b>routes/web.php</b> from the top and finds the route for /posts.',`<svg viewBox="0 0 420 160" role="img" aria-label="The route matches">
+<rect class="bx-hl" x="6" y="14" width="96" height="70" rx="8"/>${V.ic('sign',34,20,40,'ic-a')}<text class="t-b" x="54" y="76" text-anchor="middle">Route</text>
+<rect class="bx" x="110" y="14" width="96" height="70" rx="8"/>${V.ic('person',138,20,40,'ic-info')}<text class="t-b" x="158" y="76" text-anchor="middle">Controller</text>
+<rect class="bx" x="214" y="14" width="96" height="70" rx="8"/>${V.ic('db',242,20,40,'ic-warn')}<text class="t-b" x="262" y="76" text-anchor="middle">Model</text>
+<rect class="bx" x="318" y="14" width="96" height="70" rx="8"/>${V.ic('file',346,20,40,'ic-ok')}<text class="t-b" x="366" y="76" text-anchor="middle">View</text>
+<rect class="bx-dark" x="6" y="98" width="408" height="52" rx="6"/><text class="t-term" x="16" y="130" style="font-size:14px">Route::get('/posts', ...)  <tspan class="t-ok">match</tspan></text>
+</svg>`],
+ ['The route hands over to the controller code. Its job: "get the published posts, then show them".',`<svg viewBox="0 0 420 160" role="img" aria-label="The controller runs">
+<rect class="bx" x="6" y="14" width="96" height="70" rx="8"/>${V.ic('sign',34,20,40,'ic-a')}<text class="t-b" x="54" y="76" text-anchor="middle">Route</text>
+<rect class="bx-hl" x="110" y="14" width="96" height="70" rx="8"/>${V.ic('person',138,20,40,'ic-info')}<text class="t-b" x="158" y="76" text-anchor="middle">Controller</text>
+<rect class="bx" x="214" y="14" width="96" height="70" rx="8"/>${V.ic('db',242,20,40,'ic-warn')}<text class="t-b" x="262" y="76" text-anchor="middle">Model</text>
+<rect class="bx" x="318" y="14" width="96" height="70" rx="8"/>${V.ic('file',346,20,40,'ic-ok')}<text class="t-b" x="366" y="76" text-anchor="middle">View</text>
+<rect class="bx-dark" x="6" y="98" width="408" height="52" rx="6"/><text class="t-term" x="16" y="130" style="font-size:14px">$posts = Post::where(...)-&gt;get();</text>
+</svg>`],
+ ['The <b>Post</b> model turns that PHP into SQL, asks the database, and gives back a collection of Post objects.',`<svg viewBox="0 0 420 160" role="img" aria-label="The model queries the database">
+<rect class="bx" x="6" y="14" width="96" height="70" rx="8"/>${V.ic('sign',34,20,40,'ic-a')}<text class="t-b" x="54" y="76" text-anchor="middle">Route</text>
+<rect class="bx" x="110" y="14" width="96" height="70" rx="8"/>${V.ic('person',138,20,40,'ic-info')}<text class="t-b" x="158" y="76" text-anchor="middle">Controller</text>
+<rect class="bx-hl" x="214" y="14" width="96" height="70" rx="8"/>${V.ic('db',242,20,40,'ic-warn')}<text class="t-b" x="262" y="76" text-anchor="middle">Model</text>
+<rect class="bx" x="318" y="14" width="96" height="70" rx="8"/>${V.ic('file',346,20,40,'ic-ok')}<text class="t-b" x="366" y="76" text-anchor="middle">View</text>
+<rect class="bx-dark" x="6" y="98" width="408" height="52" rx="6"/><text class="t-term" x="16" y="120" style="font-size:14px">select * from posts</text><text class="t-term" x="16" y="142" style="font-size:14px">where published = 1  <tspan class="t-ok">2 posts</tspan></text>
+</svg>`],
+ ['The controller passes the posts to the <b>posts.index</b> view. Blade fills the template and the finished HTML goes back to the browser.',`<svg viewBox="0 0 420 160" role="img" aria-label="The view renders HTML">
+<rect class="bx" x="6" y="14" width="96" height="70" rx="8"/>${V.ic('sign',34,20,40,'ic-a')}<text class="t-b" x="54" y="76" text-anchor="middle">Route</text>
+<rect class="bx" x="110" y="14" width="96" height="70" rx="8"/>${V.ic('person',138,20,40,'ic-info')}<text class="t-b" x="158" y="76" text-anchor="middle">Controller</text>
+<rect class="bx" x="214" y="14" width="96" height="70" rx="8"/>${V.ic('db',242,20,40,'ic-warn')}<text class="t-b" x="262" y="76" text-anchor="middle">Model</text>
+<rect class="bx-hl" x="318" y="14" width="96" height="70" rx="8"/>${V.ic('file',346,20,40,'ic-ok')}<text class="t-b" x="366" y="76" text-anchor="middle">View</text>
+<rect class="bx-ok" x="6" y="98" width="408" height="52" rx="6"/><text class="t-m" x="16" y="120" style="font-size:14px">&lt;li&gt;Hello Laravel&lt;/li&gt;</text><text class="t-m" x="16" y="142" style="font-size:14px">&lt;li&gt;Eloquent is neat&lt;/li&gt;</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('routes/web.php','Pages for browsers live here'),V.no('two routes, same URL and method','The first match wins; the second never runs'),
+ V.rh('Conventions'),
+ V.ok('PostController','Singular model name + Controller'),V.ok('index, show, store','Standard method names for list, one item, create'))}
+${V.hook(`Host, waiter, pantry, plate: route, controller, model, view.`)}
+`)}
 
-<h4>Artisan and migrations: building the table</h4>
-<p><b>Artisan</b> is Laravel's command-line helper. You run it as <code>php artisan</code> followed by a command. The first one you need is <code>php artisan migrate</code>.</p>
-<p>A <b>migration</b> is a PHP file that describes a change to the database's structure, such as "create a posts table with these columns". Look at the lesson's migration:</p>
-<pre class="snip">Schema::create('posts', function (Blueprint $table) {
-    $table-&gt;id();                                  // auto-numbered id
-    $table-&gt;string('title');                       // short text
-    $table-&gt;text('body');                          // long text
-    $table-&gt;boolean('published')-&gt;default(false);  // true or false
-    $table-&gt;timestamps();                          // created_at, updated_at
-});</pre>
-<p>Why not just create the table by hand? Because migrations live in your code and in Git. A teammate or a server runs <code>php artisan migrate</code> and gets exactly the same tables. Laravel records which migrations have already run in its own table, so running the command again only applies new ones. Migrations are version control for your database structure.</p>
+${V.card(2,'Migrations and Eloquent models','a table blueprint and a class that speaks SQL',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="The Post class is linked to the posts table. Each object is one row">
+<rect class="bx-a" x="10" y="20" width="140" height="120" rx="8"/><text class="t-m" x="80" y="52" text-anchor="middle" style="font-size:17px">Post</text>
+<text class="t-s" x="80" y="80" text-anchor="middle">class (singular)</text>${V.ic('box',60,90,40,'ic-a')}
+<path class="ln-a" d="M154 80H200"/><polygon class="ah-a" points="198,73 198,87 210,80"/><path class="ln-a" d="M210 96H164"/><polygon class="ah-a" points="166,89 166,103 154,96"/>
+<rect class="bx" x="214" y="20" width="196" height="30" rx="4"/><text class="t-m" x="312" y="41" text-anchor="middle" style="font-size:15px">posts</text>
+<rect class="bx" x="214" y="50" width="196" height="30"/><text class="t-s" x="224" y="70">1  Hello Laravel</text>
+<rect class="bx-info" x="214" y="80" width="196" height="30"/><text class="t-s" x="224" y="100">2  Eloquent is neat</text>
+<rect class="bx" x="214" y="110" width="196" height="30"/><text class="t-s" x="224" y="130">3  Draft ideas</text>
+<text class="t-s" x="312" y="164" text-anchor="middle">table (plural)</text>
+</svg><figcaption>An Eloquent model is a class linked to one table. Laravel guesses the table name: Post becomes posts. Each Post object is one row.</figcaption></figure>
+${V.like(`<p>A <b>migration</b> is the builder's plan for a table: which columns, what types. A <b>model</b> is a translator standing at the table: you speak PHP, it speaks SQL to the database for you.</p>`)}
+${V.why(`<p>Writing SQL by hand for every page is repetitive, and changing tables by hand on every computer goes wrong. Migrations are table changes saved as code, so <code>php artisan migrate</code> builds the same tables everywhere. Eloquent is Laravel's ORM (object-relational mapper): it turns rows into objects.</p>`)}
+${V.anat([[1,'Post'],[2,'::where'],"('published', true)",[3,'-&gt;latest()'],[4,'-&gt;get()']],[
+ '<b>The model.</b> Starts a query on the posts table.',
+ '<b>where.</b> Only rows where the column equals the value. Values are bound safely, like PDO placeholders.',
+ '<b>latest.</b> Newest first, ordered by <code>created_at</code>.',
+ '<b>get.</b> Runs the query now and returns a collection of Post objects.'])}
+${V.rules(V.rh('Rules: mass assignment'),
+ V.no('$fillable = []','Post::create([...]) refuses: MassAssignmentException'),V.ok('$fillable = [\'title\', \'body\', \'published\']','Only these columns may be filled from an array'),
+ V.no('Post::create($request-&gt;all())','Without $fillable, a crafted form could set is_admin'),
+ V.rh('Conventions: naming'),
+ V.ok('Post / posts','Model singular PascalCase, table plural snake_case'),V.ok('create_posts_table','Migration files are named after what they do, with a timestamp'),
+ V.ok('php artisan migrate','Applies migrations that have not run yet'))}
+${V.hook(`Migration builds the table, model speaks to it, $fillable guards it.`)}
+`)}
 
-<h4>Eloquent models: a class for each table</h4>
-<p><b>Eloquent</b> is Laravel's <b>ORM</b>, short for object-relational mapper. It connects a class to a table, so each row comes back as an object and you rarely write SQL by hand. The connection is made by naming convention: the class <code>Post</code> uses the table <code>posts</code>, the plural in lower case.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="The Post class maps to the posts table and each Post object maps to one row">
-<rect class="bx-a" x="10" y="20" width="140" height="36" rx="6"/><text class="t-b" x="80" y="43" text-anchor="middle">class Post</text>
-<rect class="bx-ok" x="10" y="56" width="140" height="36" rx="6"/><text class="t" x="80" y="79" text-anchor="middle">a Post object</text>
-<path class="ln-a" d="M150 38H192"/><polygon class="ah-a" points="192,32 192,44 200,38"/>
-<path class="ln-ok" d="M150 74H192"/><polygon class="ah-ok" points="192,68 192,80 200,74"/>
-<rect class="bx-info" x="200" y="20" width="50" height="36"/><text class="t-b" x="225" y="43" text-anchor="middle">id</text>
-<rect class="bx-info" x="250" y="20" width="160" height="36"/><text class="t-b" x="330" y="43" text-anchor="middle">title</text>
-<rect class="bx-ok" x="200" y="56" width="50" height="36"/><text class="t-m" x="225" y="79" text-anchor="middle">1</text>
-<rect class="bx-ok" x="250" y="56" width="160" height="36"/><text class="t-s" x="330" y="79" text-anchor="middle">Hello Laravel</text>
-<rect class="bx" x="200" y="92" width="50" height="36"/><text class="t-m" x="225" y="115" text-anchor="middle">2</text>
-<rect class="bx" x="250" y="92" width="160" height="36"/><text class="t-s" x="330" y="115" text-anchor="middle">Eloquent is neat</text>
-<rect class="bx" x="200" y="128" width="50" height="36"/><text class="t-m" x="225" y="151" text-anchor="middle">3</text>
-<rect class="bx" x="250" y="128" width="160" height="36"/><text class="t-s" x="330" y="151" text-anchor="middle">Draft ideas</text>
-<text class="t-s" x="210" y="190" text-anchor="middle">The class matches the table; each object matches one row</text>
-</svg><figcaption>The Post class is linked to the posts table by its name. Each Post object holds one row, so the object for row 1 has the title Hello Laravel, and its columns are read as properties.</figcaption></figure>
-<p>With an almost empty class (<code>class Post extends Model</code>), you already get a full set of tools, because <code>Model</code> provides them through inheritance:</p>
-<pre class="snip">Post::all();                     // every row, as Post objects
-Post::find(1);                   // the row with id 1, or null
-Post::where('published', true)   // start a query with a condition
-    -&gt;latest()                   // newest first (by created_at)
-    -&gt;get();                     // run it: a collection of Posts</pre>
-<p>The last example is a <b>chain</b>. Each method adds a piece to the query, and nothing is sent to the database until <code>get()</code> runs it. The result is a <b>collection</b>, Laravel's list-like object, which you can loop over with <code>foreach</code> just like an array. Each column is a property: <code>$post-&gt;title</code>.</p>
+${V.card(3,'Blade views and route-model binding','templates with holes, URLs that find rows',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="A Blade template with holes is filled with a post's title and body to make a page">
+<rect class="bx-info" x="10" y="14" width="190" height="150" rx="8"/>
+<text class="t-m" x="22" y="42" style="font-size:14px">&lt;h1&gt;</text>
+<rect class="ln-d" x="22" y="52" width="164" height="30" rx="4"/><text class="t-m" x="28" y="72" style="font-size:14px">{{ $post-&gt;title }}</text>
+<text class="t-m" x="22" y="104" style="font-size:14px">&lt;p&gt;</text>
+<rect class="ln-d" x="22" y="114" width="164" height="30" rx="4"/><text class="t-m" x="28" y="134" style="font-size:14px">{{ $post-&gt;body }}</text>
+<path class="ln-a" d="M202 90H226"/><polygon class="ah-a" points="224,83 224,97 236,90"/>
+<rect class="bx-ok" x="240" y="14" width="170" height="150" rx="8"/>
+<text class="t-b" x="252" y="70" style="font-size:20px">Hello Laravel</text>
+<text class="t" x="252" y="134">My first post.</text>
+</svg><figcaption>A Blade view is HTML with holes. Laravel fills each {{ }} with a value, safely escaped, and sends the result.</figcaption></figure>
+${V.like(`<p>A birthday card template with blank lines for the name. Blade writes in the name, but always in ink that cannot turn into instructions: if someone's "name" is a <code>&lt;script&gt;</code> tag, it is shown as text, not run.</p>`)}
+${V.anat([[1,'@foreach'],' ($posts as $post)\n  &lt;li&gt;',[2,'{{ $post-&gt;title }}'],'&lt;/li&gt;\n',[1,'@endforeach']],[
+ '<b>Blade directives</b> start with <code>@</code>: loops, ifs, layouts. Every <code>@foreach</code> needs an <code>@endforeach</code>.',
+ '<b>Echo with escaping.</b> Prints the value with &lt; and &gt; made harmless. This stops XSS (cross-site scripting).'])}
+${V.steps([
+ ['A visitor opens <b>/posts/1</b>. The route <b>/posts/{post}</b> matches, and <b>{post}</b> captures 1.',`<svg viewBox="0 0 420 150" role="img" aria-label="URL posts 1 matches the route">
+<rect class="bx-hl" x="10" y="14" width="400" height="40" rx="6"/><text class="t-m" x="22" y="40" style="font-size:15px">GET /posts/<tspan class="t-a" style="font-weight:700">1</tspan></text>
+<text class="t-m" x="10" y="88" style="font-size:14px">'/posts/{post}'  ...  function (Post $post)</text>
+<rect class="ln-d" x="10" y="104" width="400" height="38" rx="6"/>
+</svg>`],
+ ['The parameter is typed <b>Post $post</b> and named like <b>{post}</b>, so Laravel looks up the Post with id 1 and passes in the object.',`<svg viewBox="0 0 420 150" role="img" aria-label="Laravel finds post 1">
+<rect class="bx" x="10" y="14" width="400" height="40" rx="6"/><text class="t-m" x="22" y="40" style="font-size:15px">GET /posts/<tspan class="t-a" style="font-weight:700">1</tspan></text>
+<text class="t-m" x="10" y="88" style="font-size:14px">'/posts/{post}'  ...  function (Post $post)</text>
+<rect class="bx-ok" x="10" y="104" width="400" height="38" rx="6"/><text class="t" x="22" y="129">$post = Post 1: "Hello Laravel"</text>
+</svg>`],
+ ['Someone tries <b>/posts/999</b>. No such row, so Laravel stops and answers <b>404 Not Found</b> for you. No if statement needed.',`<svg viewBox="0 0 420 150" role="img" aria-label="Missing post gives 404">
+<rect class="bx" x="10" y="14" width="400" height="40" rx="6"/><text class="t-m" x="22" y="40" style="font-size:15px">GET /posts/<tspan class="t-bad" style="font-weight:700">999</tspan></text>
+<text class="t-m" x="10" y="88" style="font-size:14px">'/posts/{post}'  ...  function (Post $post)</text>
+<rect class="bx-bad" x="10" y="104" width="400" height="38" rx="6"/><text class="t-b" x="22" y="129">404 Not Found</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('view(\'posts.index\', [...])','Dot means folder: resources/views/posts/index.blade.php'),V.no('{!! $post-&gt;body !!}','Prints raw HTML: only for content you fully trust'),
+ V.no('{post} with function (Post $item)','The names must match or binding does not happen'),V.ok('.blade.php','Views need this ending to be compiled by Blade'),
+ V.rh('Conventions'),
+ V.ok('posts/index, posts/show','One folder per model, views named after the action'))}
+${V.build(`<ol><li>Run <code>php artisan migrate</code> to create the posts table.</li><li>Run <code>php artisan db:seed</code>, read the mass assignment error, then fill in <code>$fillable</code> and seed again.</li><li>Add <code>Route::get('/posts', ...)</code> that queries published posts, newest first, and returns <code>view('posts.index', ['posts' =&gt; $posts])</code>.</li><li>Create the index view with <code>@foreach</code> and links to each post.</li><li>Add <code>/posts/{post}</code> with a <code>Post $post</code> parameter and a show view. Test /posts/1 and /posts/999.</li></ol>`)}
+${V.hook(`Double curlies escape, the URL name matches the parameter, a missing row is a free 404.`)}
+`)}
 
-<h4>Mass assignment and <code>$fillable</code></h4>
-<p>The seeder fills the table with three posts, using <code>Post::create([...])</code> with an array of column values. Setting many columns from one array at once is called <b>mass assignment</b>. Run <code>php artisan db:seed</code> and it fails with an error along the lines of <b>Add [title] to fillable property to allow mass assignment on [App\\Models\\Post]</b>.</p>
-<p>That refusal is deliberate. Imagine a sign-up form handled with <code>User::create($request-&gt;all())</code>. A crafty visitor adds a hidden field <code>is_admin=1</code> to the form, and they have made themselves an administrator. So Laravel only mass-assigns columns you have explicitly allowed in the model's <code>$fillable</code> list:</p>
-<pre class="snip">class Post extends Model
-{
-    protected $fillable = ['title', 'body'];   // add every column the seeder sets
-}</pre>
-<p>Look at the seeder to see which columns it sets, list exactly those, and run <code>php artisan db:seed</code> again.</p>
-
-<h4>Routes and views</h4>
-<p>A <b>route</b> pairs an HTTP method and a URL with the code that answers it. You already have one for the home page. A route for the post list fetches the data and hands it to a view:</p>
-<pre class="snip">Route::get('/posts', function () {
-    $posts = Post::where('published', true)-&gt;latest()-&gt;get();
-    return view('posts.index', ['posts' =&gt; $posts]);
-});</pre>
-<p><code>view('posts.index', [...])</code> means "render the template at <code>resources/views/posts/index.blade.php</code> and give it these variables". The dot in the name stands for a folder, and Laravel adds <code>.blade.php</code> itself. The array's keys become variable names inside the template, so <code>'posts'</code> becomes <code>$posts</code> there. Filtering with <code>where('published', true)</code> is what keeps the draft off the page.</p>
-
-<h4>Blade templates and escaping</h4>
-<p><b>Blade</b> is Laravel's template language: mostly HTML, plus a few special markers.</p>
-<pre class="snip">&lt;h1&gt;Blog&lt;/h1&gt;
-&lt;ul&gt;
-@foreach ($posts as $post)
-    &lt;li&gt;{{ $post-&gt;title }}&lt;/li&gt;
-@endforeach
-&lt;/ul&gt;</pre>
-<p><code>@foreach</code> and <code>@endforeach</code> repeat the HTML between them once per post. <code>{{ ... }}</code> prints a value, and here is the important part: it <b>escapes</b> it first, turning characters like <code>&lt;</code> into harmless codes. If someone titles a post with a <code>&lt;script&gt;</code> tag, visitors see the text instead of running the script. That attack is called <b>cross-site scripting</b>, or XSS, and Blade blocks it by default. Blade also has <code>{!! ... !!}</code>, which prints without escaping. Only use it for HTML you fully trust.</p>
-
-<h4>Route parameters and route-model binding</h4>
-<p>To show one post, the URL needs to carry its id: <code>/posts/1</code>, <code>/posts/2</code>. In the route, curly braces mark a part of the URL that can vary, a <b>route parameter</b>: <code>Route::get('/posts/{post}', ...)</code>.</p>
-<p>Now the clever part. If your function asks for a <code>Post</code> object with a parameter of the same name, <code>function (Post $post)</code>, Laravel takes the number from the URL, looks up the post with that id, and passes in the finished object. This is <b>route-model binding</b>. If no post has that id, Laravel stops and returns a <b>404 Not Found</b> page for you. That is exactly what the last task checks with <code>/posts/999</code>.</p>
-<div class="mistake"><b>Common mistake</b>Mismatched names, such as <code>{id}</code> in the URL with <code>Post $post</code> in the function. Binding only happens when the name in braces matches the parameter name, so use <code>{post}</code> with <code>$post</code>.</div>
-<div class="mistake"><b>Common mistake</b>Forgetting <code>-&gt;get()</code> at the end of a query chain. Without it you pass the unfinished query to the view instead of the posts.</div>
-
-<h4>Reading the errors you will hit</h4>
-<ul>
-<li><b>Add [title] to fillable property</b>: a mass-assigned column is missing from <code>$fillable</code>.</li>
-<li><b>View [posts.index] not found</b>: the template file is missing or misnamed. It must be <code>resources/views/posts/index.blade.php</code>.</li>
-<li><b>no such table: posts</b>, or "Base table or view not found" on MySQL: run <code>php artisan migrate</code> first.</li>
-<li><b>Undefined variable $posts</b> inside a view: the key in the array passed to <code>view()</code> does not match the name used in the template.</li>
-</ul>
-<div class="try"><b>Try it in your head</b>After seeding, what does <code>/posts</code> list, and what does <code>/posts/3</code> show? The list shows only the two published posts, newest first, so "Draft ideas" is missing. But <code>/posts/3</code> still shows the draft, because the show route looks posts up by id and does not filter. A real blog would add that check too.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>A Laravel request flows route, then model and database, then Blade view, then HTML.</li>
-<li>Migrations describe tables in code; <code>php artisan migrate</code> applies them.</li>
-<li>Eloquent links <code>Post</code> to <code>posts</code>; chains like <code>where()-&gt;latest()-&gt;get()</code> build and run queries.</li>
-<li><code>$fillable</code> lists the only columns that may be mass-assigned, blocking crafted form fields.</li>
-<li><code>{{ }}</code> prints escaped text, <code>@foreach</code> loops, and <code>function (Post $post)</code> with <code>{post}</code> loads the record or returns 404.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Which table does a model called <code>Comment</code> use? <i>comments.</i> 2. Which file does <code>view('posts.show')</code> load? <i>resources/views/posts/show.blade.php.</i> 3. What stops <code>Post::create($request-&gt;all())</code> setting any column? <i>$fillable.</i></div>
 `);
 
 explain('h6',`
-<h4>Why build an API</h4>
-<p>In the last lesson your Laravel app answered with HTML pages, made for people reading in a browser. But many of your "visitors" are not people. A phone app, a JavaScript front end, or another company's server wants the <b>data</b>, not a page, so it can display or process it its own way.</p>
-<p>An <b>API</b> (application programming interface) is a set of URLs designed for programs to call. Instead of HTML, it answers with <b>JSON</b>, a plain text format for data that every language can read. A task looks like this in JSON:</p>
-<pre class="snip">{ "id": 1, "title": "Write tests", "done": false }</pre>
-<p>Curly braces hold named fields, much like a PHP associative array. A list of tasks is the same thing inside square brackets. This lesson builds a to-do API that can list, create, read, update and delete tasks, the four basic data jobs often called <b>CRUD</b> (create, read, update, delete).</p>
+<p>Phone apps, JavaScript front ends and other servers do not want HTML pages. They want raw data. A <b>REST API</b> is how your Laravel app serves that data, using URLs and HTTP methods that every developer in the world already understands.</p>
 
-<h4>REST: nouns in the URL, verbs in the method</h4>
-<p>Every HTTP request has a <b>method</b> (also called a verb) and a <b>URL</b>. <b>REST</b> is a widely used style for designing APIs around that pair. The URL names a <b>resource</b>, a thing such as "all tasks" or "task number 1". The method says what to do with it. The URLs stay simple nouns; you never need <code>/deleteTask</code>.</p>
-<div class="tbl-wrap"><table><tr><th>Method and URL</th><th>Meaning</th><th>Success status</th></tr>
-<tr><td><code>GET /api/tasks</code></td><td>List all tasks</td><td>200 OK</td></tr>
-<tr><td><code>POST /api/tasks</code></td><td>Create a new task from the request body</td><td>201 Created</td></tr>
-<tr><td><code>GET /api/tasks/1</code></td><td>Read task 1</td><td>200 OK, or 404 if it does not exist</td></tr>
-<tr><td><code>PATCH /api/tasks/1</code></td><td>Change some fields of task 1</td><td>200 OK</td></tr>
-<tr><td><code>DELETE /api/tasks/1</code></td><td>Remove task 1</td><td>204 No Content</td></tr></table></div>
-<p>GET only ever reads; it must never change data, because browsers, search engines and caches repeat GET requests freely. POST and PATCH carry a <b>body</b>: the JSON data being sent. You may also meet <code>PUT</code>, which replaces a whole resource, whereas <code>PATCH</code> changes only the fields you send.</p>
+${V.card(1,'Resources and verbs','one address, five actions',`
+<figure class="fig"><svg viewBox="0 0 420 206" role="img" aria-label="Five requests on the tasks resource: GET lists, POST creates, GET with an id reads one, PATCH changes, DELETE removes, each with its status code">
+<text class="t-s" x="10" y="16">method</text><text class="t-s" x="104" y="16">address</text><text class="t-s" x="246" y="16">action</text><text class="t-s" x="346" y="16">status</text>
+<rect class="bx-ok" x="10" y="26" width="84" height="30" rx="6"/><text class="t-b" x="52" y="47" text-anchor="middle">GET</text><text class="t-m" x="104" y="47" style="font-size:15px">/api/tasks</text><text class="t" x="246" y="47">list all</text><rect class="bx" x="346" y="26" width="64" height="30" rx="6"/><text class="t-m" x="378" y="47" text-anchor="middle">200</text>
+<rect class="bx-a" x="10" y="62" width="84" height="30" rx="6"/><text class="t-b" x="52" y="83" text-anchor="middle">POST</text><text class="t-m" x="104" y="83" style="font-size:15px">/api/tasks</text><text class="t" x="246" y="83">create</text><rect class="bx" x="346" y="62" width="64" height="30" rx="6"/><text class="t-m" x="378" y="83" text-anchor="middle">201</text>
+<rect class="bx-ok" x="10" y="98" width="84" height="30" rx="6"/><text class="t-b" x="52" y="119" text-anchor="middle">GET</text><text class="t-m" x="104" y="119" style="font-size:15px">/api/tasks/1</text><text class="t" x="246" y="119">read one</text><rect class="bx" x="346" y="98" width="64" height="30" rx="6"/><text class="t-m" x="378" y="119" text-anchor="middle">200</text>
+<rect class="bx-info" x="10" y="134" width="84" height="30" rx="6"/><text class="t-b" x="52" y="155" text-anchor="middle">PATCH</text><text class="t-m" x="104" y="155" style="font-size:15px">/api/tasks/1</text><text class="t" x="246" y="155">change</text><rect class="bx" x="346" y="134" width="64" height="30" rx="6"/><text class="t-m" x="378" y="155" text-anchor="middle">200</text>
+<rect class="bx-bad" x="10" y="170" width="84" height="30" rx="6"/><text class="t-b" x="52" y="191" text-anchor="middle">DELETE</text><text class="t-m" x="104" y="191" style="font-size:15px">/api/tasks/1</text><text class="t" x="246" y="191">remove</text><rect class="bx" x="346" y="170" width="64" height="30" rx="6"/><text class="t-m" x="378" y="191" text-anchor="middle">204</text>
+</svg><figcaption>A resource is a kind of thing, here tasks. It has one address. The HTTP method says what to do, and the status code in the answer says how it went.</figcaption></figure>
+${V.like(`<p>A library counter. There is one counter for books, and you can ask it different things: show me the list, add this new book, show me book 7, fix book 7's label, throw book 7 away. Same counter, different verbs. The librarian always answers with a short code: done, created, not found.</p>`)}
+${V.why(`<p>Before REST, every API invented its own style: <code>/getTasks</code>, <code>/makeNewTask.php?x=1</code>. Roy Fielding described REST in 2000: use the web's own building blocks, URLs for things and HTTP methods for actions. Now any developer can guess how your API works.</p>`)}
+${V.anat([[1,'PATCH'],' ',[2,'/api/tasks'],[3,'/1'],'  ',[4,'{"done": true}'],'  &#8594; ',[5,'200']],[
+ '<b>Method.</b> The verb: GET reads, POST creates, PATCH changes some fields, DELETE removes.',
+ '<b>Resource.</b> Plural noun, never a verb.',
+ '<b>ID.</b> Which one. Leave it off to mean the whole collection.',
+ '<b>JSON body.</b> Data sent with POST and PATCH.',
+ '<b>Status code.</b> 2xx means success, 4xx means the client must fix something, 5xx means the server broke.'])}
+${V.rules(V.rh('Rules: status codes'),
+ V.ok('201 Created','After POST makes something; send the new item back'),V.ok('204 No Content','After DELETE: success, nothing to say'),
+ V.ok('404 Not Found','The ID does not exist'),V.ok('422 Unprocessable Content','The data broke a validation rule'),
+ V.no('200 {"error": "..."}','Never say "OK" for a failure; clients check the code'),
+ V.rh('Conventions'),
+ V.ok('/api/tasks/5','Plural nouns, ID in the path'),V.no('/api/deleteTask?id=5','Verbs in the URL: the method is the verb'))}
+${V.hook(`Nouns in the URL, verbs in the method, the answer in the status.`)}
+`)}
 
-<h4>Status codes: the answer before the answer</h4>
-<p>Every response starts with a three-digit <b>status code</b>. Programs read it before anything else to know whether the request worked. The first digit tells you the family:</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Status code families: 2xx success, 4xx client mistakes, 5xx server failures">
-<rect class="bx-ok" x="10" y="10" width="120" height="50" rx="8"/><text class="t-b" x="70" y="32" text-anchor="middle">2xx</text><text class="t-s" x="70" y="50" text-anchor="middle">it worked</text>
-<text class="t-s" x="145" y="31">200 OK, 201 Created</text><text class="t-s" x="145" y="51">204 No Content</text>
-<rect class="bx-warn" x="10" y="75" width="120" height="50" rx="8"/><text class="t-b" x="70" y="97" text-anchor="middle">4xx</text><text class="t-s" x="70" y="115" text-anchor="middle">client's mistake</text>
-<text class="t-s" x="145" y="96">404 Not Found</text><text class="t-s" x="145" y="116">422 Unprocessable Content</text>
-<rect class="bx-bad" x="10" y="140" width="120" height="50" rx="8"/><text class="t-b" x="70" y="162" text-anchor="middle">5xx</text><text class="t-s" x="70" y="180" text-anchor="middle">server's fault</text>
-<text class="t-s" x="145" y="161">500 Internal Server Error</text><text class="t-s" x="145" y="181">a bug or crash on your side</text>
-</svg><figcaption>Status codes come in families. Codes in the 200s mean success. Codes in the 400s mean the client sent something wrong and must fix it, such as a missing record or invalid data. Codes in the 500s mean the server itself failed.</figcaption></figure>
-<p>Choosing the right code is part of the API's design. A client that receives 422 knows to show the user the form errors; a client that receives 500 knows to try again later or report a bug. Returning 200 with "error" hidden in the body forces every client to guess.</p>
+${V.card(2,'Create with validation','POST, validate, 201 or 422',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="A request passes a validation gate. Good data goes on to be saved with 201. Bad data is sent back with 422">
+${V.ic('mail',10,60,56,'ic-info')}<text class="t-s" x="38" y="136" text-anchor="middle">request</text>
+<path class="ln" d="M72 88H130"/><polygon class="ah" points="128,81 128,95 140,88"/>
+<rect class="bx-warn" x="142" y="40" width="96" height="96" rx="10"/>${V.ic('shield',166,52,48,'ic-warn')}<text class="t-b" x="190" y="124" text-anchor="middle">validate</text>
+<path class="ln-ok" d="M240 66 300 36"/><polygon class="ah-ok" points="296,28 308,32 302,42"/>
+<rect class="bx-ok" x="310" y="12" width="100" height="52" rx="8"/><text class="t-b" x="360" y="36" text-anchor="middle">saved</text><text class="t-m" x="360" y="56" text-anchor="middle">201</text>
+<path class="ln" d="M240 110 300 140"/><polygon class="ah" points="302,132 308,146 296,146"/>
+<rect class="bx-bad" x="310" y="116" width="100" height="52" rx="8"/><text class="t-b" x="360" y="140" text-anchor="middle">sent back</text><text class="t-m" x="360" y="160" text-anchor="middle">422</text>
+</svg><figcaption>Validation is a gate before the database. Good data goes through and is saved. Bad data is turned back with a list of what to fix.</figcaption></figure>
+${V.like(`<p>A form at the post office. The clerk checks it before accepting the parcel: no address, no delivery, and you get the form back with the empty box circled. That circled box is the <b>errors</b> object in a 422 reply.</p>`)}
+${V.why(`<p>Never trust what arrives over the internet. Anyone can send any JSON. Checking it by hand with lots of ifs is tedious and easy to miss, so Laravel gives you <code>$request-&gt;validate()</code> with short rules that build the error reply for you.</p>`)}
+${V.anat(['$data = $request-&gt;',[1,'validate'],'([\n    \'title\' =&gt; \'',[2,'required'],'|',[3,'string'],'|',[4,'max:100'],'\',\n]);\nreturn response()-&gt;json(Task::create($data), ',[5,'201'],');'],[
+ '<b>validate.</b> Checks the request. On failure it stops and replies 422 by itself. On success it returns only the checked fields.',
+ '<b>required.</b> The field must be present and not empty.',
+ '<b>string.</b> Must be text.',
+ '<b>max:100.</b> At most 100 characters. Rules are joined with a pipe <code>|</code>.',
+ '<b>Status.</b> 201 Created instead of the default 200.'])}
+${V.steps([
+ ['The client sends <b>POST /api/tasks</b> with the JSON body <b>{"title": "Write tests"}</b>.',`<svg viewBox="0 0 420 180" role="img" aria-label="POST request with a title">
+<rect class="bx-info" x="10" y="12" width="400" height="44" rx="6"/><text class="t-m" x="22" y="40" style="font-size:15px">POST /api/tasks  {"title": "Write tests"}</text>
+<rect class="bx" x="10" y="70" width="190" height="40" rx="6"/><text class="t-m" x="22" y="96" style="font-size:14px">routes/api.php</text>
+<rect class="bx" x="220" y="70" width="190" height="40" rx="6"/><text class="t-m" x="232" y="96" style="font-size:14px">store()</text>
+<rect class="ln-d" x="10" y="124" width="400" height="48" rx="6"/>
+</svg>`],
+ ['<b>routes/api.php</b> matches POST /tasks and calls <b>TaskController@store</b>. Laravel adds the /api prefix to every route in that file.',`<svg viewBox="0 0 420 180" role="img" aria-label="The route calls store">
+<rect class="bx-info" x="10" y="12" width="400" height="44" rx="6"/><text class="t-m" x="22" y="40" style="font-size:15px">POST /api/tasks  {"title": "Write tests"}</text>
+<rect class="bx-hl" x="10" y="70" width="190" height="40" rx="6"/><text class="t-m" x="22" y="96" style="font-size:14px">routes/api.php</text>
+<path class="ln-a" d="M200 90H212"/><polygon class="ah-a" points="210,84 210,96 220,90"/>
+<rect class="bx-hl" x="220" y="70" width="190" height="40" rx="6"/><text class="t-m" x="232" y="96" style="font-size:14px">store()</text>
+<rect class="ln-d" x="10" y="124" width="400" height="48" rx="6"/>
+</svg>`],
+ ['<b>validate()</b> checks the rules. title is there, it is text and it is short. Passed.',`<svg viewBox="0 0 420 180" role="img" aria-label="Validation passes">
+<rect class="bx-info" x="10" y="12" width="400" height="44" rx="6"/><text class="t-m" x="22" y="40" style="font-size:15px">POST /api/tasks  {"title": "Write tests"}</text>
+<rect class="bx" x="10" y="70" width="190" height="40" rx="6"/><text class="t-m" x="22" y="96" style="font-size:14px">routes/api.php</text>
+<rect class="bx-ok" x="220" y="70" width="190" height="40" rx="6"/><text class="t-m" x="232" y="96" style="font-size:14px">store()</text>${V.ic('check',374,76,28,'ic-ok')}
+<rect class="ln-d" x="10" y="124" width="400" height="48" rx="6"/><text class="t" x="22" y="154">required ok, string ok, max:100 ok</text>
+</svg>`],
+ ['<b>Task::create()</b> saves the row and the controller replies <b>201 Created</b> with the new task as JSON, including its new id.',`<svg viewBox="0 0 420 180" role="img" aria-label="201 Created with the new task">
+<rect class="bx-info" x="10" y="12" width="400" height="44" rx="6"/><text class="t-m" x="22" y="40" style="font-size:15px">POST /api/tasks  {"title": "Write tests"}</text>
+<rect class="bx" x="10" y="70" width="190" height="40" rx="6"/><text class="t-m" x="22" y="96" style="font-size:14px">routes/api.php</text>
+<rect class="bx-ok" x="220" y="70" width="190" height="40" rx="6"/><text class="t-m" x="232" y="96" style="font-size:14px">store()</text>
+<rect class="bx-ok" x="10" y="124" width="400" height="48" rx="6"/><text class="t-m" x="22" y="154" style="font-size:14px"><tspan class="t-ok" style="font-weight:700">201</tspan> {"id": 1, "title": "Write tests"}</text>
+</svg>`],
+ ['Now the client sends an <b>empty body</b>. validate() fails, stops the method and replies <b>422</b> with an errors object naming each bad field.',`<svg viewBox="0 0 420 180" role="img" aria-label="Empty body gives 422 with errors">
+<rect class="bx-info" x="10" y="12" width="400" height="44" rx="6"/><text class="t-m" x="22" y="40" style="font-size:15px">POST /api/tasks  {}</text>
+<rect class="bx" x="10" y="70" width="190" height="40" rx="6"/><text class="t-m" x="22" y="96" style="font-size:14px">routes/api.php</text>
+<rect class="bx-bad" x="220" y="70" width="190" height="40" rx="6"/><text class="t-m" x="232" y="96" style="font-size:14px">store()</text>${V.ic('cross',374,76,28,'ic-bad')}
+<rect class="bx-bad" x="10" y="124" width="400" height="48" rx="6"/><text class="t-m" x="22" y="144" style="font-size:14px"><tspan class="t-bad" style="font-weight:700">422</tspan> "errors": {"title": [</text><text class="t-m" x="22" y="164" style="font-size:14px">  "The title field is required."]}</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('[TaskController::class, \'store\']','A route points at a controller class and method name'),V.no('Task::create($request-&gt;all())','Skips validation; save $data from validate() instead'),
+ V.ok('\'done\' =&gt; \'boolean\'','Validate every field you accept, not just required ones'),
+ V.rh('Conventions'),
+ V.ok('index, store, show, update, destroy','Laravel\'s standard names for the five actions'),V.ok('php artisan install:api','On Laravel 11 and later, creates routes/api.php'))}
+${V.hook(`Validate at the gate: pass gets 201, fail gets 422 with the reasons.`)}
+`)}
 
-<h4>API routes and controllers</h4>
-<p>API routes live in <code>routes/api.php</code>, and Laravel automatically puts <code>/api</code> in front of every URL in that file. So <code>Route::get('/tasks', ...)</code> answers <code>/api/tasks</code>. (In new Laravel 11 and later projects that file does not exist until you run <code>php artisan install:api</code>; this lesson's project already has it.)</p>
-<p>Last lesson, small functions inside the routes file did the work. For an API with five actions, that gets crowded, so the code moves into a <b>controller</b>: a class whose methods each handle one action. The route points at a method using an array of the class name and the method name:</p>
-<pre class="snip">Route::get('/tasks', [TaskController::class, 'index']);
-Route::post('/tasks', [TaskController::class, 'store']);
-Route::get('/tasks/{task}', [TaskController::class, 'show']);</pre>
-<p><code>TaskController::class</code> is simply the class's full name as a string, written in a way your editor can check. Laravel's usual method names are <code>index</code> (list), <code>store</code> (create), <code>show</code> (read one), <code>update</code> and <code>destroy</code>. Following them pays off: once you know the pattern, <code>Route::apiResource('tasks', TaskController::class)</code> registers all five routes in one line.</p>
-<p>Here is the nicest shortcut in Laravel APIs: if a controller method <b>returns a model or a collection</b>, Laravel converts it to JSON and sends it with status 200. So <code>index()</code> can simply return <code>Task::orderBy('id')-&gt;get()</code>. The model's <code>$casts</code> setting, <code>'done' =&gt; 'boolean'</code>, makes sure <code>done</code> comes out as a real <code>true</code> or <code>false</code> in JSON, not the 0 or 1 the database stores.</p>
+${V.card(3,'Read, update, delete','the life of one task',`
+<figure class="fig"><svg viewBox="0 0 420 150" role="img" aria-label="Task 1 is created, marked done, then deleted. Asking for it afterwards gives 404">
+<rect class="bx-ok" x="10" y="30" width="90" height="70" rx="8"/>${V.ic('card',33,36,44,'ic-ok')}<text class="t-s" x="55" y="94" text-anchor="middle">created</text>
+<rect class="bx-info" x="116" y="30" width="90" height="70" rx="8"/>${V.ic('check',139,36,44,'ic-info')}<text class="t-s" x="161" y="94" text-anchor="middle">done</text>
+<rect class="bx-bad" x="222" y="30" width="90" height="70" rx="8"/>${V.ic('cross',245,36,44,'ic-bad')}<text class="t-s" x="267" y="94" text-anchor="middle">deleted</text>
+<rect class="ln-d" x="328" y="30" width="82" height="70" rx="8"/><text class="t-b" x="369" y="72" text-anchor="middle">404</text>
+<text class="t-m" x="55" y="128" text-anchor="middle" style="font-size:14px">POST</text><text class="t-m" x="161" y="128" text-anchor="middle" style="font-size:14px">PATCH</text><text class="t-m" x="267" y="128" text-anchor="middle" style="font-size:14px">DELETE</text><text class="t-m" x="369" y="128" text-anchor="middle" style="font-size:14px">GET</text>
+</svg><figcaption>One task's life told in four requests. After the delete, the same address answers 404.</figcaption></figure>
+${V.steps([
+ ['<b>PATCH /api/tasks/1</b> with <b>{"done": true}</b>. Route-model binding finds task 1; update() changes only that field and returns the task with 200.',`<svg viewBox="0 0 420 140" role="img" aria-label="PATCH marks task 1 done">
+<rect class="bx-info" x="10" y="12" width="400" height="40" rx="6"/><text class="t-m" x="22" y="38" style="font-size:15px">PATCH /api/tasks/1  {"done": true}</text>
+<rect class="bx-ok" x="10" y="70" width="400" height="56" rx="6"/><text class="t-m" x="22" y="104" style="font-size:14px"><tspan class="t-ok" style="font-weight:700">200</tspan> {"id": 1, "done": true, ...}</text>
+</svg>`],
+ ['<b>DELETE /api/tasks/1</b>. destroy() deletes the row and returns <b>response()-&gt;noContent()</b>: status 204 and an empty body.',`<svg viewBox="0 0 420 140" role="img" aria-label="DELETE returns 204">
+<rect class="bx-info" x="10" y="12" width="400" height="40" rx="6"/><text class="t-m" x="22" y="38" style="font-size:15px">DELETE /api/tasks/1</text>
+<rect class="bx-ok" x="10" y="70" width="400" height="56" rx="6"/><text class="t-m" x="22" y="104" style="font-size:14px"><tspan class="t-ok" style="font-weight:700">204</tspan> (empty body)</text>
+</svg>`],
+ ['<b>GET /api/tasks/1</b> again. The row is gone, so binding cannot find it and Laravel answers <b>404</b> before show() even runs.',`<svg viewBox="0 0 420 140" role="img" aria-label="GET after delete returns 404">
+<rect class="bx-info" x="10" y="12" width="400" height="40" rx="6"/><text class="t-m" x="22" y="38" style="font-size:15px">GET /api/tasks/1</text>
+<rect class="bx-bad" x="10" y="70" width="400" height="56" rx="6"/><text class="t-m" x="22" y="104" style="font-size:14px"><tspan class="t-bad" style="font-weight:700">404</tspan> Not Found</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('function show(Task $task)','Typed parameter + {task} in the URL = automatic lookup and 404'),V.ok('return $task;','Returning a model sends it as JSON with 200'),
+ V.no('PATCH with \'title\' =&gt; \'required\'','A partial update should not demand every field'),
+ V.rh('Conventions'),
+ V.ok('PATCH for some fields','PUT traditionally replaces the whole item'),V.ok('$casts = [\'done\' =&gt; \'boolean\']','So JSON shows true, not 1'))}
+${V.build(`<ol><li>Run <code>php artisan migrate</code> to create the tasks table.</li><li>Add the POST route and write <code>store()</code>: validate, create, return JSON with 201. Test with a title, then with an empty body.</li><li>Add <code>GET /tasks</code> and <code>GET /tasks/{task}</code>; test ids 1 and 999.</li><li>Add PATCH and DELETE routes with <code>update()</code> and <code>destroy()</code>.</li><li>Send PATCH, then DELETE, then GET the same task and watch 200, 204, 404.</li></ol>`)}
+${V.hook(`Created 201, deleted 204, missing 404, wrong data 422.`)}
+`)}
 
-<h4>Creating with validation: 201 or 422</h4>
-<p>Never trust incoming data. A client might send no title, a number instead of text, or a title ten thousand characters long. <code>$request-&gt;validate()</code> checks the request body against <b>rules</b>, written as text separated by vertical bars:</p>
-<pre class="snip">$data = $request-&gt;validate([
-    'title' =&gt; 'required|string|max:100',   // must exist, be text, at most 100 chars
-    'done'  =&gt; 'boolean',                    // optional, but true/false if sent
-]);</pre>
-<figure class="fig"><svg viewBox="0 0 420 236" role="img" aria-label="POST request: validation fails with 422, or passes and creates the task with 201">
-<rect class="bx-info" x="120" y="10" width="180" height="36" rx="6"/><text class="t-m" x="210" y="33" text-anchor="middle">POST /api/tasks</text>
-<path class="ln" d="M210 46v12"/><polygon class="ah" points="204,58 216,58 210,66"/>
-<rect class="bx-a" x="120" y="66" width="180" height="36" rx="6"/><text class="t-m" x="210" y="89" text-anchor="middle">validate()</text>
-<path class="ln" d="M210 102V112H100V126M210 112H320V126"/>
-<polygon class="ah" points="94,126 106,126 100,134"/><polygon class="ah-ok" points="314,126 326,126 320,134"/>
-<text class="t-s t-bad" x="150" y="128" text-anchor="middle">fails</text>
-<text class="t-s t-ok" x="268" y="128" text-anchor="middle">passes</text>
-<rect class="bx-bad" x="10" y="134" width="180" height="40" rx="6"/><text class="t-b" x="100" y="159" text-anchor="middle">422 + errors</text>
-<text class="t-s" x="100" y="194" text-anchor="middle">nothing is saved</text>
-<rect class="bx" x="230" y="134" width="180" height="40" rx="6"/><text class="t-m" x="320" y="159" text-anchor="middle">Task::create</text>
-<path class="ln-ok" d="M320 174v12"/><polygon class="ah-ok" points="314,186 326,186 320,194"/>
-<rect class="bx-ok" x="230" y="194" width="180" height="36" rx="6"/><text class="t-b" x="320" y="217" text-anchor="middle">201 + new task</text>
-</svg><figcaption>Every POST passes through validation first. If a rule fails, Laravel stops immediately and answers 422 with the errors for each field, and nothing is saved. If every rule passes, the task is created and returned with status 201.</figcaption></figure>
-<p>If any rule fails, <code>validate()</code> stops the method right there. When the client asks for JSON, as API clients do with an <code>Accept: application/json</code> header, Laravel answers <b>422 Unprocessable Content</b> with a body like this:</p>
-<pre class="snip">{
-  "message": "The title field is required.",
-  "errors": { "title": ["The title field is required."] }
-}</pre>
-<p>The <code>errors</code> object lists the problems field by field, so a front end can show each message next to the right input. If validation passes, <code>validate()</code> returns <b>only the validated fields</b>. Extra fields a client slipped in are dropped, which works hand in hand with <code>$fillable</code> from the last lesson.</p>
-<p>Returning the new task directly would send status 200. For a creation, the correct code is 201 Created, so you build the response yourself: <code>response()-&gt;json($task, 201)</code>, meaning "send this as JSON with status 201".</p>
-
-<h4>Reading, updating and deleting one task</h4>
-<p>The three single-task actions all use a <code>{task}</code> route parameter with <b>route-model binding</b>, which you met last lesson: a method parameter <code>Task $task</code> receives the task whose id is in the URL. When there is no such task, Laravel answers <b>404 Not Found</b> before your method even runs. That means <code>show()</code> can be one line that returns <code>$task</code>.</p>
-<ul>
-<li><b>update</b> takes both the request and the task: <code>update(Request $request, Task $task)</code>. Because PATCH changes only some fields, its rules leave out <code>required</code>. Then <code>$task-&gt;update($data)</code> saves the changes, and returning <code>$task</code> sends back the updated version with 200.</li>
-<li><b>destroy</b> calls <code>$task-&gt;delete()</code>. There is nothing useful left to send back, so it returns <code>response()-&gt;noContent()</code>, which is status <b>204 No Content</b>: success, with an empty body.</li>
-</ul>
-<p>The last task checks the whole story in order: PATCH sets <code>done</code> to true, DELETE answers 204, and a GET for the same task afterwards answers 404, proving it is really gone.</p>
-<div class="tip"><b>Tip</b>Run <code>php artisan migrate</code> before anything else, or every request fails because the tasks table does not exist. Then use the request panel: choose the method, type the path, add a JSON body for POST and PATCH, and press Send. Always look at the status code first, then the body.</div>
-<div class="mistake"><b>Common mistake</b>Keeping <code>required</code> in the PATCH rules. Then a client that only wants to tick a task as done must also resend the title, or gets a 422. Partial updates need rules without <code>required</code>.</div>
-<div class="mistake"><b>Common mistake</b>Adding a method to the controller but not a route for it. The method exists, yet the URL gives 404 or "405 Method Not Allowed", because Laravel only knows the routes in <code>routes/api.php</code>. Every action needs both.</div>
-
-<h4>Reading the errors you will hit</h4>
-<ul>
-<li><b>404 Not Found</b>: either no route matches that method and URL, or route-model binding found no record with that id.</li>
-<li><b>405 Method Not Allowed</b>: the URL exists, but not with that method, for example a DELETE route that was never added.</li>
-<li><b>422</b> with <code>errors</code>: your own validation rejected the body. Read the field messages.</li>
-<li><b>500</b>: your code crashed. Common causes are a missing table (run the migration) or a column missing from <code>$fillable</code>.</li>
-</ul>
-<div class="try"><b>Try it in your head</b>A client sends <code>POST /api/tasks</code> with the body <code>{"title": ""}</code>, then <code>DELETE /api/tasks/42</code> when no task 42 exists. What status codes come back? The empty title fails <code>required</code>, so 422. The delete finds no task through route-model binding, so 404.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>A REST API names resources in URLs and uses the method for the action: GET reads, POST creates, PATCH updates, DELETE removes.</li>
-<li>Status families: 2xx success, 4xx the client's mistake, 5xx the server's fault. Create with 201, delete with 204, missing with 404, invalid with 422.</li>
-<li>Routes in <code>routes/api.php</code> get the <code>/api</code> prefix and point at controller methods with <code>[TaskController::class, 'store']</code>.</li>
-<li>Returning a model or collection sends JSON with 200; <code>response()-&gt;json($task, 201)</code> and <code>response()-&gt;noContent()</code> set other codes.</li>
-<li><code>$request-&gt;validate()</code> returns only checked fields, or answers 422 with errors for each field.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Which method and URL list every task? <i>GET /api/tasks.</i> 2. What status should a successful DELETE return? <i>204 No Content.</i> 3. A POST arrives without a required title. What does Laravel reply? <i>422 with an errors object.</i></div>
 `);

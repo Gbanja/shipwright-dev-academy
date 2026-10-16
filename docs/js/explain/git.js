@@ -21,7 +21,7 @@ const ar=o=>{const X=[4,144,284],N=['Working folder','Staging box','History'],I=
   s+=`<path class="${a2?'ln-a':'ln-d'}" d="M214 180H336"/><polygon class="${a2?'ah-a':'ah'}" points="336,174 336,186 346,180"/><text class="t-m${a2?' t-a':''}" x="280" y="204" text-anchor="middle" style="font-size:14px">git commit</text>`}
  return s+(o.x||'')};
 /* laptop (left) and GitHub (right). o.l / o.r: commits [label, class, column, dy, parents?]; o.lt / o.rt: tags [name, commit index, up?]; o.dir 'push' | 'pull' | 'fetch' */
-const side=(x0,C,T)=>{let s='';const P=C.map((c,k)=>[x0+30+c[2]*40,108+(c[3]||0)]);
+const side=(x0,C,T)=>{let s='';const P=C.map((c,k)=>[x0+56+c[2]*52,108+(c[3]||0)]);
  C.forEach((c,k)=>{const ps=c[4]||(k?[k-1]:[]);ps.forEach(p=>s+=ed(P[p][0],P[p][1],P[k][0],P[k][1]))});
  C.forEach((c,k)=>s+=cs(P[k][0],P[k][1],c[0],c[1]));
  (T||[]).forEach(t=>{const [x,y]=P[t[1]],w=t[0].length*8.4+14,ty=t[2]?y-48:y+24;s+=`<path class="ln-d" d="M${x} ${t[2]?y-24:y+14}V${t[2]?y-14:y+24}"/><rect class="${t[3]||'bx-warn'}" x="${x-w/2}" y="${ty}" width="${w}" height="24" rx="4"/><text class="t-m" x="${x}" y="${ty+17}" text-anchor="middle" style="font-size:14px">${t[0]}</text>`});return s};
@@ -474,22 +474,22 @@ ${cm(250,110,'M','bx-ok')}<text class="t-b" x="330" y="96">merge commit</text><t
 ${V.like(`<p>Two streams meeting to form a river. Both bring water. The point where they join is a new place on the map, the merge commit.</p>`)}
 ${V.why(`<p>Git finds the last commit both branches share, called the <b>merge base</b>. It compares each side with it and combines both sets of changes. Three snapshots are involved (base, yours, theirs), which is where the name comes from.</p>`)}
 ${V.steps([
- ['main is at B (it already has the navbar). feature/footer split off earlier, from A, and has its own commit C.',`<svg viewBox="0 0 420 210" role="img" aria-label="main on B, feature/footer on C, both from A">
+ ['main is at B (it already has the navbar). feature/footer split off earlier, from A, and has its own commit C.',`<svg viewBox="0 0 420 236" role="img" aria-label="main on B, feature/footer on C, both from A">
 ${ed(60,110,190,110)}${ed(60,110,190,170)}${cm(60,110,'A')}${cm(190,110,'B')}${cm(190,170,'C')}${br('main',190,110,true,true)}
-<path class="ln-d" d="M208 170H222"/><rect class="bx-warn" x="222" y="157" width="144" height="26" rx="4"/><text class="t-m" x="294" y="175" text-anchor="middle">feature/footer</text>
+${br('feature/footer',190,170,false)}
 </svg>`],
- ['<b>git merge feature/footer</b>. Git finds the merge base, <b>A</b>, the last commit both lines share, and combines both sets of changes.',`<svg viewBox="0 0 420 210" role="img" aria-label="Git finds merge base A">
+ ['<b>git merge feature/footer</b>. Git finds the merge base, <b>A</b>, the last commit both lines share, and combines both sets of changes.',`<svg viewBox="0 0 420 236" role="img" aria-label="Git finds merge base A">
 ${ed(60,110,190,110,'ln-a')}${ed(60,110,190,170,'ln-a')}${cm(60,110,'A','bx-hl')}${cm(190,110,'B')}${cm(190,170,'C')}${br('main',190,110,true,true)}
-<path class="ln-d" d="M208 170H222"/><rect class="bx-warn" x="222" y="157" width="144" height="26" rx="4"/><text class="t-m" x="294" y="175" text-anchor="middle">feature/footer</text>
-<text class="t-b t-a" x="60" y="158" text-anchor="middle" style="font-size:14px">base</text>
+${br('feature/footer',190,170,false)}
+<text class="t-b t-a" x="60" y="152" text-anchor="middle" style="font-size:14px">base</text>
 </svg>`],
- ['It makes a new <b>merge commit, M</b>, with two parents: B and C. main moves onto M. Your folder now has the navbar and the footer.',`<svg viewBox="0 0 420 210" role="img" aria-label="Merge commit M with parents B and C">
+ ['It makes a new <b>merge commit, M</b>, with two parents: B and C. main moves onto M. Your folder now has the navbar and the footer.',`<svg viewBox="0 0 420 236" role="img" aria-label="Merge commit M with parents B and C">
 ${ed(60,110,190,110)}${ed(60,110,190,170)}${ed(190,110,330,110,'ln-ok')}${ed(190,170,330,110,'ln-ok')}${cm(60,110,'A')}${cm(190,110,'B')}${cm(190,170,'C')}${cm(330,110,'M','bx-ok')}${br('main',330,110,true,true,'bx-hl')}
-<path class="ln-d" d="M208 170H222"/><rect class="bx-warn" x="222" y="157" width="144" height="26" rx="4"/><text class="t-m" x="294" y="175" text-anchor="middle">feature/footer</text>
+${br('feature/footer',190,170,false)}
 </svg>`],
- ['Tidy up: <b>git branch -d feature/footer</b> peels off the note. The commits stay in history, safely reachable from main.',`<svg viewBox="0 0 420 210" role="img" aria-label="feature/footer note removed; commits remain">
+ ['Tidy up: <b>git branch -d feature/footer</b> peels off the note. The commits stay in history, safely reachable from main.',`<svg viewBox="0 0 420 236" role="img" aria-label="feature/footer note removed; commits remain">
 ${ed(60,110,190,110)}${ed(60,110,190,170)}${ed(190,110,330,110)}${ed(190,170,330,110)}${cm(60,110,'A')}${cm(190,110,'B')}${cm(190,170,'C')}${cm(330,110,'M')}${br('main',330,110,true,true)}
-<rect class="bx t-dim" x="222" y="157" width="144" height="26" rx="4"/><text class="t-m t-dim" x="294" y="175" text-anchor="middle">feature/footer</text><path class="ln-x" d="M222 183 366 157"/>
+<rect class="bx t-dim" x="118" y="206" width="144" height="26" rx="4"/><text class="t-m t-dim" x="190" y="224" text-anchor="middle">feature/footer</text><path class="ln-x" d="M118 232 262 206"/>
 </svg>`]])}
 ${V.rules(V.rh('Rules'),
  V.ok('git switch main, then merge','Stand on the branch that receives the work'),V.no('git merge main (on the feature)','Pulls main into your feature instead. Not what you meant'),
@@ -571,604 +571,395 @@ ${V.hook(`See the fences, pick the words, delete the fences, then <code>add</cod
 <div class="try"><b>Try it in your head</b>1. Two branches change different files. Conflict? <i>No. Git merges them automatically.</i> 2. Which side is between <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt; HEAD</code> and <code>=======</code>? <i>Yours: the branch you are on.</i> 3. How do you back out of a merge halfway? <i>git merge --abort.</i></div>
 `);
 
-}
 explain('g8',`
-<h4>Why you need a remote</h4>
-<p>Everything so far has lived in the <code>.git</code> folder on your own computer. That has two problems. If your laptop dies, the whole history dies with it. And nobody else can see or add to your work. Teams need one shared place where everyone's commits meet.</p>
-<p>That shared place is a <b>remote</b>: another copy of the same repository, stored somewhere else, usually on GitHub. You send your commits to it and collect other people's commits from it. Your local repository and the remote are full equals; each holds its own copy of the history, and you keep them in step by hand.</p>
-<div class="analogy"><b>Think of it like</b>A shared folder in the cloud that does not sync on its own. You decide when to upload (push) and when to download (pull). Until you do, the two copies can quietly drift apart.</div>
+<p>So far your history has lived only on your laptop. If the laptop dies, the work dies with it, and nobody else can help. This lesson connects your repository to GitHub so it is backed up and shareable.</p>
 
-<h4>Connecting: <code>git remote add origin</code></h4>
-<pre class="snip">git remote add origin https://github.com/you/portfolio.git</pre>
-<p>This saves a nickname for a web address. <code>origin</code> is the nickname; the URL is where the repository lives on GitHub. From now on you can say <code>origin</code> instead of typing the URL. "origin" is only a convention, but it is so universal that you should use it for your main remote. <code>git remote -v</code> lists the remotes you have saved.</p>
-<p>On a real computer, you first create an empty repository on github.com to get that URL. GitHub URLs come in two styles: HTTPS (<code>https://github.com/...</code>) and SSH (<code>git@github.com:...</code>). Both work. GitHub no longer accepts your account password for pushes, so you sign in with a browser login, a personal access token or an SSH key. The sandbox skips that step.</p>
+${V.card(1,'Remotes and origin','a saved contact for another copy',`
+<figure class="fig"><svg viewBox="0 0 420 212" role="img" aria-label="Your laptop with commit A and an empty GitHub repository, joined by a remote called origin">
+${lg({l:[['A','bx-a',0]],lt:[['main',0,true]],x:`<path class="ln-d" d="M150 108H330"/><rect class="bx-a" x="170" y="94" width="80" height="28" rx="14"/><text class="t-m t-a" x="210" y="113" text-anchor="middle" style="font-size:14px">origin</text><text class="t" x="316" y="140" text-anchor="middle" style="font-size:14px">empty repo</text>`})}
+<text class="t-m" x="210" y="198" text-anchor="middle" style="font-size:14px">https://github.com/you/portfolio.git</text>
+</svg><figcaption>A remote is another copy of your repository somewhere else, usually GitHub. You give it a short nickname so you never have to type the long web address again. By convention the main one is called origin.</figcaption></figure>
+${V.like(`<p>Saving a friend in your phone's contacts. You save the long number once under a nickname, then you just tap "Mum". <b>origin</b> is the nickname; the URL is the number.</p>`)}
+${V.anat([[1,'git remote add'],' ',[2,'origin'],' ',[3,'https://github.com/you/portfolio.git']],[
+ '<b>Command.</b> Save a new remote. It only stores the address; nothing is uploaded yet.',
+ '<b>Nickname.</b> <code>origin</code> by convention.',
+ '<b>Address.</b> Copied from the green "Code" button on GitHub. SSH addresses look like <code>git@github.com:you/portfolio.git</code>.'])}
+${V.rules(V.ok('git remote -v','Lists your remotes and their addresses'),V.no('git remote add origin (twice)','"remote origin already exists". Use git remote set-url to change it'),
+ V.ok('Empty repo on GitHub','When creating it, do not tick "Add a README" if you already have commits locally'))}
+`)}
 
-<h4>Pushing for the first time: <code>git push -u origin main</code></h4>
-<p><b>Pushing</b> uploads commits from your branch to the remote. Let's read the command word by word:</p>
-<ol>
-<li><code>push</code>: send commits.</li>
-<li><code>origin</code>: to the remote with that nickname.</li>
-<li><code>main</code>: the branch to send. GitHub will get a branch called <code>main</code> with the same commits.</li>
-<li><code>-u</code>, short for <code>--set-upstream</code>: remember this pairing. Your local <code>main</code> now has an <b>upstream</b>, <code>origin/main</code>. Afterwards, plain <code>git push</code> and <code>git pull</code> know where to go without you naming it.</li>
-</ol>
-<p>You only need <code>-u</code> once per branch. After that, <code>git push</code> on its own is enough.</p>
+${V.card(2,'Push','send your commits up',`
+${V.steps([
+ ['Your laptop has commit <b>A</b>. GitHub has nothing yet.',`<svg viewBox="0 0 420 212" role="img" aria-label="Laptop has A; GitHub empty">
+${lg({l:[['A','bx-a',0]],lt:[['main',0,true]]})}
+</svg>`],
+ ['<b>git push -u origin main</b> uploads main to GitHub. Now GitHub has A too, with its own main note.',`<svg viewBox="0 0 420 212" role="img" aria-label="Push copies A to GitHub">
+${lg({l:[['A','bx-a',0]],lt:[['main',0,true]],r:[['A','bx-ok',0]],rt:[['main',0,true]],rc:'bx-hl',dir:'push',cmd:'git push -u origin main'})}
+</svg>`],
+ ['The <b>-u</b> also linked your main to GitHub\'s. Your laptop keeps a note called <b>origin/main</b>: "the last time I looked, GitHub\'s main was here". From now on, plain <b>git push</b> works.',`<svg viewBox="0 0 420 212" role="img" aria-label="Laptop shows origin/main on A">
+${lg({l:[['A','bx-a',0]],lt:[['main',0,true],['origin/main',0,false,'bx-info']],r:[['A','bx-a',0]],rt:[['main',0,true]]})}
+</svg>`]])}
+${V.anat([[1,'git push'],' ',[2,'-u'],' ',[3,'origin'],' ',[4,'main']],[
+ '<b>Push.</b> Upload commits GitHub does not have yet.',
+ '<b>Set upstream.</b> Remember this pairing, so next time <code>git push</code> and <code>git pull</code> need nothing after them.',
+ '<b>Where to.</b> The remote\'s nickname.',
+ '<b>Which branch.</b>'])}
+${V.like(`<p>Uploading photos to a shared album. Only the new ones go up; the ones already there are not sent again.</p>`)}
+`)}
 
-<h4><code>origin/main</code>: your notebook about GitHub</h4>
-<p>After the push, the graph panel shows a new label, <code>origin/main</code>. This is a <b>remote-tracking branch</b>. It is not the branch on GitHub itself. It is your local note of where GitHub's <code>main</code> was <i>the last time you checked</i>. Git updates that note only when you talk to the remote: on push, fetch or pull.</p>
-<p>That is why <code>git status</code> can say "Your branch is up to date with 'origin/main'" even when a teammate pushed five minutes ago: your notebook is out of date, not your eyes.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Your computer holds main and origin/main; GitHub holds its own main">
-<rect class="bx" x="10" y="20" width="170" height="160" rx="8"/><text class="t-b" x="95" y="44" text-anchor="middle">Your computer</text>
-<rect class="bx-info" x="250" y="20" width="160" height="160" rx="8"/><text class="t-b" x="330" y="44" text-anchor="middle">GitHub: origin</text>
-<rect class="bx-ok" x="110" y="62" width="50" height="24" rx="6"/><text class="t-b" x="135" y="79" text-anchor="middle">main</text>
-<line class="ln" x1="121" y1="110" x2="70" y2="110"/>
-<circle class="bx-a" cx="55" cy="110" r="14"/><text class="t-s" x="55" y="115" text-anchor="middle">C1</text>
-<circle class="bx-a" cx="135" cy="110" r="14"/><text class="t-s" x="135" y="115" text-anchor="middle">C2</text>
-<line class="ln-d" x1="55" y1="126" x2="55" y2="138"/><text class="t-s t-info" x="55" y="154" text-anchor="middle">origin/main</text>
-<text class="t-s" x="55" y="171" text-anchor="middle">last seen</text>
-<rect class="bx-ok" x="305" y="62" width="50" height="24" rx="6"/><text class="t-b" x="330" y="79" text-anchor="middle">main</text>
-<circle class="bx-a" cx="330" cy="110" r="14"/><text class="t-s" x="330" y="115" text-anchor="middle">C1</text>
-<line class="ln-a" x1="184" y1="96" x2="238" y2="96"/><polygon class="ah-a" points="236,90 236,102 246,96"/><text class="t-s" x="215" y="88" text-anchor="middle">push</text>
-<line class="ln-ok" x1="192" y1="140" x2="246" y2="140"/><polygon class="ah-ok" points="194,134 194,146 184,140"/><text class="t-s" x="215" y="132" text-anchor="middle">fetch</text>
-</svg><figcaption>You made commit C2 locally. GitHub still only has C1, and your origin/main label remembers that GitHub's main was on C1 when you last checked. git push sends C2 up and moves both GitHub's main and your origin/main to it. git fetch brings down anything new from GitHub.</figcaption></figure>
+${V.card(3,'Rejected? Pull first','someone got there before you',`
+${V.steps([
+ ['Your teammate Ada pushed commit <b>T</b> to GitHub. Meanwhile you made commit <b>B</b> on your laptop. Both grew from A.',`<svg viewBox="0 0 420 212" role="img" aria-label="Laptop A then B; GitHub A then T">
+${lg({l:[['A','bx-a',0],['B','bx-info',1]],lt:[['main',1,true]],r:[['A','bx-a',0],['T','bx-warn',1]],rt:[['main',1,true]]})}
+</svg>`],
+ ['<b>git push</b> is <b>rejected</b>. If GitHub took your B, Ada\'s T would be lost. Git refuses: "Updates were rejected... fetch first".',`<svg viewBox="0 0 420 212" role="img" aria-label="Push rejected">
+${lg({l:[['A','bx-a',0],['B','bx-info',1]],lt:[['main',1,true]],r:[['A','bx-a',0],['T','bx-warn',1]],rt:[['main',1,true]],rc:'bx-bad',bad:'git push: rejected',x:V.ic('cross',92,176,34,'ic-bad')})}
+</svg>`],
+ ['<b>git pull</b> downloads T (that half is <b>fetch</b>) and merges it with your B (that half is <b>merge</b>). You get merge commit <b>M</b> holding both.',`<svg viewBox="0 0 420 212" role="img" aria-label="Pull brings T down and merges it into M">
+${lg({l:[['A','bx-a',0],['B','bx-info',1,-20],['T','bx-warn',1,20,[0]],['M','bx-ok',2,0,[1,2]]],lt:[['main',3,true]],r:[['A','bx-a',0],['T','bx-warn',1]],rt:[['main',1,true]],dir:'pull'})}
+</svg>`],
+ ['<b>git push</b> again. GitHub already has T, M builds on it, so nothing is lost. Accepted.',`<svg viewBox="0 0 420 212" role="img" aria-label="Push succeeds; GitHub has M">
+${lg({l:[['A','bx-a',0],['B','bx-info',1,-20],['T','bx-warn',1,20,[0]],['M','bx-ok',2,0,[1,2]]],lt:[['main',3,true]],r:[['A','bx-a',0],['B','bx-info',1,-20],['T','bx-warn',1,20,[0]],['M','bx-ok',2,0,[1,2]]],rt:[['main',3,true]],rc:'bx-hl',dir:'push'})}
+</svg>`]])}
+${V.like(`<p>A shared class notebook. Before you write your page, you read the pages others added since you last looked. Otherwise you would write over them.</p>`)}
+${V.rules(V.rh('Rules'),
+ V.ok('git pull, then git push','The fix for "Updates were rejected"'),V.no('git push --force','Overwrites GitHub and deletes your teammate\'s work. Never your first move'),
+ V.ok('git fetch','Download only. Updates origin/main but leaves your files alone'),V.ok('git pull = fetch + merge','Download and combine in one go'),
+ V.rh('Conventions'),
+ V.ok('Pull before you start work','Fewer surprises and smaller merges'),
+ V.ok('git config --global pull.rebase false','On a real computer Git may ask how to combine diverged work. false means merge, as in this lesson'))}
+${V.build(`<ol><li>Add GitHub as <code>origin</code> with <code>git remote add</code>.</li><li>Push main with <code>-u</code> so it remembers the link.</li><li>Commit a change and try <code>git push</code>. Read the rejection.</li><li>Run <code>git pull</code> to bring in Ada's commit.</li><li>Push again. This time it works.</li></ol>`)}
+${V.hook(`Rejected? Pull, then push. Never force your way past a teammate.`)}
+`)}
 
-<h4>Downloading: <code>git fetch</code> and <code>git pull</code></h4>
-<ul>
-<li><code>git fetch</code> downloads new commits from the remote and updates <code>origin/main</code>. It does <b>not</b> touch your files or your own <code>main</code>. It is always safe: it just refreshes your notebook so you can look before you act.</li>
-<li><code>git pull</code> is <code>git fetch</code> followed by <code>git merge origin/main</code>. It downloads, then merges the remote's work into your current branch, exactly like the merges from earlier lessons: a fast-forward if you have no new commits, a merge commit if you both do.</li>
-</ul>
-
-<h4>When your push is rejected</h4>
-<p>In this lesson, right after your first push, a teammate called Ada pushes a commit that adds a README. You do not have it. Then you commit your own change and push:</p>
-<pre class="snip">$ git push
- ! [rejected]        main -&gt; main (fetch first)
-error: failed to push some refs to 'https://github.com/you/portfolio.git'
-hint: Updates were rejected because the remote contains work that you do
-hint: not have locally.</pre>
-<p>Why does GitHub refuse? A push is only allowed if it is a <b>fast-forward</b> for the remote: your commits must sit on top of everything GitHub already has. Yours do not. GitHub's <code>main</code> has Ada's commit, and your <code>main</code> has your commit instead. If GitHub accepted your push, its <code>main</code> label would jump to your commit and Ada's work would fall off the branch.</p>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="Your main and GitHub's main each have a commit the other lacks">
-<text class="t-b" x="10" y="65">your main</text><text class="t-b" x="10" y="145">GitHub main</text>
-<line class="ln" x1="236" y1="60" x2="174" y2="60"/><line class="ln" x1="236" y1="140" x2="174" y2="140"/>
-<circle class="bx-a" cx="160" cy="60" r="14"/><text class="t-s" x="160" y="65" text-anchor="middle">C1</text>
-<circle class="bx-a" cx="250" cy="60" r="14"/><text class="t-s" x="250" y="65" text-anchor="middle">L</text>
-<circle class="bx-a" cx="160" cy="140" r="14"/><text class="t-s" x="160" y="145" text-anchor="middle">C1</text>
-<circle class="bx-ok" cx="250" cy="140" r="14"/><text class="t-s" x="250" y="145" text-anchor="middle">T</text>
-<text class="t-s" x="275" y="65">your heading</text><text class="t-s" x="275" y="145">Ada's README</text>
-<line class="ln-d" x1="10" y1="100" x2="410" y2="100"/>
-<text class="t-b t-bad" x="210" y="190" text-anchor="middle">Push refused: it would drop T</text>
-</svg><figcaption>Both copies start from C1. Your main added L, your heading change. GitHub's main added T, Ada's README. Neither contains the other, so pushing L would throw T away, and GitHub refuses.</figcaption></figure>
-
-<h4>The fix: pull, then push</h4>
-<pre class="snip">git pull    # fetch Ada's commit and merge it with yours
-git push    # now your main contains everything GitHub has</pre>
-<p>After <code>git pull</code>, your <code>main</code> has a merge commit whose two parents are your commit and Ada's. It contains both changes. Now your history sits on top of GitHub's, so the push is a fast-forward and succeeds. If you and Ada had changed the same lines, the pull would stop with a merge conflict, and you would resolve it exactly as in the previous lesson.</p>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="After pull and push, a merge commit with parents L and T is on both copies">
-<line class="ln" x1="74" y1="98" x2="166" y2="56"/><line class="ln" x1="74" y1="110" x2="166" y2="152"/>
-<line class="ln-ok" x1="194" y1="56" x2="286" y2="98"/><line class="ln-ok" x1="194" y1="152" x2="286" y2="110"/>
-<circle class="bx-a" cx="60" cy="104" r="15"/><text class="t-s" x="60" y="109" text-anchor="middle">C1</text>
-<circle class="bx-a" cx="180" cy="50" r="15"/><text class="t-s" x="180" y="55" text-anchor="middle">L</text>
-<circle class="bx-ok" cx="180" cy="158" r="15"/><text class="t-s" x="180" y="163" text-anchor="middle">T</text>
-<circle class="bx-ok" cx="300" cy="104" r="17"/><text class="t-b" x="300" y="109" text-anchor="middle">M</text>
-<rect class="bx-ok" x="330" y="64" width="60" height="26" rx="6"/><text class="t-b" x="360" y="82" text-anchor="middle">main</text>
-<rect class="bx-info" x="324" y="118" width="90" height="26" rx="6"/><text class="t-s" x="369" y="136" text-anchor="middle">origin/main</text>
-<text class="t-s" x="180" y="24" text-anchor="middle">yours</text><text class="t-s" x="180" y="196" text-anchor="middle">Ada's</text>
-</svg><figcaption>git pull made merge commit M, whose parents are your commit L and Ada's commit T. git push then sent M to GitHub, so main and origin/main both point at M and the two copies match again.</figcaption></figure>
-<div class="tip"><b>Tip</b>On a real computer, newer versions of Git may stop a pull like this and ask how to combine diverged branches, with a hint mentioning <code>pull.rebase</code>. Running <code>git config --global pull.rebase false</code> once tells Git to merge, which is the behaviour this lesson uses. The other choice, rebasing, comes in an advanced lesson.</div>
-<div class="mistake"><b>Common mistake</b>Answering a rejected push with <code>git push --force</code>. Force makes GitHub accept your history and throw away whatever does not fit, which here means deleting Ada's commit for the whole team. A rejected push almost always means: pull first. Never reach for <code>--force</code> on a shared branch.</div>
-
-<h4>A daily rhythm</h4>
-<p>Start your session with <code>git pull</code> so you build on the latest work. Commit as you go. Push when a piece of work is done, so others can see it and your work is backed up. Pull again before you push if it has been a while.</p>
-<div class="try"><b>Try it in your head</b>You run <code>git fetch</code> and see that <code>origin/main</code> is two commits ahead of your <code>main</code>. Have your files changed? No. Fetch only updated your notebook. Your files change when you merge, for example with <code>git pull</code>, which here would be a simple fast-forward because you have no new commits of your own.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>A remote is another copy of the repository, usually on GitHub; <code>origin</code> is the conventional name, added with <code>git remote add origin URL</code>.</li>
-<li><code>git push -u origin main</code> uploads main and sets its upstream; afterwards plain <code>git push</code> works.</li>
-<li><code>origin/main</code> is your local record of GitHub's main, updated by push, fetch and pull.</li>
-<li><code>git fetch</code> downloads without changing your files; <code>git pull</code> is fetch plus merge.</li>
-<li>"Updates were rejected" means the remote has commits you lack: pull, then push. Do not force.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. What is <code>origin</code>? <i>The nickname of your main remote, usually GitHub.</i> 2. Difference between fetch and pull? <i>Fetch only downloads; pull downloads and merges.</i> 3. Why is a push rejected? <i>GitHub has commits you do not have yet.</i></div>
 `);
+
 explain('g9',`
-<h4>Why teams do not push straight to main</h4>
-<p>In the last lesson you pushed commits directly onto <code>main</code> on GitHub. On a real team that is risky. <code>main</code> is usually the version that gets deployed to real users. One unreviewed typo can take a website down. So most teams protect <code>main</code> and agree on a routine: nobody changes it directly. Every change goes through a <b>pull request</b> first.</p>
-<p>A <b>pull request</b>, or <b>PR</b>, is a request on GitHub that says: "here is my branch; please review it, and if it is good, merge it into <code>main</code>". The name comes from asking the project to <i>pull</i> your changes in. GitLab calls the same thing a <b>merge request</b>.</p>
-<div class="analogy"><b>Think of it like</b>An editor checking an article before it is printed. You write the draft separately, hand it in, the editor leaves comments, you make fixes, and only then does it go into the newspaper.</div>
+<p>In real teams, nobody pushes straight to <code>main</code>. Every change goes through a <b>pull request</b> first, so another person can check it. This is the daily rhythm of professional software work, and it is what interviewers expect you to know.</p>
 
-<h4>What happens inside a pull request</h4>
-<p>A PR page on GitHub shows three things:</p>
-<ul>
-<li><b>The changes</b>: every commit on your branch and a diff of every file, so reviewers can read your work line by line.</li>
-<li><b>The conversation</b>: teammates leave comments, ask questions and finally <b>approve</b> or <b>request changes</b>. If you push more commits to the same branch, the PR updates automatically.</li>
-<li><b>Checks</b>: automated jobs, often GitHub Actions, that run your tests and other checks on every push. A red cross means something failed.</li>
-</ul>
-<p>When the reviewers are happy and the checks pass, someone clicks <b>Merge pull request</b>. GitHub performs the merge on its own copy of the repository.</p>
+${V.card(1,'GitHub Flow','seven steps, every time',`
+<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="GitHub Flow: branch, commit, push, pull request, review, merge, pull main">
+${V.ic('branch',10,10,44,'ic-a')}${V.ic('check',116,10,44,'ic-ok')}${V.ic('cloud',222,10,44,'ic-a')}${V.ic('chat',328,10,44,'ic-info')}
+<text class="t-b" x="32" y="76" text-anchor="middle" style="font-size:14px">1 branch</text><text class="t-b" x="138" y="76" text-anchor="middle" style="font-size:14px">2 commit</text><text class="t-b" x="244" y="76" text-anchor="middle" style="font-size:14px">3 push</text><text class="t-b" x="350" y="76" text-anchor="middle" style="font-size:14px">4 open PR</text>
+<path class="ln-a" d="M60 32H108M166 32H214M272 32H320"/>
+${V.ic('people',328,106,44,'ic-p')}${V.ic('branch',222,106,44,'ic-ok')}${V.ic('laptop',116,106,44,'ic-info')}
+<text class="t-b" x="350" y="172" text-anchor="middle" style="font-size:14px">5 review</text><text class="t-b" x="244" y="172" text-anchor="middle" style="font-size:14px">6 merge</text><text class="t-b" x="138" y="172" text-anchor="middle" style="font-size:14px">7 pull main</text>
+<path class="ln-a" d="M350 84V100M320 128H272M214 128H166"/>
+</svg><figcaption>Branch, commit, push the branch, open a pull request, get it reviewed, merge it on GitHub, then pull main to your laptop. Repeat for every change.</figcaption></figure>
+${V.like(`<p>Handing in an essay. You write it on your own paper (a branch), hand it to the teacher (open a pull request), the teacher writes comments and you fix them (review), and only then does it go on the classroom wall (merged into main).</p>`)}
+${V.why(`<p>main is the version real users get. One careless push can break it for everyone. A <b>pull request</b> (PR) is a request to merge your branch, with a page where teammates comment line by line and automatic tests run. GitHub added them in 2008, and they are now how almost all teams work.</p>`)}
+${V.hook(`Branch, commit, push, PR, review, merge, pull. Never straight to main.`)}
+`)}
 
-<h4>GitHub Flow, step by step</h4>
-<p>The routine is called <b>GitHub Flow</b>. It is just the branch, commit, push and merge skills you already have, put in a fixed order:</p>
-<figure class="fig"><svg viewBox="0 0 420 280" role="img" aria-label="GitHub Flow: branch, commit, push, open PR, review, merge, pull main, delete branch">
-<g text-anchor="middle">
-<rect class="bx" x="10" y="20" width="110" height="40" rx="8"/><text class="t" x="65" y="45">1 branch</text>
-<rect class="bx" x="155" y="20" width="110" height="40" rx="8"/><text class="t" x="210" y="45">2 commit</text>
-<rect class="bx" x="300" y="20" width="110" height="40" rx="8"/><text class="t" x="355" y="45">3 push</text>
-<rect class="bx-info" x="300" y="105" width="110" height="40" rx="8"/><text class="t" x="355" y="130">4 open PR</text>
-<rect class="bx-info" x="155" y="105" width="110" height="40" rx="8"/><text class="t" x="210" y="130">5 review</text>
-<rect class="bx-info" x="10" y="105" width="110" height="40" rx="8"/><text class="t" x="65" y="130">6 merge</text>
-<rect class="bx-ok" x="10" y="190" width="110" height="40" rx="8"/><text class="t" x="65" y="215">7 pull main</text>
-<rect class="bx-ok" x="155" y="190" width="150" height="40" rx="8"/><text class="t" x="230" y="215">8 delete branch</text>
-<text class="t-s" x="210" y="266">Grey and green: your computer. Blue: GitHub.</text>
-</g>
-<line class="ln" x1="120" y1="40" x2="146" y2="40"/><polygon class="ah" points="145,34 145,46 154,40"/>
-<line class="ln" x1="265" y1="40" x2="291" y2="40"/><polygon class="ah" points="290,34 290,46 299,40"/>
-<line class="ln" x1="355" y1="60" x2="355" y2="96"/><polygon class="ah" points="349,95 361,95 355,104"/>
-<line class="ln" x1="300" y1="125" x2="274" y2="125"/><polygon class="ah" points="275,119 275,131 266,125"/>
-<line class="ln" x1="155" y1="125" x2="129" y2="125"/><polygon class="ah" points="130,119 130,131 121,125"/>
-<line class="ln" x1="65" y1="145" x2="65" y2="181"/><polygon class="ah" points="59,180 71,180 65,189"/>
-<line class="ln" x1="120" y1="210" x2="146" y2="210"/><polygon class="ah" points="145,204 145,216 154,210"/>
-</svg><figcaption>GitHub Flow. On your computer you create a branch, commit and push it. On GitHub you open a pull request, teammates review it, and it is merged. Back on your computer you pull main to get the merged work and delete the finished branch.</figcaption></figure>
-<p>Let's walk through the lesson's version, adding a contact page.</p>
+${V.card(2,'One pull request, start to finish','watch both computers',`
+${V.steps([
+ ['<b>git switch -c feature/contact</b>, add contact.html and commit <b>C</b>. It exists only on your laptop.',`<svg viewBox="0 0 420 212" role="img" aria-label="Commit C on feature/contact, laptop only">
+${lg({l:[['A','bx-a',0],['C','bx-ok',1]],lt:[['main',0,true],['feature/contact',1,false]],r:[['A','bx-a',0]],rt:[['main',0,true]]})}
+</svg>`],
+ ['<b>git push -u origin feature/contact</b> uploads the branch. GitHub now shows a "Compare &amp; pull request" button.',`<svg viewBox="0 0 420 212" role="img" aria-label="feature/contact pushed to GitHub">
+${lg({l:[['A','bx-a',0],['C','bx-ok',1]],lt:[['main',0,true],['feature/contact',1,false]],r:[['A','bx-a',0],['C','bx-ok',1]],rt:[['main',0,true],['feature/contact',1,false]],rc:'bx-hl',dir:'push',cmd:'git push -u origin feature/contact'})}
+</svg>`],
+ ['<b>gh pr create</b> opens pull request #1: "please merge feature/contact into main". Teammates review it and tests run.',`<svg viewBox="0 0 420 212" role="img" aria-label="Pull request 1 opened on GitHub">
+${lg({l:[['A','bx-a',0],['C','bx-ok',1]],lt:[['main',0,true],['feature/contact',1,false]],r:[['A','bx-a',0],['C','bx-ok',1]],rt:[['main',0,true],['feature/contact',1,false]],x:`<rect class="bx-info" x="300" y="64" width="108" height="30" rx="6"/><text class="t-b t-info" x="354" y="84" text-anchor="middle" style="font-size:14px">PR #1 open</text>`})}
+<text class="t-m t-a" x="210" y="206" text-anchor="middle" style="font-size:14px">gh pr create --title "Add contact page"</text>
+</svg>`],
+ ['<b>gh pr merge 1</b> merges it <b>on GitHub</b>. GitHub\'s main now has the contact page. Your laptop does not know yet.',`<svg viewBox="0 0 420 212" role="img" aria-label="Merged on GitHub; laptop main unchanged">
+${lg({l:[['A','bx-a',0],['C','bx-ok',1]],lt:[['main',0,true],['feature/contact',1,false]],r:[['A','bx-a',0],['C','bx-ok',1,24],['M','bx-ok',2,0,[0,1]]],rt:[['main',2,true]],rc:'bx-hl'})}
+<text class="t-b t-ok" x="316" y="206" text-anchor="middle" style="font-size:14px">PR #1 merged</text>
+</svg>`],
+ ['<b>git switch main</b> then <b>git pull</b> brings the merge home. Finally <b>git branch -d feature/contact</b> peels off the finished note.',`<svg viewBox="0 0 420 212" role="img" aria-label="Laptop main pulled and updated">
+${lg({l:[['A','bx-a',0],['C','bx-ok',1,24],['M','bx-ok',2,0,[0,1]]],lt:[['main',2,true]],r:[['A','bx-a',0],['C','bx-ok',1,24],['M','bx-ok',2,0,[0,1]]],rt:[['main',2,true]],dir:'pull',cmd:'git switch main; git pull'})}
+</svg>`]])}
+${V.anat([[1,'gh pr create'],' ',[2,'--title "Add contact page"'],' ',[3,'--body "Adds a contact form"']],[
+ '<b>GitHub CLI.</b> <code>gh</code> is GitHub\'s official command-line tool. On the website the same step is the "Compare &amp; pull request" button.',
+ '<b>Title.</b> Short, imperative, like a commit message.',
+ '<b>Description.</b> What changed and why. Without it, gh asks you for one.'])}
+${V.rules(V.rh('Rules'),
+ V.no('git push origin main','Skips review. Many teams block it with branch protection'),V.ok('git push -u origin feature/contact','Push the branch, not main'),
+ V.no('Forgetting git pull after merging','The merge happened on GitHub. Your laptop is out of date until you pull'),
+ V.rh('Conventions'),
+ V.ok('Small PRs','Easy to review in ten minutes; huge ones get rubber-stamped'),V.ok('gh pr merge 1 --merge','Choose the style: --merge, --squash or --rebase'),
+ V.ok('Delete the branch after merging','Locally with git branch -d, and on GitHub with one click'))}
+${V.build(`<ol><li>Create and switch to <code>feature/contact</code>.</li><li>Add <code>contact.html</code> and commit it.</li><li>Push the branch with <code>-u</code>.</li><li>Open the pull request with <code>gh pr create</code>, then merge it with <code>gh pr merge 1</code>.</li><li>Switch to main, pull, and delete your local branch.</li></ol>`)}
+${V.hook(`The merge happens up on GitHub. Pull it down, or you never got it.`)}
+`)}
 
-<h4>Steps 1 to 3: branch, commit, push the branch</h4>
-<pre class="snip">git switch -c feature/contact             # 1. new branch for this one job
-git add . &amp;&amp; git commit -m "Add contact page"   # 2. commit on it
-git push -u origin feature/contact        # 3. upload the BRANCH</pre>
-<p>The new part is step 3. In the last lesson you pushed <code>main</code>. Here you push your feature branch, so GitHub gets a branch called <code>feature/contact</code> alongside its <code>main</code>. The <code>-u</code> sets the upstream, as before, so later pushes from this branch are just <code>git push</code>. A PR needs the branch to exist on GitHub, because reviewers cannot see your laptop.</p>
-
-<h4>Step 4: open the pull request</h4>
-<p>On github.com, after a push you see a yellow banner with a <b>Compare &amp; pull request</b> button. This sandbox uses <code>gh</code> instead, GitHub's official command-line tool, which does the same from the terminal:</p>
-<pre class="snip">gh pr create --title "Add contact page"</pre>
-<p>A PR goes <i>from</i> a branch (your <code>feature/contact</code>) <i>into</i> a base branch (normally <code>main</code>). Give it a clear title and, on a real project, a description: what changed, why, and how to test it. On a real computer, <code>gh</code> asks for anything you did not pass as an option, such as the description, which <code>--body</code> provides. You need to sign in once with <code>gh auth login</code>.</p>
-<p>Every PR gets a number. This is the first one in the repository, so it is <code>#1</code>.</p>
-
-<h4>Steps 5 and 6: review and merge</h4>
-<p>In a real team, now you wait for review. You answer comments, push fixes to the same branch, and the PR updates. When it is approved:</p>
-<pre class="snip">gh pr merge 1</pre>
-<p>This merges PR number 1 on GitHub. On a real computer <code>gh</code> asks which kind of merge you want: a normal merge commit, a <b>squash</b> (all your commits combined into one) or a <b>rebase</b>. Teams usually pick one style and stick to it; the website's merge button offers the same choices.</p>
-
-<h4>Step 7: the merge happened on GitHub, not on your laptop</h4>
-<p>This catches everyone out at first. After merging, GitHub's <code>main</code> contains your contact page. Your local <code>main</code> does not. Nothing has changed on your computer, because the merge was done on GitHub's copy.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="GitHub's main has the merged PR; your local main does not until you pull">
-<g text-anchor="middle">
-<text class="t-b" x="100" y="22">GitHub main</text><text class="t-b" x="320" y="22">your main</text>
-<rect class="bx-ok" x="10" y="36" width="180" height="36" rx="6"/><text class="t-s" x="100" y="59">Merge pull request #1</text>
-<rect class="bx-ok" x="10" y="80" width="180" height="36" rx="6"/><text class="t-s" x="100" y="103">Add contact page</text>
-<rect class="bx" x="10" y="124" width="180" height="36" rx="6"/><text class="t-s" x="100" y="147">Add homepage</text>
-<rect class="ln-d" x="230" y="36" width="180" height="36" rx="6" fill="none"/><text class="t-s" x="320" y="59">missing</text>
-<rect class="ln-d" x="230" y="80" width="180" height="36" rx="6" fill="none"/><text class="t-s" x="320" y="103">missing</text>
-<rect class="bx" x="230" y="124" width="180" height="36" rx="6"/><text class="t-s" x="320" y="147">Add homepage</text>
-<text class="t-m t-ok" x="210" y="190">git switch main, git pull</text>
-</g>
-</svg><figcaption>Right after merging on GitHub, GitHub's main has two new commits: your contact page and the merge commit for pull request number 1. Your local main still ends at Add homepage. Switching to main and running git pull downloads the two missing commits.</figcaption></figure>
-<pre class="snip">git switch main
-git pull</pre>
-<p>Now your local <code>main</code> matches GitHub, <code>contact.html</code> is in your folder, and you are ready to start the next branch from up-to-date code.</p>
-
-<h4>Step 8: tidy up</h4>
-<pre class="snip">git branch -d feature/contact</pre>
-<p>Because you pulled the merged work, Git can see that every commit on <code>feature/contact</code> is now in <code>main</code>, so <code>-d</code> deletes it without complaint. GitHub's copy of the branch can be removed with the <b>Delete branch</b> button on the PR page.</p>
-<div class="mistake"><b>Common mistake</b>Running <code>git branch -d</code> before pulling, and getting "not fully merged". Your local <code>main</code> does not have the merge yet, so Git thinks the work would be lost. Pull first. (If your team squash-merges, the squashed commit has a different id, so Git may still refuse. Once you have checked the PR really is merged, <code>-D</code> is safe in that case.)</div>
-<div class="tip"><b>Tip</b>Keep pull requests small. A PR that changes 50 lines gets a careful review in minutes. A PR that changes 2,000 lines gets skimmed, and bugs slip through.</div>
-<div class="try"><b>Try it in your head</b>Your PR has a review comment asking you to fix a typo. Do you need to open a new PR? No. Fix the typo on the same branch, commit, and <code>git push</code>. The existing PR updates with the new commit automatically.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>A pull request asks for your branch to be reviewed and merged into <code>main</code>; it shows the diff, a conversation and automated checks.</li>
-<li>GitHub Flow: branch, commit, push the branch, open a PR, review, merge, pull main, delete the branch.</li>
-<li><code>git push -u origin feature/name</code> puts your branch on GitHub; <code>gh pr create</code> and <code>gh pr merge</code> do from the terminal what the website buttons do.</li>
-<li>The merge happens on GitHub, so your local <code>main</code> only gets it after <code>git switch main</code> and <code>git pull</code>.</li>
-<li>Delete merged branches with <code>git branch -d</code>, after pulling.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Where does a PR merge happen? <i>On GitHub, not on your laptop.</i> 2. What must you do after it is merged? <i>Switch to main and git pull.</i> 3. Which branch do you push in GitHub Flow? <i>Your feature branch, never main directly.</i></div>
 `);
+
 explain('g10',`
-<h4>Three tools for three awkward moments</h4>
-<p>By now you can commit, branch, merge and share. This lesson covers three situations that come up every week on a real team:</p>
-<ul>
-<li>You are halfway through something and need a clean folder <i>right now</i>, without committing half-done work. That is <b>stash</b>.</li>
-<li>A commit that is already on GitHub turns out to be wrong, and teammates already have it. That is <b>revert</b>.</li>
-<li>You made some local commits you want to throw away completely. That is <b>reset</b>, which you met briefly in the undo lesson.</li>
-</ul>
-<p>The sandbox starts with three commits that each change <code>app.js</code>: "Create app", "Add login" and "Add dashboard".</p>
+<p>Real work gets interrupted. A bug report arrives while your files are half-edited, or a commit that is already on GitHub turns out to be wrong. These three tools handle exactly those moments.</p>
 
-<h4>Stash: a shelf for unfinished work</h4>
-<p>Picture this. You are editing <code>app.js</code> when someone asks you to check something on another branch. Your edit is not ready to commit. Switching might be refused ("your local changes would be overwritten"), and even if it is allowed, your half-done edit would come along to the other branch.</p>
-<p><code>git stash</code> takes all your uncommitted changes to tracked files, staged and unstaged, saves them on a private shelf inside <code>.git</code>, and resets your folder to match the last commit. Your working tree is clean. Later, <code>git stash pop</code> takes the changes off the shelf and puts them back.</p>
-<div class="analogy"><b>Think of it like</b>A drawer in your desk. Someone needs the desk urgently, so you sweep your papers into the drawer. When they leave, you take the papers out and carry on exactly where you were.</div>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="git stash moves changes from the working directory to a shelf; git stash pop brings them back">
-<g text-anchor="middle">
-<rect class="bx" x="10" y="30" width="160" height="140" rx="8"/><text class="t-b" x="90" y="56">Working dir</text>
-<rect class="bx-a" x="25" y="76" width="130" height="34" rx="6"/><text class="t-s" x="90" y="98">app.js: v4 wip</text>
-<text class="t-s" x="90" y="136">after stash:</text><text class="t-s" x="90" y="154">clean</text>
-<rect class="bx-warn" x="250" y="30" width="160" height="140" rx="8"/><text class="t-b" x="330" y="56">Stash shelf</text>
-<rect class="bx" x="265" y="76" width="130" height="34" rx="6"/><text class="t-m" x="330" y="98">stash@{0}</text>
-<rect class="bx" x="265" y="118" width="130" height="34" rx="6"/><text class="t-m" x="330" y="140">stash@{1}</text>
-<text class="t-s" x="210" y="80">git stash</text><text class="t-s" x="210" y="130">stash pop</text>
-</g>
-<line class="ln-a" x1="174" y1="92" x2="238" y2="92"/><polygon class="ah-a" points="236,86 236,98 246,92"/>
-<line class="ln-ok" x1="184" y1="142" x2="246" y2="142"/><polygon class="ah-ok" points="186,136 186,148 176,142"/>
-</svg><figcaption>git stash moves your uncommitted edits off the desk onto a shelf, leaving the working directory clean. The newest shelf entry is called stash@{0}, the one before it stash@{1}, and so on. git stash pop moves the newest entry back into your files and removes it from the shelf.</figcaption></figure>
-<pre class="snip">git stash         # shelve: working tree becomes clean
-git stash list    # stash@{0}: WIP on main: 3c1e9a0 Add dashboard
-git stash pop     # bring the newest entry back and remove it from the shelf</pre>
-<p>A few details worth knowing:</p>
-<ul>
-<li>The shelf is a stack. The newest entry is <code>stash@{0}</code>, and <code>pop</code> always takes the top one first.</li>
-<li>"WIP" means "work in progress". <code>git stash push -m "half-done filters"</code> gives an entry a clearer name.</li>
-<li>By default, brand-new untracked files are <b>not</b> stashed. Add <code>-u</code> (<code>git stash -u</code>) to include them.</li>
-<li>The stash is local only. It is never pushed to GitHub, so do not use it as long-term storage.</li>
-<li>If the popped changes clash with the current files, you get a normal conflict to resolve, and the entry stays on the shelf until you drop it with <code>git stash drop</code>.</li>
-</ul>
+${V.card(1,'Stash','a shelf for unfinished work',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="Half-finished work moved off the desk onto a shelf labelled stash">
+<rect class="bx-info" x="10" y="80" width="170" height="70" rx="8"/><text class="t-b" x="95" y="70" text-anchor="middle">Your desk</text><text class="t" x="95" y="122" text-anchor="middle" style="font-size:14px">clean</text>
+<path class="ln" style="stroke-width:4" d="M240 66H410"/><text class="t-b" x="325" y="24" text-anchor="middle">Stash shelf</text>
+<rect class="bx-warn" x="270" y="34" width="110" height="30" rx="5"/><text class="t-m" x="325" y="55" text-anchor="middle" style="font-size:14px">v4 wip</text>
+${ed(180,100,262,50,'ln-a')}<polygon class="ah-a" points="256,44 268,48 258,56"/><text class="t-m t-a" x="230" y="112" style="font-size:14px">git stash</text>
+${ed(262,72,180,130,'ln-ok')}<text class="t-m t-ok" x="250" y="148" style="font-size:14px">git stash pop</text>
+</svg><figcaption>git stash lifts your uncommitted changes off the desk onto a shelf, leaving the folder clean. git stash pop puts them back.</figcaption></figure>
+${V.like(`<p>You are halfway through a jigsaw on the kitchen table and dinner is ready. You slide the whole thing onto a tray and put it on a shelf. After dinner you bring the tray back, exactly as you left it.</p>`)}
+${V.steps([
+ ['You are halfway through a change to app.js. Then: "Can you look at something urgent?"',`<svg viewBox="0 0 420 180" role="img" aria-label="app.js edited on the desk">
+<rect class="bx-hl" x="10" y="60" width="180" height="100" rx="10"/><text class="t-b" x="100" y="48" text-anchor="middle">Desk</text>
+<rect class="bx-warn" x="30" y="94" width="140" height="30" rx="5"/><text class="t-m" x="100" y="115" text-anchor="middle" style="font-size:14px">app.js (wip)</text>
+<rect class="bx" x="230" y="60" width="180" height="100" rx="10"/><text class="t-b" x="320" y="48" text-anchor="middle">Stash shelf</text>
+</svg>`],
+ ['<b>git stash</b> moves the unfinished change onto the shelf as <b>stash@{0}</b>. Your folder goes back to the last commit.',`<svg viewBox="0 0 420 180" role="img" aria-label="Change moved to stash">
+<rect class="bx" x="10" y="60" width="180" height="100" rx="10"/><text class="t-b" x="100" y="48" text-anchor="middle">Desk</text><text class="t t-ok" x="100" y="115" text-anchor="middle" style="font-size:14px">clean</text>
+<rect class="bx-hl" x="230" y="60" width="180" height="100" rx="10"/><text class="t-b" x="320" y="48" text-anchor="middle">Stash shelf</text>
+<rect class="bx-warn" x="250" y="94" width="140" height="30" rx="5"/><text class="t-m" x="320" y="115" text-anchor="middle" style="font-size:14px">stash@{0}</text>
+</svg>`],
+ ['<b>git status</b> says clean, so you can switch branches and deal with the emergency. <b>git stash list</b> shows what is on the shelf.',`<svg viewBox="0 0 420 180" role="img" aria-label="Status clean, stash list shows one entry">
+<text class="t-m" x="10" y="22" style="font-size:14px">$ git stash list</text><text class="t-m t-ok" x="10" y="42" style="font-size:14px">stash@{0}: WIP on main: Add dashboard</text>
+<rect class="bx-hl" x="10" y="60" width="180" height="100" rx="10"/><text class="t t-ok" x="100" y="115" text-anchor="middle" style="font-size:14px">clean: switch away</text>
+<rect class="bx" x="230" y="60" width="180" height="100" rx="10"/>
+<rect class="bx-warn" x="250" y="94" width="140" height="30" rx="5"/><text class="t-m" x="320" y="115" text-anchor="middle" style="font-size:14px">stash@{0}</text>
+</svg>`],
+ ['<b>git stash pop</b> puts the change back on your desk and removes it from the shelf. Carry on where you left off.',`<svg viewBox="0 0 420 180" role="img" aria-label="Change popped back to desk">
+<rect class="bx-hl" x="10" y="60" width="180" height="100" rx="10"/><text class="t-b" x="100" y="48" text-anchor="middle">Desk</text>
+<rect class="bx-warn" x="30" y="94" width="140" height="30" rx="5"/><text class="t-m" x="100" y="115" text-anchor="middle" style="font-size:14px">app.js (wip)</text>
+<rect class="bx" x="230" y="60" width="180" height="100" rx="10"/><text class="t-b" x="320" y="48" text-anchor="middle">Stash shelf</text><text class="t t-dim" x="320" y="115" text-anchor="middle" style="font-size:14px">empty</text>
+</svg>`]])}
+${V.rules(V.ok('git stash pop','Bring back the newest stash and remove it from the shelf'),V.ok('git stash apply','Bring it back but keep a copy on the shelf'),
+ V.no('Stashing new files','Untracked files stay behind unless you use git stash -u'),V.ok('Pop clashes?','If pop hits a conflict, the stash is kept so nothing is lost'))}
+`)}
 
-<h4>Committing tracked changes in one step: <code>-am</code></h4>
-<p>After popping, the lesson commits with <code>git commit -am "Add settings page"</code>. The <code>-a</code> option means "stage every modified tracked file first", and <code>-m</code> is the message, so <code>-am</code> combines them. It skips <code>git add</code> for files Git already knows. It does not pick up brand-new files; those still need <code>git add</code>.</p>
+${V.card(2,'Revert and reset','correct it in public, or rewind in private',`
+${V.like(`<p><b>Revert</b> is a newspaper printing a correction in tomorrow's paper: yesterday's paper still exists, and everyone can see the fix. <b>Reset</b> is tearing pages out of your own diary: fine while nobody else has read it, a disaster if they have copies.</p>`)}
+${V.steps([
+ ['History: A, B, C, then D, "Add settings page". You decide D was a mistake.',`<svg viewBox="0 0 420 200" role="img" aria-label="Commits A, B, C, D with main on D">
+${ed(50,120,290,120)}${cm(50,120,'A')}${cm(130,120,'B')}${cm(210,120,'C')}${cm(290,120,'D','bx-bad')}${br('main',290,120,true,true)}
+<text class="t" x="290" y="168" text-anchor="middle" style="font-size:14px">settings</text>
+</svg>`],
+ ['<b>git revert HEAD</b> adds a <b>new</b> commit, R, that does the exact opposite of D. Nothing is deleted. History only grows, so it is safe on shared branches.',`<svg viewBox="0 0 420 200" role="img" aria-label="Revert adds commit R after D">
+${ed(50,120,370,120)}${cm(50,120,'A')}${cm(130,120,'B')}${cm(210,120,'C')}${cm(290,120,'D','bx-bad')}${cm(370,120,'R','bx-ok')}${br('main',370,120,true,true)}
+<text class="t" x="290" y="168" text-anchor="middle" style="font-size:14px">settings</text><text class="t" x="370" y="168" text-anchor="middle" style="font-size:14px">undo D</text>
+</svg>`],
+ ['<b>git reset --hard HEAD~1</b> instead moves main back one step and drops R from the branch. History is rewritten, so only do this to commits you have not pushed.',`<svg viewBox="0 0 420 200" role="img" aria-label="Reset moves main back to D; R dropped">
+${ed(50,120,290,120)}${ed(290,120,352,120,'ln-d')}${cm(50,120,'A')}${cm(130,120,'B')}${cm(210,120,'C')}${cm(290,120,'D','bx-bad')}<circle class="bx t-dim" cx="370" cy="120" r="18"/><text class="t-b t-dim" x="370" y="126" text-anchor="middle">R</text>${br('main',290,120,true,true,'bx-hl')}
+<text class="t" x="290" y="168" text-anchor="middle" style="font-size:14px">settings</text>
+</svg>`]])}
+${V.anat([[1,'git revert'],' ',[2,'HEAD']],[
+ '<b>Revert.</b> Make a new commit that undoes the changes of the commit you name. Git writes the message for you: <code>Revert "Add settings page"</code>.',
+ '<b>Which commit.</b> HEAD is the latest. You can also give an id, like <code>git revert 7d01e4b</code>.'])}
+${V.rules(V.rh('Rules'),
+ V.ok('git revert','For anything already pushed. Safe for everyone'),V.no('git reset on pushed commits','Rewrites history your teammates already have'),
+ V.ok('git reset --hard HEAD~1','Fine for tidying local commits nobody has seen'),V.no('--hard with unsaved work','Uncommitted changes are deleted for good'))}
+${V.build(`<ol><li>Change <code>app.js</code>, then stash it and check <code>git status</code> is clean.</li><li>Pop the stash and commit the change.</li><li>Undo that commit safely with <code>git revert HEAD</code>.</li><li>Drop the revert commit locally with a hard reset of one step, then read the log.</li></ol>`)}
+${V.hook(`Stash to pause. Revert to correct in public. Reset only in private.`)}
+`)}
 
-<h4>Revert: undo by adding a commit</h4>
-<p>Suppose "Add settings page" has been pushed, and it breaks something. In the undo lesson you learned that resetting pushed commits causes trouble, because teammates have them. The safe tool is <code>git revert</code>.</p>
-<pre class="snip">git revert HEAD</pre>
-<p><code>git revert</code> works out exactly what the chosen commit changed, and makes a <b>new commit that does the opposite</b>. If the commit added a line, the revert removes it; if it removed one, the revert puts it back. The new commit's message is <code>Revert "Add settings page"</code>, and its description notes which commit it reverses. On a real computer an editor opens so you can explain why; <code>--no-edit</code> accepts the default.</p>
-<p>The original commit stays in the history. Nothing is rewritten. Teammates just pull one more ordinary commit. That is why revert is safe on shared branches. You can revert any commit by its id, not just <code>HEAD</code>: <code>git revert 3c1e9a0</code>.</p>
-
-<h4>Reset: move the branch back</h4>
-<p><code>git reset</code> does something completely different. It moves the branch label itself back to an earlier commit. Later commits are no longer part of the branch, as if they never happened. With <code>--hard</code>, your files are also reset to match, and any uncommitted changes are destroyed.</p>
-<p>In the lesson, after reverting, you run <code>git reset --hard HEAD~1</code>. <code>HEAD~1</code> is the commit before the revert, so this simply drops the revert commit and puts "Add settings page" back on top.</p>
-<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="Revert adds an undo commit; reset moves the branch back and drops a commit">
-<text class="t-m" x="10" y="75">revert</text><text class="t-m" x="10" y="185">reset</text>
-<line class="ln" x1="110" y1="70" x2="390" y2="70"/><line class="ln" x1="110" y1="180" x2="270" y2="180"/>
-<line class="ln-d" x1="265" y1="180" x2="304" y2="180"/>
-<g text-anchor="middle">
-<circle class="bx-a" cx="110" cy="70" r="15"/><text class="t-s" x="110" y="75">v1</text>
-<circle class="bx-a" cx="180" cy="70" r="15"/><text class="t-s" x="180" y="75">v2</text>
-<circle class="bx-a" cx="250" cy="70" r="15"/><text class="t-s" x="250" y="75">v3</text>
-<circle class="bx-a" cx="320" cy="70" r="15"/><text class="t-s" x="320" y="75">S</text>
-<circle class="bx-ok" cx="390" cy="70" r="15"/><text class="t-s" x="390" y="75">R</text>
-<rect class="bx-ok" x="360" y="20" width="60" height="26" rx="6"/><text class="t-b" x="390" y="38">main</text>
-<text class="t-s" x="390" y="104">undoes S</text>
-<text class="t-s t-ok" x="230" y="130">History grows: safe to share</text>
-<circle class="bx-a" cx="110" cy="180" r="15"/><text class="t-s" x="110" y="185">v1</text>
-<circle class="bx-a" cx="180" cy="180" r="15"/><text class="t-s" x="180" y="185">v2</text>
-<circle class="bx-a" cx="250" cy="180" r="15"/><text class="t-s" x="250" y="185">v3</text>
-<circle class="ln-d" cx="320" cy="180" r="15" fill="none"/><text class="t-s" x="320" y="185">S</text>
-<rect class="bx-ok" x="220" y="142" width="60" height="22" rx="6"/><text class="t-b" x="250" y="158">main</text>
-<text class="t-s t-bad" x="230" y="226">History rewritten: local only</text>
-</g>
-</svg><figcaption>Top: git revert keeps commit S, "Add settings page", and adds a new commit R that undoes it, so the history only grows. Bottom: git reset moves main back to v3, and commit S drops off the branch, which rewrites history.</figcaption></figure>
-
-<h4>Revert or reset?</h4>
-<div class="tbl-wrap"><table><tr><th></th><th><code>git revert</code></th><th><code>git reset</code></th></tr>
-<tr><td>How it undoes</td><td>Adds a new commit that cancels an old one</td><td>Moves the branch back; later commits leave it</td></tr>
-<tr><td>Rewrites history?</td><td>No</td><td>Yes</td></tr>
-<tr><td>Safe on shared branches?</td><td>Yes</td><td>No</td></tr>
-<tr><td>Use it for</td><td>Undoing something already pushed</td><td>Cleaning up your own unpushed commits</td></tr></table></div>
-<p>A simple rule: if the commit has left your computer, revert it. If it has not, reset is fine.</p>
-
-<h4>Errors and safety nets</h4>
-<ul>
-<li><b><code>your local changes would be overwritten by revert</code></b>: revert needs a clean working tree. Commit or stash first.</li>
-<li><b>Lost commits after a hard reset</b>: a reset does not delete commits straight away; they are just no longer on a branch. <code>git reflog</code> lists every commit HEAD has recently pointed at, so you can find the id and run <code>git reset --hard &lt;id&gt;</code> to get it back. Uncommitted edits destroyed by <code>--hard</code> are not recoverable.</li>
-</ul>
-<div class="mistake"><b>Common mistake</b>Fixing a bad pushed commit with <code>git reset --hard HEAD~1</code> and then <code>git push --force</code>. Your teammates still have the commit, their next pull gets confused, and anything they built on it is at risk. On shared branches, revert.</div>
-<div class="mistake"><b>Common mistake</b>Stashing, getting distracted, and forgetting. Weeks later the work is still on the shelf, and nobody else can see it. Run <code>git stash list</code> now and then, and pop or commit what you find.</div>
-<div class="try"><b>Try it in your head</b>Your history is A, B, C, all pushed. B introduced a bug. What does <code>git revert B</code> produce? A new commit D on top of C that removes B's changes. The history becomes A, B, C, D, and nobody's copy is rewritten.</div>
-
-<h4>Recap</h4>
-<ul>
-<li><code>git stash</code> shelves uncommitted changes and cleans the working tree; <code>git stash list</code> shows the shelf; <code>git stash pop</code> brings the newest back.</li>
-<li><code>git commit -am</code> stages modified tracked files and commits in one step.</li>
-<li><code>git revert &lt;commit&gt;</code> adds a new commit that undoes an old one, without rewriting history: safe for pushed work.</li>
-<li><code>git reset --hard HEAD~1</code> moves the branch back and discards changes: local, unpushed work only.</li>
-<li><code>git reflog</code> can find commits that a reset removed from a branch.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. You must switch branch but have half-done edits. What do you run? <i>git stash.</i> 2. A bad commit is already on GitHub. Revert or reset? <i>Revert.</i> 3. Does revert delete the bad commit? <i>No. It adds a new commit that undoes it.</i></div>
 `);
+
 explain('g11',`
-<h4>Two more ways to move commits around</h4>
-<p>Merging is not the only way to combine work. This lesson adds two tools professionals use every day:</p>
-<ul>
-<li><b>Rebase</b> moves a whole branch so it starts from a newer commit, giving a straight, tidy history.</li>
-<li><b>Cherry-pick</b> copies one single commit from anywhere onto your current branch.</li>
-</ul>
-<p>Both work by <b>replaying</b> changes: Git looks at what a commit changed, and applies the same change somewhere else, making a new commit. Understanding that one idea explains everything else in this lesson, including why rebasing shared work is dangerous.</p>
+<p>Merging keeps every fork in the road. Sometimes you would rather have a clean, straight story, or you only want one single commit from another branch. Rebase and cherry-pick are the tools for that.</p>
 
-<h4>The starting picture</h4>
-<p>The sandbox has three branches. <code>feature/api</code> split off from "Init app" and has two commits, "Add API client" and "Add retries". Meanwhile <code>main</code> moved on with "Add README". A third branch, <code>hotfix</code>, holds a security fix. You are on <code>feature/api</code>.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="feature/api branches from an older main; main has moved on">
-<line class="ln" x1="75" y1="150" x2="165" y2="150"/><line class="ln" x1="72" y1="139" x2="168" y2="71"/><line class="ln" x1="195" y1="60" x2="275" y2="60"/>
-<g text-anchor="middle">
-<circle class="bx-a" cx="60" cy="150" r="15"/><text class="t-s" x="60" y="155">C1</text>
-<circle class="bx-a" cx="180" cy="150" r="15"/><text class="t-s" x="180" y="155">C4</text>
-<circle class="bx-a" cx="180" cy="60" r="15"/><text class="t-s" x="180" y="65">C2</text>
-<circle class="bx-a" cx="290" cy="60" r="15"/><text class="t-s" x="290" y="65">C3</text>
-<text class="t-s" x="60" y="186">Init app</text><text class="t-s" x="180" y="186">Add README</text>
-<text class="t-s" x="180" y="30">API client</text><text class="t-s" x="290" y="30">retries</text>
-<rect class="bx-ok" x="205" y="137" width="60" height="26" rx="6"/><text class="t-b" x="235" y="155">main</text>
-<rect class="bx-info" x="314" y="47" width="100" height="26" rx="6"/><text class="t-b" x="364" y="65">feature/api</text>
-<rect class="bx-dark" x="332" y="90" width="64" height="26" rx="6"/><text class="t-term" x="364" y="108">HEAD</text>
-</g>
-<line class="ln" x1="364" y1="90" x2="364" y2="80"/><polygon class="ah" points="358,82 370,82 364,74"/>
-</svg><figcaption>Before rebasing. main went from C1, Init app, to C4, Add README. feature/api split off from C1 earlier and has C2, API client, and C3, retries. You are on feature/api, so it does not yet have the README.</figcaption></figure>
+${V.card(1,'Rebase','replay your commits on the newest main',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="Before rebase the feature forks from an old commit. After rebase the same changes sit on top of the newest main in a straight line">
+<text class="t-b" x="10" y="24">Before</text>
+${ed(40,56,130,56)}${ed(40,56,130,104)}${ed(130,104,200,104)}${cs(40,56,'I')}${cs(130,56,'R')}${cs(130,104,'A1','bx-info')}${cs(200,104,'A2','bx-info')}
+<text class="t" x="160" y="61" style="font-size:14px">main</text>
+<text class="t-b" x="250" y="24">After</text>
+${ed(250,80,400,80)}${cs(250,80,'I')}${cs(300,80,'R')}${cs(350,80,'A1&#39;','bx-ok')}${cs(400,80,'A2&#39;','bx-ok')}
+<text class="t" x="210" y="160" text-anchor="middle" style="font-size:14px">same changes, new ids, one straight line</text>
+</svg><figcaption>Your feature started from an old main (I). Rebase lifts your commits off and replays them on top of the newest main (R), as if you had started today. They get new ids, shown with a dash.</figcaption></figure>
+${V.like(`<p>Queuing at lunch. You joined the queue early, then wandered off for a while. Rebasing is rejoining at the back of the current queue: same tray, same food, but now you are behind everyone who arrived meanwhile.</p>`)}
+${V.why(`<p>Lots of small merge commits make the history look like a tangle of train tracks. Rebasing first keeps one straight line that is easy to read, and the final merge becomes a simple fast-forward.</p>`)}
+${V.steps([
+ ['You are on <b>feature/api</b> with commits A1 and A2. Since you branched, main moved on to <b>R</b> (Add README).',`<svg viewBox="0 0 420 250" role="img" aria-label="feature/api forks from I; main has R">
+${ed(50,110,140,110)}${ed(50,110,140,180)}${ed(140,180,230,180)}${cm(50,110,'I')}${cm(140,110,'R')}${cm(140,180,'A1','bx-info')}${cm(230,180,'A2','bx-info')}${br('main',140,110,true)}${br('feature/api',230,180,false,false)}
+<text class="t-b t-a" x="300" y="186" style="font-size:14px">HEAD</text>
+</svg>`],
+ ['<b>git rebase main</b>. Git lifts your two commits off and remembers the changes each one made.',`<svg viewBox="0 0 420 250" role="img" aria-label="A1 and A2 lifted off">
+${ed(50,110,140,110)}${ed(50,110,140,180,'ln-d')}${ed(140,180,230,180,'ln-d')}${cm(50,110,'I')}${cm(140,110,'R')}<circle class="bx t-dim" cx="140" cy="180" r="18"/><text class="t-b t-dim" x="140" y="186" text-anchor="middle">A1</text><circle class="bx t-dim" cx="230" cy="180" r="18"/><text class="t-b t-dim" x="230" y="186" text-anchor="middle">A2</text>${br('main',140,110,true)}
+<path class="ln-a" d="M260 170C300 150 300 130 260 112"/><polygon class="ah-a" points="254,104 268,108 260,118"/><text class="t-b t-a" x="300" y="146" style="font-size:14px">lift and replay</text>
+</svg>`],
+ ['It replays them one by one on top of R, making brand-new commits <b>A1&#39;</b> and <b>A2&#39;</b> with new ids. feature/api moves to A2&#39;. The old ones are left behind.',`<svg viewBox="0 0 420 250" role="img" aria-label="A1' and A2' on top of R">
+${ed(50,110,320,110)}${cm(50,110,'I')}${cm(140,110,'R')}${cm(230,110,'A1&#39;','bx-ok')}${cm(320,110,'A2&#39;','bx-ok')}<circle class="bx t-dim" cx="140" cy="180" r="18"/><text class="t-b t-dim" x="140" y="186" text-anchor="middle">A1</text><circle class="bx t-dim" cx="230" cy="180" r="18"/><text class="t-b t-dim" x="230" y="186" text-anchor="middle">A2</text>${br('main',140,110,true)}${br('feature/api',320,110,true,true,'bx-hl')}
+</svg>`],
+ ['<b>git switch main</b>, then <b>git merge feature/api</b>. The line is straight, so main just fast-forwards. No merge commit at all.',`<svg viewBox="0 0 420 250" role="img" aria-label="main fast-forwards to A2'">
+${ed(50,110,320,110)}${cm(50,110,'I')}${cm(140,110,'R')}${cm(230,110,'A1&#39;')}${cm(320,110,'A2&#39;','bx-ok')}${br('main',320,110,true,true,'bx-hl')}${br('feature/api',320,110,false)}
+<text class="t-b t-ok" x="140" y="186" text-anchor="middle">Fast-forward</text>
+</svg>`]])}
+${V.anat([[1,'git rebase'],' ',[2,'main']],[
+ '<b>Rebase.</b> Replay the commits of the branch you are on.',
+ '<b>Onto what.</b> The branch to rebuild on top of.'])}
+${V.rules(V.rh('The golden rule'),
+ V.ok('Rebase your own local work','Nobody else has those commits, so new ids hurt nobody'),
+ V.no('Rebasing commits others already have','New ids make their copies clash with yours. Merge shared branches instead'),
+ V.rh('When it clashes'),
+ V.ok('git add, then git rebase --continue','Fix the file like a merge conflict, stage it, carry on'),V.ok('git rebase --abort','Back to exactly how things were'))}
+${V.hook(`Rebase: rejoin the back of the queue. Never cut a queue other people are already standing in.`)}
+`)}
 
-<h4>Rebase: "as if I had started today"</h4>
-<p>You could merge <code>main</code> into your feature, which would add a merge commit. Rebase takes a different approach. Running <code>git rebase main</code> while on <code>feature/api</code> does this:</p>
-<ol>
-<li>Find the commits on your branch that <code>main</code> does not have: C2 and C3.</li>
-<li>Set them aside, and move your branch to the tip of <code>main</code>, C4.</li>
-<li>Replay C2's change on top of C4, making a new commit, C2 prime. Then replay C3's change on top of that, making C3 prime.</li>
-<li>Point <code>feature/api</code> at the last new commit.</li>
-</ol>
-<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="After rebase, new copies of the feature commits sit on top of main">
-<line class="ln" x1="55" y1="150" x2="125" y2="150"/><line class="ln-ok" x1="155" y1="150" x2="235" y2="150"/><line class="ln-ok" x1="265" y1="150" x2="345" y2="150"/>
-<line class="ln-d" x1="52" y1="139" x2="128" y2="71"/><line class="ln-d" x1="155" y1="60" x2="235" y2="60"/>
-<g text-anchor="middle">
-<circle class="bx-a" cx="40" cy="150" r="15"/><text class="t-s" x="40" y="155">C1</text>
-<circle class="bx-a" cx="140" cy="150" r="15"/><text class="t-s" x="140" y="155">C4</text>
-<circle class="ln-d" cx="140" cy="60" r="15" fill="none"/><text class="t-s" x="140" y="65">C2</text>
-<circle class="ln-d" cx="250" cy="60" r="15" fill="none"/><text class="t-s" x="250" y="65">C3</text>
-<text class="t-s" x="340" y="65">old copies</text>
-<circle class="bx-ok" cx="250" cy="150" r="16"/><text class="t-s" x="250" y="155">C2'</text>
-<circle class="bx-ok" cx="360" cy="150" r="16"/><text class="t-s" x="360" y="155">C3'</text>
-<rect class="bx-ok" x="110" y="172" width="60" height="26" rx="6"/><text class="t-b" x="140" y="190">main</text>
-<rect class="bx-info" x="310" y="102" width="100" height="26" rx="6"/><text class="t-b" x="360" y="120">feature/api</text>
-<text class="t-s" x="250" y="190">new ids</text>
-</g>
-</svg><figcaption>After git rebase main. Git replayed the two feature commits on top of C4, creating new commits C2 prime and C3 prime with new ids. feature/api now points at C3 prime. The old C2 and C3, dashed, are no longer on any branch.</figcaption></figure>
-<p>The changes are the same, but the commits are <b>new</b>. Their parent is different, and the id is a fingerprint that includes the parent, so every replayed commit gets a <b>new id</b>. You can check with <code>git log --oneline</code>: the messages are familiar, the ids are not.</p>
-<div class="analogy"><b>Think of it like</b>Re-recording two songs on top of a newer backing track. The tunes are the same, but they are new recordings, and the old ones are no longer in the playlist.</div>
+${V.card(2,'Cherry-pick','copy one commit, nothing else',`
+${V.like(`<p>Picking one cherry off a tree instead of taking the whole branch. You get exactly that one change.</p>`)}
+${V.steps([
+ ['main has your rebased feature. On the <b>hotfix</b> branch there is one commit, <b>X</b>, "Patch XSS bug" (a security fix). You want only that.',`<svg viewBox="0 0 420 250" role="img" aria-label="main on A2'; hotfix has X off R">
+${ed(50,110,320,110)}${ed(140,110,230,180)}${cm(50,110,'I')}${cm(140,110,'R')}${cm(230,110,'A1&#39;')}${cm(320,110,'A2&#39;')}${cm(230,180,'X','bx-warn')}${br('main',320,110,true,true)}${br('hotfix',230,180,false)}
+</svg>`],
+ ['<b>git log hotfix --oneline</b> shows the commit. <b>git cherry-pick hotfix</b> copies the change from the commit at the tip of hotfix onto main as a new commit, <b>X&#39;</b>.',`<svg viewBox="0 0 420 250" role="img" aria-label="X copied onto main as X'">
+${ed(50,110,390,110)}${ed(140,110,230,180)}${cm(50,110,'I')}${cm(140,110,'R')}${cm(230,110,'A1&#39;')}${cm(320,110,'A2&#39;')}${cm(390,110,'X&#39;','bx-ok')}${cm(230,180,'X','bx-warn')}${br('main',390,110,true,true,'bx-hl')}${br('hotfix',230,180,false)}
+<path class="ln-a" d="M250 172C320 160 360 150 380 132"/><polygon class="ah-a" points="372,128 386,126 382,140"/>
+</svg>`]])}
+${V.anat([[1,'git cherry-pick'],' ',[2,'hotfix']],[
+ '<b>Cherry-pick.</b> Apply the change from one commit onto the branch you are on, as a new commit.',
+ '<b>Which commit.</b> A commit id like <code>9c2e11a</code>, or a branch name, which means "the newest commit on that branch".'])}
+${V.rules(V.ok('git cherry-pick 9c2e11a','Pick by id for precision'),V.ok('X stays on hotfix','The original is untouched; you made a copy'),
+ V.no('Cherry-picking whole features','Many commits copied one by one is messy. Merge or rebase instead'))}
+${V.build(`<ol><li>On <code>feature/api</code>, look at the graph, then rebase onto main.</li><li>Switch to main and merge the feature. Expect a fast-forward.</li><li>List the hotfix branch's commits with <code>git log</code>.</li><li>Cherry-pick the hotfix commit onto main.</li></ol>`)}
+${V.hook(`Rebase moves your whole line. Cherry-pick copies one dot.`)}
+`)}
 
-<h4>Why bother? A straight history</h4>
-<p>Now switch to <code>main</code> and run <code>git merge feature/api</code>. Because the feature branch now starts from the tip of <code>main</code>, <code>main</code> has nothing the feature lacks, so the merge is a <b>fast-forward</b>: no merge commit. The project history is a single straight line, easy to read and easy to search.</p>
-<div class="tbl-wrap"><table><tr><th></th><th>Merge</th><th>Rebase</th></tr>
-<tr><td>History shape</td><td>True record, with merge commits</td><td>Straight line</td></tr>
-<tr><td>Commit ids</td><td>Unchanged</td><td>New ids for replayed commits</td></tr>
-<tr><td>Safe on shared branches?</td><td>Yes</td><td>No</td></tr>
-<tr><td>Typical use</td><td>Combining shared branches</td><td>Tidying your own local work</td></tr></table></div>
-
-<h4>The golden rule of rebasing</h4>
-<p><b>Never rebase commits that other people already have.</b> Rebase throws away the old commits and creates new ones. If a teammate already pulled your old C2 and C3 and built on them, their history now refers to commits that no longer exist on your branch. When they next pull, Git sees two different versions of the same work, and the result is duplicated commits and confusing conflicts.</p>
-<p>Rebasing your own unpushed commits is completely safe. If you rebase a branch that you pushed but nobody else uses, the next push must replace the old commits, which needs <code>git push --force-with-lease</code>. That flag forces the push, but refuses if someone else has pushed to the branch since you last fetched.</p>
-
-<h4>When a rebase hits a conflict</h4>
-<p>Replaying a commit can conflict, just like a merge. The rebase pauses on that commit. You fix the file exactly as in the conflicts lesson, then:</p>
-<pre class="snip">git add file               # mark it resolved
-git rebase --continue      # replay the remaining commits
-git rebase --abort         # or: give up and return to how things were</pre>
-<p>Note that it is <code>--continue</code>, not <code>git commit</code>. Because rebase replays one commit at a time, you may have to resolve conflicts more than once.</p>
-
-<h4>Cherry-pick: copy one commit</h4>
-<p>Sometimes you want one particular commit, not a whole branch. Here, <code>hotfix</code> contains "Patch XSS bug", an urgent security fix, and you want it on <code>main</code> right now without anything else from that branch.</p>
-<pre class="snip">git log hotfix --oneline   # find the commit you want
-git cherry-pick hotfix     # copy the commit at the tip of hotfix onto main</pre>
-<p><code>git cherry-pick</code> takes a commit id or a branch name. A branch name means "the commit that branch points at". Git replays that one commit's change on top of your current branch, as a new commit with the same message and a new id. The <code>hotfix</code> branch itself is not merged; <code>main</code> just gains a copy of that one fix.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="cherry-pick copies the hotfix commit onto main as a new commit">
-<line class="ln" x1="75" y1="150" x2="325" y2="150"/><line class="ln" x1="70" y1="138" x2="140" y2="72"/>
-<path class="ln-d" d="M166 60H340V124"/><polygon class="ah-a" points="334,124 346,124 340,133"/>
-<g text-anchor="middle">
-<circle class="bx-a" cx="60" cy="150" r="15"/><text class="t-s" x="60" y="155">C4</text>
-<circle class="bx-a" cx="150" cy="150" r="16"/><text class="t-s" x="150" y="155">C2'</text>
-<circle class="bx-a" cx="240" cy="150" r="16"/><text class="t-s" x="240" y="155">C3'</text>
-<circle class="bx-a" cx="150" cy="60" r="15"/><text class="t-s" x="150" y="65">C5</text>
-<circle class="bx-ok" cx="340" cy="150" r="16"/><text class="t-s" x="340" y="155">C5'</text>
-<text class="t-s t-a" x="260" y="50">cherry-pick</text>
-<text class="t-s" x="150" y="28">hotfix: Patch XSS</text>
-<text class="t-s" x="340" y="186">copy, new id</text>
-<rect class="bx-ok" x="362" y="137" width="54" height="26" rx="6"/><text class="t-b" x="389" y="155">main</text>
-</g>
-</svg><figcaption>The hotfix branch holds C5, Patch XSS bug. git cherry-pick hotfix, run on main, replays just that commit's change on top of main as a new commit, C5 prime, with a new id. The hotfix branch is left as it was and is not merged.</figcaption></figure>
-<p>Cherry-pick is handy for moving a fix onto a release branch, or rescuing one good commit from an abandoned branch. Do not use it to move lots of commits around: copies with different ids make history harder to follow.</p>
-<div class="mistake"><b>Common mistake</b>Rebasing in the wrong direction. To update your feature, stand on the <b>feature</b> branch and run <code>git rebase main</code>. Standing on <code>main</code> and running <code>git rebase feature/api</code> would replay main's commits onto your feature and rewrite the shared branch.</div>
-<div class="try"><b>Try it in your head</b>You rebase your local, unpushed branch onto main. Its two commits had ids <code>a1b2c3d</code> and <code>e4f5a6b</code>. Will they keep those ids? No. They are replayed onto a new parent, so both get new ids, even though their changes and messages are the same.</div>
-
-<h4>Recap</h4>
-<ul>
-<li><code>git rebase main</code>, run on your feature branch, replays your commits on top of the latest main for a straight history.</li>
-<li>Replayed commits are new commits with new ids; the originals drop off the branch.</li>
-<li>Golden rule: never rebase commits others already have. Rebase local work; merge shared branches.</li>
-<li>Rebase conflicts: fix, <code>git add</code>, <code>git rebase --continue</code>, or <code>git rebase --abort</code>.</li>
-<li><code>git cherry-pick &lt;commit or branch&gt;</code> copies one commit onto your current branch as a new commit.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. After a rebase, do your commits keep their ids? <i>No. They are new commits with new ids.</i> 2. Should you rebase main that the whole team uses? <i>No. Only rebase your own unshared work.</i> 3. You need one bug fix from another branch. Which tool? <i>git cherry-pick.</i></div>
 `);
+
 explain('g12',`
-<h4>Some files must never be committed</h4>
-<p>Not every file in your project folder belongs in Git. Some are actively dangerous to commit:</p>
-<ul>
-<li><b>Secrets</b>: passwords and API keys, usually kept in a file called <code>.env</code>. An <b>API key</b> is a secret string that lets a program use a paid service in your name. If it reaches a public GitHub repository, automated bots can find it within minutes and run up bills or steal data.</li>
-<li><b>Logs</b>: files like <code>debug.log</code> that programs write while running. They change constantly and mean nothing to anyone else.</li>
-<li><b>Generated files</b>: build output, or the <code>node_modules</code> folder of downloaded libraries, which can hold tens of thousands of files. Anyone can regenerate them, so storing them only bloats the history.</li>
-</ul>
-<p>Git cannot guess which files are which. It shows every untracked file in <code>git status</code>, and <code>git add .</code> would happily stage them all. You need a way to say "pretend these do not exist". That is a <code>.gitignore</code> file.</p>
-<div class="analogy"><b>Think of it like</b>A "do not pack" list taped to the parcel box. Whoever is packing checks the list and leaves those items on the desk, every single time.</div>
+<p>Some files must never reach GitHub: passwords, keys, logs, and huge folders of downloaded code. One leaked key can cost real money within minutes. This lesson shows how to keep them out, and how to mark your releases.</p>
 
-<h4>Writing a <code>.gitignore</code></h4>
-<p><code>.gitignore</code> is a plain text file in the top folder of your repository. Each line is a <b>pattern</b> that describes files to ignore:</p>
-<div class="tbl-wrap"><table><tr><th>Line</th><th>Ignores</th></tr>
-<tr><td><code>.env</code></td><td>Any file named exactly <code>.env</code></td></tr>
-<tr><td><code>*.log</code></td><td>Every file ending in <code>.log</code>. The star means "any characters".</td></tr>
-<tr><td><code>node_modules/</code></td><td>A whole folder and everything inside it. The trailing slash means "folders only".</td></tr>
-<tr><td><code>/build</code></td><td>A leading slash matches only at the top of the repository.</td></tr>
-<tr><td><code># secrets</code></td><td>Nothing: lines starting with # are comments.</td></tr>
-<tr><td><code>!keep.log</code></td><td>An exclamation mark makes an exception: do not ignore this one.</td></tr></table></div>
-<p>The sandbox builds the file one line at a time with <code>echo</code>. This is where two shell symbols matter:</p>
-<pre class="snip">echo ".env" &gt; .gitignore      # &gt;  creates or OVERWRITES the file
-echo "*.log" &gt;&gt; .gitignore    # &gt;&gt; APPENDS a line to the end</pre>
-<p>Use a single <code>&gt;</code> for the first line only. If you used it for the second line too, it would wipe out <code>.env</code> and leave just <code>*.log</code>. Check the result with <code>cat .gitignore</code>.</p>
+${V.card(1,'.gitignore','a "do not pack" list',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="Files .env and debug.log bounce off the .gitignore shield; app.js passes through to Git">
+${V.ic('file',10,14,40,'ic-ok')}<text class="t-m" x="58" y="40">app.js</text>
+${V.ic('key',10,68,40,'ic-bad')}<text class="t-m" x="58" y="94">.env</text>
+${V.ic('file',10,122,40,'ic-bad')}<text class="t-m" x="58" y="148">debug.log</text>
+${V.ic('shield',196,58,64,'ic-a')}<text class="t-m t-a" x="228" y="146" text-anchor="middle" style="font-size:14px">.gitignore</text>
+${ed(118,34,340,34,'ln-ok')}<polygon class="ah-ok" points="338,28 338,40 348,34"/>
+${V.ic('book',354,14,44,'ic-a')}<text class="t-b" x="376" y="76" text-anchor="middle" style="font-size:14px">Git</text>
+<path class="ln" style="stroke-width:2" d="M106 88H188"/><path class="ln" style="stroke-width:2" d="M154 142C176 140 186 118 194 104"/>
+${V.ic('cross',270,80,32,'ic-bad')}<text class="t-b t-bad" x="310" y="102" style="font-size:14px">ignored</text>
+</svg><figcaption>.gitignore is a plain text file listing names and patterns. Git pretends matching files do not exist: they never show in git status and git add . skips them.</figcaption></figure>
+${V.like(`<p>A "do not pack" list stuck on the suitcase: no passport photocopies, no dirty laundry. Whoever packs, the list keeps those things out.</p>`)}
+${V.why(`<p>Bots scan every public GitHub push for keys and passwords, often within minutes. Other files are just noise: logs change every run, and <code>node_modules</code> can hold thousands of files anyone can re-download. Listing them once in .gitignore protects the whole team.</p>`)}
+${V.anat([[1,'.env'],'\n',[2,'*.log'],'\n',[3,'node_modules/']],[
+ '<b>Exact name.</b> Ignore that one file.',
+ '<b>Wildcard.</b> <code>*</code> means "anything", so every file ending in .log.',
+ '<b>Folder.</b> A trailing slash ignores a whole folder.'])}
+${V.steps([
+ ['You created <b>.env</b> (a secret key) and <b>debug.log</b>. git status lists both as untracked, one <code>git add .</code> from disaster.',`<svg viewBox="0 0 420 212" role="img" aria-label=".env and debug.log untracked">
+${ar({hl:0,w:[['.env','bx-bad'],['debug.log','bx-bad']],h:['A'],hn:'A: Create app'})}
+</svg>`],
+ ['<b>echo ".env" &gt; .gitignore</b> then <b>echo "*.log" &gt;&gt; .gitignore</b>. One <code>&gt;</code> creates the file; two <code>&gt;&gt;</code> add a line to the end.',`<svg viewBox="0 0 420 212" role="img" aria-label=".gitignore created; .env and debug.log now hidden">
+${ar({hl:0,w:[['.gitignore','bx-info'],['.env','bx t-dim'],['debug.log','bx t-dim']],h:['A'],hn:'A: Create app'})}
+</svg>`],
+ ['<b>git status</b> now shows only .gitignore. <b>git add .</b> and commit: the list is saved, the secrets are not.',`<svg viewBox="0 0 420 212" role="img" aria-label="Only .gitignore committed">
+${ar({hl:2,w:[['.gitignore','bx-ok'],['.env','bx t-dim'],['debug.log','bx t-dim']],h:['A',['B','bx-ok']],hn:'B: Add gitignore'})}
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.no('echo "*.log" &gt; .gitignore','A single &gt; overwrites the file and wipes the .env line'),V.ok('echo "*.log" &gt;&gt; .gitignore','Double &gt;&gt; appends a new line'),
+ V.no('Ignoring a file already committed','.gitignore only affects untracked files. Run git rm --cached file to stop tracking it'),
+ V.ok('Leaked a key? Revoke it first','Cancel it at the provider, then clean up. Deleting the file later does not un-leak it'),
+ V.rh('Conventions'),
+ V.ok('Commit .gitignore itself','So every teammate gets the same list'),V.ok('Create it before the first commit','Easier than removing secrets afterwards'))}
+${V.hook(`List it before you add it. Once a secret is pushed, it is public.`)}
+`)}
 
-<h4>What <code>git status</code> shows now</h4>
-<p>With the ignore file in place, <code>.env</code> and <code>debug.log</code> are still on your disk, but Git stops mentioning them. The only new thing <code>git status</code> lists is <code>.gitignore</code> itself:</p>
-<pre class="snip">Untracked files:
-  (use "git add &lt;file&gt;..." to include in what will be committed)
-        .gitignore</pre>
-<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="How each file in the folder is treated once .gitignore exists">
-<g text-anchor="middle">
-<text class="t-s" x="70" y="18">in the folder</text><text class="t-s" x="325" y="18">git status says</text>
-<rect class="bx" x="10" y="32" width="120" height="36" rx="6"/><text class="t-m" x="70" y="55">app.js</text>
-<rect class="bx" x="10" y="82" width="120" height="36" rx="6"/><text class="t-m" x="70" y="105">.env</text>
-<rect class="bx" x="10" y="132" width="120" height="36" rx="6"/><text class="t-m" x="70" y="155">debug.log</text>
-<rect class="bx" x="10" y="182" width="120" height="36" rx="6"/><text class="t-m" x="70" y="205">.gitignore</text>
-<rect class="bx-ok" x="240" y="32" width="170" height="36" rx="6"/><text class="t" x="325" y="55">committed, clean</text>
-<rect class="bx-bad" x="240" y="82" width="170" height="36" rx="6"/><text class="t" x="325" y="105">hidden: .env</text>
-<rect class="bx-bad" x="240" y="132" width="170" height="36" rx="6"/><text class="t" x="325" y="155">hidden: *.log</text>
-<rect class="bx-warn" x="240" y="182" width="170" height="36" rx="6"/><text class="t" x="325" y="205">untracked, shown</text>
-</g>
-<line class="ln" x1="132" y1="50" x2="230" y2="50"/><polygon class="ah" points="229,44 229,56 238,50"/>
-<line class="ln" x1="132" y1="100" x2="230" y2="100"/><polygon class="ah" points="229,94 229,106 238,100"/>
-<line class="ln" x1="132" y1="150" x2="230" y2="150"/><polygon class="ah" points="229,144 229,156 238,150"/>
-<line class="ln" x1="132" y1="200" x2="230" y2="200"/><polygon class="ah" points="229,194 229,206 238,200"/>
-</svg><figcaption>Four files sit in the folder. app.js was already committed and has not changed, so it is clean. .env matches the .env pattern and debug.log matches the star dot log pattern, so both are hidden from Git. .gitignore itself is a new file, so it is shown as untracked.</figcaption></figure>
-<p>Commit the <code>.gitignore</code> itself, with <code>git add .</code> and a commit. That way every teammate who clones the project gets the same rules. Now even <code>git add .</code> skips the ignored files.</p>
+${V.card(2,'Tags and versions','a permanent name for a release',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="A tag nailed to a commit stays put while the branch note moves on">
+${ed(60,70,360,70)}${cm(60,70,'A')}${cm(160,70,'B')}${cm(260,70,'C')}${cm(360,70,'D')}
+${V.ic('tag',136,94,48,'ic-ok')}<text class="t-m t-ok" x="160" y="156" text-anchor="middle">v1.0.0</text>
+<path class="ln-d" d="M360 52V40"/><rect class="bx-warn" x="333" y="14" width="54" height="26" rx="4"/><text class="t-m" x="360" y="32" text-anchor="middle">main</text>
+</svg><figcaption>A branch is a sticky note that moves with every commit. A tag is nailed down: v1.0.0 points at commit B forever, so everyone can find exactly what was released.</figcaption></figure>
+${V.like(`<p>The height marks on a kitchen door frame. Each mark has a date and stays exactly where it was drawn, however much you grow afterwards.</p>`)}
+${V.anat([[1,'v'],[2,'1'],'.',[3,'4'],'.',[4,'2']],[
+ '<b>v for version.</b> A common habit in tag names.',
+ '<b>MAJOR.</b> Bump it for breaking changes: old code using yours may stop working.',
+ '<b>MINOR.</b> Bump it for new features that break nothing.',
+ '<b>PATCH.</b> Bump it for bug fixes only.'])}
+<p>This is <b>semantic versioning</b>. Watch the number change as the project grows.</p>
+${V.steps([
+ ['First release. <b>git tag v1.0.0</b> nails a tag on the current commit.',`<svg viewBox="0 0 420 170" role="img" aria-label="v1.0.0 on A">
+${cm(60,60,'A','bx-ok')}<rect class="bx-ok" x="20" y="96" width="80" height="28" rx="6"/><text class="t-m" x="60" y="116" text-anchor="middle">v1.0.0</text>
+</svg>`],
+ ['You fix a typo. Nothing new, nothing broken: bump PATCH to <b>v1.0.1</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="v1.0.1 on B, a fix">
+${ed(60,60,160,60)}${cm(60,60,'A')}${cm(160,60,'B','bx-ok')}<rect class="bx" x="20" y="96" width="80" height="28" rx="6"/><text class="t-m" x="60" y="116" text-anchor="middle">v1.0.0</text><rect class="bx-ok" x="120" y="96" width="80" height="28" rx="6"/><text class="t-m" x="160" y="116" text-anchor="middle">v1.0.1</text>
+<text class="t" x="160" y="152" text-anchor="middle" style="font-size:14px">fix</text>
+</svg>`],
+ ['You add a dark mode. A new feature that breaks nothing: bump MINOR and reset PATCH, <b>v1.1.0</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="v1.1.0 on C, a feature">
+${ed(60,60,260,60)}${cm(60,60,'A')}${cm(160,60,'B')}${cm(260,60,'C','bx-ok')}<rect class="bx" x="20" y="96" width="80" height="28" rx="6"/><text class="t-m" x="60" y="116" text-anchor="middle">v1.0.0</text><rect class="bx" x="120" y="96" width="80" height="28" rx="6"/><text class="t-m" x="160" y="116" text-anchor="middle">v1.0.1</text><rect class="bx-ok" x="220" y="96" width="80" height="28" rx="6"/><text class="t-m" x="260" y="116" text-anchor="middle">v1.1.0</text>
+<text class="t" x="160" y="152" text-anchor="middle" style="font-size:14px">fix</text><text class="t" x="260" y="152" text-anchor="middle" style="font-size:14px">feature</text>
+</svg>`],
+ ['You rename a setting, so old setups break. Bump MAJOR and reset the rest: <b>v2.0.0</b>.',`<svg viewBox="0 0 420 170" role="img" aria-label="v2.0.0 on D, a breaking change">
+${ed(60,60,360,60)}${cm(60,60,'A')}${cm(160,60,'B')}${cm(260,60,'C')}${cm(360,60,'D','bx-bad')}<rect class="bx" x="20" y="96" width="80" height="28" rx="6"/><text class="t-m" x="60" y="116" text-anchor="middle">v1.0.0</text><rect class="bx" x="120" y="96" width="80" height="28" rx="6"/><text class="t-m" x="160" y="116" text-anchor="middle">v1.0.1</text><rect class="bx" x="220" y="96" width="80" height="28" rx="6"/><text class="t-m" x="260" y="116" text-anchor="middle">v1.1.0</text><rect class="bx-bad" x="320" y="96" width="80" height="28" rx="6"/><text class="t-m" x="360" y="116" text-anchor="middle">v2.0.0</text>
+<text class="t" x="160" y="152" text-anchor="middle" style="font-size:14px">fix</text><text class="t" x="260" y="152" text-anchor="middle" style="font-size:14px">feature</text><text class="t" x="360" y="152" text-anchor="middle" style="font-size:14px">breaking</text>
+</svg>`]])}
+${V.rules(V.ok('git tag','On its own, lists all tags'),V.ok('git tag -a v1.0.0 -m "First release"','An annotated tag stores who, when and a message. Best for real releases'),
+ V.ok('git push origin v1.0.0','Tags are not pushed by default. Push them by name, or all with --tags'),V.no('Moving a released tag','People rely on v1.0.0 meaning one exact commit. Make a new version instead'))}
+${V.build(`<ol><li>Create a secret <code>.env</code> and a <code>debug.log</code>.</li><li>Write a <code>.gitignore</code> with one <code>&gt;</code>, then add the log pattern with <code>&gt;&gt;</code>.</li><li>Run <code>git status</code>: only .gitignore should appear.</li><li>Stage and commit it.</li><li>Tag the commit <code>v1.0.0</code>, then list your tags.</li></ol>`)}
+${V.hook(`Fix, feature, breaking: PATCH, MINOR, MAJOR. Branches move; tags stay nailed down.`)}
+`)}
 
-<h4>The catch: it only affects untracked files</h4>
-<p><code>.gitignore</code> only stops Git from <i>starting</i> to track a file. If a file was already committed before you added the rule, Git keeps tracking it and keeps recording its changes. To stop tracking it while keeping it on your disk:</p>
-<pre class="snip">git rm --cached config.json    # remove from Git's tracking only
-git commit -m "Stop tracking config.json"</pre>
-<p><code>--cached</code> means "remove it from the staging area and future commits, but leave my actual file alone". Without <code>--cached</code>, <code>git rm</code> deletes the file from your disk too.</p>
-<div class="mistake"><b>Common mistake</b>Committing a secret, then adding it to <code>.gitignore</code> and thinking the problem is solved. The secret is still inside every old commit, and anyone who can see the repository can read it. If a key was ever pushed, <b>revoke it first</b> at the service that issued it and create a new one. Cleaning it out of the history comes second, and is a much bigger job.</div>
-
-<h4>Tags: permanent labels for releases</h4>
-<p>When you release a version of your project, you want to find exactly that code again later: "what did version 1.0.0 contain?" A <b>tag</b> is a label stuck on one commit that <b>never moves</b>.</p>
-<p>That is the difference from a branch. A branch label moves forward every time you commit on it. A tag stays on its commit forever, so <code>v1.0.0</code> always means the same code.</p>
-<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="The tag v1.0.0 stays on its commit while main moves forward">
-<line class="ln" x1="75" y1="80" x2="325" y2="80"/>
-<g text-anchor="middle">
-<circle class="bx-a" cx="60" cy="80" r="15"/><text class="t-s" x="60" y="85">A</text>
-<circle class="bx-a" cx="160" cy="80" r="15"/><text class="t-s" x="160" y="85">B</text>
-<circle class="bx-a" cx="250" cy="80" r="15"/><text class="t-s" x="250" y="85">C</text>
-<circle class="bx-a" cx="340" cy="80" r="15"/><text class="t-s" x="340" y="85">D</text>
-<rect class="bx-warn" x="115" y="112" width="90" height="28" rx="6"/><text class="t-m" x="160" y="131">v1.0.0</text>
-<rect class="bx-ok" x="310" y="24" width="60" height="26" rx="6"/><text class="t-b" x="340" y="42">main</text>
-<text class="t-s" x="160" y="166">tag: stays put</text><text class="t-s" x="340" y="128">branch: moves</text>
-</g>
-<line class="ln" x1="160" y1="112" x2="160" y2="100"/>
-<path class="ln-d" d="M160 40H300"/><polygon class="ah" points="298,34 298,46 307,40"/><line class="ln" x1="340" y1="50" x2="340" y2="65"/>
-</svg><figcaption>You tagged commit B as v1.0.0, then kept working. The main branch label moved on to D with every new commit, but the tag is still on B, so v1.0.0 always points at exactly the released code.</figcaption></figure>
-<pre class="snip">git tag v1.0.0                              # tag the current commit
-git tag                                     # list all tags
-git tag -a v1.1.0 -m "Add contact page"     # annotated tag with a message
-git push origin v1.0.0                      # tags are NOT pushed by default</pre>
-<p>A plain <code>git tag v1.0.0</code> makes a <b>lightweight</b> tag: just a name. With <code>-a</code> and <code>-m</code> you make an <b>annotated</b> tag, which also stores who tagged it, when, and a message. Teams usually prefer annotated tags for real releases. Note the last line: a normal <code>git push</code> does not send tags, so push them by name. On GitHub, tags appear under Releases.</p>
-
-<h4>Version numbers: semantic versioning</h4>
-<p>Release names like <code>v2.4.1</code> follow a widely used convention called <b>semantic versioning</b>, or <b>semver</b>. The three numbers are MAJOR.MINOR.PATCH, and each one tells users how risky an upgrade is.</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="Semantic version 2.4.1: major, minor and patch, with examples of each bump">
-<g text-anchor="middle">
-<text class="t-m t-a" x="110" y="56" style="font-size:40px">2</text><text class="t-m" x="160" y="56" style="font-size:40px">.</text>
-<text class="t-m t-ok" x="210" y="56" style="font-size:40px">4</text><text class="t-m" x="260" y="56" style="font-size:40px">.</text>
-<text class="t-m t-info" x="310" y="56" style="font-size:40px">1</text>
-<text class="t-b t-a" x="110" y="86">MAJOR</text><text class="t-b t-ok" x="210" y="86">MINOR</text><text class="t-b t-info" x="310" y="86">PATCH</text>
-<rect class="bx-a" x="10" y="108" width="400" height="30" rx="6"/><text class="t" x="210" y="128">breaking change: 2.4.1 to 3.0.0</text>
-<rect class="bx-ok" x="10" y="146" width="400" height="30" rx="6"/><text class="t" x="210" y="166">new feature: 2.4.1 to 2.5.0</text>
-<rect class="bx-info" x="10" y="184" width="400" height="30" rx="6"/><text class="t" x="210" y="204">bug fix: 2.4.1 to 2.4.2</text>
-</g>
-</svg><figcaption>Version 2.4.1 means major version 2, minor version 4, patch 1. A breaking change bumps the major number and resets the others, giving 3.0.0. A new feature that breaks nothing bumps the minor number, giving 2.5.0. A bug fix bumps only the patch number, giving 2.4.2.</figcaption></figure>
-<ul>
-<li><b>PATCH</b>: bug fixes only. Safe to upgrade.</li>
-<li><b>MINOR</b>: new features that do not break anything that already worked. The patch number resets to 0.</li>
-<li><b>MAJOR</b>: a <b>breaking change</b>, meaning code that used the old version may stop working. Minor and patch reset to 0.</li>
-</ul>
-<p>The little <code>v</code> in front is a common habit for tag names, not part of the version itself.</p>
-<div class="try"><b>Try it in your head</b>Your app is at <code>v1.3.2</code>. You add a dark mode that changes nothing existing. What is the next version? A new feature with no breakage bumps MINOR and resets PATCH: <code>v1.4.0</code>.</div>
-
-<h4>Recap</h4>
-<ul>
-<li><code>.gitignore</code> lists patterns for files Git should ignore: <code>.env</code>, <code>*.log</code>, <code>node_modules/</code>. Commit the file itself.</li>
-<li><code>&gt;</code> overwrites a file and <code>&gt;&gt;</code> appends to it.</li>
-<li><code>.gitignore</code> only affects untracked files; stop tracking a committed file with <code>git rm --cached</code>.</li>
-<li>A leaked secret must be revoked first; removing it from history comes second.</li>
-<li>A tag is a label that never moves: <code>git tag v1.0.0</code>, list with <code>git tag</code>, push with <code>git push origin v1.0.0</code>. Versions follow MAJOR.MINOR.PATCH.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Which pattern ignores every log file? <i>*.log.</i> 2. You are on v2.3.1 and fix a bug. New version? <i>v2.3.2.</i> 3. You add a feature to v2.3.2. New version? <i>v2.4.0.</i></div>
 `);
+
 explain('g13',`
-<h4>The situation</h4>
-<p>This is a drill: no new commands, just everything from the track, in the right order, under time pressure. Here is the scenario. You are halfway through a dashboard feature on <code>feature/dashboard</code>. One commit, "Start charts", is pushed; more work, "filters wip", sits uncommitted in <code>dashboard.js</code>. Then the message arrives: <b>login is broken in production, ship a fix now</b>. And a teammate pushed a commit to <code>main</code> on GitHub this morning that you do not have yet.</p>
-<p>A hotfix like this is a classic live-coding interview task. What is being tested is not speed of typing. It is whether you keep your unfinished work safe, start the fix from the right place, ship it through review, and get back to where you were without losing anything. This walkthrough gives you a strategy you can run calmly every time.</p>
-<div class="analogy"><b>Think of it like</b>A chef in the middle of preparing a dish when an urgent order comes in. A good chef covers the half-made dish and puts it in the fridge, cleans the station, cooks the urgent order with fresh ingredients, sends it out, then takes the first dish back out and carries on.</div>
+<p>This is a drill, the kind of pressure test live-coding interviews love. The commands are ones you already know. The skill is doing them in the right order, calmly, without losing a single line of work.</p>
 
-<h4>The plan in one picture</h4>
-<figure class="fig"><svg viewBox="0 0 420 280" role="img" aria-label="Branch flow: stash, update main, hotfix branch, merge by PR, rebase the feature onto main">
-<line class="ln-d" x1="58" y1="138" x2="122" y2="72"/>
-<line class="ln" x1="65" y1="150" x2="125" y2="150"/><line class="ln" x1="155" y1="150" x2="285" y2="150"/>
-<line class="ln" x1="150" y1="162" x2="210" y2="228"/><line class="ln" x1="230" y1="228" x2="290" y2="162"/>
-<line class="ln-ok" x1="310" y1="138" x2="370" y2="72"/>
-<line class="ln-d" x1="146" y1="60" x2="184" y2="60"/><line class="ln-d" x1="306" y1="60" x2="354" y2="60"/><polygon class="ah" points="352,54 352,66 362,60"/>
-<g text-anchor="middle">
-<circle class="bx-a" cx="50" cy="150" r="15"/><text class="t-s" x="50" y="155">C1</text>
-<circle class="ln-d" cx="130" cy="60" r="15" fill="none"/><text class="t-s" x="130" y="65">C2</text>
-<circle class="bx-ok" cx="140" cy="150" r="15"/><text class="t-s" x="140" y="155">T</text>
-<circle class="bx-a" cx="220" cy="240" r="15"/><text class="t-s" x="220" y="245">H</text>
-<circle class="bx-ok" cx="300" cy="150" r="16"/><text class="t-b" x="300" y="155">M</text>
-<circle class="bx-ok" cx="380" cy="60" r="16"/><text class="t-s" x="380" y="65">C2'</text>
-<text class="t-s" x="124" y="184" text-anchor="end">teammate</text>
-<text class="t-s" x="130" y="30">old charts</text>
-<rect class="bx-warn" x="186" y="44" width="120" height="32" rx="6"/><text class="t-s" x="246" y="65">stash: filters</text>
-<rect class="bx-info" x="250" y="226" width="112" height="28" rx="6"/><text class="t-b" x="306" y="245">hotfix/login</text>
-<rect class="bx-ok" x="330" y="137" width="60" height="26" rx="6"/><text class="t-b" x="360" y="155">main</text>
-<text class="t-s" x="410" y="30" text-anchor="end">feature, rebased</text>
-</g>
-<text class="t-s" x="312" y="184">merged PR</text>
-</svg><figcaption>The whole drill as a commit graph. Your old feature commit C2, dashed, started from C1, and your unfinished filters go onto the stash shelf. Main is updated with your teammate's commit T. The fix H is made on hotfix/login, branched from T, and merged on GitHub as merge commit M. Finally the feature is rebased onto M as C2 prime, and the stashed filters are popped back on top.</figcaption></figure>
+${V.card(1,'The scene','three things at once',`
+<figure class="fig"><svg viewBox="0 0 420 190" role="img" aria-label="You have half-finished work, production login is broken, and a teammate pushed to main">
+<rect class="bx-warn" x="6" y="10" width="130" height="170" rx="10"/>${V.ic('laptop',39,20,64,'ic-warn')}<text class="t-b" x="71" y="112" text-anchor="middle" style="font-size:14px">your laptop</text><text class="t" x="71" y="138" text-anchor="middle" style="font-size:14px">dashboard</text><text class="t" x="71" y="158" text-anchor="middle" style="font-size:14px">half done</text>
+<rect class="bx-bad" x="145" y="10" width="130" height="170" rx="10"/>${V.ic('warn',178,20,64,'ic-bad')}<text class="t-b" x="210" y="112" text-anchor="middle" style="font-size:14px">production</text><text class="t" x="210" y="138" text-anchor="middle" style="font-size:14px">login is</text><text class="t" x="210" y="158" text-anchor="middle" style="font-size:14px">broken</text>
+<rect class="bx-info" x="284" y="10" width="130" height="170" rx="10"/>${V.ic('person',317,20,64,'ic-info')}<text class="t-b" x="349" y="112" text-anchor="middle" style="font-size:14px">teammate</text><text class="t" x="349" y="138" text-anchor="middle" style="font-size:14px">pushed to</text><text class="t" x="349" y="158" text-anchor="middle" style="font-size:14px">main today</text>
+</svg><figcaption>Uncommitted work on your feature branch, a fire in production, and your local main is out of date. The order of your moves matters.</figcaption></figure>
+${V.like(`<p>A firefighter's routine. When the alarm rings they do not think; they follow the same steps every time: boots, jacket, helmet, truck. Practise the routine until your hands know it.</p>`)}
+${V.why(`<p>Hotfixes go wrong in predictable ways: unfinished work gets dragged onto the fix, the fix is built on an old main, or the fix skips review. The routine below blocks all three.</p>`)}
+`)}
 
-<h4>Phase 1: look, then save your work</h4>
-<p>Start with <code>git status</code>. It confirms you are on <code>feature/dashboard</code> and that <code>dashboard.js</code> is modified. Never switch away from uncommitted work without deciding what happens to it.</p>
-<pre class="snip">git status     # where am I, what is unsaved?
-git stash      # shelve "filters wip"; the working tree is now clean</pre>
-<p>Why stash rather than commit? The filters are half-done. A "wip" commit would work too, but stash keeps the feature branch's history clean and is quicker. Either way, the rule is: <b>never carry half-done work onto a hotfix branch</b>, or it ships to production with the fix.</p>
+${V.card(2,'The routine','stash, sync, branch, fix, ship, sync, resume',`
+${V.steps([
+ ['<b>git status</b> shows unfinished work. <b>git stash</b> shelves it, so your feature branch (commit S) is clean.',`<svg viewBox="0 0 420 260" role="img" aria-label="Work stashed; on feature/dashboard at S">
+${ed(40,110,110,190)}${cm(40,110,'I')}${cm(110,190,'S')}${br('feature/dashboard',110,190,false,false,'bx-hl')}<text class="t-b t-a" x="200" y="247" style="font-size:14px">HEAD</text>
+${br('main',40,110,true)}
+<rect class="bx-warn" x="300" y="20" width="114" height="56" rx="8"/><text class="t-b" x="357" y="42" text-anchor="middle" style="font-size:14px">stash</text><text class="t-m" x="357" y="64" text-anchor="middle" style="font-size:14px">filters wip</text>
+</svg>`],
+ ['<b>git switch main</b> and <b>git pull</b>. Your teammate\'s commit <b>T</b> arrives, so the fix will be built on the real, current main.',`<svg viewBox="0 0 420 260" role="img" aria-label="main pulled: I then T">
+${ed(40,110,110,110)}${ed(40,110,110,190)}${cm(40,110,'I')}${cm(110,110,'T','bx-ok')}${cm(110,190,'S')}${br('feature/dashboard',110,190,false)}
+${br('main',110,110,true,true,'bx-hl')}
+<rect class="bx-warn" x="300" y="20" width="114" height="56" rx="8"/><text class="t-b" x="357" y="42" text-anchor="middle" style="font-size:14px">stash</text><text class="t-m" x="357" y="64" text-anchor="middle" style="font-size:14px">filters wip</text>
+</svg>`],
+ ['<b>git switch -c hotfix/login</b>, fix login.js, <b>git commit -am "Fix login crash"</b>. Commit <b>F</b> holds only the fix.',`<svg viewBox="0 0 420 260" role="img" aria-label="hotfix/login with commit F">
+${ed(40,110,180,110)}${ed(40,110,110,190)}${cm(40,110,'I')}${cm(110,110,'T')}${cm(180,110,'F','bx-ok')}${cm(110,190,'S')}${br('feature/dashboard',110,190,false)}
+${br('hotfix/login',180,110,true,true,'bx-hl')}
+<rect class="bx-warn" x="300" y="20" width="114" height="56" rx="8"/><text class="t-b" x="357" y="42" text-anchor="middle" style="font-size:14px">stash</text><text class="t-m" x="357" y="64" text-anchor="middle" style="font-size:14px">filters wip</text>
+</svg>`],
+ ['Ship it through review: <b>git push -u origin hotfix/login</b>, <b>gh pr create</b>, <b>gh pr merge</b>. GitHub merges it into main as <b>M</b>.',`<svg viewBox="0 0 420 260" role="img" aria-label="PR merged on GitHub as M">
+${ed(40,110,250,110)}${ed(40,110,110,190)}${cm(40,110,'I')}${cm(110,110,'T')}${cm(180,110,'F')}${cm(250,110,'M','bx-ok')}${cm(110,190,'S')}${br('feature/dashboard',110,190,false)}
+${br('hotfix/login',180,110,true,true)}
+<rect class="bx-info" x="246" y="160" width="168" height="30" rx="6"/><text class="t-b t-info" x="330" y="180" text-anchor="middle" style="font-size:14px">on GitHub: PR merged</text>
+<rect class="bx-warn" x="300" y="20" width="114" height="56" rx="8"/><text class="t-b" x="357" y="42" text-anchor="middle" style="font-size:14px">stash</text><text class="t-m" x="357" y="64" text-anchor="middle" style="font-size:14px">filters wip</text>
+</svg>`],
+ ['<b>git switch main</b>, <b>git pull</b>. Your local main now matches GitHub, fix included.',`<svg viewBox="0 0 420 260" role="img" aria-label="Local main pulled to M">
+${ed(40,110,250,110)}${ed(40,110,110,190)}${cm(40,110,'I')}${cm(110,110,'T')}${cm(180,110,'F')}${cm(250,110,'M','bx-ok')}${cm(110,190,'S')}${br('feature/dashboard',110,190,false)}
+${br('main',250,110,false,true,'bx-hl')}
+<rect class="bx-warn" x="300" y="20" width="114" height="56" rx="8"/><text class="t-b" x="357" y="42" text-anchor="middle" style="font-size:14px">stash</text><text class="t-m" x="357" y="64" text-anchor="middle" style="font-size:14px">filters wip</text>
+</svg>`],
+ ['Back to work: <b>git switch feature/dashboard</b>, <b>git rebase main</b> (S is replayed as S&#39; on top of M), then <b>git stash pop</b>. Your unfinished filters return.',`<svg viewBox="0 0 420 260" role="img" aria-label="Feature rebased onto M; stash popped">
+${ed(40,110,320,110)}${cm(40,110,'I')}${cm(110,110,'T')}${cm(180,110,'F')}${cm(250,110,'M')}${cm(320,110,'S&#39;','bx-ok')}<circle class="bx t-dim" cx="110" cy="190" r="18"/><text class="t-b t-dim" x="110" y="196" text-anchor="middle">S</text>
+${br('main',250,110,false)}${br('feature/dashboard',320,110,true,true,'bx-hl')}
+<rect class="bx" x="186" y="206" width="228" height="40" rx="8"/><text class="t-m t-ok" x="300" y="232" text-anchor="middle" style="font-size:14px">desk: filters wip</text>
+</svg>`]])}
+${V.anat([[1,'git switch'],' ',[2,'-c'],' ',[3,'hotfix/'],[4,'login']],[
+ '<b>Switch.</b>',
+ '<b>Create first.</b> From the commit you are on, which must be the freshly pulled main.',
+ '<b>Kind.</b> <code>hotfix/</code> tells everyone this is an urgent production fix.',
+ '<b>What.</b> A short description.'])}
+`)}
 
-<h4>Phase 2: start from the latest main</h4>
-<pre class="snip">git switch main
-git pull       # brings in your teammate's commit</pre>
-<p>A fix must be built on what is actually in production, not on your stale copy. Your local <code>main</code> has no commits of its own, so this pull is a simple fast-forward onto your teammate's commit. If you skipped it, your hotfix branch would start from old code, and its pull request might conflict or quietly undo your teammate's change.</p>
+${V.card(3,'Drill rules','what separates calm from chaos',`
+${V.rules(V.rh('Rules'),
+ V.ok('git status before every switch','Know what is on your desk before you move'),
+ V.no('Carrying WIP onto a hotfix','Your half-built dashboard would ship with the fix'),
+ V.no('Branching the fix from an old main','You would undo your teammate\'s work or hit conflicts. Pull first'),
+ V.no('Pushing the fix straight to main','Even in a hurry it goes through a PR'),
+ V.rh('Watch out'),
+ V.ok('git push --force-with-lease','feature/dashboard was pushed before the rebase, so a normal push is rejected. This forces safely, only if nobody else pushed there'),
+ V.ok('Shared branch? Merge instead','If teammates use feature/dashboard, run git merge main rather than rebase'))}
+${V.build(`<ol><li>Status, then stash.</li><li>Switch to main and pull.</li><li>Create <code>hotfix/login</code>, fix, commit.</li><li>Push the branch, create the PR, merge it.</li><li>Switch to main and pull again.</li><li>Switch to your feature, rebase onto main, pop the stash.</li></ol>`)}
+${V.hook(`Stash, sync, branch, fix, ship, sync, resume. Say it until your fingers know it.`)}
+`)}
 
-<h4>Phase 3: make the fix on its own branch</h4>
-<pre class="snip">git switch -c hotfix/login          # new branch from up-to-date main
-# edit login.js so it works, then:
-git commit -am "Fix login crash"</pre>
-<p>The branch name starts with <code>hotfix/</code>, which tells the team at a glance that this is urgent. <code>-am</code> stages the modified, already-tracked <code>login.js</code> and commits it in one step. Keep the fix small: fix the crash, nothing else. Tidying up while you are in there makes the review slower and the change riskier.</p>
-
-<h4>Phase 4: ship it through a pull request</h4>
-<pre class="snip">git push -u origin hotfix/login
-gh pr create --title "Fix login crash"
-gh pr merge 1</pre>
-<p>Even in an emergency, the fix goes through a PR, so it is reviewed, tested by the checks, and recorded. In the sandbox you merge it yourself; on a real team a colleague would approve it first. GitHub's <code>main</code> now contains the fix as merge commit M.</p>
-
-<h4>Phase 5: bring the fix home</h4>
-<pre class="snip">git switch main
-git pull</pre>
-<p>Remember from the pull requests lesson: the merge happened on GitHub, so your local <code>main</code> does not have it until you pull. After this, local <code>main</code> and <code>origin/main</code> point at the same commit. You could also delete the finished branch now with <code>git branch -d hotfix/login</code>.</p>
-
-<h4>Phase 6: get back to your feature</h4>
-<pre class="snip">git switch feature/dashboard
-git rebase main     # replay "Start charts" on top of the fixed main
-git stash pop       # put "filters wip" back</pre>
-<p>Rebasing moves your feature so it starts from the newest <code>main</code>, which now includes the login fix and your teammate's change. Your feature is then tested against the real current code. The order matters: rebase refuses to run with uncommitted changes, so rebase while the tree is still clean, and pop the stash last.</p>
-<p>One honest caveat. "Start charts" had already been pushed, and the golden rule says not to rebase shared commits. If you are the only person working on <code>feature/dashboard</code>, this is fine; your next push will need <code>git push --force-with-lease</code> because the commit has a new id. If others share the branch, use <code>git merge main</code> instead of rebasing. Being able to say this in an interview is worth as much as typing the commands.</p>
-<figure class="fig"><svg viewBox="0 0 420 320" role="img" aria-label="The six phases with their commands">
-<rect class="bx-warn" x="10" y="10" width="100" height="44" rx="8"/><text class="t-b" x="60" y="37" text-anchor="middle">1 Save</text>
-<text class="t-m" x="124" y="37">git status, git stash</text>
-<rect class="bx" x="10" y="62" width="100" height="44" rx="8"/><text class="t-b" x="60" y="89" text-anchor="middle">2 Sync</text>
-<text class="t-m" x="124" y="89">git switch main, pull</text>
-<rect class="bx-a" x="10" y="114" width="100" height="44" rx="8"/><text class="t-b" x="60" y="141" text-anchor="middle">3 Fix</text>
-<text class="t-m" x="124" y="132">switch -c hotfix/login</text><text class="t-m" x="124" y="152">git commit -am</text>
-<rect class="bx-info" x="10" y="166" width="100" height="44" rx="8"/><text class="t-b" x="60" y="193" text-anchor="middle">4 Ship</text>
-<text class="t-m" x="124" y="184">git push -u origin</text><text class="t-m" x="124" y="204">gh pr create, merge</text>
-<rect class="bx" x="10" y="218" width="100" height="44" rx="8"/><text class="t-b" x="60" y="245" text-anchor="middle">5 Sync</text>
-<text class="t-m" x="124" y="245">git switch main, pull</text>
-<rect class="bx-ok" x="10" y="270" width="100" height="44" rx="8"/><text class="t-b" x="60" y="297" text-anchor="middle">6 Resume</text>
-<text class="t-m" x="124" y="288">switch, rebase main</text><text class="t-m" x="124" y="308">git stash pop</text>
-</svg><figcaption>The six phases as a checklist. Save: check status and stash. Sync: switch to main and pull. Fix: create the hotfix branch and commit. Ship: push the branch, open the pull request and merge it. Sync again: switch to main and pull the merge. Resume: switch back to the feature, rebase onto main and pop the stash.</figcaption></figure>
-
-<h4>When something goes wrong mid-drill</h4>
-<ul>
-<li><b>"Your local changes would be overwritten"</b> when switching: you forgot to stash. Run <code>git stash</code>, then switch.</li>
-<li><b>Push rejected</b>: someone pushed to the same branch. <code>git pull</code>, then push. Never force a shared branch.</li>
-<li><b>Conflict during rebase</b>: fix the file, <code>git add</code> it, <code>git rebase --continue</code>. Panicking? <code>git rebase --abort</code> puts the branch back.</li>
-<li><b>Conflict on stash pop</b>: resolve the file as usual; the entry stays on the shelf until you <code>git stash drop</code> it.</li>
-<li><b>Lost track of where you are</b>: <code>git status</code>, and <code>git log --oneline --graph --all</code> to see every branch at once.</li>
-</ul>
-<div class="mistake"><b>Common mistake</b>Creating the hotfix branch straight from <code>feature/dashboard</code>, because that is where you happened to be. The hotfix then contains your unfinished charts, and merging the PR ships half a feature to production. Always switch to <code>main</code> and pull <i>before</i> <code>git switch -c hotfix/...</code>.</div>
-<div class="mistake"><b>Common mistake</b>Popping the stash before rebasing. Rebase then refuses because your working tree is not clean. If it happens, stash again, rebase, and pop.</div>
-<div class="try"><b>Try it in your head</b>You finished Phase 4, the PR is merged, and you jump straight to <code>git switch feature/dashboard</code> and <code>git rebase main</code>. Does your feature now contain the login fix? No. Your local <code>main</code> was never pulled after the merge, so you rebased onto the old main. Phase 5, pulling main, is what brings the fix to your computer.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Save first: <code>git status</code>, then <code>git stash</code>, so unfinished work never reaches the hotfix.</li>
-<li>Start fixes from an up-to-date main: <code>git switch main</code>, <code>git pull</code>, <code>git switch -c hotfix/name</code>.</li>
-<li>Ship through a PR even in a hurry: push the branch, <code>gh pr create</code>, <code>gh pr merge</code>.</li>
-<li>The merge is on GitHub: switch to main and pull to bring it home.</li>
-<li>Resume: switch back, <code>git rebase main</code> while clean (or merge if the branch is shared), then <code>git stash pop</code>.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. What is the very first command? <i>git status, then git stash.</i> 2. Why pull main before branching the fix? <i>So the fix builds on the newest main, including your teammate's commit.</i> 3. After the PR merges, why pull again? <i>The merge happened on GitHub; your local main does not have it yet.</i></div>
 `);
+}

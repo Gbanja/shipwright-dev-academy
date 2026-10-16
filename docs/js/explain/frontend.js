@@ -652,7 +652,7 @@ ${V.card(3,'Three classic bugs','the ones everyone writes',`
 <circle class="bx-info" cx="40" cy="44" r="24"/><text class="t-m" x="40" y="51" text-anchor="middle" style="font-size:18px">50</text>
 <path class="ln-a" d="M66 52 98 76"/><polygon class="ah-a" points="92,82 104,82 100,70"/>
 <rect class="bx-ok" x="96" y="84" width="96" height="44" rx="6"/><text class="t-m" x="144" y="112" text-anchor="middle">total</text>
-<text class="t-m" x="100" y="38" style="font-size:18px">total = 50</text>
+<text class="t-m" x="84" y="30" style="font-size:17px">total = 50</text>
 <text class="t-s" x="20" y="156">= puts a value in</text>
 <path class="ln-d" d="M214 10V160"/>
 <polygon class="bx-warn" points="320,24 404,70 320,116 236,70"/>
@@ -706,146 +706,198 @@ ${V.hook(`Lockers go 0 to length minus 1. One = stores, a comparison asks. No re
 `);
 
 explain('f1',`
-<h4>Why structure and layout matter</h4>
-<p>You can already write HTML and style it with CSS. But open the starter code and notice something: the page is built entirely from <code>&lt;div&gt;</code> elements. A <code>&lt;div&gt;</code> ("division") is a generic box that means nothing at all. Visually the page works. Underneath, nothing tells a computer which part is the menu and which part is the main content.</p>
-<p>And everything stacks in one long column, because that is what the browser does by default. Most block elements, like <code>&lt;div&gt;</code>, <code>&lt;p&gt;</code> and <code>&lt;h1&gt;</code>, take the full width and push the next element underneath. To put things side by side you need layout tools.</p>
-<p>This lesson fixes both problems: <b>semantic HTML</b> for meaning, then <b>flexbox</b> and <b>grid</b> for layout, and finally <b>media queries</b> so the layout adapts to phones. Every frontend framework you will meet later, React included, ends up producing exactly this HTML and CSS.</p>
+<p>React, Vue and every other framework end up producing plain HTML and CSS. Get the structure and layout right here and every framework after this is easier.</p>
 
-<h4>Semantic elements: tags that say what they are</h4>
-<p>"Semantic" means "to do with meaning". HTML has elements that behave exactly like a <code>&lt;div&gt;</code> but also announce their role:</p>
-<div class="tbl-wrap"><table><tr><th>Element</th><th>Meaning</th></tr>
-<tr><td><code>&lt;header&gt;</code></td><td>The introductory strip at the top: logo, site name, navigation.</td></tr>
-<tr><td><code>&lt;nav&gt;</code></td><td>A block of main navigation links.</td></tr>
-<tr><td><code>&lt;main&gt;</code></td><td>The main content of this page. Use only one per page.</td></tr>
-<tr><td><code>&lt;section&gt;</code></td><td>A themed group of content, usually with its own heading.</td></tr>
-<tr><td><code>&lt;article&gt;</code></td><td>A self-contained item that would make sense on its own: a blog post, a product card.</td></tr>
-<tr><td><code>&lt;footer&gt;</code></td><td>The closing strip: copyright, contact links.</td></tr></table></div>
-<figure class="fig"><svg viewBox="0 0 420 260" role="img" aria-label="Page wireframe: header with nav on top, main with a section of three articles, footer at the bottom">
-<rect class="bx-a" x="10" y="10" width="400" height="50" rx="6"/>
-<text class="t-b t-a" x="22" y="40">header</text>
-<rect class="bx" x="140" y="20" width="258" height="30" rx="5"/><text class="t-m" x="152" y="40">nav</text>
-<text class="t-s" x="250" y="40">Work  About  Contact</text>
-<rect class="bx-ok" x="10" y="70" width="400" height="140" rx="6"/>
-<text class="t-b t-ok" x="22" y="94">main</text>
-<rect class="bx-info" x="22" y="104" width="376" height="96" rx="5"/>
-<text class="t-m t-info" x="34" y="124">section class="cards"</text>
-<g text-anchor="middle">
-<rect class="bx" x="34" y="134" width="112" height="56" rx="5"/><text class="t-m" x="90" y="167">article</text>
-<rect class="bx" x="154" y="134" width="112" height="56" rx="5"/><text class="t-m" x="210" y="167">article</text>
-<rect class="bx" x="274" y="134" width="112" height="56" rx="5"/><text class="t-m" x="330" y="167">article</text>
-</g>
-<rect class="bx-dark" x="10" y="220" width="400" height="32" rx="6"/>
-<text class="t-term" x="22" y="242">footer</text><text class="t-term" x="300" y="242">© 2026 Ada</text>
-</svg><figcaption>The portfolio page rebuilt with meaning. A header at the top holds the nav links. The main area holds a section of three article cards. A footer closes the page.</figcaption></figure>
-<p>Why bother, if it looks the same? Because people and programs other than sighted humans read your page:</p>
-<ul>
-<li><b>Screen readers</b>, which read pages aloud for blind users, list these elements as <b>landmarks</b>. A user can press one key to jump straight to the navigation or skip to the main content, instead of listening to every link first.</li>
-<li><b>Search engines</b> use the structure to work out what your page is about and which text matters most.</li>
-<li><b>Other developers</b>, including you in six months, can read the code and understand it at a glance.</li>
-</ul>
-<p>A list of links is still a list, so inside <code>&lt;nav&gt;</code> put the links in a <code>&lt;ul&gt;</code>, one <code>&lt;li&gt;</code> per link. Screen readers then announce "list, three items", which tells the user how many choices there are.</p>
+${V.card(1,'Semantic HTML','tags that say what things are',`
+<figure class="fig"><svg viewBox="0 0 420 210" role="img" aria-label="A page plan: header with nav at the top, main with a section of three articles, footer at the bottom">
+<rect class="bx" x="6" y="6" width="408" height="198" rx="8"/>
+<rect class="bx-a" x="14" y="14" width="392" height="40" rx="6"/><text class="t-m" x="26" y="39">header</text>
+<rect class="bx-info" x="196" y="20" width="202" height="28" rx="5"/><text class="t-m" x="208" y="39">nav</text>
+<path class="ln" d="M256 34H290M302 34H336M348 34H382"/>
+<rect class="bx-ok" x="14" y="62" width="392" height="104" rx="6"/><text class="t-m" x="26" y="82">main</text>
+<rect class="ln-d" x="24" y="90" width="372" height="68" rx="5"/>
+<rect class="bx" x="34" y="98" width="112" height="52" rx="5"/><text class="t-m" x="90" y="129" text-anchor="middle" style="font-size:14px">article</text>
+<rect class="bx" x="154" y="98" width="112" height="52" rx="5"/><text class="t-m" x="210" y="129" text-anchor="middle" style="font-size:14px">article</text>
+<rect class="bx" x="274" y="98" width="112" height="52" rx="5"/><text class="t-m" x="330" y="129" text-anchor="middle" style="font-size:14px">article</text>
+<rect class="bx-warn" x="14" y="172" width="392" height="26" rx="6"/><text class="t-m" x="26" y="190">footer</text>
+</svg><figcaption>A semantic page. Each part is named for what it is: the top banner, the navigation links, the main content (a section of article cards) and the footer.</figcaption></figure>
+${V.like(`<p>Signs on the doors of a building: "Reception", "Library", "Exit". A page made only of <code>&lt;div&gt;</code>s is a building where every door just says "Room". You can still walk around, but nobody can find anything quickly.</p>`)}
+${V.why(`<p>Before HTML5 (finished in 2014), people wrote <code>&lt;div id="header"&gt;</code>, and every site invented its own names. HTML5 added standard tags with meaning. Screen readers turn them into <b>landmarks</b> that blind users can jump between, and search engines use them to find your real content.</p>`)}
+${V.anat([[1,'&lt;nav&gt;'],'\n  ',[2,'&lt;ul&gt;'],'\n    ',[3,'&lt;li&gt;'],[4,'&lt;a href="#work"&gt;Work&lt;/a&gt;'],'&lt;/li&gt;\n  &lt;/ul&gt;\n',[1,'&lt;/nav&gt;']],[
+ '<b>nav.</b> The landmark for the main links around your site.',
+ '<b>ul.</b> A menu is a list of links, so it is marked up as a list.',
+ '<b>li.</b> One menu item.',
+ '<b>The link.</b> <code>#work</code> jumps to the element with <code>id="work"</code> on the same page.'])}
+<p><b>Watch a screen reader</b> look for its way around, first on a page of divs, then on a semantic page.</p>
+${V.steps([
+ ['A page made only of <b>div</b>s. The screen reader finds no landmarks, so its user must listen from the top, line by line.',`<svg viewBox="0 0 420 180" role="img" aria-label="All divs: no landmarks found">
+<rect class="bx" x="10" y="10" width="190" height="34" rx="5"/><text class="t-m" x="22" y="32">div</text>
+<rect class="bx" x="10" y="50" width="190" height="34" rx="5"/><text class="t-m" x="22" y="72">div</text>
+<rect class="bx" x="10" y="90" width="190" height="50" rx="5"/><text class="t-m" x="22" y="120">div</text>
+<rect class="bx" x="10" y="146" width="190" height="28" rx="5"/><text class="t-m" x="22" y="165">div</text>
+${V.ic('person',220,10,44,'ic-info')}<text class="t-b" x="272" y="38">Landmarks:</text>
+<text class="t t-bad" x="226" y="84">none found</text>
+<text class="t-s" x="226" y="112">Listening from the top,</text><text class="t-s" x="226" y="132">one line at a time...</text>
+</svg>`],
+ ['The same page with <b>header</b>, <b>nav</b>, <b>main</b> and <b>footer</b>. Now the reader lists four landmarks. (It calls the top header "banner" and the footer "content info".)',`<svg viewBox="0 0 420 180" role="img" aria-label="Semantic page: four landmarks listed">
+<rect class="bx-a" x="10" y="10" width="190" height="34" rx="5"/><text class="t-m" x="22" y="32">header</text>
+<rect class="bx-info" x="10" y="50" width="190" height="34" rx="5"/><text class="t-m" x="22" y="72">nav</text>
+<rect class="bx-ok" x="10" y="90" width="190" height="50" rx="5"/><text class="t-m" x="22" y="120">main</text>
+<rect class="bx-warn" x="10" y="146" width="190" height="28" rx="5"/><text class="t-m" x="22" y="165">footer</text>
+${V.ic('person',220,10,44,'ic-info')}<text class="t-b" x="272" y="38">Landmarks:</text>
+<text class="t" x="226" y="76">banner</text><text class="t" x="226" y="100">navigation</text><text class="t" x="226" y="124">main</text><text class="t" x="226" y="148">content info</text>
+</svg>`],
+ ['The user presses one key to jump straight to <b>main</b>, skipping the menu they have heard a hundred times.',`<svg viewBox="0 0 420 180" role="img" aria-label="Jumping straight to main">
+<rect class="bx-a" x="10" y="10" width="190" height="34" rx="5"/><text class="t-m t-dim" x="22" y="32">header</text>
+<rect class="bx-info" x="10" y="50" width="190" height="34" rx="5"/><text class="t-m t-dim" x="22" y="72">nav</text>
+<rect class="bx-hl" x="10" y="90" width="190" height="50" rx="5"/><text class="t-m" x="22" y="120" style="font-weight:700">main</text>
+<rect class="bx-warn" x="10" y="146" width="190" height="28" rx="5"/><text class="t-m t-dim" x="22" y="165">footer</text>
+${V.ic('person',220,10,44,'ic-info')}<text class="t-b" x="272" y="38">Landmarks:</text>
+<text class="t t-dim" x="226" y="76">banner</text><text class="t t-dim" x="226" y="100">navigation</text><text class="t-b t-ok" x="226" y="124">main  &#9664; jump!</text><text class="t t-dim" x="226" y="148">content info</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('one &lt;main&gt; per page','The single main content area'),V.no('&lt;div class="nav"&gt;','A class name gives no meaning to a screen reader'),
+ V.rh('Conventions'),
+ V.ok('&lt;section&gt;','A group of related content, usually with a heading'),V.ok('&lt;article&gt;','A self-contained item: a card, a post'),
+ V.ok('&lt;div&gt;','Only for styling, when no other tag fits'))}
+${V.hook(`Name the rooms: header, nav, main, footer. A div is a door with no sign.`)}
+`)}
 
-<h4>Flexbox: a row of things</h4>
-<p><b>Flexbox</b> (the flexible box layout) arranges items along <b>one line</b>, either a row or a column. It is perfect for a row of nav links, a toolbar or a button group.</p>
-<p>The key idea: you put <code>display: flex;</code> on the <b>parent</b>, called the <b>flex container</b>, and its direct children, the <b>flex items</b>, line up. You never put it on the items themselves.</p>
-<pre class="snip">nav ul {
-  display: flex;       /* children sit in a row  */
-  gap: 16px;           /* space between them     */
-  list-style: none;    /* hide the bullet points */
-  padding: 0;          /* remove the list indent */
-}</pre>
-<p>The selector <code>nav ul</code>, with a space between the two names, is a <b>descendant selector</b>: it means "any <code>ul</code> inside a <code>nav</code>". It targets only the menu list, not every list on the page.</p>
-<figure class="fig"><svg viewBox="0 0 420 220" role="img" aria-label="A flex container with three items in a row along the main axis, with gaps, and the cross axis running down">
-<rect class="bx-a" x="20" y="30" width="330" height="110" rx="8"/>
-<text class="t-s t-a" x="30" y="22">flex container: nav ul</text>
-<g text-anchor="middle">
-<rect class="bx-ok" x="40" y="60" width="80" height="50" rx="6"/><text class="t-b" x="80" y="90">Work</text>
-<rect class="bx-ok" x="140" y="60" width="80" height="50" rx="6"/><text class="t-b" x="180" y="90">About</text>
-<rect class="bx-ok" x="240" y="60" width="90" height="50" rx="6"/><text class="t-b" x="285" y="90">Contact</text>
-<text class="t-s" x="128" y="128">gap</text><text class="t-s" x="230" y="128">gap</text>
-</g>
-<path class="ln-d" d="M120 85h20M220 85h20"/>
-<path class="ln-a" d="M20 170h320"/><polygon class="ah-a" points="338,164 338,176 348,170"/>
-<text class="t-b t-a" x="184" y="196" text-anchor="middle">main axis: justify-content</text>
-<path class="ln-ok" d="M376 30v100"/><polygon class="ah-ok" points="370,128 382,128 376,138"/>
-<text class="t-s t-ok" x="376" y="160" text-anchor="middle">cross</text>
-<text class="t-s t-ok" x="376" y="178" text-anchor="middle">axis</text>
-</svg><figcaption>Flexbox lines items up along the main axis, left to right in a row. Gap adds space between neighbours. justify-content spreads items along the main axis, and align-items lines them up on the cross axis, which runs top to bottom.</figcaption></figure>
-<p>Two more properties give you control along the two directions, called <b>axes</b>:</p>
-<ul>
-<li><code>justify-content</code> works along the <b>main axis</b> (left to right in a row). <code>space-between</code> pushes the first item to one end and the last to the other, which is how many headers put a logo on the left and links on the right.</li>
-<li><code>align-items</code> works on the <b>cross axis</b> (top to bottom in a row). <code>align-items: center</code> lines items up through their middles, so a tall logo and short links sit neatly together.</li>
-</ul>
+${V.card(2,'Flexbox','one direction: a row or a column',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="Three items in a row inside a flex container, with gaps between them and an arrow showing the main axis">
+<rect class="bx-info" x="30" y="16" width="360" height="100" rx="8"/>
+<rect class="bx-a" x="50" y="36" width="90" height="60" rx="6"/><text class="t-b" x="95" y="71" text-anchor="middle">Work</text>
+<rect class="bx-a" x="165" y="36" width="90" height="60" rx="6"/><text class="t-b" x="210" y="71" text-anchor="middle">About</text>
+<rect class="bx-a" x="280" y="36" width="90" height="60" rx="6"/><text class="t-b" x="325" y="71" text-anchor="middle">Contact</text>
+<text class="t-s" x="152" y="112" text-anchor="middle">gap</text><text class="t-s" x="267" y="112" text-anchor="middle">gap</text>
+<path class="ln-a" d="M30 138H380"/><polygon class="ah-a" points="378,131 378,145 390,138"/>
+<text class="t-b t-a" x="210" y="162" text-anchor="middle">main axis: items line up this way</text>
+</svg><figcaption>display: flex turns the children of an element into a line of items. gap puts equal space between them.</figcaption></figure>
+${V.like(`<p>Books on a shelf. The shelf is the <b>container</b>, the books are the <b>items</b>. Flexbox decides which way the books line up, how far apart they stand, and whether they sit at the top, middle or bottom of the shelf.</p>`)}
+${V.why(`<p>For years, putting things side by side meant hacks with floats that broke easily. Flexbox, supported in all major browsers from about 2015, was designed for exactly this job: lining things up in one direction.</p>`)}
+${V.anat([[1,'nav ul'],' {\n  ',[2,'display: flex;'],'\n  ',[3,'gap: 16px;'],'\n  ',[4,'align-items: center;'],'\n}'],[
+ '<b>The container.</b> Flex goes on the <b>parent</b>; its children become the items.',
+ '<b>display: flex.</b> Children line up in a row (the default direction).',
+ '<b>gap.</b> Space between items, but not around the outside.',
+ '<b>align-items.</b> Lines items up across the row: top, center or bottom.'])}
+<p><b>Watch a list of links become a menu bar</b>, one line of CSS at a time.</p>
+${V.steps([
+ ['A plain list: one link per line, with bullet points.',`<svg viewBox="0 0 420 160" role="img" aria-label="Plain list with bullets">
+<rect class="bx-dark" x="6" y="8" width="200" height="144" rx="8"/>
+<text class="t-term" x="18" y="36" style="font-size:14px">nav ul {</text><text class="t-term" x="18" y="140" style="font-size:14px">}</text>
+<rect class="bx" x="218" y="8" width="196" height="144" rx="8"/>
+<circle class="dot-m" cx="236" cy="45" r="3.5"/><text class="t t-info" x="248" y="50">Work</text>
+<circle class="dot-m" cx="236" cy="75" r="3.5"/><text class="t t-info" x="248" y="80">About</text>
+<circle class="dot-m" cx="236" cy="105" r="3.5"/><text class="t t-info" x="248" y="110">Contact</text>
+</svg>`],
+ ['<b>list-style: none</b> removes the bullets. Adding <b>padding: 0</b> as well would remove the indent that lists have by default.',`<svg viewBox="0 0 420 160" role="img" aria-label="Bullets removed">
+<rect class="bx-dark" x="6" y="8" width="200" height="144" rx="8"/>
+<text class="t-term" x="18" y="36" style="font-size:14px">nav ul {</text>
+<text class="t-term t-ok" x="32" y="60" style="font-size:14px">list-style: none;</text>
+<text class="t-term" x="18" y="140" style="font-size:14px">}</text>
+<rect class="bx" x="218" y="8" width="196" height="144" rx="8"/>
+<text class="t t-info" x="230" y="50">Work</text><text class="t t-info" x="230" y="80">About</text><text class="t t-info" x="230" y="110">Contact</text>
+</svg>`],
+ ['<b>display: flex</b> lines the items up in a row. But they are squashed together.',`<svg viewBox="0 0 420 160" role="img" aria-label="Items in a row, touching">
+<rect class="bx-dark" x="6" y="8" width="200" height="144" rx="8"/>
+<text class="t-term" x="18" y="36" style="font-size:14px">nav ul {</text>
+<text class="t-term" x="32" y="60" style="font-size:14px">list-style: none;</text>
+<text class="t-term t-ok" x="32" y="84" style="font-size:14px">display: flex;</text>
+<text class="t-term" x="18" y="140" style="font-size:14px">}</text>
+<rect class="bx" x="218" y="8" width="196" height="144" rx="8"/>
+<text class="t t-info" x="230" y="50">Work</text><text class="t t-info" x="266" y="50">About</text><text class="t t-info" x="311" y="50">Contact</text>
+</svg>`],
+ ['<b>gap: 16px</b> puts equal space between the items. A menu bar, with no margins to fiddle with.',`<svg viewBox="0 0 420 160" role="img" aria-label="Items in a row with gaps">
+<rect class="bx-dark" x="6" y="8" width="200" height="144" rx="8"/>
+<text class="t-term" x="18" y="36" style="font-size:14px">nav ul {</text>
+<text class="t-term" x="32" y="60" style="font-size:14px">list-style: none;</text>
+<text class="t-term" x="32" y="84" style="font-size:14px">display: flex;</text>
+<text class="t-term t-ok" x="32" y="108" style="font-size:14px">gap: 16px;</text>
+<text class="t-term" x="18" y="140" style="font-size:14px">}</text>
+<rect class="bx" x="218" y="8" width="196" height="144" rx="8"/>
+<text class="t t-info" x="230" y="50">Work</text><text class="t t-info" x="282" y="50">About</text><text class="t t-info" x="343" y="50">Contact</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('nav ul { display: flex }','Flex on the parent'),V.no('li { display: flex }','On the items it only affects what is inside each item'),
+ V.rh('Conventions'),
+ V.ok('justify-content','Spreads items along the row'),V.ok('align-items','Lines them up across it'),
+ V.ok('gap over margins','One gap value instead of a margin on every item'))}
+${V.hook(`Flex is a shelf: one line, items side by side, gap between.`)}
+`)}
 
-<h4>Grid: rows and columns together</h4>
-<p>Flexbox thinks in one line. A set of cards needs <b>two</b> dimensions: columns across and rows down, with everything aligned in both directions. That is <b>CSS Grid</b>.</p>
-<pre class="snip">.cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);   /* 3 equal columns */
-  gap: 16px;                                 /* space between cells */
-}</pre>
-<p>Reading <code>repeat(3, 1fr)</code> step by step:</p>
-<ol>
-<li><code>grid-template-columns</code> lists the width of each column, so <code>1fr 1fr 1fr</code> means three columns.</li>
-<li><code>repeat(3, 1fr)</code> is shorthand for exactly that: "repeat 1fr three times".</li>
-<li><code>fr</code> means "fraction of the free space". Three columns of 1fr each share the space equally, a third each. <code>2fr 1fr</code> would make the first column twice as wide as the second.</li>
-</ol>
-<p>The children drop into the cells in order: first card in column 1, second in column 2, third in column 3. A fourth card would start a new row automatically. As with flexbox, <code>display: grid</code> goes on the <b>parent</b>, here the element with class <code>cards</code>, and <code>gap</code> works the same way.</p>
-<div class="analogy"><b>Think of it like</b>Flexbox is a bookshelf: one row of books, which you can push left, right or spread out. Grid is a chessboard: you decide the rows and columns, and pieces drop into squares.</div>
+${V.card(3,'CSS Grid','two directions: rows and columns',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A grid of three equal columns, like an egg box, with six cards dropped into the slots">
+<text class="t-m t-a" x="86" y="20" text-anchor="middle">1fr</text><text class="t-m t-a" x="210" y="20" text-anchor="middle">1fr</text><text class="t-m t-a" x="334" y="20" text-anchor="middle">1fr</text>
+<rect class="bx-info" x="20" y="28" width="380" height="132" rx="8"/>
+<rect class="bx-a" x="30" y="38" width="112" height="52" rx="6"/><text class="t" x="86" y="69" text-anchor="middle">Shop</text>
+<rect class="bx-a" x="154" y="38" width="112" height="52" rx="6"/><text class="t" x="210" y="69" text-anchor="middle">Blog</text>
+<rect class="bx-a" x="278" y="38" width="112" height="52" rx="6"/><text class="t" x="334" y="69" text-anchor="middle">Chat</text>
+<rect class="bx" x="30" y="98" width="112" height="52" rx="6"/><text class="t" x="86" y="129" text-anchor="middle">Game</text>
+<rect class="bx" x="154" y="98" width="112" height="52" rx="6"/><text class="t" x="210" y="129" text-anchor="middle">Map</text>
+<rect class="ln-d" x="278" y="98" width="112" height="52" rx="6"/><text class="t-s" x="334" y="129" text-anchor="middle">next slot</text>
+</svg><figcaption>Three equal columns. Items drop into the slots in order, left to right, and a new row starts when a row is full.</figcaption></figure>
+${V.like(`<p>An egg box. You decide the slots first, then the eggs go in one by one, filling each row before starting the next. You never position each egg yourself.</p>`)}
+${V.why(`<p>Flexbox handles one line well, but card galleries and whole page layouts need rows <b>and</b> columns that line up. CSS Grid, in all major browsers since 2017, was built for two-dimensional layout.</p>`)}
+${V.anat([[1,'grid-template-columns'],': ',[2,'repeat'],'(',[3,'3'],', ',[4,'1fr'],');'],[
+ '<b>Property.</b> Describes the columns. (Use it together with <code>display: grid</code> on the parent.)',
+ '<b>repeat().</b> Shorthand so you do not write the same size again and again.',
+ '<b>How many.</b> Three columns.',
+ '<b>fr.</b> One <b>fr</b>action of the free space. Three 1fr columns share it equally.'])}
+${V.rules(V.rh('Rules'),
+ V.ok('repeat(3, 1fr)','Same as 1fr 1fr 1fr'),V.ok('gap: 16px','Works in grid too, between rows and columns'),
+ V.rh('Conventions'),
+ V.ok('Flex for a line','Menus, toolbars, a button row'),V.ok('Grid for a layout','Card galleries, whole pages'))}
+${V.hook(`Flex is a shelf, grid is an egg box. 1fr means "one equal share".`)}
+`)}
 
-<h4>Responsive design and media queries</h4>
-<p>Three columns look great on a laptop. On a phone 400 pixels wide, each card would be a squashed strip about 120 pixels wide. <b>Responsive design</b> means one page that adapts its layout to the screen it is on.</p>
-<p>The tool is a <b>media query</b>: a block of CSS that only applies when a condition about the screen is true.</p>
-<pre class="snip">@media (max-width: 600px) {
-  .cards {
-    grid-template-columns: 1fr;   /* one column */
-  }
-}</pre>
-<p>Read it as: "when the viewport is at most 600 pixels wide, give the cards one column". The <b>viewport</b> is the visible area of the page inside the browser window. Above 600 pixels the query is ignored and the three-column rule applies. At 600 or below, both rules match the same selector, and the one written later wins, as you learnt in the CSS lesson. That is why media queries go <b>after</b> the normal rules.</p>
-<figure class="fig"><svg viewBox="0 0 420 230" role="img" aria-label="The same cards: three columns on a wide screen, stacked in one column on a phone">
-<rect class="bx" x="10" y="20" width="250" height="150" rx="8"/>
-<text class="t-s" x="135" y="14" text-anchor="middle">wide screen, 900px</text>
-<rect class="bx-ok" x="24" y="40" width="68" height="110" rx="5"/><rect class="bx-ok" x="101" y="40" width="68" height="110" rx="5"/><rect class="bx-ok" x="178" y="40" width="68" height="110" rx="5"/>
-<g text-anchor="middle"><text class="t-b" x="58" y="100">1</text><text class="t-b" x="135" y="100">2</text><text class="t-b" x="212" y="100">3</text></g>
-<rect class="bx" x="300" y="20" width="110" height="200" rx="12"/>
-<text class="t-s" x="355" y="14" text-anchor="middle">phone, 420px</text>
-<rect class="bx-ok" x="314" y="40" width="82" height="50" rx="5"/><rect class="bx-ok" x="314" y="98" width="82" height="50" rx="5"/><rect class="bx-ok" x="314" y="156" width="82" height="50" rx="5"/>
-<g text-anchor="middle"><text class="t-b" x="355" y="70">1</text><text class="t-b" x="355" y="128">2</text><text class="t-b" x="355" y="186">3</text></g>
-<path class="ln-a" d="M262 95h30"/><polygon class="ah-a" points="290,89 290,101 300,95"/>
-<text class="t-s" x="135" y="196" text-anchor="middle">repeat(3, 1fr)</text>
-<text class="t-s" x="135" y="216" text-anchor="middle">phone: media query sets 1fr</text>
-</svg><figcaption>The same three cards on two screens. At 900 pixels wide they sit in three equal columns. At 420 pixels the media query matches, the grid switches to one column, and the cards stack.</figcaption></figure>
-<p>One more piece makes media queries work on real phones. Without it, mobile browsers pretend to be about 980 pixels wide and shrink the whole page, so your query never fires. Add this to the head:</p>
-<pre class="snip">&lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;</pre>
-<div class="tip"><b>Tip</b>Professionals often design <b>mobile-first</b>: write the one-column phone layout as the normal rule, then add a <code>@media (min-width: 600px)</code> query that switches to three columns on bigger screens. Small screens get the simplest CSS, and you add complexity only where there is room for it. Either direction passes the tasks here.</div>
+${V.card(4,'Responsive design','one page, every screen size',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="On a laptop the cards sit in three columns. On a phone they stack in one column">
+<rect class="bx" x="14" y="14" width="236" height="132" rx="8"/><path class="ln" d="M4 154H260"/>
+<rect class="bx-a" x="26" y="46" width="66" height="60" rx="5"/><rect class="bx-a" x="99" y="46" width="66" height="60" rx="5"/><rect class="bx-a" x="172" y="46" width="66" height="60" rx="5"/>
+<text class="t-s" x="132" y="174" text-anchor="middle">wide: 3 columns</text>
+<rect class="bx" x="300" y="8" width="100" height="150" rx="14"/>
+<rect class="bx-a" x="312" y="28" width="76" height="34" rx="4"/><rect class="bx-a" x="312" y="68" width="76" height="34" rx="4"/><rect class="bx-a" x="312" y="108" width="76" height="34" rx="4"/>
+<text class="t-s" x="350" y="174" text-anchor="middle">phone: 1 column</text>
+</svg><figcaption>The same HTML, two layouts. A media query switches the grid to one column when the screen is narrow.</figcaption></figure>
+${V.like(`<p>Water takes the shape of whatever glass you pour it into. A responsive page does the same: the content stays the same, the layout reshapes to fit the screen.</p>`)}
+${V.why(`<p>When smartphones arrived in 2007, desktop sites showed up tiny and you had to pinch and zoom. In 2010 Ethan Marcotte named the fix <b>responsive web design</b>: flexible layouts plus <b>media queries</b>, CSS that only applies under a condition such as a narrow screen.</p>`)}
+${V.anat([[1,'@media'],' ',[2,'(max-width: 600px)'],' {\n  ',[3,'.cards'],' { ',[4,'grid-template-columns: 1fr;'],' }\n}'],[
+ '<b>@media.</b> "Only apply the rules inside when..."',
+ '<b>Condition.</b> The screen is 600px wide <b>or less</b>.',
+ '<b>Selector.</b> Normal CSS rules go inside.',
+ '<b>The change.</b> One column instead of three.'])}
+<p><b>Drag the window narrower</b> and watch the condition switch on.</p>
+${V.steps([
+ ['900px wide. Is 900 at most 600? No, so the media query is off. Three columns.',`<svg viewBox="0 0 420 175" role="img" aria-label="900px: three columns">
+<rect class="bx" x="10" y="10" width="380" height="120" rx="8"/>
+<rect class="bx-a" x="22" y="40" width="112" height="60" rx="5"/><rect class="bx-a" x="144" y="40" width="112" height="60" rx="5"/><rect class="bx-a" x="266" y="40" width="112" height="60" rx="5"/>
+<text class="t-b" x="10" y="156">900px</text><text class="t-m" x="90" y="156">900 &lt;= 600? <tspan class="t-bad">no</tspan></text>
+</svg>`],
+ ['700px. Still bigger than 600, still off. The three columns just get narrower, because 1fr shares whatever space there is.',`<svg viewBox="0 0 420 175" role="img" aria-label="700px: still three columns">
+<rect class="bx" x="10" y="10" width="296" height="120" rx="8"/>
+<rect class="bx-a" x="22" y="40" width="84" height="60" rx="5"/><rect class="bx-a" x="116" y="40" width="84" height="60" rx="5"/><rect class="bx-a" x="210" y="40" width="84" height="60" rx="5"/>
+<text class="t-b" x="10" y="156">700px</text><text class="t-m" x="90" y="156">700 &lt;= 600? <tspan class="t-bad">no</tspan></text>
+</svg>`],
+ ['600px. max-width includes 600 itself, so now the condition is true. The rule inside switches on: one column.',`<svg viewBox="0 0 420 175" role="img" aria-label="600px: one column">
+<rect class="bx-hl" x="10" y="10" width="254" height="120" rx="8"/>
+<rect class="bx-a" x="22" y="20" width="230" height="30" rx="5"/><rect class="bx-a" x="22" y="56" width="230" height="30" rx="5"/><rect class="bx-a" x="22" y="92" width="230" height="30" rx="5"/>
+<text class="t-b" x="10" y="156">600px</text><text class="t-m" x="90" y="156">600 &lt;= 600? <tspan class="t-ok">yes</tspan></text>
+</svg>`],
+ ['400px, phone size. Still true: one comfortable column, no pinching or zooming.',`<svg viewBox="0 0 420 175" role="img" aria-label="400px: one column">
+<rect class="bx-hl" x="10" y="10" width="170" height="120" rx="8"/>
+<rect class="bx-a" x="22" y="20" width="146" height="30" rx="5"/><rect class="bx-a" x="22" y="56" width="146" height="30" rx="5"/><rect class="bx-a" x="22" y="92" width="146" height="30" rx="5"/>
+<text class="t-b" x="10" y="156">400px</text><text class="t-m" x="90" y="156">400 &lt;= 600? <tspan class="t-ok">yes</tspan></text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('&lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;','Without it, phones pretend to be about 980px wide and your media query never fires'),
+ V.no('@media before the base rule','Same selector, so the later rule wins: put media queries after'),
+ V.rh('Conventions'),
+ V.ok('mobile-first','Write the phone layout first, then add @media (min-width: ...) for bigger screens'))}
+${V.build(`<ol><li>Swap the outer divs for <code>header</code>, <code>nav</code>, <code>main</code> and <code>footer</code>, and put the menu links in a <code>ul</code>.</li><li>Make the menu list a flex row with a gap and no bullets.</li><li>Make the card container a grid of three equal columns with a gap.</li><li>Add a media query for screens 600px or narrower that switches it to one column.</li><li>Run it, then make the preview narrow to check.</li></ol>`)}
+${V.hook(`Same content, different glass. @media says "only when the screen is like this".`)}
+`)}
 
-<h4>Working through the tasks</h4>
-<ol>
-<li>Swap each meaningful <code>&lt;div&gt;</code> for its semantic element: the top strip, the menu, the content area and the bottom strip. Put the links in a list.</li>
-<li>Make the nav list a flex container with a gap.</li>
-<li>Make <code>.cards</code> a grid with three equal columns. The checker widens the preview to 900 pixels to test it.</li>
-<li>Add a media query for 600 pixels and below that switches to one column. The checker squeezes the preview to 420 pixels.</li>
-</ol>
-<div class="mistake"><b>Common mistake</b>Putting <code>display: flex</code> or <code>display: grid</code> on the items instead of their parent. Layout properties describe how a container arranges its <b>children</b>. If <code>.card</code> gets <code>display: grid</code>, each card lays out its own heading and paragraph, and the cards themselves do not move.</div>
-<div class="mistake"><b>Common mistake</b>Changing the tags but not the CSS. If your old CSS targeted <code>.menu</code> and you removed that class when switching to <code>&lt;nav&gt;</code>, the rule now matches nothing. Update selectors to match the new HTML.</div>
-
-<h4>When the layout will not budge</h4>
-<ul>
-<li>Items still stack? Check that <code>display</code> is on the direct parent of the items you want to move. Flex and grid affect children only, not grandchildren.</li>
-<li>Media query never applies? Check the brackets: <code>@media (max-width: 600px) { … }</code> needs both the round brackets and its own pair of curly braces around the rules inside.</li>
-<li>Media query always applies, or never? Make sure it comes after the normal rule, so it wins when both match.</li>
-<li>In a real browser, the developer tools draw flex and grid outlines over the page when you inspect the container, which shows you exactly where each cell is.</li>
-</ul>
-<div class="try"><b>Try it in your head</b>A container has <code>grid-template-columns: 2fr 1fr;</code> and 300 pixels of space, with no gap. How wide is each column? Total fractions: 2 plus 1 is 3, so each fr is 100 pixels. The first column is 200 pixels, the second 100. And where does a fifth card go in <code>repeat(3, 1fr)</code>? Into the second column of the second row.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>Semantic elements such as <code>&lt;header&gt;</code>, <code>&lt;nav&gt;</code>, <code>&lt;main&gt;</code> and <code>&lt;footer&gt;</code> give the page meaning that screen readers and search engines use.</li>
-<li>Flexbox lays children out along one line; put <code>display: flex</code> and <code>gap</code> on the parent.</li>
-<li>Grid lays children out in rows and columns; <code>repeat(3, 1fr)</code> makes three equal columns.</li>
-<li>A media query applies CSS only when its condition is true, such as <code>max-width: 600px</code>. Put it after the normal rules.</li>
-<li>Add the viewport meta tag so phones report their real width.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. Menu links in a row: flex or grid? <i>Flex: one direction.</i> 2. What does <code>repeat(4, 1fr)</code> make? <i>Four equal columns.</i> 3. At exactly 600px, does <code>@media (max-width: 600px)</code> apply? <i>Yes: max-width includes 600.</i></div>
 `);
 
 explain('f2',`
