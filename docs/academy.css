@@ -443,7 +443,7 @@ body:has(#voiceBar:not([hidden])){padding-bottom:170px}
 .strip.hook>div{font-weight:600;font-size:15.5px}
 /* code anatomy: colour-coded parts with numbered labels */
 .anat{margin:4px 0 14px;border:1px solid var(--line);border-radius:10px;overflow:hidden;max-width:620px}
-.anat pre{margin:0;padding:24px 14px 12px;background:var(--term-bg);color:var(--term-ink);font-family:var(--f-mono);font-size:16px;line-height:2.4;white-space:pre-wrap;overflow-x:auto}
+.anat pre{margin:0;padding:24px 14px 12px;background:var(--term-bg);color:var(--term-ink);font-family:var(--f-mono);font-size:16px;line-height:2.4;white-space:pre-wrap;overflow-wrap:anywhere;overflow-x:auto}
 .anat .tk{position:relative;border-bottom:3px solid var(--k);padding:0 1px;margin:0 3px}
 .anat .tk::before{content:attr(data-n);position:absolute;left:50%;top:-1.25em;transform:translateX(-50%);font:700 10px/16px var(--f-body);width:16px;height:16px;border-radius:50%;background:var(--k);color:#fff;text-align:center}
 .anat ol{list-style:none;margin:0;padding:10px 14px;display:grid;gap:6px;font-size:14px}
