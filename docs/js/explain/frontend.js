@@ -901,143 +901,183 @@ ${V.hook(`Same content, different glass. @media says "only when the screen is li
 `);
 
 explain('f2',`
-<h4>Making a page come alive</h4>
-<p>So far your pages have been fixed: whatever HTML you wrote is what appears, and it never changes. Real apps react. You type a task, press Add, and it appears in a list. You open a page and the latest messages load in without a refresh. All of that is JavaScript changing the page while it is open.</p>
-<p>This lesson joins the two halves you have learnt: the JavaScript language from the beginner lessons, and the HTML page. The bridge between them is called the <b>DOM</b>. Libraries like React, which come next, do this work for you, but they are doing exactly what you will do by hand here. Knowing it makes React far less magical.</p>
+<p>Every "Add to basket" button, live search box and endless feed works the same way underneath: find an element, react to an event, change the page, load data. React does this for you later, so learn what it is doing.</p>
 
-<h4>The DOM: the page as a tree of objects</h4>
-<p>When the browser reads your HTML, it does not keep the text. It builds a model of the page in memory: one <b>object</b> for every element, linked together in a tree just like the nesting tree you drew in your first HTML lesson. That model is the <b>Document Object Model</b>, or DOM.</p>
-<figure class="fig"><svg viewBox="0 0 420 240" role="img" aria-label="HTML text becomes a DOM tree; JavaScript reads and changes the tree and the screen follows">
-<rect class="bx-dark" x="10" y="20" width="120" height="96" rx="6"/>
-<text class="t-term" x="20" y="44">&lt;input&gt;</text><text class="t-term" x="20" y="68">&lt;button&gt;</text><text class="t-term" x="20" y="92">&lt;ul&gt;</text>
-<text class="t-s" x="70" y="136" text-anchor="middle">HTML text</text>
-<path class="ln" d="M130 68h22"/><polygon class="ah" points="150,62 150,74 160,68"/>
-<rect class="bx-a" x="230" y="10" width="100" height="32" rx="6"/><text class="t-m" x="280" y="31" text-anchor="middle">document</text>
-<path class="ln" d="M280 42v12M200 54h160M200 54v10M280 54v10M360 54v10"/>
-<g text-anchor="middle">
-<rect class="bx-ok" x="164" y="64" width="72" height="30" rx="6"/><text class="t-m" x="200" y="84">input</text>
-<rect class="bx-ok" x="244" y="64" width="72" height="30" rx="6"/><text class="t-m" x="280" y="84">button</text>
-<rect class="bx-ok" x="324" y="64" width="72" height="30" rx="6"/><text class="t-m" x="360" y="84">ul</text>
-</g>
-<path class="ln-d" d="M360 94v16"/>
-<rect class="bx-info" x="324" y="110" width="72" height="30" rx="6"/><text class="t-m" x="360" y="130" text-anchor="middle">li</text>
-<text class="t-s" x="360" y="156" text-anchor="middle">added by JS</text>
-<text class="t-b" x="222" y="31" text-anchor="end">DOM</text>
-<rect class="bx-warn" x="164" y="180" width="232" height="44" rx="8"/>
-<text class="t-b" x="280" y="207" text-anchor="middle">your JavaScript</text>
-<path class="ln-a" d="M200 180v-80"/><polygon class="ah-a" points="194,102 206,102 200,94"/>
-<path class="ln-a" d="M360 180v-34"/><polygon class="ah-a" points="354,148 366,148 360,140"/>
-<text class="t-s" x="70" y="196" text-anchor="middle">find, change,</text>
-<text class="t-s" x="70" y="214" text-anchor="middle">add, remove</text>
-</svg><figcaption>The browser turns the HTML text into a tree of objects called the DOM. Your JavaScript reaches into that tree to read the input and to add new list items. Whenever the tree changes, the screen updates to match.</figcaption></figure>
-<p>The crucial fact: <b>the screen always shows the DOM, not your original HTML</b>. Change an object in the tree and the page changes instantly, with no reload. Add a new object and a new element appears. JavaScript gets into the tree through a ready-made variable called <code>document</code>.</p>
+${V.card(1,'The DOM','the page as a live tree',`
+<figure class="fig"><svg viewBox="0 0 420 212" role="img" aria-label="The DOM tree: document, then html, then body, which holds input#task, button#add and ul#list, which holds an li">
+<rect class="bx-dark" x="150" y="6" width="120" height="30" rx="6"/><text class="t-term" x="210" y="26" text-anchor="middle">document</text>
+<rect class="bx" x="170" y="52" width="80" height="30" rx="6"/><text class="t-m" x="210" y="72" text-anchor="middle">html</text>
+<rect class="bx" x="170" y="98" width="80" height="30" rx="6"/><text class="t-m" x="210" y="118" text-anchor="middle">body</text>
+<path class="ln" d="M210 36V52M210 82V98M210 128V136H69V146M210 136V146M210 136H351V146M351 176V184"/>
+<rect class="bx-info" x="14" y="146" width="110" height="30" rx="6"/><text class="t-m" x="69" y="166" text-anchor="middle" style="font-size:14px">input#task</text>
+<rect class="bx-a" x="150" y="146" width="120" height="30" rx="6"/><text class="t-m" x="210" y="166" text-anchor="middle" style="font-size:14px">button#add</text>
+<rect class="bx-ok" x="296" y="146" width="110" height="30" rx="6"/><text class="t-m" x="351" y="166" text-anchor="middle" style="font-size:14px">ul#list</text>
+<rect class="bx" x="321" y="184" width="60" height="24" rx="5"/><text class="t-m" x="351" y="201" text-anchor="middle" style="font-size:14px">li</text>
+</svg><figcaption>The browser turns your HTML into a tree of objects called the DOM (Document Object Model). JavaScript can reach any branch and change it, and the screen updates straight away.</figcaption></figure>
+${V.like(`<p>A puppet on strings. The HTML file is the puppet as it was built. The DOM is the puppet hanging up live, and JavaScript holds the strings: pull one and that part of the page moves at once.</p>`)}
+${V.why(`<p>In the late 1990s, Netscape and Internet Explorer each let scripts change pages in their own incompatible way. In 1998 the W3C standardised the DOM, so the same JavaScript works in every browser.</p>`)}
+${V.anat([[1,'document'],[2,'.querySelector'],'(',[3,"'#add'"],')'],[
+ '<b>document.</b> The whole page, the root of the tree.',
+ '<b>querySelector.</b> "Find me the first element that matches."',
+ '<b>A CSS selector.</b> The same ones you write in CSS: <code>#id</code>, <code>.class</code>, <code>tag</code>.'])}
+${V.rules(V.rh('Rules'),
+ V.ok("querySelector('#list')",'The first match, or null if none'),V.ok("querySelectorAll('li')",'Every match, as a list'),
+ V.no('script in &lt;head&gt; with no defer','It runs before the elements exist, so it finds null'),V.ok('script at the end of body','The tree is built by then'))}
+${V.hook(`HTML is the plan, the DOM is the live building. <code>querySelector</code> finds a room by its CSS address.`)}
+`)}
 
-<h4>Finding elements with querySelector</h4>
-<pre class="snip">const input = document.querySelector('#task');
-const list = document.querySelector('#list');</pre>
-<p><code>document.querySelector</code> takes a <b>CSS selector</b>, exactly like the ones you wrote in the CSS lessons, and gives back the first element that matches. <code>'#task'</code> means "the element with id task". You can also use <code>'.card'</code> or <code>'nav a'</code>. If nothing matches, it gives back <code>null</code>, which means "nothing".</p>
-<p>Each element object has <b>properties</b> you can read and change with a dot:</p>
-<ul>
-<li><code>input.value</code> is the text currently typed into an input box. Setting it to an empty string, <code>''</code>, clears the box.</li>
-<li><code>el.textContent</code> is the text inside an element. Setting it replaces that text.</li>
-</ul>
+${V.card(2,'Changing the page','create, fill, append',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="A visitor types an image tag with an attack in it. textContent shows it as harmless text. innerHTML runs it as code">
+<text class="t-s" x="210" y="18" text-anchor="middle">A visitor types this into your box:</text>
+<rect class="bx" x="60" y="26" width="300" height="34" rx="6"/><text class="t-m" x="72" y="48" style="font-size:14px">&lt;img src=x onerror=alert(1)&gt;</text>
+<path class="ln" d="M150 62 112 90M270 62 308 90"/>
+<rect class="bx-ok" x="10" y="94" width="195" height="78" rx="8"/>${V.ic('check',164,100,32,'ic-ok')}
+<text class="t-b" x="22" y="118">textContent</text><text class="t" x="22" y="142">shown as plain text</text><text class="t-s" x="22" y="162">harmless</text>
+<rect class="bx-bad" x="215" y="94" width="195" height="78" rx="8"/>${V.ic('warn',370,100,32,'ic-bad')}
+<text class="t-b" x="227" y="118">innerHTML</text><text class="t" x="227" y="142">runs as code!</text><text class="t-s" x="227" y="162">the attacker's script runs</text>
+</svg><figcaption>textContent treats what it is given as plain text. innerHTML builds HTML from it, so a visitor can sneak in code. This attack is called cross-site scripting (XSS).</figcaption></figure>
+${V.like(`<p>Building a new shelf for a room: first you make the shelf (create), then you put the label on it (fill), then you fix it to the wall (append). Until that last step, nobody in the room can see it.</p>`)}
+<p><b>Watch a new list item being made</b> and then removed.</p>
+${V.steps([
+ ['<b>createElement</b> makes a brand new, empty li. It exists only in memory: it is not on the page yet.',`<svg viewBox="0 0 420 180" role="img" aria-label="A new empty li floats outside the page">
+<rect class="bx-dark" x="6" y="8" width="408" height="36" rx="6"/><text class="t-term" x="16" y="31" style="font-size:14px">const li = document.createElement('li');</text>
+<rect class="bx" x="10" y="56" width="230" height="116" rx="8"/><text class="t-m" x="22" y="76">ul#list</text>
+<circle class="dot-m" cx="28" cy="100" r="3.5"/><text class="t" x="40" y="105">Walk dog</text>
+<rect class="ln-d" x="264" y="84" width="140" height="36" rx="5"/><text class="t-m" x="280" y="107">li</text>
+<text class="t-s" x="264" y="144">in memory only</text>
+</svg>`],
+ ['<b>textContent</b> puts the text inside it. Still invisible to the visitor.',`<svg viewBox="0 0 420 180" role="img" aria-label="The li now holds Buy milk">
+<rect class="bx-dark" x="6" y="8" width="408" height="36" rx="6"/><text class="t-term" x="16" y="31" style="font-size:14px">li.textContent = 'Buy milk';</text>
+<rect class="bx" x="10" y="56" width="230" height="116" rx="8"/><text class="t-m" x="22" y="76">ul#list</text>
+<circle class="dot-m" cx="28" cy="100" r="3.5"/><text class="t" x="40" y="105">Walk dog</text>
+<rect class="bx-hl" x="264" y="84" width="140" height="36" rx="5"/><text class="t" x="280" y="107">Buy milk</text>
+<text class="t-s" x="264" y="144">in memory only</text>
+</svg>`],
+ ['<b>append</b> attaches it to the list in the DOM. Now it is on the page.',`<svg viewBox="0 0 420 180" role="img" aria-label="The li is appended to the list">
+<rect class="bx-dark" x="6" y="8" width="408" height="36" rx="6"/><text class="t-term" x="16" y="31" style="font-size:14px">list.append(li);</text>
+<rect class="bx" x="10" y="56" width="230" height="116" rx="8"/><text class="t-m" x="22" y="76">ul#list</text>
+<circle class="dot-m" cx="28" cy="100" r="3.5"/><text class="t" x="40" y="105">Walk dog</text>
+<rect class="bx-hl" x="20" y="114" width="200" height="30" rx="5"/><circle class="dot-m" cx="28" cy="129" r="3.5"/><text class="t" x="40" y="134">Buy milk</text>
+${V.ic('check',290,84,40,'ic-ok')}<text class="t-s" x="264" y="144">on the page</text>
+</svg>`],
+ ['<b>remove</b> takes an element out of the DOM, and it disappears from the page.',`<svg viewBox="0 0 420 180" role="img" aria-label="The li is removed">
+<rect class="bx-dark" x="6" y="8" width="408" height="36" rx="6"/><text class="t-term" x="16" y="31" style="font-size:14px">li.remove();</text>
+<rect class="bx" x="10" y="56" width="230" height="116" rx="8"/><text class="t-m" x="22" y="76">ul#list</text>
+<circle class="dot-m" cx="28" cy="100" r="3.5"/><text class="t" x="40" y="105">Walk dog</text>
+<rect class="ln-d" x="20" y="114" width="200" height="30" rx="5"/><text class="t t-dim" x="40" y="134">Buy milk</text><path class="ln-x" d="M36 129H112"/>
+<text class="t-s" x="264" y="144">gone</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('li.textContent = input.value','User text stays text'),V.no('li.innerHTML = input.value','Lets a visitor inject code (XSS)'),
+ V.no('createElement without append','Made, but never shown'),
+ V.rh('Conventions'),
+ V.ok("input.value.trim()",'Cut spaces off both ends before checking for empty'))}
+${V.hook(`Create, fill, append. Text goes in with textContent, never innerHTML.`)}
+`)}
 
-<h4>Building new elements</h4>
-<p>Adding a list item takes three steps:</p>
-<pre class="snip">const li = document.createElement('li');   // 1. make a new li
-li.textContent = 'Buy milk';               // 2. fill it with text
-list.append(li);                           // 3. attach it to the ul</pre>
-<p>Step 1 creates the element in memory only. It is not on the page yet, like a sticky note you have written but not stuck anywhere. Step 3, <code>append</code>, attaches it as the last child of <code>list</code>, and only then does it appear. Forgetting to append is a very common reason for "nothing happens". The opposite, <code>li.remove()</code>, takes an element out of the tree, and it vanishes from the screen.</p>
+${V.card(3,'Events','doing something when the user acts',`
+<figure class="fig"><svg viewBox="0 0 420 165" role="img" aria-label="Clicking the Add button sends a click event, and your addTask function runs">
+<rect class="bx-a" x="20" y="48" width="110" height="50" rx="10"/><text class="t-b" x="75" y="79" text-anchor="middle">Add</text>
+<polygon class="ah" points="112,86 112,116 119,109 125,121 130,119 124,107 134,107"/>
+<path class="ln-a" d="M140 73H218"/><polygon class="ah-a" points="216,66 216,80 228,73"/>
+<text class="t-b t-a" x="182" y="60" text-anchor="middle">click</text>
+<rect class="bx-ok" x="232" y="38" width="176" height="70" rx="10"/>
+<text class="t-m" x="320" y="70" text-anchor="middle">addTask()</text><text class="t-s" x="320" y="92" text-anchor="middle">your function runs</text>
+<text class="t-s" x="210" y="150" text-anchor="middle">addEventListener connects the button to the action</text>
+</svg><figcaption>An event is something that happens: a click, a key press. A listener is a function the browser calls each time that event happens.</figcaption></figure>
+${V.like(`<p>A doorbell. You wire it up once. Nothing happens until someone presses it, and then the bell rings, every time, as often as they press.</p>`)}
+${V.anat([[1,'button'],[2,'.addEventListener'],'(',[3,"'click'"],', ',[4,'addTask'],')'],[
+ '<b>The element</b> to watch.',
+ '<b>addEventListener.</b> "When this happens to it, call that."',
+ '<b>The event name.</b> <code>\'click\'</code>, <code>\'keydown\'</code>, <code>\'input\'</code>...',
+ '<b>The function</b> to call. No brackets: you hand over the function, the browser calls it later.'])}
+<p><b>Watch a click bubble up.</b> The event starts at the button you clicked and then travels up through every parent.</p>
+${V.steps([
+ ['You click <b>Delete</b>. The event starts at the button, its <b>target</b>. Its listener runs first.',`<svg viewBox="0 0 420 175" role="img" aria-label="Event at the button">
+<rect class="bx" x="10" y="10" width="300" height="156" rx="8"/><text class="t-m" x="22" y="30">body</text>
+<rect class="bx" x="24" y="38" width="272" height="118" rx="7"/><text class="t-m" x="36" y="58">ul</text>
+<rect class="bx" x="38" y="68" width="244" height="78" rx="6"/><text class="t-m" x="50" y="88">li</text><text class="t" x="50" y="126">Buy milk</text>
+<rect class="bx-hl" x="186" y="96" width="84" height="36" rx="6"/><text class="t-b" x="228" y="119" text-anchor="middle">Delete</text>
+<text class="t-b t-a" x="324" y="146">button</text><text class="t-m t-dim" x="324" y="116">li</text><text class="t-m t-dim" x="324" y="86">ul</text><text class="t-m t-dim" x="324" y="56">body</text>
+</svg>`],
+ ['Then it <b>bubbles</b> up to the parent li.',`<svg viewBox="0 0 420 175" role="img" aria-label="Event bubbles to li">
+<rect class="bx" x="10" y="10" width="300" height="156" rx="8"/><text class="t-m" x="22" y="30">body</text>
+<rect class="bx" x="24" y="38" width="272" height="118" rx="7"/><text class="t-m" x="36" y="58">ul</text>
+<rect class="bx-hl" x="38" y="68" width="244" height="78" rx="6"/><text class="t-m" x="50" y="88">li</text><text class="t" x="50" y="126">Buy milk</text>
+<rect class="bx" x="186" y="96" width="84" height="36" rx="6"/><text class="t-b" x="228" y="119" text-anchor="middle">Delete</text>
+<text class="t-m t-dim" x="324" y="146">button</text><text class="t-b t-a" x="324" y="116">li</text><text class="t-m t-dim" x="324" y="86">ul</text><text class="t-m t-dim" x="324" y="56">body</text>
+<path class="ln-a" d="M345 136V124"/>
+</svg>`],
+ ['Then to the ul. A listener here would hear clicks from <b>every</b> Delete button in the list, even ones added later. That trick is called event delegation.',`<svg viewBox="0 0 420 175" role="img" aria-label="Event bubbles to ul">
+<rect class="bx" x="10" y="10" width="300" height="156" rx="8"/><text class="t-m" x="22" y="30">body</text>
+<rect class="bx-hl" x="24" y="38" width="272" height="118" rx="7"/><text class="t-m" x="36" y="58">ul</text>
+<rect class="bx" x="38" y="68" width="244" height="78" rx="6"/><text class="t-m" x="50" y="88">li</text><text class="t" x="50" y="126">Buy milk</text>
+<rect class="bx" x="186" y="96" width="84" height="36" rx="6"/><text class="t-b" x="228" y="119" text-anchor="middle">Delete</text>
+<text class="t-m t-dim" x="324" y="146">button</text><text class="t-m t-dim" x="324" y="116">li</text><text class="t-b t-a" x="324" y="86">ul</text><text class="t-m t-dim" x="324" y="56">body</text>
+</svg>`],
+ ['Finally up to body and the document. Any listener on the way gets its turn.',`<svg viewBox="0 0 420 175" role="img" aria-label="Event reaches body">
+<rect class="bx-hl" x="10" y="10" width="300" height="156" rx="8"/><text class="t-m" x="22" y="30">body</text>
+<rect class="bx" x="24" y="38" width="272" height="118" rx="7"/><text class="t-m" x="36" y="58">ul</text>
+<rect class="bx" x="38" y="68" width="244" height="78" rx="6"/><text class="t-m" x="50" y="88">li</text><text class="t" x="50" y="126">Buy milk</text>
+<rect class="bx" x="186" y="96" width="84" height="36" rx="6"/><text class="t-b" x="228" y="119" text-anchor="middle">Delete</text>
+<text class="t-m t-dim" x="324" y="146">button</text><text class="t-m t-dim" x="324" y="116">li</text><text class="t-m t-dim" x="324" y="86">ul</text><text class="t-b t-a" x="324" y="56">body</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok("addEventListener('click', addTask)",'Hand over the function'),V.no("addEventListener('click', addTask())",'The brackets call it right now, once, and hand over its result'),
+ V.no("'onclick'",'The event name is just click'),V.ok("e.key === 'Enter'",'In a keydown listener, which key was pressed'),
+ V.rh('Conventions'),
+ V.ok("() =&gt; li.remove()",'A small arrow function when the job is one line'))}
+${V.hook(`Wire the bell once, it rings every press. No brackets on the function you hand over.`)}
+`)}
 
-<h4>textContent, not innerHTML</h4>
-<p>There is another property, <code>innerHTML</code>, that reads text as HTML and builds elements from it. It looks convenient, but never feed it text a user typed. If someone types <code>&lt;img src=x onerror="stealCookies()"&gt;</code> into your task box, <code>innerHTML</code> turns it into a real element and runs their code in your page. That attack is called <b>cross-site scripting</b>, or XSS. <code>textContent</code> always treats input as plain characters, so the same text just shows up as harmless words. You will try this attack yourself in the Security track.</p>
+${V.card(4,'Loading data with fetch','order, wait, collect',`
+<figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="The browser sends a request to the server and the server sends back JSON data">
+${V.ic('laptop',10,14,70,'ic-a')}<text class="t-s" x="45" y="102" text-anchor="middle">browser</text>
+${V.ic('server',340,14,70,'ic-info')}<text class="t-s" x="375" y="102" text-anchor="middle">server</text>
+<path class="ln-a" d="M90 36H322"/><polygon class="ah-a" points="320,29 320,43 332,36"/><text class="t-m" x="210" y="28" text-anchor="middle" style="font-size:14px">GET /api/users</text>
+<path class="ln-ok" d="M330 66H98"/><polygon class="ah-ok" points="100,59 100,73 88,66"/><text class="t-m" x="210" y="88" text-anchor="middle" style="font-size:14px">[ {...}, {...}, {...} ]</text>
+<text class="t-s" x="210" y="142" text-anchor="middle">request goes out, response comes back</text>
+</svg><figcaption>fetch sends a request across the internet and gives you a promise of the answer. The data usually comes back as JSON, text that looks like JavaScript objects.</figcaption></figure>
+${V.like(`<p>Ordering in a restaurant. The waiter takes your order to the kitchen. You do not freeze until the food comes: you keep chatting. When the plate arrives, you still have to take the lid off before you can eat. That lid is <code>res.json()</code>.</p>`)}
+${V.why(`<p>Pages used to reload completely to show new data. Around 2005, Gmail and Google Maps showed that JavaScript could quietly load data in the background (this was called AJAX). <code>fetch</code>, added to browsers around 2015, is the modern, simpler way to do it.</p>`)}
+${V.anat([[1,'const res'],' = ',[2,'await'],' ',[3,'fetch'],'(',[4,"'/api/users'"],');'],[
+ '<b>The response.</b> Status (200 OK, 404...) and headers. The data inside still needs reading.',
+ '<b>await.</b> Pause this function until the answer arrives. The rest of the page keeps working.',
+ '<b>fetch.</b> Sends the request and returns a Promise: an IOU for a future value.',
+ '<b>The address</b> to ask. Starting with / means "on this same site".'])}
+${V.steps([
+ ['<b>fetch</b> sends the request. You get a Promise that is still <b>pending</b>. The page stays responsive while it waits.',`<svg viewBox="0 0 420 180" role="img" aria-label="Request travelling to the server, promise pending">
+${V.ic('laptop',10,14,70,'ic-a')}${V.ic('server',340,14,70,'ic-info')}<path class="ln-d" d="M90 55H330"/>
+<rect class="bx-a" x="140" y="38" width="140" height="34" rx="6"/><text class="t-m" x="210" y="61" text-anchor="middle" style="font-size:14px">GET /api/users</text>
+<polygon class="ah-a" points="318,48 318,62 330,55"/>
+${V.ic('clock',10,118,34,'ic-warn')}<text class="t-b" x="52" y="134">Promise: pending</text><text class="t-s" x="52" y="156">the page keeps working while it waits</text>
+</svg>`],
+ ['The server answers. <b>res</b> arrives with a status like <b>200 OK</b>. The body (the data) is still being read.',`<svg viewBox="0 0 420 180" role="img" aria-label="Response arrives">
+${V.ic('laptop',10,14,70,'ic-a')}${V.ic('server',340,14,70,'ic-info')}<path class="ln-d" d="M90 55H330"/>
+<rect class="bx-ok" x="140" y="38" width="140" height="34" rx="6"/><text class="t-m" x="210" y="61" text-anchor="middle" style="font-size:14px">200 OK</text>
+<polygon class="ah-ok" points="102,48 102,62 90,55"/>
+${V.ic('box',10,118,34,'ic-ok')}<text class="t-b" x="52" y="134">res: the response</text><text class="t-s" x="52" y="156">a parcel, still sealed</text>
+</svg>`],
+ ['<b>await res.json()</b> reads the body and turns the JSON text into a real JavaScript array of objects.',`<svg viewBox="0 0 420 180" role="img" aria-label="JSON becomes an array">
+${V.ic('laptop',10,14,70,'ic-a')}${V.ic('server',340,14,70,'ic-info')}<path class="ln-d" d="M90 55H330"/>
+<rect class="bx-ok" x="10" y="114" width="400" height="52" rx="8"/>
+<text class="t-m" x="22" y="145" style="font-size:14px">[{ id: 1, name: 'Ada Lovelace' }, ...]</text>
+</svg>`],
+ ['A <b>for...of</b> loop makes an li for each user, sets its textContent and appends it. The names appear.',`<svg viewBox="0 0 420 180" role="img" aria-label="Three names shown on the page">
+${V.ic('laptop',10,14,70,'ic-a')}${V.ic('server',340,14,70,'ic-info')}<path class="ln-d" d="M90 55H330"/>
+<rect class="bx" x="10" y="114" width="400" height="52" rx="8"/>
+<circle class="dot-m" cx="24" cy="140" r="3.5"/><text class="t" x="34" y="145">Ada Lovelace</text>
+<circle class="dot-m" cx="152" cy="140" r="3.5"/><text class="t" x="162" y="145">Grace Hopper</text>
+<circle class="dot-m" cx="284" cy="140" r="3.5"/><text class="t" x="294" y="145">Alan Turing</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.ok('async function loadUsers()','await only works inside an async function (or a module)'),V.no('const users = res.json()','Forgot await: you get a Promise, not the data'),
+ V.ok('if (!res.ok) ...','fetch does not fail on 404 or 500; check res.ok yourself'),V.no('defining loadUsers() and never calling it','A recipe nobody cooks'))}
+${V.build(`<ol><li>Find the input, the Add button and the list with <code>querySelector</code>.</li><li>Write a function that trims the input, stops if it is empty, then creates, fills and appends an li, and clears the box.</li><li>Inside it, also create a Delete button whose click listener removes that li, and append it to the li.</li><li>Connect your function to the Add button's click.</li><li>Write an async function that fetches <code>/api/users</code>, reads the JSON and adds an li per name to <code>#users</code>. Call it.</li></ol>`)}
+${V.hook(`Order, wait, unwrap: <code>await fetch</code>, then <code>await res.json()</code>.`)}
+`)}
 
-<h4>Events: reacting to the user</h4>
-<p>An <b>event</b> is something that happens on the page: a click, a key press, the mouse moving. You ask an element to run a function whenever a particular event happens with <code>addEventListener</code>:</p>
-<pre class="snip">const addButton = document.querySelector('#add');
-addButton.addEventListener('click', addTask);
-
-function addTask() {
-  // runs every time #add is clicked
-}</pre>
-<p>Read it as: "add button, when you hear a click, run <code>addTask</code>". The function you hand over is called a <b>callback</b> or <b>event handler</b>. Notice there are no brackets after <code>addTask</code> here: you are handing over the function itself to be called later, not calling it now. Writing <code>addTask()</code> would run it once immediately and hand over its result instead.</p>
-<p>You will often see a short inline function written with an arrow:</p>
-<pre class="snip">del.addEventListener('click', () =&gt; li.remove());</pre>
-<p><code>() =&gt; li.remove()</code> is an <b>arrow function</b>: a function with no name and no inputs, whose body is <code>li.remove()</code>. It is just a compact way to write <code>function () { li.remove(); }</code>.</p>
-<figure class="fig"><svg viewBox="0 0 420 200" role="img" aria-label="Timeline: page loads and registers the listener, then later a click runs the handler which changes the DOM">
-<path class="ln" d="M20 60h380"/><polygon class="ah" points="398,54 398,66 408,60"/>
-<text class="t-s" x="20" y="40">page loads</text><text class="t-s" x="340" y="40">time</text>
-<circle class="dot" cx="50" cy="60" r="7"/><circle class="dot-ok" cx="230" cy="60" r="7"/>
-<rect class="bx-info" x="10" y="90" width="140" height="56" rx="8"/>
-<text class="t" x="80" y="114" text-anchor="middle">listener is</text><text class="t" x="80" y="134" text-anchor="middle">registered</text>
-<path class="ln-d" d="M50 67v23"/>
-<path class="ln-ok" d="M230 67v23"/>
-<rect class="bx-ok" x="170" y="90" width="120" height="56" rx="8"/>
-<text class="t-b" x="230" y="114" text-anchor="middle">click!</text><text class="t" x="230" y="134" text-anchor="middle">addTask runs</text>
-<path class="ln-a" d="M290 118h26"/><polygon class="ah-a" points="314,112 314,124 324,118"/>
-<rect class="bx-a" x="326" y="90" width="84" height="56" rx="8"/>
-<text class="t" x="368" y="114" text-anchor="middle">new li</text><text class="t" x="368" y="134" text-anchor="middle">appears</text>
-<text class="t-s" x="210" y="180" text-anchor="middle">Waiting costs nothing; the handler runs once per click.</text>
-</svg><figcaption>When the page loads, your script registers a listener and then finishes. Nothing else happens until the user clicks. Each click runs the handler again, which builds a new list item and appends it, so it appears on screen.</figcaption></figure>
-<p>For the Enter key, listen for <code>'keydown'</code> on the input. The handler receives an <b>event object</b>, usually named <code>e</code>, describing what happened, and <code>e.key</code> holds the name of the key, such as <code>'Enter'</code>.</p>
-
-<h4>The task list, step by step</h4>
-<p>Inside the click handler, the logic for the first three tasks goes like this:</p>
-<ol>
-<li>Read the text: take <code>input.value</code> and call <code>.trim()</code> on it, which removes spaces from both ends. That way three spaces count as empty.</li>
-<li>If the text is empty, <code>return</code> straight away, so nothing is added. An empty string counts as false in a condition, so <code>if (!text) return;</code> reads "if there is no text, stop". The <code>!</code> means "not".</li>
-<li>Create the <code>li</code>, set its <code>textContent</code>, append it to the list.</li>
-<li>Create a Delete <code>button</code> the same way, give it a click listener that removes <i>this</i> <code>li</code>, and append the button into the <code>li</code>.</li>
-<li>Clear the input by setting its value to an empty string.</li>
-</ol>
-<p>Why does each Delete button remove the right item? Because each time the handler runs it creates a brand-new <code>li</code> variable, and the arrow function created in that same run remembers it. JavaScript functions keep hold of the variables around them when they were created. This is called a <b>closure</b>, and it is used everywhere in frontend code.</p>
-
-<h4>fetch: asking a server for data</h4>
-<p>Most data an app shows lives on a <b>server</b>, another computer on the internet. To get it, the browser sends a <b>request</b> to an address, and the server sends back a <b>response</b>. An address that returns data for programs rather than pages for people is called an <b>API</b> (application programming interface). This preview has a pretend one at <code>/api/users</code>.</p>
-<p>The data usually comes back as <b>JSON</b> (JavaScript Object Notation): text that looks exactly like JavaScript arrays and objects, for example <code>[{"id":1,"name":"Ada Lovelace"}]</code>.</p>
-<figure class="fig"><svg viewBox="0 0 420 260" role="img" aria-label="Request and response between the browser and the server, with two awaits">
-<rect class="bx-info" x="20" y="10" width="120" height="36" rx="6"/><text class="t-b" x="80" y="33" text-anchor="middle">browser</text>
-<rect class="bx-a" x="280" y="10" width="120" height="36" rx="6"/><text class="t-b" x="340" y="33" text-anchor="middle">server</text>
-<path class="ln-d" d="M80 46v204M340 46v204"/>
-<path class="ln-a" d="M80 80h250"/><polygon class="ah-a" points="328,74 328,86 338,80"/>
-<text class="t-m" x="210" y="72" text-anchor="middle">GET /api/users</text>
-<text class="t-s" x="210" y="112" text-anchor="middle">code waits at await fetch</text>
-<path class="ln-ok" d="M340 150h-250"/><polygon class="ah-ok" points="92,144 92,156 82,150"/>
-<text class="t-m" x="210" y="142" text-anchor="middle">200 OK + JSON</text>
-<rect class="bx-ok" x="96" y="170" width="228" height="34" rx="6"/><text class="t" x="210" y="192" text-anchor="middle">await res.json(): read body</text>
-<rect class="bx" x="96" y="214" width="228" height="32" rx="6"/><text class="t" x="210" y="235" text-anchor="middle">loop: one li per user</text>
-</svg><figcaption>The browser sends a request for slash api slash users. While the server works, the code waits at await fetch. The response arrives with status 200 and a JSON body. A second await reads that body into a JavaScript array, and then a loop adds one list item per user.</figcaption></figure>
-<pre class="snip">async function loadUsers() {
-  const res = await fetch('/api/users');   // send request, wait
-  const users = await res.json();          // read body as JSON
-  console.log(users[0].name);              // Ada Lovelace
-}
-loadUsers();</pre>
-
-<h4>Why the two awaits</h4>
-<p>Network requests take time, anywhere from milliseconds to seconds. JavaScript must not freeze the page while it waits, or nothing could be clicked. So <code>fetch</code> immediately returns a <b>Promise</b>: an object that stands for "a value that will arrive later", like a ticket at a coffee shop counter.</p>
-<p><code>await</code> means "pause this function until the promise is ready, then give me the value". The rest of the page keeps working meanwhile. You can only use <code>await</code> inside a function marked <code>async</code>, which is why the code is wrapped in <code>async function</code> and then called.</p>
-<p>There are two waits because the response arrives in stages. The first <code>await</code> gives you the <b>response</b> object as soon as the headers (the status code and other details) arrive. The body may still be downloading, so <code>res.json()</code> returns another promise, and the second <code>await</code> gives you the finished JavaScript data. From there it is the loop you already know: <code>for (const user of users)</code>, creating an <code>li</code> for each <code>user.name</code>.</p>
-<div class="mistake"><b>Common mistake</b>Forgetting <code>await</code>. Without it, <code>users</code> is a Promise object, not an array, and looping over it fails with an error saying it is not iterable. If you see a value printed as <code>Promise { … }</code>, you are missing an await.</div>
-<div class="mistake"><b>Common mistake</b>Running <code>querySelector</code> before the element exists. If your script runs before the HTML it looks for has been read, you get <code>null</code>, and the next line fails with <code>Cannot read properties of null (reading 'addEventListener')</code>. In this lesson the script sits after the HTML, so the elements already exist. Check the selector spelling first, including the hash.</div>
-
-<h4>Errors you may see</h4>
-<ul>
-<li><code>Cannot read properties of null</code>: <code>querySelector</code> found nothing. Check the selector and that the element exists.</li>
-<li><code>Failed to fetch</code>: the request could not complete. In this preview, only <code>/api/users</code> and <code>/api/products</code> exist. On a real site, check the address and your connection.</li>
-<li><code>await is only valid in async functions</code>: wrap the code in an <code>async function</code>.</li>
-<li>Nothing happens and no error: is the element appended? Is the listener attached to the right element? Add a <code>console.log</code> inside the handler to see whether it runs at all.</li>
-</ul>
-<div class="try"><b>Try it in your head</b>A user types two spaces and clicks Add. What happens with the trim and empty check in place? <code>'  '.trim()</code> is the empty string, which counts as false, so the handler returns and the list does not change. And what goes wrong with <code>button.addEventListener('click', addTask())</code>? The brackets call addTask once when the page loads, and its result, undefined, is registered instead of the function, so clicks do nothing.</div>
-
-<h4>Recap</h4>
-<ul>
-<li>The DOM is the browser's live tree of element objects. The screen always shows the DOM, so changing it changes the page.</li>
-<li><code>querySelector</code> finds elements with CSS selectors. <code>createElement</code> makes one, <code>append</code> attaches it, <code>remove</code> takes it away.</li>
-<li>Set text with <code>textContent</code>; never put user input into <code>innerHTML</code>.</li>
-<li><code>addEventListener('click', fn)</code> runs your function every time the event happens. Pass the function, do not call it.</li>
-<li><code>fetch</code> returns a promise. In an <code>async</code> function, <code>await fetch(url)</code> then <code>await res.json()</code> gives you the data.</li>
-</ul>
+<div class="try"><b>Try it in your head</b>1. What does <code>querySelector</code> return if nothing matches? <i>null.</i> 2. Why is <code>addEventListener('click', go())</code> wrong? <i>go() runs immediately; you must pass go itself.</i> 3. Does fetch throw an error on a 404? <i>No. Check res.ok.</i></div>
 `);
 
 explain('f3',`

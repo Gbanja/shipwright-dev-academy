@@ -1355,6 +1355,71 @@ ${V.rules(V.ok('pytest.raises(ValueError)','Passes only if that error is raised'
 ${V.hook(`Middle is easy, edges are where bugs live.`)}
 `)}
 
+${V.card(4,'Fixtures','ready-made test ingredients',`
+<figure class="fig"><svg viewBox="0 0 420 218" role="img" aria-label="fixture step 4">
+<rect class="bx-info" x="6" y="8" width="408" height="62" rx="8"/>
+<text class="t-m t-a" x="16" y="32" style="font-size:14px">@pytest.fixture</text>
+<text class="t-m" x="16" y="56" style="font-size:14px">def <tspan class="t-b">cart</tspan>(): return [...]</text>
+<rect class="bx-hl" x="6" y="150" width="408" height="62" rx="8"/>
+<text class="t-m" x="16" y="174" style="font-size:14px">def test_cart_total(<tspan class="t-a">cart</tspan>):</text>
+<text class="t-m" x="40" y="198" style="font-size:14px">assert cart_total(cart) == 25.5</text>
+<path class="ln-a" d="M120 148V80"/><polygon class="ah-a" points="113,82 127,82 120,72"/>
+<text class="t" x="132" y="104" style="font-size:14px">pytest finds the fixture</text><text class="t" x="132" y="122" style="font-size:14px">with the same name</text>
+<rect class="bx-ok" x="286" y="80" width="128" height="60" rx="8"/>${V.ic('list',294,88,26,'ic-ok')}<text class="t-m" x="326" y="106" style="font-size:14px">2 items</text><text class="t" x="350" y="130" text-anchor="middle" style="font-size:14px">fresh copy</text>
+<path class="ln-ok" d="M350 142V148"/><polygon class="ah-ok" points="343,144 357,144 350,152"/>
+<text class="t-b t-ok" x="404" y="198" text-anchor="end" style="font-size:16px">&#10003;</text>
+</svg><figcaption>A fixture is a function that prepares something tests need. Any test that names it as a parameter gets a fresh copy, automatically.</figcaption></figure>
+${V.like(`<p>A restaurant kitchen's prep station. The chef shouts "onions!" and a bowl of freshly chopped onions arrives. Every dish gets its own fresh bowl, so one dish cannot spoil another.</p>`)}
+${V.steps([
+ ['pytest is about to run <b>test_cart_total</b> and sees it asks for a parameter called <b>cart</b>.',`<svg viewBox="0 0 420 218" role="img" aria-label="fixture step 1">
+<rect class="bx-info" x="6" y="8" width="408" height="62" rx="8"/>
+<text class="t-m t-a" x="16" y="32" style="font-size:14px">@pytest.fixture</text>
+<text class="t-m" x="16" y="56" style="font-size:14px">def <tspan class="t-b">cart</tspan>(): return [...]</text>
+<rect class="bx-hl" x="6" y="150" width="408" height="62" rx="8"/>
+<text class="t-m" x="16" y="174" style="font-size:14px">def test_cart_total(<tspan class="t-a">cart</tspan>):</text>
+<text class="t-m" x="40" y="198" style="font-size:14px">assert cart_total(cart) == 25.5</text>
+<text class="t-b t-a" x="210" y="118" text-anchor="middle">"This test wants something called cart."</text>
+</svg>`],
+ ['It looks for a function marked <b>@pytest.fixture</b> with that exact name.',`<svg viewBox="0 0 420 218" role="img" aria-label="fixture step 2">
+<rect class="bx-hl" x="6" y="8" width="408" height="62" rx="8"/>
+<text class="t-m t-a" x="16" y="32" style="font-size:14px">@pytest.fixture</text>
+<text class="t-m" x="16" y="56" style="font-size:14px">def <tspan class="t-b">cart</tspan>(): return [...]</text>
+<rect class="bx" x="6" y="150" width="408" height="62" rx="8"/>
+<text class="t-m" x="16" y="174" style="font-size:14px">def test_cart_total(<tspan class="t-a">cart</tspan>):</text>
+<text class="t-m" x="40" y="198" style="font-size:14px">assert cart_total(cart) == 25.5</text>
+<path class="ln-a" d="M120 148V80"/><polygon class="ah-a" points="113,82 127,82 120,72"/>
+<text class="t" x="132" y="104" style="font-size:14px">pytest finds the fixture</text><text class="t" x="132" y="122" style="font-size:14px">with the same name</text>
+</svg>`],
+ ['It calls the fixture, which builds a fresh cart list.',`<svg viewBox="0 0 420 218" role="img" aria-label="fixture step 3">
+<rect class="bx-hl" x="6" y="8" width="408" height="62" rx="8"/>
+<text class="t-m t-a" x="16" y="32" style="font-size:14px">@pytest.fixture</text>
+<text class="t-m" x="16" y="56" style="font-size:14px">def <tspan class="t-b">cart</tspan>(): return [...]</text>
+<rect class="bx" x="6" y="150" width="408" height="62" rx="8"/>
+<text class="t-m" x="16" y="174" style="font-size:14px">def test_cart_total(<tspan class="t-a">cart</tspan>):</text>
+<text class="t-m" x="40" y="198" style="font-size:14px">assert cart_total(cart) == 25.5</text>
+<path class="ln-a" d="M120 148V80"/><polygon class="ah-a" points="113,82 127,82 120,72"/>
+<text class="t" x="132" y="104" style="font-size:14px">pytest finds the fixture</text><text class="t" x="132" y="122" style="font-size:14px">with the same name</text>
+<rect class="bx-ok" x="286" y="80" width="128" height="60" rx="8"/>${V.ic('list',294,88,26,'ic-ok')}<text class="t-m" x="326" y="106" style="font-size:14px">2 items</text><text class="t" x="350" y="130" text-anchor="middle" style="font-size:14px">fresh copy</text>
+</svg>`],
+ ['It passes that list into the test as <b>cart</b>, and the assert runs. Pass.',`<svg viewBox="0 0 420 218" role="img" aria-label="fixture step 4">
+<rect class="bx-info" x="6" y="8" width="408" height="62" rx="8"/>
+<text class="t-m t-a" x="16" y="32" style="font-size:14px">@pytest.fixture</text>
+<text class="t-m" x="16" y="56" style="font-size:14px">def <tspan class="t-b">cart</tspan>(): return [...]</text>
+<rect class="bx-hl" x="6" y="150" width="408" height="62" rx="8"/>
+<text class="t-m" x="16" y="174" style="font-size:14px">def test_cart_total(<tspan class="t-a">cart</tspan>):</text>
+<text class="t-m" x="40" y="198" style="font-size:14px">assert cart_total(cart) == 25.5</text>
+<path class="ln-a" d="M120 148V80"/><polygon class="ah-a" points="113,82 127,82 120,72"/>
+<text class="t" x="132" y="104" style="font-size:14px">pytest finds the fixture</text><text class="t" x="132" y="122" style="font-size:14px">with the same name</text>
+<rect class="bx-ok" x="286" y="80" width="128" height="60" rx="8"/>${V.ic('list',294,88,26,'ic-ok')}<text class="t-m" x="326" y="106" style="font-size:14px">2 items</text><text class="t" x="350" y="130" text-anchor="middle" style="font-size:14px">fresh copy</text>
+<path class="ln-ok" d="M350 142V148"/><polygon class="ah-ok" points="343,144 357,144 350,152"/>
+<text class="t-b t-ok" x="404" y="198" text-anchor="end" style="font-size:16px">&#10003;</text>
+</svg>`]])}
+${V.rules(V.ok('def test_x(cart):','The parameter name picks the fixture'),V.no('test_x(cart) with no fixture','pytest stops: fixture \'cart\' not found'),
+ V.ok('a fresh copy per test','Tests stay independent: one cannot spoil another'))}
+${V.build(`<ol><li>Write three tests with clear <code>test_</code> names, including one for rounding.</li><li>Turn similar tests into one <code>@pytest.mark.parametrize</code> test with three rows.</li><li>Add a <code>pytest.raises(ValueError)</code> test for 150%.</li><li>Create a <code>cart</code> fixture and a test that asks for it by name.</li><li>Run, read any F carefully, and repeat until all pass.</li></ol>`)}
+${V.hook(`Name it in the brackets and pytest brings it to the table.`)}
+`)}
+
 <div class="try"><b>Try it in your head</b>1. Will pytest run a function called <code>check_total()</code>? <i>No. It must start with test_.</i> 2. What does F mean in pytest output? <i>A test failed.</i> 3. Which percents are the best to test for apply_discount? <i>0, 100 and invalid values like 150, not just 10.</i></div>
 `);
 

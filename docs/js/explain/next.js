@@ -807,8 +807,8 @@ explain('n7',`
 ${V.card(1,'Logging in','swap a password for a wristband',`
 <figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="At the ticket desk a person proves who they are once and gets a wristband labelled session, with three safety stamps: httpOnly, secure and sameSite">
 ${V.ic('person',10,40,70,'ic-info')}<text class="t-s" x="45" y="130" text-anchor="middle">you</text>
-${AR(90,74,126,74,'-a')}<text class="t-s" x="108" y="60" text-anchor="middle">password</text>
-<rect class="bx-info" x="134" y="30" width="96" height="92" rx="10"/>${V.ic('lock',160,44,44,'ic-info')}<text class="t-s" x="182" y="112" text-anchor="middle">check once</text>
+${AR(90,74,140,74,'-a')}<text class="t-s" x="112" y="60" text-anchor="middle">password</text>
+<rect class="bx-info" x="146" y="30" width="86" height="92" rx="10"/>${V.ic('lock',167,44,44,'ic-info')}<text class="t-s" x="189" y="112" text-anchor="middle">check once</text>
 ${AR(236,74,268,74,'-ok')}
 <rect class="bx-ok" x="276" y="44" width="138" height="56" rx="28"/>${V.ic('card',288,54,36,'ic-ok')}<text class="t-m" x="332" y="78" style="font-size:14px">session</text>
 <text class="t-m" x="6" y="164" style="font-size:14px">httpOnly</text><text class="t-m" x="134" y="164" style="font-size:14px">secure</text><text class="t-m" x="262" y="164" style="font-size:14px">sameSite</text>
@@ -838,7 +838,7 @@ ${AR(250,140,170,140,'-ok')}<text class="t-s" x="210" y="130" text-anchor="middl
 </svg>`],
  ['The browser keeps the wristband and sends it automatically with every request to your site. Scripts on the page cannot read it.',`<svg viewBox="0 0 420 190" role="img" aria-label="Browser now holds the cookie">
 ${LG({cookie:true,b:'bx-ok'})}
-${AR(170,160,250,160,'-ok')}<text class="t-s" x="210" y="150" text-anchor="middle">every request</text>
+${AR(170,160,250,160,'-ok')}<text class="t-s" x="210" y="130" text-anchor="middle">every</text><text class="t-s" x="210" y="148" text-anchor="middle">request</text>
 </svg>`]])}
 ${V.rules(V.rh('Security musts'),
  V.no('password === user.password','Never store or compare plain passwords: compare hashes'),V.ok('bcrypt / argon2','Slow hashing on purpose, so guessing is expensive'),
@@ -853,7 +853,7 @@ ${DOOR({url:'GET /dashboard',cookie:true})}
 ${AR(84,84,134,84,'-a')}${AR(256,84,294,84,'-ok')}
 </svg><figcaption>Middleware runs before the page, for every URL that matches. No wristband, no entry: it sends you to /login instead.</figcaption></figure>
 ${V.like(`<p>A bouncer at the door of the VIP room. He does not cook or serve. He checks one thing, your wristband, before you get anywhere near the room, and points you back to the ticket desk if you have none.</p>`)}
-${V.anat(['export function middleware(',[1,'request: NextRequest'],') {\n  if (!',[2,"request.cookies.get('session')"],')\n    return ',[3,"NextResponse.redirect(new URL('/login', request.url))"],';\n  return ',[4,'NextResponse.next()'],';\n}\nexport const config = { ',[5,"matcher: ['/dashboard/:path*']"],' };'],[
+${V.anat(['export function middleware(',[1,'request: NextRequest'],') {\n  if (!',[2,"request.cookies.get('session')"],')\n    return ',[3,'NextResponse.redirect('],"\n      new URL('/login', request.url));\n  return ",[4,'NextResponse.next()'],';\n}\nexport const config = { ',[5,"matcher: ['/dashboard/:path*']"],' };'],[
  '<b>The incoming request</b>, before any page runs.',
  '<b>Check the wristband.</b> Is there a session cookie?',
  '<b>Turn them away.</b> Redirect to /login. <code>new URL</code> builds a full address from the current one.',
@@ -886,5 +886,109 @@ ${V.hook(`Login hands out the wristband. Middleware is the bouncer. Logout cuts 
 `)}
 
 <div class="try"><b>Try it in your head</b>1. Why httpOnly? <i>Scripts on the page cannot read the cookie, so an XSS bug cannot steal the session.</i> 2. Does middleware run for <code>/about</code> with the matcher above? <i>No: only /dashboard and below.</i> 3. What does the server store instead of passwords? <i>A slow hash, made with bcrypt or argon2.</i></div>
+`);
+
+/* n8 helpers: a test runner panel. rows: [name, state] with state 'ok' | 'bad' | '' (not run) */
+const TR=(rows,code,light)=>{let s='<rect class="'+({r:'bx-bad',g:'bx-ok',b:'bx-info'}[light]||'bx')+'" x="6" y="8" width="408" height="'+(20+rows.length*30)+'" rx="10"/>';rows.forEach(([n,st],i)=>{const y=8+30+i*30;s+=st?V.ic(st==='ok'?'check':'cross',16,y-19,24,st==='ok'?'ic-ok':'ic-bad'):'';s+='<text class="t-m'+(st===''?' t-dim':'')+'" x="48" y="'+y+'" style="font-size:14px">'+n+'</text>'});const y0=8+20+rows.length*30+12;return s+CP(6,y0,408,code,-1,13,24)};
+
+explain('n8',`
+<p>Every time you change code, you might break something that used to work. Tests are small programs that check your code for you, in a second, every time. Write them first and they also tell you exactly what to build.</p>
+
+${V.card(1,'A test','an inspector with an answer sheet',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="1000 and 25 go into applyDiscount, 750 comes out, and an inspector compares it with the expected 750 and ticks it">
+<rect class="bx-info" x="6" y="50" width="88" height="44" rx="6"/><text class="t-m" x="50" y="78" text-anchor="middle" style="font-size:14px">1000, 25</text>
+${AR(98,72,126,72,'-a')}
+<rect class="bx-a" x="130" y="30" width="120" height="84" rx="10"/>${V.ic('gear',166,36,44,'ic-a')}<text class="t-m" x="190" y="104" text-anchor="middle" style="font-size:13px">applyDiscount</text>
+${AR(254,72,282,72,'-a')}
+<rect class="bx" x="286" y="50" width="56" height="44" rx="6"/><text class="t-m" x="314" y="78" text-anchor="middle">750</text>
+${V.ic('search',350,46,52,'ic-ok')}
+<text class="t" x="314" y="136" text-anchor="middle">expected 750</text>${V.ic('check',364,112,34,'ic-ok')}
+<text class="t-s" x="190" y="150" text-anchor="middle">the code under test</text>
+</svg><figcaption>A test feeds your function known inputs and compares what comes out with the answer you expected. Same answer: pass. Different: fail, with both values shown.</figcaption></figure>
+${V.like(`<p>A teacher marking with an answer sheet. The question is the input, your function writes an answer, and the test compares it with the sheet. The teacher does not care how you worked it out, only whether the answer matches.</p>`)}
+${V.why(`<p>Clicking through an app after every change is slow, and people forget steps. Automated tests check the same things in milliseconds. <b>Vitest</b> (2021) runs them for Vite and Next.js projects, using the same <code>describe</code>, <code>it</code> and <code>expect</code> words as the older Jest.</p>`)}
+${V.anat([[1,'expect'],'(',[2,'applyDiscount(1000, 25)'],')',[3,'.toBe'],'(',[4,'750'],');'],[
+ '<b>expect.</b> "I expect that…" Wraps the value you are checking.',
+ '<b>The actual value.</b> Your code runs here and produces an answer.',
+ '<b>The matcher.</b> How to compare: <code>toBe</code> (exactly the same), <code>toEqual</code> (same contents, for objects and arrays), <code>toThrow</code> (raises an error).',
+ '<b>The expected value.</b> The answer sheet.'])}
+<pre class="snip">describe('applyDiscount', () =&gt; {          // a group of tests
+  it('takes 25% off', () =&gt; {              // one test, named as a sentence
+    expect(applyDiscount(1000, 25)).toBe(750);
+  });
+});</pre>
+${V.steps([
+ ['The test calls <b>applyDiscount(1000, 25)</b>. The function runs and returns its answer.',`<svg viewBox="0 0 420 150" role="img" aria-label="The function returns 750">
+${CP(6,8,408,['expect(applyDiscount(1000, 25)).toBe(750);'],0,14,30)}
+<text class="t-s" x="16" y="78">actual</text><rect class="bx" x="16" y="88" width="100" height="44" rx="6"/><text class="t-m" x="66" y="116" text-anchor="middle" style="font-size:17px">750</text>
+</svg>`],
+ ['<b>toBe(750)</b> compares actual with expected. They match, so the test passes and shows a tick.',`<svg viewBox="0 0 420 150" role="img" aria-label="750 equals 750, pass">
+${CP(6,8,408,['expect(applyDiscount(1000, 25)).toBe(750);'],0,14,30)}
+<text class="t-s" x="16" y="78">actual</text><rect class="bx-ok" x="16" y="88" width="100" height="44" rx="6"/><text class="t-m" x="66" y="116" text-anchor="middle" style="font-size:17px">750</text>
+<text class="t-b" x="150" y="116">=</text>
+<text class="t-s" x="180" y="78">expected</text><rect class="bx-ok" x="180" y="88" width="100" height="44" rx="6"/><text class="t-m" x="230" y="116" text-anchor="middle" style="font-size:17px">750</text>
+${V.ic('check',310,90,40,'ic-ok')}
+</svg>`],
+ ['If a bug made it return <b>75</b>, the test fails and Vitest prints both values, so you see at once what went wrong.',`<svg viewBox="0 0 420 150" role="img" aria-label="75 is not 750, fail">
+${CP(6,8,408,['expect(applyDiscount(1000, 25)).toBe(750);'],0,14,30)}
+<text class="t-s" x="16" y="78">actual</text><rect class="bx-bad" x="16" y="88" width="100" height="44" rx="6"/><text class="t-m" x="66" y="116" text-anchor="middle" style="font-size:17px">75</text>
+<text class="t-b t-bad" x="146" y="116">≠</text>
+<text class="t-s" x="180" y="78">expected</text><rect class="bx" x="180" y="88" width="100" height="44" rx="6"/><text class="t-m" x="230" y="116" text-anchor="middle" style="font-size:17px">750</text>
+${V.ic('cross',310,90,40,'ic-bad')}<text class="t-bad" x="16" y="146" style="font-size:13px">AssertionError: expected 75 to be 750</text>
+</svg>`]])}
+${V.rules(V.rh('Rules'),
+ V.no('expect(applyDiscount(1000, 150)).toThrow()','The error is thrown before expect can catch it, so the test crashes'),V.ok('expect(() =&gt; applyDiscount(1000, 150)).toThrow()','Wrap a throwing call in an arrow function'),
+ V.no('expect({ a: 1 }).toBe({ a: 1 })','Two different objects are never the same object'),V.ok('expect({ a: 1 }).toEqual({ a: 1 })','toEqual compares contents'),
+ V.rh('Conventions'),V.ok("it('rejects discounts over 100%')",'Name tests as sentences about behaviour'),V.ok('price.test.ts next to price.ts','Test files end in .test.ts'))}
+${V.hook(`Expect the actual to be the expected: <code>expect(actual).toBe(expected)</code>.`)}
+`)}
+
+${V.card(2,'Red, green, refactor','the TDD traffic light',`
+<figure class="fig"><svg viewBox="0 0 420 170" role="img" aria-label="A loop of three lights: red, write a failing test; green, make it pass; refactor, tidy up">
+<circle class="bx-bad" cx="70" cy="64" r="44"/><text class="t-b t-bad" x="70" y="70" text-anchor="middle" style="font-size:18px">Red</text>
+<circle class="bx-ok" cx="210" cy="64" r="44"/><text class="t-b t-ok" x="210" y="70" text-anchor="middle" style="font-size:18px">Green</text>
+<circle class="bx-info" cx="350" cy="64" r="44"/><text class="t-b" x="350" y="70" text-anchor="middle" style="font-size:16px">Refactor</text>
+${AR(116,64,162,64,'-a')}${AR(256,64,302,64,'-a')}
+<path class="ln-a" d="M350 110C350 150 70 150 70 120"/><polygon class="ah-a" points="63,122 77,122 70,110"/>
+<text class="t-s" x="70" y="132" text-anchor="middle">failing test</text><text class="t-s" x="210" y="132" text-anchor="middle">simplest code</text><text class="t-s" x="350" y="132" text-anchor="middle">tidy, still green</text>
+</svg><figcaption>Test-driven development goes round this loop in small steps: a failing test, the simplest code that passes, then a clean-up while the tests stay green.</figcaption></figure>
+${V.like(`<p>Writing the exam questions before you revise. The questions tell you exactly what you need to know, and when you can answer them all you stop. No wasted work, and you can prove you are done.</p>`)}
+${V.why(`<p>Tests written afterwards tend to test whatever the code happens to do. Writing the test first (Kent Beck popularised this as <b>test-driven development</b>, TDD, around 2002) forces you to decide what "correct" means before you build, and a test you have seen fail is a test you know can catch a bug.</p>`)}
+${V.steps([
+ ['<b>Red.</b> Write a test for <b>applyDiscount</b> before the function exists. Run it: it fails. Good: the test can catch a problem.',`<svg viewBox="0 0 420 190" role="img" aria-label="Red: the new test fails">
+${TR([['formats whole amounts','ok'],['formats pence','ok'],['takes 25% off','bad']],['// applyDiscount is not written yet'],'r')}
+</svg>`],
+ ['<b>Green.</b> Write the simplest code that passes. Not clever, not complete: just enough.',`<svg viewBox="0 0 420 190" role="img" aria-label="Green: the test passes">
+${TR([['formats whole amounts','ok'],['formats pence','ok'],['takes 25% off','ok']],['return price - (price * percent) / 100;'],'g')}
+</svg>`],
+ ['<b>Refactor.</b> Tidy up: clear names, round to whole pence. Run again. Still green, so nothing broke.',`<svg viewBox="0 0 420 190" role="img" aria-label="Refactor: still green">
+${TR([['formats whole amounts','ok'],['formats pence','ok'],['takes 25% off','ok']],['return Math.round(price * (1 - percent / 100));'],'b')}
+</svg>`],
+ ['<b>Red again</b>, for an <b>edge case</b>: a discount over 100% should throw. The code does not check yet, so the new test fails.',`<svg viewBox="0 0 420 190" role="img" aria-label="Edge case test fails">
+${TR([['formats whole amounts','ok'],['formats pence','ok'],['takes 25% off','ok'],['rejects over 100%','bad']],["expect(() =&gt; applyDiscount(1000, 150))",'  .toThrow(\'between 0 and 100\');'],'r')}
+</svg>`],
+ ['<b>Green.</b> Add the check that throws an error with that message. Every test passes, and the edge case is now guarded for ever.',`<svg viewBox="0 0 420 190" role="img" aria-label="All tests pass">
+${TR([['formats whole amounts','ok'],['formats pence','ok'],['takes 25% off','ok'],['rejects over 100%','ok']],['if (percent &lt; 0 || percent &gt; 100)','  throw new Error(\'… between 0 and 100\');'],'g')}
+</svg>`]])}
+${V.rules(V.no('Writing the code first, then a test that copies it','The test just repeats the code, bugs included'),V.ok('See it fail first','Proves the test can actually catch a mistake'),
+ V.ok('Test edge cases','Zero, negative, empty, too big: the places bugs hide'),V.ok('npx vitest','Runs tests and re-runs them on every save'))}
+${V.hook(`Red: say what you want. Green: make it so. Refactor: make it nice.`)}
+`)}
+
+${V.card(3,'The testing pyramid','many small checks, a few big ones',`
+<figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="A pyramid: a wide base of unit tests with Vitest, fewer integration tests in the middle, and a few end-to-end tests with Playwright at the top">
+<polygon class="bx-info" points="40,170 380,170 326,118 94,118"/><text class="t-b" x="210" y="150" text-anchor="middle">Unit tests (Vitest): many, fast</text>
+<polygon class="bx-ok" points="94,114 326,114 270,62 150,62"/><text class="t-b" x="210" y="94" text-anchor="middle">Integration</text>
+<polygon class="bx-a" points="150,58 270,58 210,6"/><text class="t-b" x="210" y="48" text-anchor="middle" style="font-size:14px">E2E</text>
+${V.ic('robot',350,14,44,'ic-a')}<text class="t-s" x="372" y="74" text-anchor="middle">Playwright</text>
+</svg><figcaption>Lots of fast unit tests at the bottom, a handful of slow end-to-end tests at the top that click through the real app in a real browser.</figcaption></figure>
+${V.like(`<p>Checking a car. You test each part on the bench (unit), then the engine with the gearbox (integration), and finally take the whole car for one test drive (end to end). You would not test every bolt by driving round the block.</p>`)}
+${V.rules(V.ok('formatPrice(1250) returns "$12.50"','Unit test: Vitest'),V.ok('Sign up, see welcome page, log out','End-to-end: Playwright drives a real browser'),
+ V.no('Hundreds of end-to-end tests','Slow and flaky. Keep them for the critical journeys'))}
+${V.build(`<ol><li>Make the two <code>formatPrice</code> tests pass.</li><li>Red: write <code>applyDiscount</code> tests first and watch them fail.</li><li>Green: write the simplest code that passes them all.</li><li>Add an edge-case test with <code>toThrow</code> for a discount over 100%, then make it pass.</li></ol>`)}
+${V.hook(`Wide base of unit tests, narrow tip of browser tests.`)}
+`)}
+
+<div class="try"><b>Try it in your head</b>1. Which matcher compares two arrays' contents? <i>toEqual.</i> 2. Why must the first test fail? <i>To prove it can catch a mistake.</i> 3. "A user can check out with a card": Vitest or Playwright? <i>Playwright: it is a whole journey through the app.</i></div>
 `);
 }

@@ -534,7 +534,7 @@ explain('p6',`
 
 ${V.card(1,'Monitoring','hear about problems before your users do',`
 <figure class="fig"><svg viewBox="0 0 420 160" role="img" aria-label="An uptime robot checks the site every minute; green ticks turn into red crosses and it sends an alert">
-${V.ic('robot',8,30,64,'ic-info')}<text class="t" x="40" y="118" text-anchor="middle">uptime check</text>
+${V.ic('robot',8,30,64,'ic-info')}<text class="t" x="40" y="118" text-anchor="middle">monitor</text>
 <path class="ln" style="stroke-width:3" d="M84 62H340"/>
 <circle class="dot-ok" cx="104" cy="62" r="9"/><circle class="dot-ok" cx="144" cy="62" r="9"/><circle class="dot-ok" cx="184" cy="62" r="9"/><circle class="dot-ok" cx="224" cy="62" r="9"/>
 ${V.ic('cross',250,49,26,'ic-bad')}${V.ic('cross',290,49,26,'ic-bad')}

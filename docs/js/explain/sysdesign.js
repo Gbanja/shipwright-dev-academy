@@ -49,9 +49,9 @@ ${V.hook(`Client orders, server cooks, HTTP carries the plates.`)}
 ${V.card(2,'REST and GraphQL','two ways to design the menu',`
 <figure class="fig"><svg viewBox="0 0 420 180" role="img" aria-label="REST needs three requests to three URLs; GraphQL sends one query asking for exactly the fields needed">
 <rect class="bx" x="8" y="10" width="196" height="160" rx="10"/><text class="t-b" x="106" y="34" text-anchor="middle">REST: 3 trips</text>
-<rect class="bx-a" x="20" y="48" width="172" height="30" rx="6"/><text class="t-m" x="106" y="68" text-anchor="middle" style="font-size:14px">GET /users/42</text>
-<rect class="bx-a" x="20" y="86" width="172" height="30" rx="6"/><text class="t-m" x="106" y="106" text-anchor="middle" style="font-size:14px">GET /users/42/posts</text>
-<rect class="bx-a" x="20" y="124" width="172" height="30" rx="6"/><text class="t-m" x="106" y="144" text-anchor="middle" style="font-size:14px">GET /posts/9/comments</text>
+<rect class="bx-a" x="13" y="48" width="186" height="30" rx="6"/><text class="t-m" x="106" y="68" text-anchor="middle" style="font-size:14px">GET /users/42</text>
+<rect class="bx-a" x="13" y="86" width="186" height="30" rx="6"/><text class="t-m" x="106" y="106" text-anchor="middle" style="font-size:14px">GET /users/42/posts</text>
+<rect class="bx-a" x="13" y="124" width="186" height="30" rx="6"/><text class="t-m" x="106" y="144" text-anchor="middle" style="font-size:14px">GET /posts/9/comments</text>
 <rect class="bx" x="216" y="10" width="196" height="160" rx="10"/><text class="t-b" x="314" y="34" text-anchor="middle">GraphQL: 1 trip</text>
 <rect class="bx-info" x="228" y="48" width="172" height="106" rx="6"/>
 <text class="t-m" x="240" y="70" style="font-size:14px">user(id: 42) {</text><text class="t-m" x="254" y="92" style="font-size:14px">name</text><text class="t-m" x="254" y="114" style="font-size:14px">posts { title }</text><text class="t-m" x="240" y="136" style="font-size:14px">}</text>
